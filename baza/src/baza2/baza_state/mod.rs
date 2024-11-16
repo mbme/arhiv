@@ -141,7 +141,7 @@ impl BazaState {
         let current_value = self.documents.remove(&id);
 
         let updated_document = if let Some(document_head) = current_value {
-            document_head.insert_revision(document)?
+            document_head.insert_snapshot(document)?
         } else {
             DocumentHead::new(document)
         };

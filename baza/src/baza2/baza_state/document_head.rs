@@ -64,7 +64,7 @@ impl LatestDocument {
         Ok(())
     }
 
-    pub fn insert_revision(&mut self, new_document: Document) -> Result<()> {
+    pub fn insert_snapshot(&mut self, new_document: Document) -> Result<()> {
         ensure!(
             self.get_id() == &new_document.id,
             "Document id must not change"
@@ -168,7 +168,7 @@ impl LatestConflict {
         Ok(())
     }
 
-    pub fn insert_revision(&mut self, new_document: Document) -> Result<()> {
+    pub fn insert_snapshot(&mut self, new_document: Document) -> Result<()> {
         ensure!(
             self.get_id() == &new_document.id,
             "Document id must not change"
@@ -295,7 +295,7 @@ impl DocumentHead {
         }
     }
 
-    pub fn insert_revision(self, new_document: Document) -> Result<Self> {
+    pub fn insert_snapshot(self, new_document: Document) -> Result<Self> {
         ensure!(
             self.get_id() == &new_document.id,
             "Document id must not change"
@@ -309,7 +309,7 @@ impl DocumentHead {
                     .compare_vector_clocks(&new_document.rev)
                 {
                     VectorClockOrder::Before => {
-                        latest_document.insert_revision(new_document)?;
+                        latest_document.insert_snapshot(new_document)?;
 
                         DocumentHead::Document(latest_document)
                     }
@@ -333,7 +333,7 @@ impl DocumentHead {
                         DocumentHead::Document(LatestDocument::new(new_document))
                     }
                     VectorClockOrder::Concurrent => {
-                        latest_conflict.insert_revision(new_document)?;
+                        latest_conflict.insert_snapshot(new_document)?;
 
                         DocumentHead::Conflict(latest_conflict)
                     }
@@ -379,12 +379,12 @@ mod tests {
 
             let doc_c1 = doc_a1.clone().with_rev(json!({ "c": 1 }));
             assert!(matches!(
-                head.clone().insert_revision(doc_c1).unwrap(),
+                head.clone().insert_snapshot(doc_c1).unwrap(),
                 DocumentHead::Conflict(_)
             ));
 
             assert!(matches!(
-                head.clone().insert_revision(doc_a3.clone()).unwrap(),
+                head.clone().insert_snapshot(doc_a3.clone()).unwrap(),
                 DocumentHead::Document(_)
             ));
 
@@ -399,12 +399,12 @@ mod tests {
             assert!(!head.is_staged());
 
             assert!(matches!(
-                head.clone().insert_revision(doc_a2.clone()).unwrap(),
+                head.clone().insert_snapshot(doc_a2.clone()).unwrap(),
                 DocumentHead::Conflict(_)
             ));
 
             assert!(matches!(
-                head.clone().insert_revision(doc_a3.clone()).unwrap(),
+                head.clone().insert_snapshot(doc_a3.clone()).unwrap(),
                 DocumentHead::Document(_)
             ));
 
@@ -420,7 +420,7 @@ mod tests {
             assert!(head.is_new_document());
             assert!(!head.is_committed());
             assert!(head.is_staged());
-            assert!(head.clone().insert_revision(doc_a3.clone()).is_err());
+            assert!(head.clone().insert_snapshot(doc_a3.clone()).is_err());
 
             head.modify(doc_a3.clone()).unwrap();
             assert!(head.is_new_document());
@@ -433,7 +433,7 @@ mod tests {
             assert!(!head.is_unresolved_conflict());
             assert!(!head.is_committed());
             assert!(head.is_staged());
-            assert!(head.clone().insert_revision(doc_a3.clone()).is_err());
+            assert!(head.clone().insert_snapshot(doc_a3.clone()).is_err());
 
             head.modify(doc_a3.clone()).unwrap();
             assert!(head.is_staged());
@@ -446,7 +446,7 @@ mod tests {
             assert!(head.is_resolved_conflict());
             assert!(!head.is_committed());
             assert!(head.is_staged());
-            assert!(head.clone().insert_revision(doc_a3.clone()).is_err());
+            assert!(head.clone().insert_snapshot(doc_a3.clone()).is_err());
 
             head.modify(doc_a3.clone()).unwrap();
             assert!(head.is_resolved_conflict());

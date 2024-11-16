@@ -1,5 +1,9 @@
+mod document_key;
+mod documents_index;
+
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
+    collections::{HashSet, VecDeque},
+    fmt,
     fs::File,
     io::{BufReader, Read, Write},
 };
@@ -8,108 +12,15 @@ use anyhow::{anyhow, bail, ensure, Context, Result};
 
 use rs_utils::{
     confidential1::Confidential1Key, create_file_reader, create_file_writer, crypto_key::CryptoKey,
-    C1GzReader, C1GzWriter, ContainerPatch, ContainerReader, ContainerWriter, LinesIndex,
+    C1GzReader, C1GzWriter, ContainerPatch, ContainerReader, ContainerWriter,
 };
 
-use crate::entities::{Document, Id, LatestRevComputer, Revision};
+use crate::entities::Document;
 
 use super::BazaInfo;
 
-#[derive(Hash, Eq, PartialEq, Clone)]
-pub struct BazaDocumentKey {
-    pub id: Id,
-    pub rev: Revision,
-}
-
-impl BazaDocumentKey {
-    pub fn new(id: Id, rev: Revision) -> Self {
-        Self { id, rev }
-    }
-
-    pub fn for_document(document: &Document) -> Result<Self> {
-        Ok(BazaDocumentKey::new(
-            document.id.clone(),
-            document.rev.clone(),
-        ))
-    }
-
-    pub fn parse(value: &str) -> Result<Self> {
-        let (id_raw, rev_raw) = value.split_once(' ').context("Failed to split value")?;
-
-        let id = Id::from(id_raw);
-        let rev = Revision::from_file_name(rev_raw)?;
-
-        Ok(Self { id, rev })
-    }
-
-    pub fn serialize(&self) -> String {
-        format!("{} {}", self.id, self.rev.to_file_name())
-    }
-}
-
-impl std::fmt::Debug for BazaDocumentKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("[BazaDocumentKey {}]", &self.serialize()))
-    }
-}
-
-pub struct DocumentsIndex(Vec<BazaDocumentKey>);
-
-pub type DocumentsIndexMap<'i> = HashMap<&'i Id, HashSet<&'i Revision>>;
-
-impl DocumentsIndex {
-    pub fn parse(index: &LinesIndex) -> Result<Self> {
-        let documents_index = index
-            .iter()
-            .skip(1) // skip info file
-            .map(BazaDocumentKey::parse)
-            .collect::<Result<Vec<_>>>()?;
-
-        Ok(DocumentsIndex(documents_index))
-    }
-
-    pub fn from_string_keys(keys: impl Iterator<Item = String>) -> LinesIndex {
-        let mut index = keys.collect::<Vec<_>>();
-
-        index.insert(0, "info".to_string());
-
-        LinesIndex::new(index)
-    }
-
-    pub fn from_baza_document_keys<'k>(
-        items: impl Iterator<Item = &'k BazaDocumentKey>,
-    ) -> LinesIndex {
-        Self::from_string_keys(items.map(|key| key.serialize()))
-    }
-
-    pub fn append_keys(&mut self, more_keys: Vec<BazaDocumentKey>) {
-        self.0.extend(more_keys);
-    }
-
-    pub fn as_index_map(&self) -> DocumentsIndexMap {
-        let mut map: DocumentsIndexMap = HashMap::new();
-
-        // insert all ids & revs into the map
-        for key in &self.0 {
-            let entry = map.entry(&key.id).or_default();
-
-            entry.insert(&key.rev);
-        }
-
-        // calculate max rev per document
-        for revs in &mut map.values_mut() {
-            let mut latest_rev_computer = LatestRevComputer::new();
-
-            latest_rev_computer.update(revs.iter().copied());
-
-            let mut latest_rev = latest_rev_computer.get();
-
-            std::mem::swap(revs, &mut latest_rev);
-        }
-
-        map
-    }
-}
+pub use document_key::BazaDocumentKey;
+pub use documents_index::DocumentsIndex;
 
 type LinesIter<'i> = Box<dyn Iterator<Item = Result<(String, String)>> + 'i>;
 
@@ -129,9 +40,9 @@ pub struct BazaStorage<'i, R: Read + 'i> {
     info: Option<BazaInfo>,
 }
 
-impl<'i, R: Read + 'i> std::fmt::Debug for BazaStorage<'i, R> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("BazaStorage: {:?}", &self.index.0))
+impl<'i, R: Read + 'i> fmt::Debug for BazaStorage<'i, R> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_fmt(format_args!("BazaStorage: {:?}", &self.index))
     }
 }
 
@@ -224,7 +135,7 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
 
     #[cfg(test)]
     pub fn get_all(mut self) -> Result<Vec<Document>> {
-        let mut all_items = Vec::with_capacity(self.index.0.len());
+        let mut all_items = Vec::with_capacity(self.index.len());
 
         while let Some(result) = self.next_parsed() {
             let (_key, document) = result?;
@@ -353,7 +264,7 @@ pub fn merge_storages(
     let mut keys_per_storage = storages
         .into_iter()
         .map(|s| {
-            let keys = HashSet::<BazaDocumentKey>::from_iter(s.index.0.iter().cloned());
+            let keys = HashSet::<BazaDocumentKey>::from_iter(s.index.iter().cloned());
 
             (s, keys)
         })
@@ -380,7 +291,7 @@ pub fn merge_storages(
         .map(|(s, mut keys_set)| {
             let mut ordered_keys = VecDeque::with_capacity(keys_set.len());
 
-            for index_key in &s.index.0 {
+            for index_key in s.index.iter() {
                 if let Some(key) = keys_set.take(index_key) {
                     ordered_keys.push_back(key);
                 }
@@ -476,7 +387,7 @@ mod tests {
         // read
         {
             let mut storage = BazaStorage::read(&mut data, &key)?;
-            assert_eq!(storage.index.0.len(), 1);
+            assert_eq!(storage.index.len(), 1);
             assert_eq!(storage.get_info()?, &info);
 
             let all_items = storage.get_all()?;
@@ -502,7 +413,7 @@ mod tests {
         {
             docs1.extend(docs2);
             let mut storage = BazaStorage::read(&mut data1, &key)?;
-            assert_eq!(storage.index.0.len(), 3);
+            assert_eq!(storage.index.len(), 3);
             assert_eq!(storage.get_info()?, &info);
 
             let all_items = storage.get_all()?;
@@ -540,7 +451,7 @@ mod tests {
         result.set_position(0);
 
         let mut storage = BazaStorage::read(&mut result, &key).unwrap();
-        assert_eq!(storage.index.0.len(), 4);
+        assert_eq!(storage.index.len(), 4);
         assert_eq!(storage.get_info().unwrap(), &info);
 
         let mut all_docs = [doc_a, doc_b, doc_c, doc_d];

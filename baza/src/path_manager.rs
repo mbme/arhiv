@@ -3,9 +3,7 @@ use std::path::Path;
 
 use anyhow::{ensure, Result};
 
-use rs_utils::{ensure_dir_exists, ensure_file_exists, list_files, TempFile};
-
-use crate::entities::BLOBId;
+use rs_utils::{ensure_dir_exists, ensure_file_exists, TempFile};
 
 #[derive(Debug)]
 pub struct PathManager {
@@ -14,12 +12,6 @@ pub struct PathManager {
     pub downloads_dir: String,
     pub db_file: String,
     pub lock_file: String,
-
-    pub db2_root_dir: String,
-    pub db2_file: String,
-    pub db2_data_dir: String,
-    pub state_file: String,
-    pub state_data_dir: String,
 }
 
 impl PathManager {
@@ -29,38 +21,13 @@ impl PathManager {
         let db_file = format!("{}/arhiv.sqlite", &root_dir);
         let lock_file = format!("{}/arhiv.lock", &root_dir);
 
-        // FIXME
-        let db2_root_dir = format!("{root_dir}/db2/");
-        let state_dir = format!("{root_dir}/state/");
-
-        let db2_file = format!("{db2_root_dir}/baza.gz.c1");
-        let db2_data_dir = format!("{db2_root_dir}/data");
-
-        let state_file = format!("{state_dir}/state.c1");
-        let state_data_dir = format!("{state_dir}/data");
-
         PathManager {
-            db2_root_dir,
-            db2_file,
-            db2_data_dir,
-            state_file,
-            state_data_dir,
-
             root_dir,
             data_dir,
             downloads_dir,
             db_file,
             lock_file,
         }
-    }
-
-    pub fn list_db2_baza_files(&self) -> Result<Vec<String>> {
-        let result = list_files(&self.db2_root_dir)?
-            .into_iter()
-            .filter(|file| file.ends_with(".gz.c1"))
-            .collect();
-
-        Ok(result)
     }
 
     pub fn assert_dirs_exist(&self) -> Result<()> {
@@ -97,13 +64,5 @@ impl PathManager {
 
     pub fn new_temp_file(&self, prefix: &str) -> TempFile {
         TempFile::new_in_dir(&self.downloads_dir, prefix)
-    }
-
-    pub fn get_db2_blob_path(&self, id: &BLOBId) -> String {
-        format!("{}/{id}", self.db2_data_dir)
-    }
-
-    pub fn get_state_blob_path(&self, id: &BLOBId) -> String {
-        format!("{}/{id}", self.state_data_dir)
     }
 }

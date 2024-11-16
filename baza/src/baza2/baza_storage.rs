@@ -243,7 +243,7 @@ impl<'i> BazaStorage<'i, BufReader<File>> {
         BazaStorage::read(storage_reader, key)
     }
 
-    pub fn add_to_file(self, file: &str, new_documents: &[Document]) -> Result<()> {
+    pub fn add_and_save_to_file(self, file: &str, new_documents: &[Document]) -> Result<()> {
         let mut storage_writer = create_file_writer(file)?;
 
         self.add(&mut storage_writer, new_documents)?;

@@ -1,17 +1,19 @@
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
+    fmt::Display,
     io::Read,
 };
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 
-use rs_utils::{crypto_key::CryptoKey, file_exists, log, FsTransaction};
+use rs_utils::{
+    create_dir_if_not_exist, crypto_key::CryptoKey, file_exists, list_files, log, FsTransaction,
+};
 
 use crate::{
     entities::{BLOBId, Document, Id, InstanceId, Revision},
     get_local_blob_ids,
-    path_manager::PathManager,
     schema::DataSchema,
 };
 
@@ -35,51 +37,153 @@ use super::{
 // * push updated documents to baza storage
 // * commit changes
 
+pub struct BazaManagerOptions {
+    storage_dir: String,
+    state_dir: String,
+    key: CryptoKey,
+    schema: DataSchema,
+}
+
+struct BazaPaths {
+    pub storage_dir: String,
+    pub storage_main_db_file: String,
+    pub storage_data_dir: String,
+
+    pub state_dir: String,
+    pub state_file: String,
+    pub state_data_dir: String,
+}
+
+impl BazaPaths {
+    pub fn new(storage_dir: String, state_dir: String) -> Self {
+        let storage_main_db_file = format!("{storage_dir}/baza.gz.c1");
+        let storage_data_dir = format!("{storage_dir}/data");
+
+        let state_file = format!("{state_dir}/state.c1");
+        let state_data_dir = format!("{state_dir}/data");
+
+        Self {
+            storage_dir,
+            storage_main_db_file,
+            storage_data_dir,
+
+            state_dir,
+            state_file,
+            state_data_dir,
+        }
+    }
+
+    pub fn ensure_dirs_exist(&self) -> Result<()> {
+        create_dir_if_not_exist(&self.storage_dir)?;
+        create_dir_if_not_exist(&self.storage_data_dir)?;
+
+        create_dir_if_not_exist(&self.state_dir)?;
+        create_dir_if_not_exist(&self.state_data_dir)?;
+
+        Ok(())
+    }
+
+    pub fn list_storage_db_files(&self) -> Result<Vec<String>> {
+        let result = list_files(&self.storage_dir)?
+            .into_iter()
+            .filter(|file| file.ends_with(".gz.c1"))
+            .collect();
+
+        Ok(result)
+    }
+
+    pub fn get_storage_blob_path(&self, id: &BLOBId) -> String {
+        format!("{}/{id}", self.storage_data_dir)
+    }
+
+    pub fn get_state_blob_path(&self, id: &BLOBId) -> String {
+        format!("{}/{id}", self.state_data_dir)
+    }
+
+    pub fn list_storage_blobs(&self) -> Result<HashSet<BLOBId>> {
+        get_local_blob_ids(&self.storage_data_dir)
+    }
+
+    pub fn list_state_blobs(&self) -> Result<HashSet<BLOBId>> {
+        get_local_blob_ids(&self.state_data_dir)
+    }
+
+    pub fn list_blobs(&self) -> Result<HashSet<BLOBId>> {
+        let mut ids = self.list_storage_blobs()?;
+        let local_ids = self.list_state_blobs()?;
+
+        ids.extend(local_ids);
+
+        Ok(ids)
+    }
+}
+
+impl Display for BazaPaths {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "[BazaPaths storage: {}  state: {}]",
+            self.storage_dir, self.state_dir
+        )
+    }
+}
+
 pub struct BazaManager {
     state: RefCell<BazaState>,
-    path_manager: PathManager,
+    paths: BazaPaths,
     key: CryptoKey,
     info: BazaInfo,
 }
 
 impl BazaManager {
-    pub fn new(path_manager: PathManager, key: CryptoKey, schema: DataSchema) -> Result<Self> {
+    pub fn new(options: BazaManagerOptions) -> Result<Self> {
+        let paths = BazaPaths::new(options.storage_dir, options.state_dir);
+        let schema = options.schema;
+        let key = options.key;
+
+        log::info!("Opening baza {paths}");
+
+        paths.ensure_dirs_exist()?;
+
         let info = BazaInfo {
             name: schema.get_app_name().to_string(),
             data_version: schema.get_latest_data_version(),
             storage_version: STORAGE_VERSION,
         };
 
-        let state = if file_exists(&path_manager.state_file)? {
-            let state = BazaState::read_file(&path_manager.state_file, &key)?;
+        let state = if file_exists(&paths.state_file)? {
+            let state = BazaState::read_file(&paths.state_file, &key)?;
 
             ensure!(state.get_info() == &info, "State info mismatch");
 
-            log::info!("Read state file in {}", path_manager.state_file);
+            log::info!("Read state file in {}", paths.state_file);
 
             state
         } else {
             // create state if necessary
             let state = BazaState::new(InstanceId::generate(), info.clone(), HashMap::new());
-            state.write_to_file(&path_manager.state_file, &key)?;
+            state.write_to_file(&paths.state_file, &key)?;
 
-            log::info!("Created new state file in {}", path_manager.state_file);
+            log::info!("Created new state file in {}", paths.state_file);
 
             state
         };
 
         // create main storage file if necessary
-        if !file_exists(&path_manager.db2_file)? {
-            create_empty_storage_file(&path_manager.db2_file, &key, &info)?;
+        if !file_exists(&paths.storage_main_db_file)? {
+            create_empty_storage_file(&paths.storage_main_db_file, &key, &info)?;
 
-            log::info!("Created new main storage file {}", path_manager.db2_file);
+            log::info!(
+                "Created new main storage file {}",
+                paths.storage_main_db_file
+            );
         }
 
         let mut baza_manager = Self {
             state: RefCell::new(state),
-            path_manager,
             key,
             info,
+            paths,
         };
 
         baza_manager.merge_storages()?;
@@ -89,7 +193,7 @@ impl BazaManager {
     }
 
     fn get_local_blob_path(&self, id: &BLOBId) -> String {
-        self.path_manager.get_state_blob_path(id)
+        self.paths.get_state_blob_path(id)
     }
 
     pub fn get_blob_path(&self, id: &BLOBId) -> Result<String> {
@@ -99,7 +203,7 @@ impl BazaManager {
             return Ok(blob_path);
         }
 
-        let blob_path = self.path_manager.get_db2_blob_path(id);
+        let blob_path = self.paths.get_storage_blob_path(id);
         if file_exists(&blob_path)? {
             return Ok(blob_path);
         }
@@ -107,17 +211,8 @@ impl BazaManager {
         bail!("Coud't find blob {id}")
     }
 
-    fn list_local_blobs(&self) -> Result<HashSet<BLOBId>> {
-        get_local_blob_ids(&self.path_manager.state_data_dir)
-    }
-
     pub fn list_blobs(&self) -> Result<HashSet<BLOBId>> {
-        let mut ids = get_local_blob_ids(&self.path_manager.db2_data_dir)?;
-        let local_ids = self.list_local_blobs()?;
-
-        ids.extend(local_ids);
-
-        Ok(ids)
+        self.paths.list_blobs()
     }
 
     pub fn commit(mut self) -> Result<Self> {
@@ -134,7 +229,8 @@ impl BazaManager {
         }
 
         let new_blobs = self
-            .list_local_blobs()?
+            .paths
+            .list_state_blobs()?
             .into_iter()
             .map(|blob_id| {
                 let blob_path = self.get_local_blob_path(&blob_id);
@@ -146,7 +242,7 @@ impl BazaManager {
         let mut tx = FsTransaction::new();
 
         // backup db file
-        let old_db_file = tx.move_to_backup(self.path_manager.db2_file.clone())?;
+        let old_db_file = tx.move_to_backup(self.paths.storage_main_db_file.clone())?;
 
         // open old db file
         let storage = BazaStorage::read_file(&old_db_file, &self.key)?;
@@ -155,22 +251,22 @@ impl BazaManager {
         let new_documents = state.commit()?;
 
         // write changes to db file
-        storage.add_to_file(&self.path_manager.db2_file, &new_documents)?;
+        storage.add_and_save_to_file(&self.paths.storage_main_db_file, &new_documents)?;
 
         // move blobs
         for (new_blob_id, file_path) in new_blobs {
             tx.move_file(
                 file_path,
-                self.path_manager.get_db2_blob_path(&new_blob_id),
+                self.paths.get_storage_blob_path(&new_blob_id),
                 true,
             )?;
         }
 
         // backup state file
-        tx.move_to_backup(self.path_manager.state_file.clone())?;
+        tx.move_to_backup(self.paths.state_file.clone())?;
 
         // write changes to state file
-        state.write_to_file(&self.path_manager.state_file, &self.key)?;
+        state.write_to_file(&self.paths.state_file, &self.key)?;
 
         tx.commit()?;
 
@@ -184,27 +280,27 @@ impl BazaManager {
     fn sync_state_with_storage(&mut self) -> Result<()> {
         let mut state = self.state.borrow_mut();
 
-        let mut storage = BazaStorage::read_file(&self.path_manager.db2_file, &self.key)?;
+        let mut storage = BazaStorage::read_file(&self.paths.storage_main_db_file, &self.key)?;
 
         let latest_snapshots_count = sync_state_with_storage(&mut state, &mut storage)?;
 
         if latest_snapshots_count > 0 {
             log::info!("Got {latest_snapshots_count} latest snapshots from the storage");
-            state.write_to_file(&self.path_manager.state_file, &self.key)?;
+            state.write_to_file(&self.paths.state_file, &self.key)?;
         }
 
         Ok(())
     }
 
     fn merge_storages(&self) -> Result<()> {
-        let db_files = self.path_manager.list_db2_baza_files()?;
+        let db_files = self.paths.list_storage_db_files()?;
 
         if db_files.is_empty() {
             log::debug!("No existing db files found");
             return Ok(());
         }
 
-        let main_db_file = &self.path_manager.db2_file;
+        let main_db_file = &self.paths.storage_main_db_file;
         if db_files.len() == 1 && db_files[0] == *main_db_file {
             log::debug!("There's only main db file");
             return Ok(());
@@ -234,10 +330,6 @@ impl BazaManager {
 
         Ok(())
     }
-
-    // fn update(&mut self, update: BazaUpdate) -> Result<()> {
-    //     todo!()
-    // }
 }
 
 fn add_keys<'r>(

@@ -15,11 +15,8 @@ impl BazaDocumentKey {
         Self { id, rev }
     }
 
-    pub fn for_document(document: &Document) -> Result<Self> {
-        Ok(BazaDocumentKey::new(
-            document.id.clone(),
-            document.rev.clone(),
-        ))
+    pub fn for_document(document: &Document) -> Self {
+        BazaDocumentKey::new(document.id.clone(), document.rev.clone())
     }
 
     pub fn parse(value: &str) -> Result<Self> {

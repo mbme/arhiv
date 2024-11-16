@@ -34,9 +34,13 @@ impl DocumentsIndex {
         LinesIndex::new(index)
     }
 
-    pub fn from_baza_document_keys<'k>(
+    pub fn from_document_keys_refs<'k>(
         items: impl Iterator<Item = &'k BazaDocumentKey>,
     ) -> LinesIndex {
+        Self::from_string_keys(items.map(|key| key.serialize()))
+    }
+
+    pub fn from_document_keys(items: impl Iterator<Item = BazaDocumentKey>) -> LinesIndex {
         Self::from_string_keys(items.map(|key| key.serialize()))
     }
 

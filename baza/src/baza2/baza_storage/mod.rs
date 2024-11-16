@@ -185,7 +185,7 @@ impl<'i, R: Read + 'i> Iterator for BazaStorage<'i, R> {
 fn create_container_patch(documents: &[Document]) -> Result<ContainerPatch> {
     let mut patch = ContainerPatch::with_capacity(documents.len());
     for new_document in documents {
-        let key = BazaDocumentKey::for_document(new_document)?.serialize();
+        let key = BazaDocumentKey::for_document(new_document).serialize();
         ensure!(
             !patch.contains_key(&key),
             "duplicate new document {}",
@@ -208,14 +208,24 @@ pub fn create_storage(
 ) -> Result<()> {
     let c1_key = Confidential1Key::borrow_key(key);
     let c1writer = C1GzWriter::create(writer, &c1_key)?;
-    let container_writer = ContainerWriter::new(c1writer);
+    let mut container_writer = ContainerWriter::new(c1writer);
 
-    let mut patch = create_container_patch(new_documents)?;
+    let index =
+        DocumentsIndex::from_document_keys(new_documents.iter().map(BazaDocumentKey::for_document));
 
+    container_writer.write_index(&index)?;
+
+    // first line is BazaInfo
     let info = serde_json::to_string(info)?;
-    patch.insert_before(0, "info".to_string(), Some(info));
+    container_writer.write_line(&info)?;
 
-    let c1writer = container_writer.write(patch)?;
+    for document in new_documents {
+        let value = serde_json::to_string(document)?;
+        container_writer.write_line(&value)?;
+    }
+
+    let c1writer = container_writer.finish()?;
+
     c1writer.finish()?;
 
     Ok(())
@@ -307,7 +317,7 @@ pub fn merge_storages(
 
     // build index
     let index_keys = keys_per_storage.iter().flat_map(|(_s, keys)| keys.iter());
-    let index = DocumentsIndex::from_baza_document_keys(index_keys);
+    let index = DocumentsIndex::from_document_keys_refs(index_keys);
 
     let key = &keys_per_storage[0].0.key;
     let c1writer = C1GzWriter::create(writer, key)?;

@@ -75,7 +75,7 @@ impl BazaState {
     }
 
     pub fn write_to_file(&self, file: &str, key: &CryptoKey) -> Result<()> {
-        let mut state_writer = create_file_writer(file)?;
+        let mut state_writer = create_file_writer(file, true)?;
 
         self.write(&mut state_writer, key)?;
 

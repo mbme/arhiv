@@ -213,13 +213,14 @@ fn bench_confidential1_container_file(c: &mut Criterion) {
 
     group.bench_function("confidential1_gz_container_write", |b| {
         b.iter(|| {
-            let mut writer = create_file_writer(&temp1.path).expect("must create file writer");
+            let mut writer =
+                create_file_writer(&temp1.path, true).expect("must create file writer");
             confidential1_gz_container_write(&mut writer, &data, &key);
         })
     });
 
     {
-        let mut writer = create_file_writer(&temp1.path).expect("must create file writer");
+        let mut writer = create_file_writer(&temp1.path, true).expect("must create file writer");
         confidential1_gz_container_write(&mut writer, &data, &key);
 
         println!(

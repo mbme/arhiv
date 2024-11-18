@@ -174,7 +174,7 @@ impl<'i> BazaFileStorage<'i> {
         file: &str,
         new_documents: impl Iterator<Item = &'d Document>,
     ) -> Result<()> {
-        let mut storage_writer = create_file_writer(file)?;
+        let mut storage_writer = create_file_writer(file, false)?;
 
         self.add(&mut storage_writer, new_documents)?;
 
@@ -257,7 +257,7 @@ pub fn create_storage(
 }
 
 pub fn create_empty_storage_file(file: &str, key: &CryptoKey, info: &BazaInfo) -> Result<()> {
-    let mut storage_writer = create_file_writer(file)?;
+    let mut storage_writer = create_file_writer(file, false)?;
     create_storage(&mut storage_writer, key, info, &[])?;
 
     storage_writer.flush()?;
@@ -385,7 +385,7 @@ pub fn merge_storages_to_file(
     storages: Vec<BazaStorage<impl Read>>,
     file: &str,
 ) -> Result<()> {
-    let mut storage_writer = create_file_writer(file)?;
+    let mut storage_writer = create_file_writer(file, false)?;
 
     merge_storages(info, storages, &mut storage_writer)?;
 

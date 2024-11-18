@@ -185,7 +185,7 @@ impl BazaManager {
             );
         }
 
-        let mut baza_manager = Self {
+        let baza_manager = Self {
             state: RefCell::new(state),
             key,
             info,
@@ -249,15 +249,13 @@ impl BazaManager {
         BazaStorage::read_file(file_path, &self.key)
     }
 
-    pub fn commit(mut self) -> Result<Self> {
+    pub fn commit(&self) -> Result<()> {
         // FIXME use read/write locks
 
         let mut state = self.state.borrow_mut();
 
         if !state.has_staged_documents() {
-            drop(state);
-
-            return Ok(self);
+            return Ok(());
         }
 
         self.merge_storages()?;
@@ -316,10 +314,10 @@ impl BazaManager {
 
         self.update_state_from_storage()?;
 
-        Ok(self)
+        Ok(())
     }
 
-    fn update_state_from_storage(&mut self) -> Result<()> {
+    fn update_state_from_storage(&self) -> Result<()> {
         let mut state = self.state.borrow_mut();
 
         let mut storage = self.open_storage(&self.paths.storage_main_db_file)?;
@@ -544,7 +542,7 @@ mod tests {
                 .unwrap();
         }
 
-        let manager = manager.commit().unwrap();
+        manager.commit().unwrap();
 
         {
             let state = manager.state.borrow();
@@ -586,7 +584,7 @@ mod tests {
             state.modify_document(new_document(json!({}))).unwrap();
         }
 
-        let manager = manager.commit().unwrap();
+        manager.commit().unwrap();
 
         assert!(!file_exists(&db_file_1).unwrap());
         assert!(!file_exists(&db_file_2).unwrap());

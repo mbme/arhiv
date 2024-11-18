@@ -1,6 +1,6 @@
 use std::fmt;
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 
 use crate::entities::{Document, Id, Revision};
 
@@ -20,7 +20,9 @@ impl BazaDocumentKey {
     }
 
     pub fn parse(value: &str) -> Result<Self> {
-        let (id_raw, rev_raw) = value.split_once(' ').context("Failed to split value")?;
+        let (id_raw, rev_raw) = value
+            .split_once(' ')
+            .context(anyhow!("Failed to split value '{value}'"))?;
 
         let id = Id::from(id_raw);
         let rev = Revision::from_file_name(rev_raw)?;

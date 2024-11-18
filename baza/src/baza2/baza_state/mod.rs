@@ -116,7 +116,7 @@ impl BazaState {
         self.documents.get(id)
     }
 
-    pub fn modify_document(&mut self, mut document: Document) -> Result<()> {
+    pub fn stage_document(&mut self, mut document: Document) -> Result<()> {
         let id = document.id.clone();
 
         let current_value = self.documents.remove(&id);
@@ -254,7 +254,7 @@ mod tests {
         assert!(state.has_unresolved_conflicts());
         assert_eq!(state.get_latest_revision().len(), 2);
 
-        state.modify_document(doc_a3.clone()).unwrap();
+        state.stage_document(doc_a3.clone()).unwrap();
         assert!(state.has_staged_documents());
         assert!(!state.has_unresolved_conflicts());
 
@@ -262,7 +262,7 @@ mod tests {
         assert!(!state.has_staged_documents());
         assert!(state.has_unresolved_conflicts());
 
-        state.modify_document(doc_a3.clone()).unwrap();
+        state.stage_document(doc_a3.clone()).unwrap();
         state.commit().unwrap();
 
         let new_rev = Revision::from_value(json!({ "a": 1, "test": 2 })).unwrap();

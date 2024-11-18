@@ -533,7 +533,7 @@ mod tests {
         {
             let mut state = manager.state.borrow_mut();
 
-            state.modify_document(new_document(json!({}))).unwrap();
+            state.stage_document(new_document(json!({}))).unwrap();
 
             assert!(state.has_staged_documents());
 
@@ -581,7 +581,7 @@ mod tests {
         {
             let mut state = manager.state.borrow_mut();
 
-            state.modify_document(new_document(json!({}))).unwrap();
+            state.stage_document(new_document(json!({}))).unwrap();
         }
 
         manager.commit().unwrap();

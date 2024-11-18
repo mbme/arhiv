@@ -85,9 +85,9 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
         }
     }
 
-    pub fn get_info(&mut self) -> Result<&BazaInfo> {
-        if let Some(ref info) = self.info {
-            return Ok(info);
+    fn read_info_if_necessary(&mut self) -> Result<()> {
+        if self.info.is_some() {
+            return Ok(());
         }
 
         let lines = self.get_lines_iter();
@@ -95,6 +95,12 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
         let (_, info) = lines.next().context("failed to read info")??;
         let info = serde_json::from_str(&info)?;
         self.info = Some(info);
+
+        Ok(())
+    }
+
+    pub fn get_info(&mut self) -> Result<&BazaInfo> {
+        self.read_info_if_necessary()?;
 
         Ok(self.info.as_ref().expect("info is available"))
     }
@@ -154,7 +160,9 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
     }
 }
 
-impl<'i> BazaStorage<'i, BufReader<File>> {
+pub type BazaFileStorage<'i> = BazaStorage<'i, BufReader<File>>;
+
+impl<'i> BazaFileStorage<'i> {
     pub fn read_file(file: &str, key: &'i CryptoKey) -> Result<Self> {
         let storage_reader = create_file_reader(file)?;
 
@@ -180,6 +188,10 @@ impl<'i, R: Read + 'i> Iterator for BazaStorage<'i, R> {
     type Item = Result<(BazaDocumentKey, String)>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        if let Err(err) = self.read_info_if_necessary() {
+            return Some(Err(err));
+        }
+
         let line = self.get_lines_iter().next()?;
 
         match line {
@@ -413,6 +425,15 @@ mod tests {
             assert_eq!(storage.index.len(), 1);
             assert_eq!(storage.get_info()?, &info);
 
+            let all_items = storage.get_all()?;
+            assert_eq!(all_items, docs1);
+        }
+
+        data.set_position(0);
+
+        // read without reading info first
+        {
+            let storage = BazaStorage::read(&mut data, &key)?;
             let all_items = storage.get_all()?;
             assert_eq!(all_items, docs1);
         }

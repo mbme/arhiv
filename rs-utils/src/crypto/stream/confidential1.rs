@@ -177,6 +177,8 @@ impl<W: Write> Confidential1Writer<W> {
 
         writer.write_all(&hash).context("Failed to write hash")?;
 
+        writer.flush()?;
+
         Ok(writer)
     }
 }

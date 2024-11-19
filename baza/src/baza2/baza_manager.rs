@@ -127,6 +127,7 @@ impl Display for BazaPaths {
     }
 }
 
+#[derive(Clone)]
 pub struct BazaManagerOptions {
     pub storage_dir: String,
     pub state_dir: String,
@@ -134,8 +135,23 @@ pub struct BazaManagerOptions {
     pub schema: DataSchema,
 }
 
+impl BazaManagerOptions {
+    #[cfg(test)]
+    pub fn new_for_tests(test_dir: &str) -> Self {
+        let key = CryptoKey::new_random_key();
+        let schema = DataSchema::new_test_schema();
+
+        BazaManagerOptions {
+            storage_dir: format!("{test_dir}/storage"),
+            state_dir: format!("{test_dir}/state"),
+            key,
+            schema,
+        }
+    }
+}
+
 pub struct BazaManager {
-    pub state: RefCell<BazaState>,
+    state: RefCell<BazaState>,
     paths: BazaPaths,
     key: CryptoKey,
     info: BazaInfo,
@@ -196,20 +212,6 @@ impl BazaManager {
         baza_manager.update_state_from_storage()?;
 
         Ok(baza_manager)
-    }
-
-    #[cfg(test)]
-    pub fn new_test_manager(test_dir: &str) -> Self {
-        let key = CryptoKey::new_random_key();
-        let schema = DataSchema::new_test_schema();
-
-        Self::new(BazaManagerOptions {
-            storage_dir: format!("{test_dir}/storage"),
-            state_dir: format!("{test_dir}/state"),
-            key,
-            schema,
-        })
-        .unwrap()
     }
 
     #[cfg(test)]
@@ -466,7 +468,9 @@ mod tests {
     use rs_utils::{crypto_key::CryptoKey, dir_exists, file_exists, TempFile};
 
     use crate::{
-        baza2::{baza_storage::create_test_storage, DocumentHead},
+        baza2::{
+            baza_manager::BazaManagerOptions, baza_storage::create_test_storage, DocumentHead,
+        },
         tests::new_document,
     };
 
@@ -522,7 +526,7 @@ mod tests {
         let temp_dir = TempFile::new_with_details("test_baza_manager", "");
         temp_dir.mkdir().unwrap();
 
-        let manager = BazaManager::new_test_manager(&temp_dir.path);
+        let manager = BazaManager::new(BazaManagerOptions::new_for_tests(&temp_dir.path)).unwrap();
 
         assert!(dir_exists(&manager.paths.storage_dir).unwrap());
         assert!(dir_exists(&manager.paths.state_dir).unwrap());
@@ -562,7 +566,7 @@ mod tests {
         let temp_dir = TempFile::new_with_details("test_baza_manager", "");
         temp_dir.mkdir().unwrap();
 
-        let manager = BazaManager::new_test_manager(&temp_dir.path);
+        let manager = BazaManager::new(BazaManagerOptions::new_for_tests(&temp_dir.path)).unwrap();
 
         let db_file_1 = manager.paths.get_storage_file("db1");
         let db_file_2 = manager.paths.get_storage_file("db2");

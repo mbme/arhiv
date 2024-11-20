@@ -51,20 +51,20 @@ impl BazaState {
         )
     }
 
-    pub fn read(reader: impl BufRead, key: &CryptoKey) -> Result<Self> {
-        let c1_key = Confidential1Key::borrow_key(key);
+    pub fn read(reader: impl BufRead, key: CryptoKey) -> Result<Self> {
+        let c1_key = Confidential1Key::new(key);
         let c1_reader = Confidential1Reader::new(reader, &c1_key)?;
 
         serde_json::from_reader(c1_reader).context("Failed to parse BazaState")
     }
 
-    pub fn read_file(file: &str, key: &CryptoKey) -> Result<Self> {
+    pub fn read_file(file: &str, key: CryptoKey) -> Result<Self> {
         let state_reader = create_file_reader(file)?;
         BazaState::read(state_reader, key)
     }
 
-    pub fn write(&self, writer: impl Write, key: &CryptoKey) -> Result<()> {
-        let c1_key = Confidential1Key::borrow_key(key);
+    pub fn write(&self, writer: impl Write, key: CryptoKey) -> Result<()> {
+        let c1_key = Confidential1Key::new(key);
         let mut c1_writer = Confidential1Writer::new(writer, &c1_key)?;
 
         serde_json::to_writer(&mut c1_writer, &self).context("Failed to serialize BazaState")?;
@@ -74,7 +74,7 @@ impl BazaState {
         Ok(())
     }
 
-    pub fn write_to_file(&self, file: &str, key: &CryptoKey) -> Result<()> {
+    pub fn write_to_file(&self, file: &str, key: CryptoKey) -> Result<()> {
         let mut state_writer = create_file_writer(file, true)?;
 
         self.write(&mut state_writer, key)?;
@@ -293,10 +293,10 @@ mod tests {
 
         let mut data = Cursor::new(Vec::<u8>::new());
 
-        state.write(&mut data, &key).unwrap();
+        state.write(&mut data, key.clone()).unwrap();
         data.set_position(0);
 
-        let state1 = BazaState::read(&mut data, &key).unwrap();
+        let state1 = BazaState::read(&mut data, key.clone()).unwrap();
 
         assert_eq!(state, state1);
     }

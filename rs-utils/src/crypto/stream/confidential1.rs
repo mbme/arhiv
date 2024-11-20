@@ -2,10 +2,7 @@
 /// 1. password -> read salt & derive key using Argon2id v19 (m=19456 (19 MiB), t=2, p=1)
 /// 2. crypto key -> read salt & derive subkey using HKDF-sha256
 use core::str;
-use std::{
-    borrow::Cow,
-    io::{self, Read, Seek, SeekFrom, Write},
-};
+use std::io::{self, Read, Seek, SeekFrom, Write};
 
 use anyhow::{anyhow, ensure, Context, Result};
 
@@ -23,12 +20,12 @@ pub const CONFIDENTIAL1_MAGIC_STRING_LEN: usize = CONFIDENTIAL1_MAGIC_STRING.as_
 pub const CONFIDENTIAL1_HEADER_SIZE: usize =
     CONFIDENTIAL1_MAGIC_STRING_LEN + SALT_SIZE + CHACHA_NONCE_SIZE;
 
-pub enum Confidential1Key<'k> {
+pub enum Confidential1Key {
     Password(SecretBytes),
-    Key(Cow<'k, CryptoKey>),
+    Key(CryptoKey),
 }
 
-impl<'k> Confidential1Key<'k> {
+impl Confidential1Key {
     pub fn get_crypto_key(&self, salt: Salt) -> Result<CryptoKey> {
         match self {
             Confidential1Key::Password(password) => {
@@ -39,11 +36,11 @@ impl<'k> Confidential1Key<'k> {
     }
 
     pub fn new_random_key() -> Self {
-        Confidential1Key::Key(Cow::Owned(CryptoKey::new_random_key()))
+        Self::new(CryptoKey::new_random_key())
     }
 
-    pub fn borrow_key(key: &'k CryptoKey) -> Self {
-        Confidential1Key::Key(Cow::Borrowed(key))
+    pub fn new(key: CryptoKey) -> Self {
+        Confidential1Key::Key(key)
     }
 }
 

@@ -85,7 +85,7 @@ impl BazaManager {
         };
 
         let state = if file_exists(&paths.state_file)? {
-            let state = BazaState::read_file(&paths.state_file, &key)?;
+            let state = BazaState::read_file(&paths.state_file, key.clone())?;
 
             ensure!(state.get_info() == &info, "State info mismatch");
 
@@ -95,7 +95,7 @@ impl BazaManager {
         } else {
             // create state if necessary
             let state = BazaState::new(InstanceId::generate(), info.clone(), HashMap::new());
-            state.write_to_file(&paths.state_file, &key)?;
+            state.write_to_file(&paths.state_file, key.clone())?;
 
             log::info!("Created new state file in {}", paths.state_file);
 
@@ -104,7 +104,7 @@ impl BazaManager {
 
         // create main storage file if necessary
         if !file_exists(&paths.storage_main_db_file)? {
-            create_empty_storage_file(&paths.storage_main_db_file, &key, &info)?;
+            create_empty_storage_file(&paths.storage_main_db_file, key.clone(), &info)?;
 
             log::info!(
                 "Created new main storage file {}",
@@ -132,7 +132,7 @@ impl BazaManager {
         use crate::baza2::baza_storage::create_storage;
 
         let mut storage_writer = create_file_writer(file_path, false).unwrap();
-        create_storage(&mut storage_writer, &self.key, &self.info, docs).unwrap();
+        create_storage(&mut storage_writer, self.key.clone(), &self.info, docs).unwrap();
     }
 
     fn get_local_blob_path(&self, id: &BLOBId) -> String {
@@ -159,7 +159,7 @@ impl BazaManager {
     }
 
     fn open_storage(&self, file_path: &str) -> Result<BazaFileStorage<'_>> {
-        BazaStorage::read_file(file_path, &self.key)
+        BazaStorage::read_file(file_path, self.key.clone())
     }
 
     pub fn commit(&self) -> Result<()> {
@@ -219,7 +219,7 @@ impl BazaManager {
         tx.move_to_backup(self.paths.state_file.clone())?;
 
         // write changes to state file
-        state.write_to_file(&self.paths.state_file, &self.key)?;
+        state.write_to_file(&self.paths.state_file, self.key.clone())?;
 
         tx.commit()?;
 
@@ -239,7 +239,7 @@ impl BazaManager {
 
         if latest_snapshots_count > 0 {
             log::info!("Got {latest_snapshots_count} latest snapshots from the storage");
-            state.write_to_file(&self.paths.state_file, &self.key)?;
+            state.write_to_file(&self.paths.state_file, self.key.clone())?;
         }
 
         Ok(())
@@ -403,7 +403,7 @@ mod tests {
         state.insert_snapshots(vec![doc_a.clone(), doc_b.clone()]);
 
         let mut storage = create_test_storage(
-            &key,
+            key.clone(),
             &vec![
                 doc_a.clone(),
                 doc_a1.clone(),

@@ -35,7 +35,7 @@ pub const STORAGE_VERSION: u8 = 1;
 
 pub struct BazaStorage<'i, R: Read + 'i> {
     pub index: DocumentsIndex,
-    key: Confidential1Key<'i>,
+    key: Confidential1Key,
     inner: ReaderOrLinesIter<'i, R>,
     info: Option<BazaInfo>,
 }
@@ -47,8 +47,8 @@ impl<'i, R: Read + 'i> fmt::Debug for BazaStorage<'i, R> {
 }
 
 impl<'i, R: Read + 'i> BazaStorage<'i, R> {
-    pub fn read(reader: R, key: &'i CryptoKey) -> Result<Self> {
-        let c1_key = Confidential1Key::borrow_key(key);
+    pub fn read(reader: R, key: CryptoKey) -> Result<Self> {
+        let c1_key = Confidential1Key::new(key);
 
         let c1gz_reader = C1GzReader::create(reader, &c1_key)?;
         let reader = ContainerReader::init(c1gz_reader)?;
@@ -163,7 +163,7 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
 pub type BazaFileStorage<'i> = BazaStorage<'i, BufReader<File>>;
 
 impl<'i> BazaFileStorage<'i> {
-    pub fn read_file(file: &str, key: &'i CryptoKey) -> Result<Self> {
+    pub fn read_file(file: &str, key: CryptoKey) -> Result<Self> {
         let storage_reader = create_file_reader(file)?;
 
         BazaStorage::read(storage_reader, key)
@@ -227,11 +227,11 @@ fn create_container_patch<'d>(
 
 pub fn create_storage(
     writer: impl Write,
-    key: &CryptoKey,
+    key: CryptoKey,
     info: &BazaInfo,
     new_documents: &[Document],
 ) -> Result<()> {
-    let c1_key = Confidential1Key::borrow_key(key);
+    let c1_key = Confidential1Key::new(key);
     let c1writer = C1GzWriter::create(writer, &c1_key)?;
     let mut container_writer = ContainerWriter::new(c1writer);
 
@@ -256,7 +256,7 @@ pub fn create_storage(
     Ok(())
 }
 
-pub fn create_empty_storage_file(file: &str, key: &CryptoKey, info: &BazaInfo) -> Result<()> {
+pub fn create_empty_storage_file(file: &str, key: CryptoKey, info: &BazaInfo) -> Result<()> {
     let mut storage_writer = create_file_writer(file, false)?;
     create_storage(&mut storage_writer, key, info, &[])?;
 
@@ -267,7 +267,7 @@ pub fn create_empty_storage_file(file: &str, key: &CryptoKey, info: &BazaInfo) -
 
 #[cfg(test)]
 pub fn create_test_storage<'k>(
-    key: &'k CryptoKey,
+    key: CryptoKey,
     new_documents: &[Document],
 ) -> BazaStorage<'k, impl Read> {
     use std::io::Cursor;
@@ -275,7 +275,7 @@ pub fn create_test_storage<'k>(
     let info = BazaInfo::new_test_info();
 
     let mut data = Cursor::new(Vec::<u8>::new());
-    create_storage(&mut data, key, &info, new_documents).unwrap();
+    create_storage(&mut data, key.clone(), &info, new_documents).unwrap();
     data.set_position(0);
 
     BazaStorage::read(data, key).unwrap()
@@ -415,13 +415,13 @@ mod tests {
         let key = CryptoKey::new_random_key();
         let info = BazaInfo::new_test_info();
         let mut docs1 = vec![new_document(json!({ "test": "a" })).with_rev(json!({ "1": 1 }))];
-        create_storage(&mut data, &key, &info, &docs1)?;
+        create_storage(&mut data, key.clone(), &info, &docs1)?;
 
         data.set_position(0);
 
         // read
         {
-            let mut storage = BazaStorage::read(&mut data, &key)?;
+            let mut storage = BazaStorage::read(&mut data, key.clone())?;
             assert_eq!(storage.index.len(), 1);
             assert_eq!(storage.get_info()?, &info);
 
@@ -433,7 +433,7 @@ mod tests {
 
         // read without reading info first
         {
-            let storage = BazaStorage::read(&mut data, &key)?;
+            let storage = BazaStorage::read(&mut data, key.clone())?;
             let all_items = storage.get_all()?;
             assert_eq!(all_items, docs1);
         }
@@ -447,7 +447,7 @@ mod tests {
             new_document(json!({ "test": "c" })).with_rev(json!({ "1": 3 })),
         ];
         {
-            let storage = BazaStorage::read(&mut data, &key)?;
+            let storage = BazaStorage::read(&mut data, key.clone())?;
             storage.add(&mut data1, docs2.iter())?;
         }
 
@@ -456,7 +456,7 @@ mod tests {
         // read
         {
             docs1.extend(docs2);
-            let mut storage = BazaStorage::read(&mut data1, &key)?;
+            let mut storage = BazaStorage::read(&mut data1, key.clone())?;
             assert_eq!(storage.index.len(), 3);
             assert_eq!(storage.get_info()?, &info);
 
@@ -479,22 +479,22 @@ mod tests {
 
         // create storage1
         let docs1 = vec![doc_a.clone(), doc_b.clone()];
-        let storage1 = create_test_storage(&key, &docs1);
+        let storage1 = create_test_storage(key.clone(), &docs1);
 
         // create storage2
         let docs2 = vec![doc_b.clone(), doc_c.clone()];
-        let storage2 = create_test_storage(&key, &docs2);
+        let storage2 = create_test_storage(key.clone(), &docs2);
 
         // create storage3
         let docs3 = vec![doc_a.clone(), doc_c.clone(), doc_d.clone()];
-        let storage3 = create_test_storage(&key, &docs3);
+        let storage3 = create_test_storage(key.clone(), &docs3);
 
         // merge storages
         let mut result = Cursor::new(Vec::<u8>::new());
         merge_storages(&info, vec![storage1, storage2, storage3], &mut result).unwrap();
         result.set_position(0);
 
-        let mut storage = BazaStorage::read(&mut result, &key).unwrap();
+        let mut storage = BazaStorage::read(&mut result, key.clone()).unwrap();
         assert_eq!(storage.index.len(), 4);
         assert_eq!(storage.get_info().unwrap(), &info);
 

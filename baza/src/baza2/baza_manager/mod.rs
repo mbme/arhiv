@@ -182,14 +182,31 @@ impl BazaManager {
         BazaStorage::read_file(file_path, self.key.clone())
     }
 
+    pub fn has_unsaved_changes(&self) -> bool {
+        self.state.is_modified()
+    }
+
+    pub fn save_changes(&mut self) -> Result<()> {
+        if self.state.is_modified() {
+            self.state
+                .write_to_file(&self.paths.state_file, self.key.clone())?;
+            log::info!("Saved state changes to the file");
+        }
+
+        Ok(())
+    }
+
     pub fn commit(mut self) -> Result<()> {
         // FIXME use read/write locks
 
+        self.save_changes()?;
+
+        self.merge_storages()?;
+
+        // TODO cleanup blobs
         if !self.state.has_staged_documents() {
             return Ok(());
         }
-
-        self.merge_storages()?;
 
         let new_blobs = self
             .paths
@@ -242,8 +259,6 @@ impl BazaManager {
             .write_to_file(&self.paths.state_file, self.key.clone())?;
 
         tx.commit()?;
-
-        self.update_state_from_storage()?;
 
         Ok(())
     }
@@ -299,6 +314,14 @@ impl BazaManager {
         tx.commit()?;
 
         Ok(())
+    }
+}
+
+impl Drop for BazaManager {
+    fn drop(&mut self) {
+        if self.has_unsaved_changes() {
+            log::error!("Dropping BazaManager with unsaved changes");
+        }
     }
 }
 
@@ -521,5 +544,25 @@ mod tests {
             .open_storage(&manager.paths.storage_main_db_file)
             .unwrap();
         assert_eq!(storage.index.len(), 4);
+    }
+
+    #[test]
+    fn test_baza_manager_preserves_state() {
+        let temp_dir = TempFile::new_with_details("test_baza_manager", "");
+        temp_dir.mkdir().unwrap();
+
+        let options = BazaManagerOptions::new_for_tests(&temp_dir.path);
+
+        {
+            let mut manager = options.clone().open().unwrap();
+            manager.stage_document(new_document(json!({}))).unwrap();
+            manager.save_changes().unwrap();
+        }
+
+        {
+            let manager = options.clone().open().unwrap();
+
+            assert!(manager.has_staged_documents());
+        }
     }
 }

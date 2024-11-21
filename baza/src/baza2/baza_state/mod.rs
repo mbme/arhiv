@@ -27,6 +27,9 @@ pub struct BazaState {
     instance_id: InstanceId,
     info: BazaInfo,
     documents: HashMap<Id, DocumentHead>,
+
+    #[serde(skip)]
+    modified: bool,
 }
 
 // TODO kvs
@@ -41,6 +44,7 @@ impl BazaState {
             info,
             documents,
             instance_id,
+            modified: false,
         }
     }
 
@@ -65,7 +69,7 @@ impl BazaState {
         BazaState::read(state_reader, key)
     }
 
-    pub fn write(&self, writer: impl Write, key: CryptoKey) -> Result<()> {
+    pub fn write(&mut self, writer: impl Write, key: CryptoKey) -> Result<()> {
         let c1_key = Confidential1Key::new(key);
         let mut c1_writer = Confidential1Writer::new(writer, &c1_key)?;
 
@@ -73,10 +77,12 @@ impl BazaState {
 
         c1_writer.finish()?;
 
+        self.modified = false;
+
         Ok(())
     }
 
-    pub fn write_to_file(&self, file: &str, key: CryptoKey) -> Result<()> {
+    pub fn write_to_file(&mut self, file: &str, key: CryptoKey) -> Result<()> {
         let mut state_writer = create_file_writer(file, true)?;
 
         self.write(&mut state_writer, key)?;
@@ -84,6 +90,10 @@ impl BazaState {
         state_writer.flush()?;
 
         Ok(())
+    }
+
+    pub fn is_modified(&self) -> bool {
+        self.modified
     }
 
     pub fn get_info(&self) -> &BazaInfo {
@@ -133,6 +143,7 @@ impl BazaState {
         };
 
         self.documents.insert(id, updated_document);
+        self.modified = true;
 
         Ok(())
     }
@@ -149,6 +160,7 @@ impl BazaState {
         };
 
         self.documents.insert(id, updated_document);
+        self.modified = true;
 
         Ok(())
     }
@@ -200,6 +212,7 @@ impl BazaState {
 
         if let Some(reset_document) = document.reset() {
             self.documents.insert(id, reset_document);
+            self.modified = true;
         }
 
         Ok(())
@@ -225,6 +238,8 @@ impl BazaState {
             self.documents.insert(id, new_head);
         }
 
+        self.modified = true;
+
         Ok(())
     }
 }
@@ -245,6 +260,7 @@ mod tests {
         let mut state = BazaState::new_test_state();
 
         assert_eq!(state.get_single_latest_revision(), Revision::INITIAL);
+        assert!(!state.is_modified());
 
         let doc_a1 = new_document(json!({})).with_rev(json!({ "a": 1 }));
         let doc_a2 = doc_a1.clone().with_rev(json!({ "test": 1 }));
@@ -252,6 +268,7 @@ mod tests {
         doc_a3.stage();
 
         state.insert_snapshots(vec![doc_a1, doc_a2]);
+        assert!(state.is_modified());
         assert!(!state.has_staged_documents());
         assert!(state.has_unresolved_conflicts());
         assert_eq!(state.get_latest_revision().len(), 2);
@@ -295,7 +312,9 @@ mod tests {
 
         let mut data = Cursor::new(Vec::<u8>::new());
 
+        assert!(state.is_modified());
         state.write(&mut data, key.clone()).unwrap();
+        assert!(!state.is_modified());
         data.set_position(0);
 
         let state1 = BazaState::read(&mut data, key.clone()).unwrap();

@@ -21,6 +21,7 @@ mod document_head;
 
 pub use document_head::{DocumentHead, LatestConflict, LatestDocument};
 
+// FIXME separate on-disk data structure from in-memory data structure
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct BazaState {
     instance_id: InstanceId,
@@ -29,6 +30,7 @@ pub struct BazaState {
 }
 
 // TODO kvs
+// TODO locks
 impl BazaState {
     pub fn new(
         instance_id: InstanceId,

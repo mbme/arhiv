@@ -1,7 +1,6 @@
 mod baza_paths;
 
 use std::{
-    cell::RefCell,
     collections::{HashMap, HashSet},
     io::Read,
 };
@@ -22,7 +21,7 @@ use super::{
         create_empty_storage_file, merge_storages_to_file, BazaDocumentKey, BazaFileStorage,
         STORAGE_VERSION,
     },
-    BazaInfo, BazaState, BazaStorage,
+    BazaInfo, BazaState, BazaStorage, DocumentHead,
 };
 
 // create?
@@ -47,6 +46,10 @@ pub struct BazaManagerOptions {
 }
 
 impl BazaManagerOptions {
+    pub fn open(self) -> Result<BazaManager> {
+        BazaManager::new(self)
+    }
+
     #[cfg(test)]
     pub fn new_for_tests(test_dir: &str) -> Self {
         let key = CryptoKey::new_random_key();
@@ -62,7 +65,7 @@ impl BazaManagerOptions {
 }
 
 pub struct BazaManager {
-    state: RefCell<BazaState>,
+    state: BazaState,
     paths: BazaPaths,
     key: CryptoKey,
     info: BazaInfo,
@@ -112,8 +115,8 @@ impl BazaManager {
             );
         }
 
-        let baza_manager = Self {
-            state: RefCell::new(state),
+        let mut baza_manager = Self {
+            state,
             key,
             info,
             paths,
@@ -158,16 +161,31 @@ impl BazaManager {
         self.paths.list_blobs()
     }
 
-    fn open_storage(&self, file_path: &str) -> Result<BazaFileStorage<'_>> {
+    pub fn stage_document(&mut self, document: Document) -> Result<()> {
+        self.state.stage_document(document)
+    }
+
+    pub fn has_staged_documents(&self) -> bool {
+        self.state.has_staged_documents()
+    }
+
+    pub fn iter_documents(&self) -> impl Iterator<Item = &DocumentHead> {
+        self.state.iter_documents()
+    }
+
+    #[cfg(test)]
+    pub fn insert_snapshot(&mut self, document: Document) -> Result<()> {
+        self.state.insert_snapshot(document)
+    }
+
+    fn open_storage<'s>(&self, file_path: &str) -> Result<BazaFileStorage<'s>> {
         BazaStorage::read_file(file_path, self.key.clone())
     }
 
-    pub fn commit(&self) -> Result<()> {
+    pub fn commit(mut self) -> Result<()> {
         // FIXME use read/write locks
 
-        let mut state = self.state.borrow_mut();
-
-        if !state.has_staged_documents() {
+        if !self.state.has_staged_documents() {
             return Ok(());
         }
 
@@ -193,10 +211,11 @@ impl BazaManager {
         let storage = self.open_storage(&old_db_file)?;
 
         // update state
-        state.commit()?;
+        self.state.commit()?;
 
         // collect snapshots that aren't present in the storage
-        let new_documents = state
+        let new_documents = self
+            .state
             .iter_documents()
             .flat_map(|head| head.iter_snapshots())
             .filter(|document| !storage.contains(&BazaDocumentKey::for_document(document)))
@@ -219,27 +238,25 @@ impl BazaManager {
         tx.move_to_backup(self.paths.state_file.clone())?;
 
         // write changes to state file
-        state.write_to_file(&self.paths.state_file, self.key.clone())?;
+        self.state
+            .write_to_file(&self.paths.state_file, self.key.clone())?;
 
         tx.commit()?;
-
-        drop(state);
 
         self.update_state_from_storage()?;
 
         Ok(())
     }
 
-    fn update_state_from_storage(&self) -> Result<()> {
-        let mut state = self.state.borrow_mut();
-
+    fn update_state_from_storage(&mut self) -> Result<()> {
         let mut storage = self.open_storage(&self.paths.storage_main_db_file)?;
 
-        let latest_snapshots_count = update_state_from_storage(&mut state, &mut storage)?;
+        let latest_snapshots_count = update_state_from_storage(&mut self.state, &mut storage)?;
 
         if latest_snapshots_count > 0 {
             log::info!("Got {latest_snapshots_count} latest snapshots from the storage");
-            state.write_to_file(&self.paths.state_file, self.key.clone())?;
+            self.state
+                .write_to_file(&self.paths.state_file, self.key.clone())?;
         }
 
         Ok(())
@@ -385,7 +402,7 @@ mod tests {
         tests::new_document,
     };
 
-    use super::{update_state_from_storage, BazaManager, BazaState};
+    use super::{update_state_from_storage, BazaState};
 
     #[test]
     fn test_update_state_from_storage() {
@@ -437,7 +454,8 @@ mod tests {
         let temp_dir = TempFile::new_with_details("test_baza_manager", "");
         temp_dir.mkdir().unwrap();
 
-        let manager = BazaManager::new(BazaManagerOptions::new_for_tests(&temp_dir.path)).unwrap();
+        let options = BazaManagerOptions::new_for_tests(&temp_dir.path);
+        let mut manager = options.clone().open().unwrap();
 
         assert!(dir_exists(&manager.paths.storage_dir).unwrap());
         assert!(dir_exists(&manager.paths.state_dir).unwrap());
@@ -445,29 +463,24 @@ mod tests {
         assert!(file_exists(&manager.paths.state_file).unwrap());
         assert!(file_exists(&manager.paths.storage_main_db_file).unwrap());
 
-        {
-            let mut state = manager.state.borrow_mut();
+        manager.stage_document(new_document(json!({}))).unwrap();
 
-            state.stage_document(new_document(json!({}))).unwrap();
+        assert!(manager.has_staged_documents());
 
-            assert!(state.has_staged_documents());
-
-            state
-                .insert_snapshot(new_document(json!({})).with_rev(json!({ "a": 1 })))
-                .unwrap();
-        }
+        manager
+            .insert_snapshot(new_document(json!({})).with_rev(json!({ "a": 1 })))
+            .unwrap();
 
         manager.commit().unwrap();
 
-        {
-            let state = manager.state.borrow();
-            assert!(!state.has_staged_documents());
+        let manager = options.clone().open().unwrap();
 
-            let storage = manager
-                .open_storage(&manager.paths.storage_main_db_file)
-                .unwrap();
-            assert_eq!(storage.index.len(), 2);
-        }
+        assert!(!manager.has_staged_documents());
+
+        let storage = manager
+            .open_storage(&manager.paths.storage_main_db_file)
+            .unwrap();
+        assert_eq!(storage.index.len(), 2);
 
         // TODO check if commits, including BLOBs
     }
@@ -477,7 +490,8 @@ mod tests {
         let temp_dir = TempFile::new_with_details("test_baza_manager", "");
         temp_dir.mkdir().unwrap();
 
-        let manager = BazaManager::new(BazaManagerOptions::new_for_tests(&temp_dir.path)).unwrap();
+        let options = BazaManagerOptions::new_for_tests(&temp_dir.path);
+        let mut manager = options.clone().open().unwrap();
 
         let db_file_1 = manager.paths.get_storage_file("db1");
         let db_file_2 = manager.paths.get_storage_file("db2");
@@ -493,25 +507,19 @@ mod tests {
         assert!(file_exists(&db_file_1).unwrap());
         assert!(file_exists(&db_file_2).unwrap());
 
-        {
-            let mut state = manager.state.borrow_mut();
-
-            state.stage_document(new_document(json!({}))).unwrap();
-        }
+        manager.stage_document(new_document(json!({}))).unwrap();
 
         manager.commit().unwrap();
+        let manager = options.clone().open().unwrap();
 
         assert!(!file_exists(&db_file_1).unwrap());
         assert!(!file_exists(&db_file_2).unwrap());
 
-        {
-            let state = manager.state.borrow();
-            assert_eq!(state.iter_documents().count(), 3);
+        assert_eq!(manager.iter_documents().count(), 3);
 
-            let storage = manager
-                .open_storage(&manager.paths.storage_main_db_file)
-                .unwrap();
-            assert_eq!(storage.index.len(), 4);
-        }
+        let storage = manager
+            .open_storage(&manager.paths.storage_main_db_file)
+            .unwrap();
+        assert_eq!(storage.index.len(), 4);
     }
 }

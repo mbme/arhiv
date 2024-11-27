@@ -157,8 +157,8 @@ impl<'c> Validator<'c> {
         }
     }
 
-    pub fn validate_staged(
-        mut self,
+    fn validate_document_attributes(
+        &self,
         document: &Document,
         prev_document: Option<&Document>,
     ) -> std::result::Result<(), ValidationError> {
@@ -184,9 +184,19 @@ impl<'c> Validator<'c> {
             }
         }
 
-        if !document_errors.is_empty() {
-            ValidationError::throw_document_error(document_errors)?;
+        if document_errors.is_empty() {
+            Ok(())
+        } else {
+            ValidationError::throw_document_error(document_errors)
         }
+    }
+
+    pub fn validate_staged(
+        mut self,
+        document: &Document,
+        prev_document: Option<&Document>,
+    ) -> std::result::Result<(), ValidationError> {
+        self.validate_document_attributes(document, prev_document)?;
 
         self.validate_fields_presence(document)?;
 

@@ -32,6 +32,8 @@ tinytemplate = "1"
 
 rusqlite = { version = "0.32", features = ["chrono", "serde_json", "functions", "collation", "bundled"] }
 
+thiserror = "2" # macro for better errors
+
 reqwest.workspace = true
 axum.workspace = true
 axum-extra.workspace = true

@@ -6,8 +6,8 @@ use baza::{
     entities::{Document, DocumentType, ERASED_DOCUMENT_TYPE},
     markup::MarkupStr,
     schema::{create_attachment, Attachment, DataSchema},
-    validator::{ValidationError, Validator},
-    DocumentExpert, Filter,
+    validator::ValidationError,
+    DocumentExpert, Filter, StagingError,
 };
 use rs_utils::{ensure_dir_exists, get_symlink_target_path, is_readable, path_to_string};
 
@@ -165,8 +165,6 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             let mut document = tx.must_get_document(&id)?;
 
-            let prev_document = document.clone();
-
             document.data = data;
 
             let document_expert = arhiv.baza.get_document_expert();
@@ -174,20 +172,19 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .prepare_attachments(&mut document, &mut tx)
                 .await?;
 
-            let validator = Validator::new(&tx);
-            let validation_result = validator.validate_staged(&document, Some(&prev_document));
-
-            let errors = if let Err(error) = validation_result {
-                Some(error.into())
+            if let Err(err) = tx.stage_document(&mut document, Some(lock_key)) {
+                match err {
+                    StagingError::Validation(validation_error) => APIResponse::SaveDocument {
+                        errors: Some(validation_error.into()),
+                    },
+                    StagingError::Other(error) => return Err(error),
+                }
             } else {
-                tx.stage_document(&mut document, Some(lock_key))?;
                 tx.update_document_collections(&document, &collections)?;
                 tx.commit()?;
 
-                None
-            };
-
-            APIResponse::SaveDocument { errors }
+                APIResponse::SaveDocument { errors: None }
+            }
         }
         APIRequest::CreateDocument {
             document_type,
@@ -204,21 +201,24 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .prepare_attachments(&mut document, &mut tx)
                 .await?;
 
-            let validator = Validator::new(&tx);
-            let validation_result = validator.validate_staged(&document, None);
-
-            let (id, errors) = if let Err(error) = validation_result {
-                (None, Some(error.into()))
+            if let Err(err) = tx.stage_document(&mut document, None) {
+                match err {
+                    StagingError::Validation(validation_error) => APIResponse::CreateDocument {
+                        id: None,
+                        errors: Some(validation_error.into()),
+                    },
+                    StagingError::Other(error) => return Err(error),
+                }
             } else {
-                tx.stage_document(&mut document, None)?;
                 tx.update_document_collections(&document, &collections)?;
 
                 tx.commit()?;
 
-                (Some(document.id.clone()), None)
-            };
-
-            APIResponse::CreateDocument { id, errors }
+                APIResponse::CreateDocument {
+                    id: Some(document.id.clone()),
+                    errors: None,
+                }
+            }
         }
         APIRequest::EraseDocument { ref id } => {
             let tx = arhiv.baza.get_tx()?;

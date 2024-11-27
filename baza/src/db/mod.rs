@@ -15,7 +15,7 @@ use std::sync::Arc;
 use anyhow::{Context, Result};
 use tokio::sync::broadcast::Sender;
 
-pub use connection::BazaConnection;
+pub use connection::{BazaConnection, StagingError};
 pub use dto::{BLOBSCount, DocumentsCount, ListPage};
 pub use filter::{Conditions, Filter, OrderBy};
 pub use kvs::{KvsConstKey, KvsEntry, KvsKey};

@@ -3,6 +3,7 @@ use std::{borrow::Cow, collections::HashSet, sync::Arc, time::Instant};
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use rusqlite::{params, params_from_iter, Connection, OptionalExtension};
 use serde_json::Value;
+use thiserror::Error;
 use tokio::sync::broadcast::Sender;
 
 use rs_utils::{
@@ -17,7 +18,7 @@ use crate::{
     },
     path_manager::PathManager,
     schema::DataSchema,
-    validator::Validator,
+    validator::{ValidationError, Validator},
     DocumentExpert,
 };
 
@@ -29,6 +30,13 @@ use super::{
     sqlite_connection::{init_functions, open_connection},
     utils::{self, get_local_blob_ids},
 };
+
+#[derive(Error, Debug)]
+#[error(transparent)]
+pub enum StagingError {
+    Validation(#[from] ValidationError),
+    Other(#[from] anyhow::Error),
+}
 
 pub enum BazaConnection {
     ReadOnly {
@@ -698,7 +706,7 @@ impl BazaConnection {
         &mut self,
         document: &mut Document,
         lock_key: Option<DocumentLockKey>,
-    ) -> Result<()> {
+    ) -> std::result::Result<(), StagingError> {
         log::debug!("Staging document {}", &document.id);
 
         let prev_document = self.get_document(&document.id)?;

@@ -165,7 +165,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             let mut document = tx.must_get_document(&id)?;
 
-            let prev_data = document.data;
+            let prev_document = document.clone();
 
             document.data = data;
 
@@ -175,21 +175,17 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .await?;
 
             let validator = Validator::new(&tx);
-            let validation_result = validator.validate(&document, Some(&prev_data));
+            let validation_result = validator.validate_staged(&document, Some(&prev_document));
 
             let errors = if let Err(error) = validation_result {
                 Some(error.into())
             } else {
                 tx.stage_document(&mut document, Some(lock_key))?;
+                tx.update_document_collections(&document, &collections)?;
+                tx.commit()?;
 
                 None
             };
-
-            if errors.is_none() {
-                tx.update_document_collections(&document, &collections)?;
-
-                tx.commit()?;
-            }
 
             APIResponse::SaveDocument { errors }
         }
@@ -209,21 +205,18 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .await?;
 
             let validator = Validator::new(&tx);
-            let validation_result = validator.validate(&document, None);
+            let validation_result = validator.validate_staged(&document, None);
 
             let (id, errors) = if let Err(error) = validation_result {
                 (None, Some(error.into()))
             } else {
                 tx.stage_document(&mut document, None)?;
-
-                (Some(document.id.clone()), None)
-            };
-
-            if errors.is_none() {
                 tx.update_document_collections(&document, &collections)?;
 
                 tx.commit()?;
-            }
+
+                (Some(document.id.clone()), None)
+            };
 
             APIResponse::CreateDocument { id, errors }
         }

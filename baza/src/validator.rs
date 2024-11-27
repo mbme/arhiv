@@ -5,7 +5,7 @@ use anyhow::{anyhow, bail, ensure, Result};
 
 use crate::{
     db::BazaConnection,
-    entities::{BLOBId, Document, DocumentData, Id},
+    entities::{BLOBId, Document, Id},
     schema::Field,
 };
 
@@ -15,6 +15,12 @@ pub type FieldValidationErrors = HashMap<String, Vec<String>>;
 pub enum ValidationError {
     FieldError { errors: FieldValidationErrors },
     DocumentError { errors: Vec<String> },
+}
+
+impl ValidationError {
+    fn throw_document_error(errors: Vec<String>) -> std::result::Result<(), Self> {
+        Err(ValidationError::DocumentError { errors })
+    }
 }
 
 impl From<anyhow::Error> for ValidationError {
@@ -151,11 +157,37 @@ impl<'c> Validator<'c> {
         }
     }
 
-    pub fn validate(
+    pub fn validate_staged(
         mut self,
         document: &Document,
-        prev_data: Option<&DocumentData>,
+        prev_document: Option<&Document>,
     ) -> std::result::Result<(), ValidationError> {
+        let mut document_errors = Vec::with_capacity(3);
+        if document.is_erased() {
+            document_errors.push("Erased documents can't be staged".to_string());
+        }
+
+        if let Some(prev_document) = prev_document {
+            if document.document_type != prev_document.document_type {
+                document_errors.push(format!(
+                    "document type '{}' is different from the type '{}' of existing document",
+                    document.document_type, prev_document.document_type
+                ));
+            }
+
+            if document.updated_at != prev_document.updated_at {
+                document_errors.push(format!(
+                "document updated_at '{}' is different from the updated_at '{}' of existing document",
+                document.updated_at,
+                prev_document.updated_at
+                ));
+            }
+        }
+
+        if !document_errors.is_empty() {
+            ValidationError::throw_document_error(document_errors)?;
+        }
+
         self.validate_fields_presence(document)?;
 
         for field in self
@@ -166,8 +198,8 @@ impl<'c> Validator<'c> {
             let value = document.data.get(field.name);
 
             // ensure readonly field didn't change
-            if let Some(prev_data) = prev_data {
-                let prev_value = prev_data.get(field.name);
+            if let Some(prev_document) = prev_document {
+                let prev_value = prev_document.data.get(field.name);
 
                 if field.readonly && value != prev_value {
                     self.track_err::<()>(

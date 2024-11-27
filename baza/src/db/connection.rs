@@ -701,46 +701,18 @@ impl BazaConnection {
     ) -> Result<()> {
         log::debug!("Staging document {}", &document.id);
 
-        ensure!(
-            !document.is_erased(),
-            "erased documents must not be updated"
-        );
-
         let prev_document = self.get_document(&document.id)?;
 
-        Validator::new(self).validate(
-            document,
-            prev_document.as_ref().map(|document| &document.data),
-        )?;
+        Validator::new(self).validate_staged(document, prev_document.as_ref())?;
 
-        if let Some(prev_document) = prev_document {
+        if prev_document.is_some() {
             log::debug!("Updating existing document {}", &document.id);
-
-            document.stage();
-
-            ensure!(
-                document.document_type == prev_document.document_type,
-                "document type '{}' is different from the type '{}' of existing document",
-                document.document_type,
-                prev_document.document_type
-            );
-
-            ensure!(
-                document.updated_at == prev_document.updated_at,
-                "document updated_at '{}' is different from the updated_at '{}' of existing document",
-                document.updated_at,
-                prev_document.updated_at
-            );
-
-            document.updated_at = now();
         } else {
             log::debug!("Creating new document {}", &document.id);
-
-            document.stage();
-
-            document.updated_at = now();
         }
 
+        document.stage();
+        document.updated_at = now();
         self.put_document(document, lock_key)?;
 
         self.register_event(BazaEvent::DocumentStaged {

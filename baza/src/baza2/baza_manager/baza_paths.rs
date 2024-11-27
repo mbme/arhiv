@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt::Display};
 
 use anyhow::Result;
 
-use rs_utils::{create_dir_if_not_exist, list_files};
+use rs_utils::{create_dir_if_not_exist, file_exists, list_files};
 
 use crate::{entities::BLOBId, get_local_blob_ids};
 
@@ -60,11 +60,11 @@ impl BazaPaths {
     }
 
     pub fn get_storage_blob_path(&self, id: &BLOBId) -> String {
-        format!("{}/{id}", self.storage_data_dir)
+        format!("{}/{}", self.storage_data_dir, id.get_file_name())
     }
 
     pub fn get_state_blob_path(&self, id: &BLOBId) -> String {
-        format!("{}/{id}", self.state_data_dir)
+        format!("{}/{}", self.state_data_dir, id.get_file_name())
     }
 
     pub fn list_storage_blobs(&self) -> Result<HashSet<BLOBId>> {
@@ -82,6 +82,12 @@ impl BazaPaths {
         ids.extend(local_ids);
 
         Ok(ids)
+    }
+
+    pub fn storage_blob_exists(&self, id: &BLOBId) -> Result<bool> {
+        let file = self.get_storage_blob_path(id);
+
+        file_exists(&file)
     }
 }
 

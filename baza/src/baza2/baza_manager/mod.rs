@@ -2,16 +2,23 @@ mod baza_paths;
 
 use std::{
     collections::{HashMap, HashSet},
-    io::Read,
+    fs::remove_file,
+    io::{copy, Read},
 };
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 
-use rs_utils::{crypto_key::CryptoKey, file_exists, log, FsTransaction};
+use rs_utils::{
+    confidential1::{Confidential1Key, Confidential1Writer},
+    create_file_reader, create_file_writer,
+    crypto_key::CryptoKey,
+    file_exists, log, FsTransaction,
+};
 
 use crate::{
     entities::{BLOBId, Document, Id, InstanceId, Revision},
     schema::DataSchema,
+    DocumentExpert,
 };
 
 use baza_paths::BazaPaths;
@@ -69,6 +76,7 @@ pub struct BazaManager {
     paths: BazaPaths,
     key: CryptoKey,
     info: BazaInfo,
+    schema: DataSchema,
 }
 
 impl BazaManager {
@@ -120,6 +128,7 @@ impl BazaManager {
             key,
             info,
             paths,
+            schema,
         };
 
         baza_manager.merge_storages()?;
@@ -142,26 +151,64 @@ impl BazaManager {
         self.paths.get_state_blob_path(id)
     }
 
-    pub fn get_blob_path(&self, id: &BLOBId) -> Result<String> {
+    pub fn get_blob_path(&self, id: &BLOBId) -> Result<Option<String>> {
         let blob_path = self.get_local_blob_path(id);
 
         if file_exists(&blob_path)? {
-            return Ok(blob_path);
+            return Ok(Some(blob_path));
         }
 
         let blob_path = self.paths.get_storage_blob_path(id);
         if file_exists(&blob_path)? {
-            return Ok(blob_path);
+            return Ok(Some(blob_path));
         }
 
-        bail!("Coud't find blob {id}")
+        Ok(None)
+    }
+
+    fn blob_exists(&self, id: &BLOBId) -> Result<bool> {
+        self.get_blob_path(id).map(|path| path.is_some())
     }
 
     pub fn list_blobs(&self) -> Result<HashSet<BLOBId>> {
         self.paths.list_blobs()
     }
 
+    pub fn add_blob(&mut self, file_path: &str) -> Result<BLOBId> {
+        ensure!(
+            file_exists(file_path)?,
+            "BLOB source must exist and must be a file"
+        );
+
+        let blob_id = BLOBId::from_file(file_path)?;
+        if self.blob_exists(&blob_id)? {
+            log::debug!("blob {blob_id} already exists");
+
+            return Ok(blob_id);
+        }
+
+        let salt = CryptoKey::salt_from_data(blob_id.to_string())?;
+        let key = Confidential1Key::from_key_and_salt(&self.key, salt)?;
+
+        let blob_path = self.get_local_blob_path(&blob_id);
+
+        let file_writer = create_file_writer(&blob_path, false)?;
+        let mut c1_writer = Confidential1Writer::new(file_writer, &key)?;
+
+        let mut file_reader = create_file_reader(file_path)?;
+
+        copy(&mut file_reader, &mut c1_writer).context("Failed to copy & encrypt file data")?;
+
+        c1_writer.finish()?;
+
+        log::info!("Created blob {blob_id} from {file_path}");
+
+        Ok(blob_id)
+    }
+
     pub fn stage_document(&mut self, document: Document) -> Result<()> {
+        // FIXME ensure all blobs and refs exist
+        // Validator::new(self).validate_staged(document, prev_document)?;
         self.state.stage_document(document)
     }
 
@@ -203,21 +250,13 @@ impl BazaManager {
 
         self.merge_storages()?;
 
-        // TODO cleanup blobs
+        // TODO document locks
+        // TODO erase document history on commit
+        // TODO erased documents after merging storage files
         if !self.state.has_staged_documents() {
+            log::info!("Commit: nothing to commit");
             return Ok(());
         }
-
-        let new_blobs = self
-            .paths
-            .list_state_blobs()?
-            .into_iter()
-            .map(|blob_id| {
-                let blob_path = self.get_local_blob_path(&blob_id);
-
-                (blob_id, blob_path)
-            })
-            .collect::<HashMap<_, _>>();
 
         let mut tx = FsTransaction::new();
 
@@ -231,25 +270,29 @@ impl BazaManager {
         self.state.commit()?;
 
         // collect snapshots that aren't present in the storage
-        let new_documents = self
+        let new_snapshots = self
             .state
             .iter_documents()
             .flat_map(|head| head.iter_snapshots())
             .filter(|document| !storage.contains(&BazaDocumentKey::for_document(document)))
             .collect::<Vec<_>>();
+        log::info!("Commit: {} new document snapshots", new_snapshots.len());
+
+        // collect new blobs that are used by new snapshots
+        let new_blobs = self.collect_new_blobs(&new_snapshots)?;
+        log::info!("Commit: {} new BLOBs", new_blobs.len());
+
+        // move blobs
+        for new_blob_id in new_blobs {
+            let state_blob_path = self.paths.get_state_blob_path(&new_blob_id);
+            let storage_blob_path = self.paths.get_storage_blob_path(&new_blob_id);
+
+            tx.move_file(state_blob_path, storage_blob_path, true)?;
+        }
 
         // write changes to db file
         storage
-            .add_and_save_to_file(&self.paths.storage_main_db_file, new_documents.into_iter())?;
-
-        // move blobs
-        for (new_blob_id, file_path) in new_blobs {
-            tx.move_file(
-                file_path,
-                self.paths.get_storage_blob_path(&new_blob_id),
-                true,
-            )?;
-        }
+            .add_and_save_to_file(&self.paths.storage_main_db_file, new_snapshots.into_iter())?;
 
         // backup state file
         tx.move_to_backup(self.paths.state_file.clone())?;
@@ -259,8 +302,46 @@ impl BazaManager {
             .write_to_file(&self.paths.state_file, self.key.clone())?;
 
         tx.commit()?;
+        log::info!("Commit: finished");
+
+        // remove unused state BLOBs if any
+        let unused_state_blobs = self.paths.list_state_blobs()?;
+        if !unused_state_blobs.is_empty() {
+            log::info!("Removing {} unused state BLOBs", unused_state_blobs.len());
+
+            for blob_id in unused_state_blobs {
+                let file_path = self.paths.get_state_blob_path(&blob_id);
+                remove_file(file_path).context("Failed to remove unused state BLOB")?;
+            }
+        }
 
         Ok(())
+    }
+
+    fn collect_new_blobs(&self, new_snapshots: &[&Document]) -> Result<HashSet<BLOBId>> {
+        let document_expert = DocumentExpert::new(&self.schema);
+
+        let mut new_blobs = HashSet::new();
+
+        for document in new_snapshots {
+            let blobs = document_expert
+                .extract_refs(&document.document_type, &document.data)?
+                .blobs;
+
+            for blob_id in blobs {
+                if new_blobs.contains(&blob_id) {
+                    continue;
+                }
+
+                if self.paths.storage_blob_exists(&blob_id)? {
+                    continue;
+                }
+
+                new_blobs.insert(blob_id);
+            }
+        }
+
+        Ok(new_blobs)
     }
 
     fn update_state_from_storage(&mut self) -> Result<()> {
@@ -472,8 +553,12 @@ mod tests {
         );
     }
 
+    // TODO test BLOBs
+    // #[test]
+    // fn test_blobs() {}
+
     #[test]
-    fn test_baza_manager() {
+    fn test_commit() {
         let temp_dir = TempFile::new_with_details("test_baza_manager", "");
         temp_dir.mkdir().unwrap();
 
@@ -486,7 +571,18 @@ mod tests {
         assert!(file_exists(&manager.paths.state_file).unwrap());
         assert!(file_exists(&manager.paths.storage_main_db_file).unwrap());
 
-        manager.stage_document(new_document(json!({}))).unwrap();
+        let blob1_file = temp_dir.new_child("blob1");
+        blob1_file.write_str("blob1").unwrap();
+
+        let blob2_file = temp_dir.new_child("blob2");
+        blob2_file.write_str("blob2").unwrap();
+
+        let blob1 = manager.add_blob(&blob1_file.path).unwrap();
+        let blob2 = manager.add_blob(&blob2_file.path).unwrap();
+
+        manager
+            .stage_document(new_document(json!({ "blob": blob1 })))
+            .unwrap();
 
         assert!(manager.has_staged_documents());
 
@@ -498,18 +594,23 @@ mod tests {
 
         let manager = options.clone().open().unwrap();
 
+        // ensure new BLOB is committed
+        assert!(manager.paths.storage_blob_exists(&blob1).unwrap());
+
+        // ensure unused state BLOB is removed
+        assert!(!manager.paths.storage_blob_exists(&blob2).unwrap());
+        assert!(manager.paths.list_state_blobs().unwrap().is_empty());
+
         assert!(!manager.has_staged_documents());
 
         let storage = manager
             .open_storage(&manager.paths.storage_main_db_file)
             .unwrap();
         assert_eq!(storage.index.len(), 2);
-
-        // TODO check if commits, including BLOBs
     }
 
     #[test]
-    fn test_baza_manager_merges_storages() {
+    fn test_merge_storages() {
         let temp_dir = TempFile::new_with_details("test_baza_manager", "");
         temp_dir.mkdir().unwrap();
 
@@ -547,7 +648,7 @@ mod tests {
     }
 
     #[test]
-    fn test_baza_manager_preserves_state() {
+    fn test_preserve_state() {
         let temp_dir = TempFile::new_with_details("test_baza_manager", "");
         temp_dir.mkdir().unwrap();
 

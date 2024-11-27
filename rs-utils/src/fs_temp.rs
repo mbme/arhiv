@@ -36,6 +36,10 @@ impl TempFile {
         }
     }
 
+    pub fn new_child(&self, subpath: impl AsRef<str>) -> Self {
+        Self::new_in_dir(&self.path, subpath)
+    }
+
     pub fn mkdir(&self) -> Result<()> {
         fs::create_dir(&self.path)?;
 

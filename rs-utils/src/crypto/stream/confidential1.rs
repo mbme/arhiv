@@ -42,6 +42,12 @@ impl Confidential1Key {
     pub fn new(key: CryptoKey) -> Self {
         Confidential1Key::Key(key)
     }
+
+    pub fn from_key_and_salt(key: &CryptoKey, salt: Salt) -> Result<Self> {
+        let subkey = CryptoKey::derive_subkey(key.get(), salt)?;
+
+        Ok(Self::new(subkey))
+    }
 }
 
 pub struct Confidential1Reader<R: Read> {

@@ -541,18 +541,6 @@ impl BazaConnection {
         })
     }
 
-    pub(crate) fn is_known_blob_id(&self, blob_id: &BLOBId) -> Result<bool> {
-        self.get_connection()
-            .query_row(
-                "SELECT true FROM used_blob_ids WHERE blob_id = ?1 LIMIT 1",
-                params![blob_id],
-                |_row| Ok(true),
-            )
-            .optional()
-            .context("Failed to check if BLOB id is known")
-            .map(|value| value.unwrap_or(false))
-    }
-
     pub(crate) fn has_snapshot(&self, id: &Id, rev: &Revision) -> Result<bool> {
         let mut stmt = self
             .get_connection()

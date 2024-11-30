@@ -99,16 +99,9 @@ impl<'c> Validator<'c> {
     }
 
     fn validate_blob_id(&self, blob_id: &BLOBId) -> Result<()> {
-        let is_known_blob_id = self.conn.is_known_blob_id(blob_id)?;
+        let blob = self.conn.get_existing_blob(blob_id)?;
 
-        if is_known_blob_id {
-            return Ok(());
-        }
-
-        // should be known OR MUST exist
-        let blob = self.conn.get_blob(blob_id);
-
-        ensure!(blob.exists()?, "new blob {} doesn't exist", blob_id);
+        ensure!(blob.is_some(), "BLOB {blob_id} doesn't exist");
 
         Ok(())
     }

@@ -291,7 +291,7 @@ mod tests {
             state
                 .get_document(&doc_a3.id)
                 .unwrap()
-                .get_single_latest_revision(),
+                .get_single_revision(),
             &new_rev
         );
 

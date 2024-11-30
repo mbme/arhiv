@@ -231,7 +231,7 @@ impl DocumentHead {
         }
     }
 
-    pub fn get_single_latest_revision(&self) -> &Revision {
+    pub fn get_single_revision(&self) -> &Revision {
         self.get_revision()
             .into_iter()
             .next()

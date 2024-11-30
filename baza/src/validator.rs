@@ -6,7 +6,7 @@ use anyhow::{anyhow, bail, ensure, Result};
 use crate::{
     db::BazaConnection,
     entities::{BLOBId, Document, Id},
-    schema::Field,
+    schema::{DataSchema, Field},
 };
 
 pub type FieldValidationErrors = HashMap<String, Vec<String>>;
@@ -63,21 +63,45 @@ impl fmt::Display for ValidationError {
     }
 }
 
-pub struct Validator<'c> {
-    conn: &'c BazaConnection,
+pub trait ValidableDB {
+    fn get_schema(&self) -> &DataSchema;
+
+    fn get_document(&self, id: &Id) -> Result<Option<Document>>;
+
+    fn blob_exists(&self, blob_id: &BLOBId) -> Result<bool>;
+}
+
+impl<'c> ValidableDB for &'c BazaConnection {
+    fn get_schema(&self) -> &DataSchema {
+        self.get_schema_ref()
+    }
+
+    fn get_document(&self, id: &Id) -> Result<Option<Document>> {
+        (self as &BazaConnection).get_document(id)
+    }
+
+    fn blob_exists(&self, blob_id: &BLOBId) -> Result<bool> {
+        let blob = self.get_existing_blob(blob_id)?;
+
+        Ok(blob.is_some())
+    }
+}
+
+pub struct Validator<DB: ValidableDB> {
+    db: DB,
     errors: FieldValidationErrors,
 }
 
-impl<'c> Validator<'c> {
-    pub fn new(conn: &'c BazaConnection) -> Self {
+impl<DB: ValidableDB> Validator<DB> {
+    pub fn new(db: DB) -> Self {
         Validator {
-            conn,
+            db,
             errors: HashMap::new(),
         }
     }
 
     fn validate_ref(&self, id: &Id, expected_document_types: Option<&[&str]>) -> Result<()> {
-        let document = if let Some(document) = self.conn.get_document(id)? {
+        let document = if let Some(document) = self.db.get_document(id)? {
             document
         } else {
             bail!("unknown document ref '{}'", id);
@@ -99,9 +123,9 @@ impl<'c> Validator<'c> {
     }
 
     fn validate_blob_id(&self, blob_id: &BLOBId) -> Result<()> {
-        let blob = self.conn.get_existing_blob(blob_id)?;
+        let blob_exists = self.db.blob_exists(blob_id)?;
 
-        ensure!(blob.is_some(), "BLOB {blob_id} doesn't exist");
+        ensure!(blob_exists, "BLOB {blob_id} doesn't exist");
 
         Ok(())
     }
@@ -120,7 +144,7 @@ impl<'c> Validator<'c> {
         &self,
         document: &Document,
     ) -> std::result::Result<(), ValidationError> {
-        let schema = self.conn.get_schema();
+        let schema = self.db.get_schema();
 
         let data_description = schema.get_data_description(&document.document_type)?;
 
@@ -193,11 +217,8 @@ impl<'c> Validator<'c> {
 
         self.validate_fields_presence(document)?;
 
-        for field in self
-            .conn
-            .get_schema()
-            .iter_fields(&document.document_type)?
-        {
+        let schema = self.db.get_schema().clone();
+        for field in schema.iter_fields(&document.document_type)? {
             let value = document.data.get(field.name);
 
             // ensure readonly field didn't change

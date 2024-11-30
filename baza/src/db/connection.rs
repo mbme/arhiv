@@ -147,6 +147,13 @@ impl BazaConnection {
         }
     }
 
+    pub(crate) fn get_schema_ref(&self) -> &DataSchema {
+        match self {
+            BazaConnection::Transaction { schema, .. }
+            | BazaConnection::ReadOnly { schema, .. } => schema,
+        }
+    }
+
     pub fn get_path_manager(&self) -> &PathManager {
         match self {
             BazaConnection::ReadOnly { path_manager, .. }
@@ -699,7 +706,8 @@ impl BazaConnection {
 
         let prev_document = self.get_document(&document.id)?;
 
-        Validator::new(self).validate_staged(document, prev_document.as_ref())?;
+        Validator::new(self as &BazaConnection)
+            .validate_staged(document, prev_document.as_ref())?;
 
         if prev_document.is_some() {
             log::debug!("Updating existing document {}", &document.id);

@@ -177,7 +177,7 @@ impl<DB: ValidableDB> Validator<DB> {
     fn validate_document_attributes(
         &self,
         document: &Document,
-        prev_document: Option<&Document>,
+        prev_document: &Option<Document>,
     ) -> std::result::Result<(), ValidationError> {
         let mut document_errors = Vec::with_capacity(3);
         if document.is_erased() {
@@ -211,9 +211,10 @@ impl<DB: ValidableDB> Validator<DB> {
     pub fn validate_staged(
         mut self,
         document: &Document,
-        prev_document: Option<&Document>,
     ) -> std::result::Result<(), ValidationError> {
-        self.validate_document_attributes(document, prev_document)?;
+        let prev_document = self.db.get_document(&document.id)?;
+
+        self.validate_document_attributes(document, &prev_document)?;
 
         self.validate_fields_presence(document)?;
 
@@ -222,7 +223,7 @@ impl<DB: ValidableDB> Validator<DB> {
             let value = document.data.get(field.name);
 
             // ensure readonly field didn't change
-            if let Some(prev_document) = prev_document {
+            if let Some(ref prev_document) = prev_document {
                 let prev_value = prev_document.data.get(field.name);
 
                 if field.readonly && value != prev_value {

@@ -704,16 +704,7 @@ impl BazaConnection {
     ) -> std::result::Result<(), StagingError> {
         log::debug!("Staging document {}", &document.id);
 
-        let prev_document = self.get_document(&document.id)?;
-
-        Validator::new(self as &BazaConnection)
-            .validate_staged(document, prev_document.as_ref())?;
-
-        if prev_document.is_some() {
-            log::debug!("Updating existing document {}", &document.id);
-        } else {
-            log::debug!("Creating new document {}", &document.id);
-        }
+        Validator::new(self as &BazaConnection).validate_staged(document)?;
 
         document.stage();
         document.updated_at = now();

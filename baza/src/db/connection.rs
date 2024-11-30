@@ -714,7 +714,7 @@ impl BazaConnection {
             id: document.id.clone(),
         })?;
 
-        log::info!("Saved document {}", document);
+        log::info!("Staged document {}", document);
 
         Ok(())
     }

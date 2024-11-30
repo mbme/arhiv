@@ -383,6 +383,12 @@ impl DocumentHead {
             DocumentHead::Conflict(latest_conflict) => Box::new(latest_conflict.original.iter()),
         }
     }
+
+    pub fn get_single_snapshot(&self) -> &Document {
+        self.iter_snapshots()
+            .next()
+            .expect("snapshots must not be empty")
+    }
 }
 
 impl fmt::Display for DocumentHead {

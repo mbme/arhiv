@@ -56,6 +56,12 @@ impl DataSchema {
                             mandatory: false,
                             readonly: false,
                         },
+                        Field {
+                            name: "ref",
+                            field_type: FieldType::Ref(&["test_type"]),
+                            mandatory: false,
+                            readonly: false,
+                        },
                     ],
                 },
                 get_attachment_definition(),

@@ -18,6 +18,7 @@ use rs_utils::{
 use crate::{
     entities::{BLOBId, Document, Id, InstanceId, Revision},
     schema::DataSchema,
+    validator::Validator,
     DocumentExpert,
 };
 
@@ -147,6 +148,10 @@ impl BazaManager {
         create_storage(&mut storage_writer, self.key.clone(), &self.info, docs).unwrap();
     }
 
+    pub fn get_schema(&self) -> &DataSchema {
+        &self.schema
+    }
+
     fn get_local_blob_path(&self, id: &BLOBId) -> String {
         self.paths.get_state_blob_path(id)
     }
@@ -166,7 +171,7 @@ impl BazaManager {
         Ok(None)
     }
 
-    fn blob_exists(&self, id: &BLOBId) -> Result<bool> {
+    pub fn blob_exists(&self, id: &BLOBId) -> Result<bool> {
         self.get_blob_path(id).map(|path| path.is_some())
     }
 
@@ -206,10 +211,18 @@ impl BazaManager {
         Ok(blob_id)
     }
 
+    pub fn get_document(&self, id: &Id) -> Option<&DocumentHead> {
+        self.state.get_document(id)
+    }
+
     pub fn stage_document(&mut self, document: Document) -> Result<()> {
-        // FIXME ensure all blobs and refs exist
-        // Validator::new(self).validate_staged(document, prev_document)?;
-        self.state.stage_document(document)
+        log::debug!("Staging document {}", &document.id);
+
+        Validator::new(self as &BazaManager).validate_staged(&document)?;
+
+        self.state.stage_document(document)?;
+
+        Ok(())
     }
 
     pub fn has_staged_documents(&self) -> bool {
@@ -579,6 +592,19 @@ mod tests {
 
         let blob1 = manager.add_blob(&blob1_file.path).unwrap();
         let blob2 = manager.add_blob(&blob2_file.path).unwrap();
+
+        assert!(
+            manager
+                .stage_document(new_document(json!({ "blob": "unknown" })))
+                .is_err(),
+            "Can't stage document that references unknown BLOB"
+        );
+        assert!(
+            manager
+                .stage_document(new_document(json!({ "ref": "unknown" })))
+                .is_err(),
+            "Can't stage document that references unknown document"
+        );
 
         manager
             .stage_document(new_document(json!({ "blob": blob1 })))

@@ -9,7 +9,7 @@ use std::{
 use anyhow::{anyhow, ensure, Context, Result};
 
 use rs_utils::{
-    confidential1::{Confidential1Key, Confidential1Writer},
+    confidential1::{Confidential1Key, Confidential1Reader, Confidential1Writer},
     create_file_reader, create_file_writer,
     crypto_key::CryptoKey,
     file_exists, log, FsTransaction,
@@ -156,7 +156,7 @@ impl BazaManager {
         self.paths.get_state_blob_path(id)
     }
 
-    pub fn get_blob_path(&self, id: &BLOBId) -> Result<Option<String>> {
+    fn get_blob_path(&self, id: &BLOBId) -> Result<Option<String>> {
         let blob_path = self.get_local_blob_path(id);
 
         if file_exists(&blob_path)? {
@@ -171,12 +171,30 @@ impl BazaManager {
         Ok(None)
     }
 
-    pub fn blob_exists(&self, id: &BLOBId) -> Result<bool> {
-        self.get_blob_path(id).map(|path| path.is_some())
+    pub fn blob_exists(&self, blob_id: &BLOBId) -> Result<bool> {
+        self.get_blob_path(blob_id).map(|path| path.is_some())
+    }
+
+    pub fn get_blob(&self, blob_id: &BLOBId) -> Result<impl Read> {
+        let file_path = self.get_blob_path(blob_id)?.context("BLOB doesn't exist")?;
+
+        let key = self.get_blob_key(blob_id)?;
+
+        let file_reader = create_file_reader(&file_path)?;
+        let c1_reader = Confidential1Reader::new(file_reader, &key)?;
+
+        Ok(c1_reader)
     }
 
     pub fn list_blobs(&self) -> Result<HashSet<BLOBId>> {
         self.paths.list_blobs()
+    }
+
+    fn get_blob_key(&self, blob_id: &BLOBId) -> Result<Confidential1Key> {
+        let salt = CryptoKey::salt_from_data(blob_id.to_string())?;
+        let key = Confidential1Key::from_key_and_salt(&self.key, salt)?;
+
+        Ok(key)
     }
 
     pub fn add_blob(&mut self, file_path: &str) -> Result<BLOBId> {
@@ -192,8 +210,7 @@ impl BazaManager {
             return Ok(blob_id);
         }
 
-        let salt = CryptoKey::salt_from_data(blob_id.to_string())?;
-        let key = Confidential1Key::from_key_and_salt(&self.key, salt)?;
+        let key = self.get_blob_key(&blob_id)?;
 
         let blob_path = self.get_local_blob_path(&blob_id);
 
@@ -508,9 +525,14 @@ fn update_state_from_storage<R: Read>(
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+
     use serde_json::json;
 
-    use rs_utils::{crypto_key::CryptoKey, dir_exists, file_exists, TempFile};
+    use rs_utils::{
+        crypto_key::CryptoKey, dir_exists, file_exists, generate_alpanumeric_string,
+        read_all_as_string, TempFile,
+    };
 
     use crate::{
         baza2::{
@@ -566,9 +588,29 @@ mod tests {
         );
     }
 
-    // TODO test BLOBs
-    // #[test]
-    // fn test_blobs() {}
+    #[test]
+    fn test_blobs() {
+        let temp_dir = TempFile::new_with_details("test_baza_manager", "");
+        temp_dir.mkdir().unwrap();
+
+        let options = BazaManagerOptions::new_for_tests(&temp_dir.path);
+        let mut manager = options.clone().open().unwrap();
+
+        let data = generate_alpanumeric_string(100);
+        let blob1_file = temp_dir.new_child("blob1");
+        blob1_file.write_str(&data).unwrap();
+
+        let blob1 = manager.add_blob(&blob1_file.path).unwrap();
+
+        let blob1_state_path = manager.get_blob_path(&blob1).unwrap().unwrap();
+        let encrypted_data = fs::read(&blob1_state_path).unwrap();
+
+        assert_ne!(data.as_bytes(), encrypted_data);
+
+        let decrypted_data = read_all_as_string(manager.get_blob(&blob1).unwrap()).unwrap();
+
+        assert_eq!(data, decrypted_data);
+    }
 
     #[test]
     fn test_commit() {

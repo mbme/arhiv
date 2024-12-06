@@ -4,7 +4,24 @@ use serde::{Deserialize, Serialize};
 
 use rs_utils::{default_date_time_format, generate_random_id, now, Timestamp};
 
-pub type DocumentLockKey = String;
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct DocumentLockKey(String);
+
+impl DocumentLockKey {
+    pub fn new_random_key() -> Self {
+        Self(generate_random_id())
+    }
+
+    pub fn from_string(value: impl Into<String>) -> Self {
+        Self(value.into())
+    }
+}
+
+impl Display for DocumentLockKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
@@ -18,7 +35,7 @@ impl DocumentLock {
     #[must_use]
     pub fn new(reason: String) -> Self {
         DocumentLock {
-            key: generate_random_id(),
+            key: DocumentLockKey::new_random_key(),
             lock_time: now(),
             reason,
         }

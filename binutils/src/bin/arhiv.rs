@@ -13,7 +13,7 @@ use arhiv::{
     definitions::get_standard_schema, Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer, ServerInfo,
 };
 use baza::{
-    entities::{Document, DocumentData, DocumentType, Id},
+    entities::{Document, DocumentData, DocumentLockKey, DocumentType, Id},
     Credentials, KvsEntry, KvsKey, DEV_MODE,
 };
 use rs_utils::{get_crate_version, into_absolute_path, log, shutdown_signal, SecretString};
@@ -325,7 +325,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             let mut tx = arhiv.baza.get_tx()?;
             if let Some(key) = key {
-                tx.unlock_document(&id, &key)?;
+                tx.unlock_document(&id, &DocumentLockKey::from_string(key))?;
             } else {
                 println!("Lock key wasn't provided, unlocking without key check");
                 tx.unlock_document_without_key(&id)?;

@@ -3,7 +3,11 @@ use std::sync::Arc;
 use anyhow::Result;
 use serde_json::Value;
 
-use crate::{entities::Id, sync::SyncManager, Baza};
+use crate::{
+    entities::{DocumentLockKey, Id},
+    sync::SyncManager,
+    Baza,
+};
 
 #[test]
 fn test_locks() -> Result<()> {
@@ -52,7 +56,10 @@ fn test_lock_stage_document() -> Result<()> {
     {
         let mut document = tx.get_document(&id)?.unwrap();
         assert!(tx
-            .stage_document(&mut document, Some("invalid key".to_string()))
+            .stage_document(
+                &mut document,
+                Some(DocumentLockKey::from_string("invalid key"))
+            )
             .is_err());
     }
 
@@ -79,7 +86,10 @@ fn test_lock_stage_document() -> Result<()> {
     {
         let mut document = tx.get_document(&id)?.unwrap();
         assert!(tx
-            .stage_document(&mut document, Some("invalid key".to_string()))
+            .stage_document(
+                &mut document,
+                Some(DocumentLockKey::from_string("invalid key"))
+            )
             .is_err());
     }
 

@@ -23,7 +23,7 @@ impl Display for DocumentLockKey {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct DocumentLock {
     key: DocumentLockKey,

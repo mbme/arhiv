@@ -94,6 +94,10 @@ pub fn new_document(value: Value) -> Document {
     Document::new_with_data(DocumentType::new("test_type"), value.try_into().unwrap())
 }
 
+pub fn new_empty_document() -> Document {
+    new_document(json!({}))
+}
+
 pub fn new_document_snapshot(id: impl Into<Id>, revision: Value) -> Document {
     let mut document = new_document(json!({}));
     document.id = id.into();

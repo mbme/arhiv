@@ -7,12 +7,12 @@ use std::{
     io::Read,
 };
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 
 use rs_utils::{crypto_key::CryptoKey, file_exists, log, FsTransaction};
 
 use crate::{
-    entities::{BLOBId, Document, Id, InstanceId, Revision},
+    entities::{BLOBId, Document, DocumentLock, DocumentLockKey, Id, InstanceId, Revision},
     schema::DataSchema,
     validator::Validator,
     DocumentExpert,
@@ -21,6 +21,7 @@ use crate::{
 use baza_paths::BazaPaths;
 
 use super::{
+    baza_state::Locks,
     baza_storage::{
         create_empty_storage_file, merge_storages_to_file, BazaDocumentKey, BazaFileStorage,
         STORAGE_VERSION,
@@ -148,16 +149,46 @@ impl BazaManager {
         &self.schema
     }
 
+    pub fn list_document_locks(&self) -> &Locks {
+        self.state.list_document_locks()
+    }
+
+    pub fn has_document_locks(&self) -> bool {
+        self.state.has_document_locks()
+    }
+
+    pub fn lock_document(&mut self, id: &Id, reason: impl Into<String>) -> Result<&DocumentLock> {
+        let reason = reason.into();
+        log::debug!("Locking document {id}: {reason}");
+        self.state.lock_document(id, reason)
+    }
+
+    pub fn unlock_document(&mut self, id: &Id, key: &DocumentLockKey) -> Result<()> {
+        log::debug!("Unlocking document {id}");
+
+        self.state.unlock_document(id, key)
+    }
+
+    pub fn unlock_document_without_key(&mut self, id: &Id) -> Result<()> {
+        log::info!("Unlocking document {id} without a key");
+
+        self.state.unlock_document_without_key(id)
+    }
+
     pub fn get_document(&self, id: &Id) -> Option<&DocumentHead> {
         self.state.get_document(id)
     }
 
-    pub fn stage_document(&mut self, document: Document) -> Result<()> {
+    pub fn stage_document(
+        &mut self,
+        document: Document,
+        lock_key: &Option<DocumentLockKey>,
+    ) -> Result<()> {
         log::debug!("Staging document {}", &document.id);
 
         Validator::new(self as &BazaManager).validate_staged(&document)?;
 
-        self.state.stage_document(document)?;
+        self.state.stage_document(document, lock_key)?;
 
         Ok(())
     }
@@ -200,12 +231,15 @@ impl BazaManager {
 
         self.merge_storages()?;
 
-        // TODO document locks
         // TODO erase document history on commit
         // TODO erased documents after merging storage files
         if !self.state.has_staged_documents() {
             log::info!("Commit: nothing to commit");
             return Ok(());
+        }
+
+        if self.state.has_document_locks() {
+            bail!("Can't commit: some documents are locked");
         }
 
         let mut tx = FsTransaction::new();
@@ -453,7 +487,7 @@ mod tests {
         baza2::{
             baza_manager::BazaManagerOptions, baza_storage::create_test_storage, DocumentHead,
         },
-        tests::new_document,
+        tests::{new_document, new_empty_document},
     };
 
     use super::{update_state_from_storage, BazaState};
@@ -528,19 +562,19 @@ mod tests {
 
         assert!(
             manager
-                .stage_document(new_document(json!({ "blob": "unknown" })))
+                .stage_document(new_document(json!({ "blob": "unknown" })), &None)
                 .is_err(),
             "Can't stage document that references unknown BLOB"
         );
         assert!(
             manager
-                .stage_document(new_document(json!({ "ref": "unknown" })))
+                .stage_document(new_document(json!({ "ref": "unknown" })), &None)
                 .is_err(),
             "Can't stage document that references unknown document"
         );
 
         manager
-            .stage_document(new_document(json!({ "blob": blob1 })))
+            .stage_document(new_document(json!({ "blob": blob1 })), &None)
             .unwrap();
 
         assert!(manager.has_staged_documents());
@@ -590,7 +624,9 @@ mod tests {
         assert!(file_exists(&db_file_1).unwrap());
         assert!(file_exists(&db_file_2).unwrap());
 
-        manager.stage_document(new_document(json!({}))).unwrap();
+        manager
+            .stage_document(new_document(json!({})), &None)
+            .unwrap();
 
         manager.commit().unwrap();
         let manager = options.clone().open().unwrap();
@@ -615,7 +651,9 @@ mod tests {
 
         {
             let mut manager = options.clone().open().unwrap();
-            manager.stage_document(new_document(json!({}))).unwrap();
+            let document = new_empty_document();
+            manager.stage_document(document.clone(), &None).unwrap();
+            manager.lock_document(&document.id, "test").unwrap();
             manager.save_changes().unwrap();
         }
 
@@ -623,6 +661,7 @@ mod tests {
             let manager = options.clone().open().unwrap();
 
             assert!(manager.has_staged_documents());
+            assert!(manager.has_document_locks());
         }
     }
 }

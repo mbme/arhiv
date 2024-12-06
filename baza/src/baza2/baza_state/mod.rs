@@ -14,26 +14,28 @@ use rs_utils::{
 
 use crate::{
     baza2::BazaInfo,
-    entities::{Document, Id, InstanceId, LatestRevComputer, Revision},
+    entities::{Document, DocumentLockKey, Id, InstanceId, LatestRevComputer, Revision},
 };
 
 mod document_head;
+mod locks;
 
 pub use document_head::{DocumentHead, LatestConflict, LatestDocument};
+pub use locks::Locks;
 
-// FIXME separate on-disk data structure from in-memory data structure
+// FIXME where to store computed data? refs, backrefs
+// FIXME events?
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct BazaState {
     instance_id: InstanceId,
     info: BazaInfo,
     documents: HashMap<Id, DocumentHead>,
+    locks: Locks,
 
     #[serde(skip)]
     modified: bool,
 }
 
-// TODO kvs
-// TODO locks
 impl BazaState {
     pub fn new(
         instance_id: InstanceId,
@@ -43,6 +45,7 @@ impl BazaState {
         Self {
             info,
             documents,
+            locks: HashMap::new(),
             instance_id,
             modified: false,
         }
@@ -128,8 +131,14 @@ impl BazaState {
         self.documents.get(id)
     }
 
-    pub fn stage_document(&mut self, mut document: Document) -> Result<()> {
+    pub fn stage_document(
+        &mut self,
+        mut document: Document,
+        lock_key: &Option<DocumentLockKey>,
+    ) -> Result<()> {
         let id = document.id.clone();
+
+        self.check_document_lock(&id, lock_key)?;
 
         let current_value = self.documents.remove(&id);
 
@@ -191,7 +200,7 @@ impl BazaState {
             .any(|document_head| document_head.is_unresolved_conflict())
     }
 
-    pub fn reset_all_documents(&mut self) {
+    pub fn reset_all_documents(&mut self) -> Result<()> {
         let ids = self
             .documents
             .iter()
@@ -200,11 +209,15 @@ impl BazaState {
             .collect::<Vec<_>>();
 
         for id in &ids {
-            self.reset_document(id).expect("entry must exist");
+            self.reset_document(id, &None)?;
         }
+
+        Ok(())
     }
 
-    pub fn reset_document(&mut self, id: &Id) -> Result<()> {
+    pub fn reset_document(&mut self, id: &Id, lock_key: &Option<DocumentLockKey>) -> Result<()> {
+        self.check_document_lock(id, lock_key)?;
+
         let (id, document) = self
             .documents
             .remove_entry(id)
@@ -219,6 +232,8 @@ impl BazaState {
     }
 
     pub(super) fn commit(&mut self) -> Result<()> {
+        ensure!(!self.has_document_locks(), "Some documents are locked");
+
         let ids = self
             .documents
             .iter()
@@ -251,7 +266,10 @@ mod tests {
     use rs_utils::crypto_key::CryptoKey;
     use serde_json::json;
 
-    use crate::{entities::Revision, tests::new_document};
+    use crate::{
+        entities::{DocumentLockKey, Id, Revision},
+        tests::{new_document, new_empty_document},
+    };
 
     use super::BazaState;
 
@@ -273,15 +291,15 @@ mod tests {
         assert!(state.has_unresolved_conflicts());
         assert_eq!(state.get_latest_revision().len(), 2);
 
-        state.stage_document(doc_a3.clone()).unwrap();
+        state.stage_document(doc_a3.clone(), &None).unwrap();
         assert!(state.has_staged_documents());
         assert!(!state.has_unresolved_conflicts());
 
-        state.reset_all_documents();
+        state.reset_all_documents().unwrap();
         assert!(!state.has_staged_documents());
         assert!(state.has_unresolved_conflicts());
 
-        state.stage_document(doc_a3.clone()).unwrap();
+        state.stage_document(doc_a3.clone(), &None).unwrap();
         state.commit().unwrap();
 
         let new_rev = Revision::from_value(json!({ "a": 1, "test": 2 })).unwrap();
@@ -305,10 +323,14 @@ mod tests {
         let key = CryptoKey::new_random_key();
         let mut state = BazaState::new_test_state();
 
+        let id: Id = "test".into();
         state.insert_snapshots(vec![
-            new_document(json!({ "test": 1 })).with_rev(json!({ "a": 1 })),
+            new_document(json!({ "test": 1 }))
+                .with_rev(json!({ "a": 1 }))
+                .with_id(id.clone()),
             new_document(json!({ "test": 2 })).with_rev(json!({ "a": 2, "b": 2 })),
         ]);
+        state.lock_document(&id, "test").unwrap();
 
         let mut data = Cursor::new(Vec::<u8>::new());
 
@@ -320,5 +342,41 @@ mod tests {
         let state1 = BazaState::read(&mut data, key.clone()).unwrap();
 
         assert_eq!(state, state1);
+    }
+
+    #[test]
+    fn test_state_stage_locks() {
+        let mut state = BazaState::new_test_state();
+
+        let doc1 = new_empty_document().with_rev(json!({ "a": 1 }));
+
+        state.insert_snapshot(doc1.clone()).unwrap();
+
+        assert!(state
+            .stage_document(
+                doc1.clone(),
+                &Some(DocumentLockKey::from_string("unexpected key"))
+            )
+            .is_err());
+
+        state.stage_document(doc1.clone(), &None).unwrap();
+
+        let key = state
+            .lock_document(&doc1.id, "test")
+            .unwrap()
+            .get_key()
+            .clone();
+
+        assert!(state.stage_document(doc1.clone(), &None).is_err());
+        assert!(state
+            .stage_document(
+                doc1.clone(),
+                &Some(DocumentLockKey::from_string("wrong key"))
+            )
+            .is_err());
+
+        state.stage_document(doc1.clone(), &Some(key)).unwrap();
+
+        assert!(state.commit().is_err());
     }
 }

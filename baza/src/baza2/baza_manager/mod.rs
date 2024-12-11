@@ -12,6 +12,7 @@ use anyhow::{anyhow, bail, ensure, Context, Result};
 use rs_utils::{crypto_key::CryptoKey, file_exists, log, FsTransaction};
 
 use crate::{
+    baza2::baza_storage::create_container_patch,
     entities::{BLOBId, Document, DocumentLock, DocumentLockKey, Id, InstanceId, Revision},
     schema::DataSchema,
     validator::Validator,
@@ -275,8 +276,9 @@ impl BazaManager {
         }
 
         // write changes to db file
-        storage
-            .add_and_save_to_file(&self.paths.storage_main_db_file, new_snapshots.into_iter())?;
+        let patch = create_container_patch(new_snapshots.into_iter())?;
+        // FIXME handle erased
+        storage.patch_and_save_to_file(&self.paths.storage_main_db_file, patch)?;
 
         // backup state file
         tx.move_to_backup(self.paths.state_file.clone())?;

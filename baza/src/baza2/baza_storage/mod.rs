@@ -105,14 +105,8 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
         Ok(self.info.as_ref().expect("info is available"))
     }
 
-    pub fn add<'d>(
-        self,
-        writer: impl Write,
-        new_documents: impl Iterator<Item = &'d Document>,
-    ) -> Result<()> {
-        // prepare patch
-        let patch = create_container_patch(new_documents)?;
-        ensure!(!patch.is_empty(), "documents to add not provided");
+    pub fn patch(self, writer: impl Write, patch: ContainerPatch) -> Result<()> {
+        ensure!(!patch.is_empty(), "container patch must not be empty");
 
         // apply patch & write db
         let c1writer = C1GzWriter::create(writer, &self.key)?;
@@ -169,14 +163,10 @@ impl<'i> BazaFileStorage<'i> {
         BazaStorage::read(storage_reader, key)
     }
 
-    pub fn add_and_save_to_file<'d>(
-        self,
-        file: &str,
-        new_documents: impl Iterator<Item = &'d Document>,
-    ) -> Result<()> {
+    pub fn patch_and_save_to_file(self, file: &str, patch: ContainerPatch) -> Result<()> {
         let mut storage_writer = create_file_writer(file, false)?;
 
-        self.add(&mut storage_writer, new_documents)?;
+        self.patch(&mut storage_writer, patch)?;
 
         storage_writer.flush()?;
 
@@ -205,7 +195,7 @@ impl<'i, R: Read + 'i> Iterator for BazaStorage<'i, R> {
     }
 }
 
-fn create_container_patch<'d>(
+pub fn create_container_patch<'d>(
     documents: impl Iterator<Item = &'d Document>,
 ) -> Result<ContainerPatch> {
     let mut patch = ContainerPatch::new();
@@ -405,7 +395,7 @@ mod tests {
 
     use crate::{baza2::baza_storage::create_test_storage, tests::new_document};
 
-    use super::{create_storage, merge_storages, BazaInfo, BazaStorage};
+    use super::{create_container_patch, create_storage, merge_storages, BazaInfo, BazaStorage};
 
     #[test]
     fn test_storage() -> Result<()> {
@@ -448,7 +438,7 @@ mod tests {
         ];
         {
             let storage = BazaStorage::read(&mut data, key.clone())?;
-            storage.add(&mut data1, docs2.iter())?;
+            storage.patch(&mut data1, create_container_patch(docs2.iter())?)?;
         }
 
         data1.set_position(0);

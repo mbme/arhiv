@@ -43,6 +43,10 @@ impl LatestDocument {
         !self.is_staged()
     }
 
+    pub fn is_erased(&self) -> bool {
+        self.original.is_erased()
+    }
+
     pub fn reset(&mut self) {
         self.staged = None;
     }
@@ -52,6 +56,8 @@ impl LatestDocument {
             self.original.id == new_document.id,
             "Document id must not change"
         );
+
+        ensure!(!self.is_erased(), "Erased document must not change");
 
         new_document.stage();
 
@@ -249,6 +255,10 @@ impl DocumentHead {
         !self.is_committed()
     }
 
+    pub fn is_erased(&self) -> bool {
+        matches!(&self, DocumentHead::Document(latest_document) if latest_document.is_erased())
+    }
+
     pub fn is_new_document(&self) -> bool {
         matches!(self, DocumentHead::Document(latest_document) if latest_document.is_new())
     }
@@ -404,7 +414,7 @@ impl fmt::Display for DocumentHead {
 mod tests {
     use serde_json::json;
 
-    use crate::tests::new_document;
+    use crate::{entities::Revision, tests::new_document};
 
     use super::DocumentHead;
 
@@ -494,6 +504,59 @@ mod tests {
 
             head.modify(doc_a3.clone()).unwrap();
             assert!(head.is_resolved_conflict());
+        }
+    }
+
+    #[test]
+    fn test_commit() {
+        let doc_a1 = new_document(json!({})).with_rev(json!({ "a": 1 }));
+        let doc_a2 = doc_a1.clone().with_rev(json!({ "b": 1 }));
+        let doc_a3 = doc_a1.clone().with_rev(json!({ "a": 1, "b": 1, "c": 1 }));
+
+        let new_rev = Revision::from_value(json!({ "a": 2, "b": 1, "c": 1 })).unwrap();
+
+        {
+            let mut head =
+                DocumentHead::new_conflict([doc_a1.clone(), doc_a2.clone()].into_iter()).unwrap();
+
+            assert!(head.clone().commit(new_rev.clone()).is_err());
+
+            head.modify(doc_a3.clone()).unwrap();
+            assert!(!head.is_committed());
+
+            head = head.commit(new_rev.clone()).unwrap();
+            assert!(head.is_committed());
+            assert_eq!(head.get_single_revision(), &new_rev);
+        }
+
+        {
+            let mut head = DocumentHead::new(doc_a1.clone());
+            head.modify(doc_a2.clone()).unwrap();
+            assert!(!head.is_committed());
+
+            head = head.commit(new_rev.clone()).unwrap();
+            assert!(head.is_committed());
+            assert_eq!(head.get_single_revision(), &new_rev);
+        }
+
+        {
+            let mut doc_a1 = doc_a1.clone();
+            doc_a1.erase();
+
+            let mut head = DocumentHead::new(doc_a1);
+            assert!(head.modify(doc_a2.clone()).is_err());
+        }
+
+        {
+            let mut head = DocumentHead::new(doc_a1.clone());
+
+            let mut doc_a2 = doc_a2.clone();
+            doc_a2.erase();
+            head.modify(doc_a2).unwrap();
+
+            head = head.commit(new_rev.clone()).unwrap();
+            assert!(head.is_committed());
+            assert!(head.is_erased());
         }
     }
 }

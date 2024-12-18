@@ -51,14 +51,7 @@ impl LatestDocument {
         self.staged = None;
     }
 
-    pub fn modify(&mut self, mut new_document: Document) -> Result<()> {
-        ensure!(
-            self.original.id == new_document.id,
-            "Document id must not change"
-        );
-
-        ensure!(!self.is_erased(), "Erased document must not change");
-
+    pub fn modify(&mut self, mut new_document: Document) {
         new_document.stage();
 
         if self.is_new() {
@@ -66,20 +59,16 @@ impl LatestDocument {
         } else {
             self.staged = Some(new_document);
         }
-
-        Ok(())
     }
 
-    pub fn insert_snapshot(&mut self, new_document: Document) -> Result<()> {
-        ensure!(
-            self.get_id() == &new_document.id,
-            "Document id must not change"
-        );
-        ensure!(!self.is_staged(), "Can't insert into staged document");
+    pub fn insert_snapshot(&mut self, new_document: Document) -> bool {
+        if self.original == new_document {
+            return false;
+        }
 
         self.original = new_document;
 
-        Ok(())
+        true
     }
 
     pub fn into_staged_document(self) -> Option<Document> {
@@ -161,30 +150,14 @@ impl LatestConflict {
         self.staged = None;
     }
 
-    pub fn modify(&mut self, mut new_document: Document) -> Result<()> {
-        ensure!(
-            self.get_id() == &new_document.id,
-            "Document id must not change"
-        );
-
+    pub fn modify(&mut self, mut new_document: Document) {
         new_document.stage();
 
         self.staged = Some(new_document);
-
-        Ok(())
     }
 
-    pub fn insert_snapshot(&mut self, new_document: Document) -> Result<()> {
-        ensure!(
-            self.get_id() == &new_document.id,
-            "Document id must not change"
-        );
-        ensure!(!self.is_staged(), "Can't insert into staged document");
-
-        let inserted = self.original.insert(new_document);
-        ensure!(inserted, "Conflict already contains this document");
-
-        Ok(())
+    pub fn insert_snapshot(&mut self, new_document: Document) -> bool {
+        self.original.insert(new_document)
     }
 
     pub fn into_staged_document(self) -> Option<Document> {
@@ -328,10 +301,19 @@ impl DocumentHead {
     }
 
     pub fn modify(&mut self, new_document: Document) -> Result<()> {
+        ensure!(
+            self.get_id() == &new_document.id,
+            "Document id must not change"
+        );
+
+        ensure!(!self.is_erased(), "Erased document must not change");
+
         match self {
             DocumentHead::Document(ref mut latest_document) => latest_document.modify(new_document),
             DocumentHead::Conflict(ref mut latest_conflict) => latest_conflict.modify(new_document),
-        }
+        };
+
+        Ok(())
     }
 
     pub fn insert_snapshot(self, new_document: Document) -> Result<Self> {
@@ -348,7 +330,8 @@ impl DocumentHead {
                     .compare_vector_clocks(&new_document.rev)
                 {
                     VectorClockOrder::Before => {
-                        latest_document.insert_snapshot(new_document)?;
+                        let inserted = latest_document.insert_snapshot(new_document);
+                        ensure!(inserted, "Already contain this document snapshot");
 
                         DocumentHead::Document(latest_document)
                     }
@@ -372,7 +355,8 @@ impl DocumentHead {
                         DocumentHead::Document(LatestDocument::new(new_document))
                     }
                     VectorClockOrder::Concurrent => {
-                        latest_conflict.insert_snapshot(new_document)?;
+                        let inserted = latest_conflict.insert_snapshot(new_document);
+                        ensure!(inserted, "Conflict already contains this document");
 
                         DocumentHead::Conflict(latest_conflict)
                     }

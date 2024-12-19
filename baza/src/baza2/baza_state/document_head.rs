@@ -6,102 +6,27 @@ use serde::{Deserialize, Serialize};
 use crate::entities::{Document, Id, Revision, VectorClockOrder};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct LatestDocument {
-    original: Document,
-    staged: Option<Document>,
-}
-
-impl LatestDocument {
-    pub fn new(original: Document) -> Self {
-        Self {
-            original,
-            staged: None,
-        }
-    }
-
-    pub fn get_id(&self) -> &Id {
-        &self.original.id
-    }
-
-    pub fn get_revision(&self) -> &Revision {
-        &self.original.rev
-    }
-
-    pub fn is_new(&self) -> bool {
-        self.original.is_staged()
-    }
-
-    pub fn is_old(&self) -> bool {
-        !self.is_new()
-    }
-
-    pub fn is_staged(&self) -> bool {
-        self.staged.is_some() || self.is_new()
-    }
-
-    pub fn is_committed(&self) -> bool {
-        !self.is_staged()
-    }
-
-    pub fn is_erased(&self) -> bool {
-        self.original.is_erased()
-    }
-
-    pub fn reset(&mut self) {
-        self.staged = None;
-    }
-
-    pub fn modify(&mut self, mut new_document: Document) {
-        new_document.stage();
-
-        if self.is_new() {
-            self.original = new_document;
-        } else {
-            self.staged = Some(new_document);
-        }
-    }
-
-    pub fn insert_snapshot(&mut self, new_document: Document) -> bool {
-        if self.original == new_document {
-            return false;
-        }
-
-        self.original = new_document;
-
-        true
-    }
-
-    pub fn into_staged_document(self) -> Option<Document> {
-        if self.is_new() {
-            return Some(self.original);
-        }
-
-        self.staged
-    }
-}
-
-impl fmt::Display for LatestDocument {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let id = self.get_id();
-
-        if self.is_new() {
-            write!(f, "[LatestDocument {id}, new staged]")
-        } else if self.is_staged() {
-            write!(f, "[LatestDocument {id}, staged]")
-        } else {
-            write!(f, "[LatestDocument {id}]")
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct LatestConflict {
+pub struct DocumentHead {
     original: HashSet<Document>,
     staged: Option<Document>,
 }
 
-impl LatestConflict {
-    pub fn new(revisions: impl Iterator<Item = Document>) -> Result<Self> {
+impl DocumentHead {
+    pub fn new(document: Document) -> Self {
+        if document.is_staged() {
+            Self {
+                original: HashSet::with_capacity(0),
+                staged: Some(document),
+            }
+        } else {
+            Self {
+                original: HashSet::from_iter([document]),
+                staged: None,
+            }
+        }
+    }
+
+    pub fn new_conflict(revisions: impl Iterator<Item = Document>) -> Result<Self> {
         let original = HashSet::from_iter(revisions);
         ensure!(
             original.len() > 1,
@@ -123,259 +48,132 @@ impl LatestConflict {
     }
 
     pub fn get_id(&self) -> &Id {
-        &self.original.iter().next().expect("must not be empty").id
+        if let Some(staged) = &self.staged {
+            return &staged.id;
+        }
+
+        &self
+            .original
+            .iter()
+            .next()
+            .expect("original must not be empty")
+            .id
     }
 
-    pub fn get_single_revision(&self) -> &Revision {
-        &self.original.iter().next().expect("must not be empty").rev
+    pub fn get_revision(&self) -> &Revision {
+        if let Some(staged) = &self.staged {
+            return &staged.rev;
+        }
+
+        &self
+            .original
+            .iter()
+            .next()
+            .expect("original must not be empty")
+            .rev
     }
 
-    pub fn get_revisions(&self) -> HashSet<&Revision> {
-        self.original.iter().map(|doc| &doc.rev).collect()
+    pub fn get_original_revisions(&self) -> impl Iterator<Item = &Revision> {
+        self.original.iter().map(|doc| &doc.rev)
+    }
+
+    pub fn is_committed(&self) -> bool {
+        !self.is_staged()
     }
 
     pub fn is_staged(&self) -> bool {
         self.staged.is_some()
     }
 
-    pub fn is_committed(&self) -> bool {
-        !self.is_staged()
-    }
-
-    pub fn is_unresolved(&self) -> bool {
-        !self.is_staged()
-    }
-
-    pub fn reset(&mut self) {
-        self.staged = None;
-    }
-
-    pub fn modify(&mut self, mut new_document: Document) {
-        new_document.stage();
-
-        self.staged = Some(new_document);
-    }
-
-    pub fn insert_snapshot(&mut self, new_document: Document) -> bool {
-        self.original.insert(new_document)
-    }
-
-    pub fn into_staged_document(self) -> Option<Document> {
-        self.staged
-    }
-}
-
-impl fmt::Display for LatestConflict {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let id = self.get_id();
-        let num_revs = self.original.len();
-
-        if self.is_staged() {
-            write!(f, "[LatestConflict {num_revs} revs of {id}, staged]")
-        } else {
-            write!(f, "[LatestConflict {num_revs} revs of {id}]")
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(tag = "type", content = "data")]
-pub enum DocumentHead {
-    Document(LatestDocument),
-    Conflict(LatestConflict),
-}
-
-impl DocumentHead {
-    pub fn new(document: Document) -> Self {
-        DocumentHead::Document(LatestDocument::new(document))
-    }
-
-    pub fn new_conflict(revisions: impl Iterator<Item = Document>) -> Result<Self> {
-        Ok(DocumentHead::Conflict(LatestConflict::new(revisions)?))
-    }
-
-    pub fn get_id(&self) -> &Id {
-        match self {
-            DocumentHead::Document(latest_document) => latest_document.get_id(),
-            DocumentHead::Conflict(latest_conflict) => latest_conflict.get_id(),
-        }
-    }
-
-    pub fn get_revision(&self) -> HashSet<&Revision> {
-        match self {
-            DocumentHead::Document(latest_document) => {
-                HashSet::from([latest_document.get_revision()])
-            }
-            DocumentHead::Conflict(latest_conflict) => latest_conflict.get_revisions(),
-        }
-    }
-
-    pub fn get_single_revision(&self) -> &Revision {
-        self.get_revision()
-            .into_iter()
-            .next()
-            .expect("revision set must not be empty")
-    }
-
-    pub fn is_committed(&self) -> bool {
-        match self {
-            DocumentHead::Document(latest_document) => latest_document.is_committed(),
-            DocumentHead::Conflict(latest_conflict) => latest_conflict.is_committed(),
-        }
-    }
-
-    pub fn is_staged(&self) -> bool {
-        !self.is_committed()
-    }
-
-    pub fn is_erased(&self) -> bool {
-        matches!(&self, DocumentHead::Document(latest_document) if latest_document.is_erased())
+    pub fn is_original_erased(&self) -> bool {
+        !self.is_conflict()
+            && self
+                .original
+                .iter()
+                .next()
+                .map(|doc| doc.is_erased())
+                .unwrap_or_default()
     }
 
     pub fn is_new_document(&self) -> bool {
-        matches!(self, DocumentHead::Document(latest_document) if latest_document.is_new())
+        self.original.is_empty()
     }
 
-    pub fn is_old_document(&self) -> bool {
-        matches!(self, DocumentHead::Document(latest_document) if latest_document.is_old())
+    pub fn is_conflict(&self) -> bool {
+        self.original.len() > 1
     }
 
     pub fn is_unresolved_conflict(&self) -> bool {
-        matches!(self, DocumentHead::Conflict(latest_conflict) if latest_conflict.is_unresolved())
+        self.is_conflict() && self.staged.is_none()
     }
 
     pub fn is_resolved_conflict(&self) -> bool {
-        matches!(self, DocumentHead::Conflict(latest_conflict) if !latest_conflict.is_unresolved())
+        self.is_conflict() && self.staged.is_some()
     }
 
     pub fn reset(mut self) -> Option<Self> {
-        match self {
-            DocumentHead::Document(ref mut latest_document) => {
-                if latest_document.is_new() {
-                    return None;
-                }
-
-                if latest_document.is_staged() {
-                    latest_document.reset();
-                }
-
-                Some(self)
-            }
-            DocumentHead::Conflict(ref mut latest_conflict) => {
-                if latest_conflict.is_staged() {
-                    latest_conflict.reset();
-                }
-
-                Some(self)
-            }
+        if self.is_new_document() {
+            return None;
         }
+
+        self.staged = None;
+
+        Some(self)
     }
 
     pub fn commit(self, new_rev: Revision) -> Result<Self> {
-        let staged_document = match self {
-            DocumentHead::Document(latest_document) => {
-                let rev = latest_document.get_revision();
-                ensure!(
-                    new_rev > *rev,
-                    "New revision must be newer than current revision"
-                );
+        let rev = self.get_revision();
+        ensure!(
+            new_rev > *rev,
+            "New revision must be newer than current revision"
+        );
 
-                latest_document.into_staged_document()
-            }
-            DocumentHead::Conflict(latest_conflict) => {
-                let rev = latest_conflict.get_single_revision();
-                ensure!(
-                    new_rev > *rev,
-                    "New revision must be newer than current revision"
-                );
-
-                latest_conflict.into_staged_document()
-            }
-        };
-
-        let mut staged_document = staged_document.context("Expected staged document")?;
+        let mut staged_document = self.staged.context("Expected staged document")?;
 
         staged_document.rev = new_rev;
 
         Ok(DocumentHead::new(staged_document))
     }
 
-    pub fn modify(&mut self, new_document: Document) -> Result<()> {
+    pub fn modify(&mut self, mut new_document: Document) -> Result<()> {
         ensure!(
             self.get_id() == &new_document.id,
             "Document id must not change"
         );
 
-        ensure!(!self.is_erased(), "Erased document must not change");
+        ensure!(
+            !self.is_original_erased(),
+            "Erased document must not change"
+        );
 
-        match self {
-            DocumentHead::Document(ref mut latest_document) => latest_document.modify(new_document),
-            DocumentHead::Conflict(ref mut latest_conflict) => latest_conflict.modify(new_document),
-        };
+        new_document.stage();
+        self.staged = Some(new_document);
 
         Ok(())
     }
 
-    pub fn insert_snapshot(self, new_document: Document) -> Result<Self> {
+    pub fn insert_snapshot(mut self, new_document: Document) -> Result<Self> {
         ensure!(
             self.get_id() == &new_document.id,
             "Document id must not change"
         );
         ensure!(!self.is_staged(), "Can't insert into staged document");
 
-        let new_head = match self {
-            DocumentHead::Document(mut latest_document) => {
-                match latest_document
-                    .get_revision()
-                    .compare_vector_clocks(&new_document.rev)
-                {
-                    VectorClockOrder::Before => {
-                        let inserted = latest_document.insert_snapshot(new_document);
-                        ensure!(inserted, "Already contain this document snapshot");
+        match self.get_revision().compare_vector_clocks(&new_document.rev) {
+            VectorClockOrder::Before => Ok(DocumentHead::new(new_document)),
+            VectorClockOrder::Concurrent => {
+                let inserted = self.original.insert(new_document);
+                ensure!(inserted, "Conflict already contains this document");
 
-                        DocumentHead::Document(latest_document)
-                    }
-                    VectorClockOrder::Concurrent => {
-                        let conflict = LatestConflict::new(
-                            [latest_document.original, new_document].into_iter(),
-                        );
-
-                        DocumentHead::Conflict(conflict?)
-                    }
-                    VectorClockOrder::After => bail!("Can't insert document with older rev"),
-                    VectorClockOrder::Equal => bail!("Can't insert document with the same rev"),
-                }
+                Ok(self)
             }
-            DocumentHead::Conflict(mut latest_conflict) => {
-                match latest_conflict
-                    .get_single_revision()
-                    .compare_vector_clocks(&new_document.rev)
-                {
-                    VectorClockOrder::Before => {
-                        DocumentHead::Document(LatestDocument::new(new_document))
-                    }
-                    VectorClockOrder::Concurrent => {
-                        let inserted = latest_conflict.insert_snapshot(new_document);
-                        ensure!(inserted, "Conflict already contains this document");
-
-                        DocumentHead::Conflict(latest_conflict)
-                    }
-                    VectorClockOrder::After => bail!("Can't insert document with older rev"),
-                    VectorClockOrder::Equal => bail!("Can't insert document with the same rev"),
-                }
-            }
-        };
-
-        Ok(new_head)
+            VectorClockOrder::After => bail!("Can't insert document with older rev"),
+            VectorClockOrder::Equal => bail!("Can't insert document with the same rev"),
+        }
     }
 
     pub fn iter_snapshots<'i>(&'i self) -> Box<dyn Iterator<Item = &'i Document> + 'i> {
-        match self {
-            DocumentHead::Document(latest_document) => {
-                Box::new([&latest_document.original].into_iter())
-            }
-            DocumentHead::Conflict(latest_conflict) => Box::new(latest_conflict.original.iter()),
-        }
+        Box::new(self.original.iter())
     }
 
     pub fn get_single_snapshot(&self) -> &Document {
@@ -387,10 +185,30 @@ impl DocumentHead {
 
 impl fmt::Display for DocumentHead {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            DocumentHead::Document(latest_document) => latest_document.fmt(f),
-            DocumentHead::Conflict(latest_conflict) => latest_conflict.fmt(f),
+        let id = self.get_id();
+
+        if self.is_new_document() {
+            return write!(f, "[DocumentHead {id}, new]");
         }
+
+        if self.is_conflict() {
+            let num_revs = self.original.len();
+
+            if self.is_resolved_conflict() {
+                return write!(
+                    f,
+                    "[DocumentHead conflict: {num_revs} revs of {id}, staged]"
+                );
+            } else {
+                return write!(f, "[DocumentHead conflict: {num_revs} revs of {id}]");
+            }
+        }
+
+        if self.is_staged() {
+            return write!(f, "[DocumentHead {id}, staged]");
+        }
+
+        write!(f, "[DocumentHead {id}]")
     }
 }
 
@@ -416,15 +234,13 @@ mod tests {
             assert!(!head.is_staged());
 
             let doc_c1 = doc_a1.clone().with_rev(json!({ "c": 1 }));
-            assert!(matches!(
-                head.clone().insert_snapshot(doc_c1).unwrap(),
-                DocumentHead::Conflict(_)
-            ));
+            assert!(head.clone().insert_snapshot(doc_c1).unwrap().is_conflict());
 
-            assert!(matches!(
-                head.clone().insert_snapshot(doc_a3.clone()).unwrap(),
-                DocumentHead::Document(_)
-            ));
+            assert!(!head
+                .clone()
+                .insert_snapshot(doc_a3.clone())
+                .unwrap()
+                .is_conflict());
 
             head.modify(doc_a3.clone()).unwrap();
             assert!(head.is_resolved_conflict());
@@ -436,15 +252,17 @@ mod tests {
             assert!(head.is_committed());
             assert!(!head.is_staged());
 
-            assert!(matches!(
-                head.clone().insert_snapshot(doc_a2.clone()).unwrap(),
-                DocumentHead::Conflict(_)
-            ));
+            assert!(head
+                .clone()
+                .insert_snapshot(doc_a2.clone())
+                .unwrap()
+                .is_conflict());
 
-            assert!(matches!(
-                head.clone().insert_snapshot(doc_a3.clone()).unwrap(),
-                DocumentHead::Document(_)
-            ));
+            assert!(!head
+                .clone()
+                .insert_snapshot(doc_a3.clone())
+                .unwrap()
+                .is_conflict());
 
             head.modify(doc_a3.clone()).unwrap();
 
@@ -510,7 +328,7 @@ mod tests {
 
             head = head.commit(new_rev.clone()).unwrap();
             assert!(head.is_committed());
-            assert_eq!(head.get_single_revision(), &new_rev);
+            assert_eq!(head.get_revision(), &new_rev);
         }
 
         {
@@ -520,7 +338,7 @@ mod tests {
 
             head = head.commit(new_rev.clone()).unwrap();
             assert!(head.is_committed());
-            assert_eq!(head.get_single_revision(), &new_rev);
+            assert_eq!(head.get_revision(), &new_rev);
         }
 
         {
@@ -540,7 +358,7 @@ mod tests {
 
             head = head.commit(new_rev.clone()).unwrap();
             assert!(head.is_committed());
-            assert!(head.is_erased());
+            assert!(head.is_original_erased());
         }
     }
 }

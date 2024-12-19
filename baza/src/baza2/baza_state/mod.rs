@@ -20,7 +20,7 @@ use crate::{
 mod document_head;
 mod locks;
 
-pub use document_head::{DocumentHead, LatestConflict, LatestDocument};
+pub use document_head::DocumentHead;
 pub use locks::Locks;
 
 // FIXME where to store computed data? refs, backrefs
@@ -107,7 +107,7 @@ impl BazaState {
         let mut latest_rev_computer = LatestRevComputer::new();
 
         for document in self.iter_documents() {
-            let document_revs = document.get_revision();
+            let document_revs = document.get_original_revisions();
             latest_rev_computer.update(document_revs);
         }
 
@@ -122,7 +122,9 @@ impl BazaState {
     }
 
     fn calculate_next_revision(&self) -> Revision {
-        let all_revs = self.iter_documents().flat_map(|head| head.get_revision());
+        let all_revs = self
+            .iter_documents()
+            .flat_map(|head| head.get_original_revisions());
 
         Revision::compute_next_rev(all_revs, &self.instance_id)
     }
@@ -306,10 +308,7 @@ mod tests {
 
         assert!(state.get_document(&doc_a3.id).unwrap().is_committed());
         assert_eq!(
-            state
-                .get_document(&doc_a3.id)
-                .unwrap()
-                .get_single_revision(),
+            state.get_document(&doc_a3.id).unwrap().get_revision(),
             &new_rev
         );
 

@@ -435,11 +435,7 @@ fn update_state_from_storage<R: Read>(
             "Document {id} must be committed"
         );
 
-        let state_revs = document_head.get_revision();
-        let state_rev = state_revs
-            .iter()
-            .next()
-            .context("state revs must not be empty")?;
+        let state_rev = document_head.get_revision();
 
         if state_rev > index_rev {
             continue;
@@ -450,11 +446,12 @@ fn update_state_from_storage<R: Read>(
             continue;
         }
 
+        let all_state_revs = document_head.get_original_revisions().collect();
         // conflicting revs
         add_keys(
             &mut latest_snapshot_keys,
             id,
-            index_revs.difference(&state_revs),
+            index_revs.difference(&all_state_revs),
         );
     }
 

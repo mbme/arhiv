@@ -14,7 +14,7 @@ use rs_utils::{crypto_key::CryptoKey, file_exists, log, FsTransaction};
 use crate::{
     baza2::baza_storage::create_container_patch,
     entities::{
-        BLOBId, BazaDocumentKey, Document, DocumentLock, DocumentLockKey, Id, InstanceId, Revision,
+        BLOBId, Document, DocumentKey, DocumentLock, DocumentLockKey, Id, InstanceId, Revision,
     },
     schema::DataSchema,
     validator::Validator,
@@ -260,7 +260,7 @@ impl BazaManager {
             .state
             .iter_documents()
             .flat_map(|head| head.iter_snapshots())
-            .filter(|document| !storage.contains(&BazaDocumentKey::for_document(document)))
+            .filter(|document| !storage.contains(&DocumentKey::for_document(document)))
             .collect::<Vec<_>>();
         log::info!("Commit: {} new document snapshots", new_snapshots.len());
 
@@ -394,11 +394,11 @@ impl Drop for BazaManager {
 }
 
 fn add_keys<'r>(
-    keys: &mut HashSet<BazaDocumentKey>,
+    keys: &mut HashSet<DocumentKey>,
     id: &Id,
     revs: impl Iterator<Item = &'r &'r Revision>,
 ) {
-    keys.extend(revs.map(|rev| BazaDocumentKey::new(id.clone(), (*rev).clone())));
+    keys.extend(revs.map(|rev| DocumentKey::new(id.clone(), (*rev).clone())));
 }
 
 fn update_state_from_storage<R: Read>(
@@ -415,7 +415,7 @@ fn update_state_from_storage<R: Read>(
         "state info and storage info must match"
     );
 
-    let mut latest_snapshot_keys: HashSet<BazaDocumentKey> = HashSet::new();
+    let mut latest_snapshot_keys: HashSet<DocumentKey> = HashSet::new();
 
     // compare storage index with state
     for (id, index_revs) in storage.index.as_index_map() {

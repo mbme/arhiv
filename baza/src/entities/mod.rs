@@ -14,7 +14,7 @@ pub use blob::BLOB;
 pub use blob_id::BLOBId;
 pub use document::Document;
 pub use document_data::DocumentData;
-pub use document_key::BazaDocumentKey;
+pub use document_key::DocumentKey;
 pub use document_lock::{DocumentLock, DocumentLockKey};
 pub use document_type::{DocumentType, ERASED_DOCUMENT_TYPE};
 pub use id::Id;

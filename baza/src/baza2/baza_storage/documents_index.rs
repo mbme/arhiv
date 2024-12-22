@@ -10,9 +10,9 @@ use rs_utils::LinesIndex;
 
 use crate::entities::{Id, LatestRevComputer, Revision};
 
-use super::BazaDocumentKey;
+use super::DocumentKey;
 
-pub struct DocumentsIndex(OrderSet<BazaDocumentKey>);
+pub struct DocumentsIndex(OrderSet<DocumentKey>);
 
 pub type DocumentsIndexMap<'i> = HashMap<&'i Id, HashSet<&'i Revision>>;
 
@@ -21,7 +21,7 @@ impl DocumentsIndex {
         let documents_index = index
             .iter()
             .skip(1) // skip info file
-            .map(BazaDocumentKey::parse)
+            .map(DocumentKey::parse)
             .collect::<Result<OrderSet<_>>>()?;
 
         Ok(DocumentsIndex(documents_index))
@@ -35,13 +35,11 @@ impl DocumentsIndex {
         LinesIndex::new(index.into_iter())
     }
 
-    pub fn from_document_keys_refs<'k>(
-        items: impl Iterator<Item = &'k BazaDocumentKey>,
-    ) -> LinesIndex {
+    pub fn from_document_keys_refs<'k>(items: impl Iterator<Item = &'k DocumentKey>) -> LinesIndex {
         Self::from_string_keys(items.map(|key| key.serialize()))
     }
 
-    pub fn from_document_keys(items: impl Iterator<Item = BazaDocumentKey>) -> LinesIndex {
+    pub fn from_document_keys(items: impl Iterator<Item = DocumentKey>) -> LinesIndex {
         Self::from_string_keys(items.map(|key| key.serialize()))
     }
 
@@ -49,7 +47,7 @@ impl DocumentsIndex {
         self.0.len()
     }
 
-    pub fn append_keys(&mut self, more_keys: Vec<BazaDocumentKey>) {
+    pub fn append_keys(&mut self, more_keys: Vec<DocumentKey>) {
         self.0.extend(more_keys);
     }
 
@@ -77,11 +75,11 @@ impl DocumentsIndex {
         map
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &BazaDocumentKey> {
+    pub fn iter(&self) -> impl Iterator<Item = &DocumentKey> {
         self.0.iter()
     }
 
-    pub fn contains(&self, key: &BazaDocumentKey) -> bool {
+    pub fn contains(&self, key: &DocumentKey) -> bool {
         self.0.contains(key)
     }
 }

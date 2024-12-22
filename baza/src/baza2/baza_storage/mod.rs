@@ -14,7 +14,7 @@ use rs_utils::{
     C1GzReader, C1GzWriter, ContainerPatch, ContainerReader, ContainerWriter,
 };
 
-use crate::entities::{BazaDocumentKey, Document};
+use crate::entities::{Document, DocumentKey};
 
 use super::BazaInfo;
 
@@ -121,7 +121,7 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
         Ok(())
     }
 
-    pub fn next_parsed(&mut self) -> Option<Result<(BazaDocumentKey, Document)>> {
+    pub fn next_parsed(&mut self) -> Option<Result<(DocumentKey, Document)>> {
         let value = self.next()?;
 
         let new_value = value.and_then(|(key, raw_document)| {
@@ -147,7 +147,7 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
         Ok(all_items)
     }
 
-    pub fn contains(&self, key: &BazaDocumentKey) -> bool {
+    pub fn contains(&self, key: &DocumentKey) -> bool {
         self.index.contains(key)
     }
 }
@@ -173,7 +173,7 @@ impl<'i> BazaFileStorage<'i> {
 }
 
 impl<'i, R: Read + 'i> Iterator for BazaStorage<'i, R> {
-    type Item = Result<(BazaDocumentKey, String)>;
+    type Item = Result<(DocumentKey, String)>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Err(err) = self.read_info_if_necessary() {
@@ -184,7 +184,7 @@ impl<'i, R: Read + 'i> Iterator for BazaStorage<'i, R> {
 
         match line {
             Ok((ref key_raw, line)) => {
-                let key = BazaDocumentKey::parse(key_raw).expect("must be valid document key");
+                let key = DocumentKey::parse(key_raw).expect("must be valid document key");
 
                 Some(Ok((key, line)))
             }
@@ -198,7 +198,7 @@ pub fn create_container_patch<'d>(
 ) -> Result<ContainerPatch> {
     let mut patch = ContainerPatch::new();
     for new_document in documents {
-        let key = BazaDocumentKey::for_document(new_document).serialize();
+        let key = DocumentKey::for_document(new_document).serialize();
         ensure!(
             !patch.contains_key(&key),
             "duplicate new document {}",
@@ -224,7 +224,7 @@ pub fn create_storage(
     let mut container_writer = ContainerWriter::new(c1writer);
 
     let index =
-        DocumentsIndex::from_document_keys(new_documents.iter().map(BazaDocumentKey::for_document));
+        DocumentsIndex::from_document_keys(new_documents.iter().map(DocumentKey::for_document));
 
     container_writer.write_index(&index)?;
 
@@ -287,7 +287,7 @@ pub fn merge_storages(
     let mut keys_per_storage = storages
         .into_iter()
         .map(|s| {
-            let keys = HashSet::<BazaDocumentKey>::from_iter(s.index.iter().cloned());
+            let keys = HashSet::<DocumentKey>::from_iter(s.index.iter().cloned());
 
             (s, keys)
         })

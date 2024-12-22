@@ -1,6 +1,7 @@
 use std::fmt;
 
 use anyhow::{anyhow, Context, Result};
+use serde::{de::Visitor, Deserialize, Serialize};
 
 use crate::entities::{Document, Id, Revision};
 
@@ -37,6 +38,65 @@ impl BazaDocumentKey {
 
 impl fmt::Debug for BazaDocumentKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_fmt(format_args!("[BazaDocumentKey {}]", &self.serialize()))
+        write!(f, "[BazaDocumentKey {}]", self.serialize())
+    }
+}
+
+impl Serialize for BazaDocumentKey {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let value = self.serialize();
+
+        serializer.serialize_str(&value)
+    }
+}
+
+struct BazaDocumentKeyVisitor;
+
+impl<'de> Visitor<'de> for BazaDocumentKeyVisitor {
+    type Value = BazaDocumentKey;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a string with serialized BazaDocumentKey")
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        BazaDocumentKey::parse(value).map_err(E::custom)
+    }
+}
+
+impl<'de> Deserialize<'de> for BazaDocumentKey {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_str(BazaDocumentKeyVisitor)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use crate::entities::{Id, Revision};
+
+    use super::BazaDocumentKey;
+
+    #[test]
+    fn test_serialization() {
+        let id = Id::from("123321");
+        let revision = Revision::from_value(json!({"a": 1, "b": 2 })).unwrap();
+
+        let key = BazaDocumentKey::new(id.clone(), revision.clone());
+        let serialized_key = key.serialize();
+        assert_eq!(&serialized_key, "123321 a:1-b:2");
+
+        let parsed_key = BazaDocumentKey::parse(&serialized_key).unwrap();
+        assert_eq!(parsed_key, key);
     }
 }

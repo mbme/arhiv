@@ -1,4 +1,3 @@
-mod document_key;
 mod documents_index;
 
 use std::{
@@ -15,11 +14,10 @@ use rs_utils::{
     C1GzReader, C1GzWriter, ContainerPatch, ContainerReader, ContainerWriter,
 };
 
-use crate::entities::Document;
+use crate::entities::{BazaDocumentKey, Document};
 
 use super::BazaInfo;
 
-pub use document_key::BazaDocumentKey;
 pub use documents_index::DocumentsIndex;
 
 type LinesIter<'i> = Box<dyn Iterator<Item = Result<(String, String)>> + 'i>;

@@ -13,7 +13,9 @@ use rs_utils::{crypto_key::CryptoKey, file_exists, log, FsTransaction};
 
 use crate::{
     baza2::baza_storage::create_container_patch,
-    entities::{BLOBId, Document, DocumentLock, DocumentLockKey, Id, InstanceId, Revision},
+    entities::{
+        BLOBId, BazaDocumentKey, Document, DocumentLock, DocumentLockKey, Id, InstanceId, Revision,
+    },
     schema::DataSchema,
     validator::Validator,
     DocumentExpert,
@@ -24,8 +26,7 @@ use baza_paths::BazaPaths;
 use super::{
     baza_state::Locks,
     baza_storage::{
-        create_empty_storage_file, merge_storages_to_file, BazaDocumentKey, BazaFileStorage,
-        STORAGE_VERSION,
+        create_empty_storage_file, merge_storages_to_file, BazaFileStorage, STORAGE_VERSION,
     },
     BazaInfo, BazaState, BazaStorage, DocumentHead,
 };

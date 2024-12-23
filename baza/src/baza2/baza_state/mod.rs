@@ -15,6 +15,7 @@ use rs_utils::{
 use crate::{
     baza2::BazaInfo,
     entities::{Document, DocumentLockKey, Id, InstanceId, LatestRevComputer, Revision},
+    schema::DataSchema,
 };
 
 mod document_head;
@@ -35,6 +36,7 @@ struct BazaStateFile {
 // FIXME events?
 pub struct BazaState {
     file: BazaStateFile,
+    schema: DataSchema,
     modified: bool,
 }
 
@@ -42,6 +44,7 @@ impl BazaState {
     pub fn new(
         instance_id: InstanceId,
         info: BazaInfo,
+        schema: DataSchema,
         documents: HashMap<Id, DocumentHead>,
     ) -> Self {
         Self {
@@ -51,6 +54,7 @@ impl BazaState {
                 locks: HashMap::new(),
                 instance_id,
             },
+            schema,
             modified: false,
         }
     }
@@ -60,11 +64,12 @@ impl BazaState {
         Self::new(
             InstanceId::from_string("test"),
             BazaInfo::new_test_info(),
+            DataSchema::new_test_schema(),
             HashMap::new(),
         )
     }
 
-    pub fn read(reader: impl BufRead, key: CryptoKey) -> Result<Self> {
+    pub fn read(reader: impl BufRead, key: CryptoKey, schema: DataSchema) -> Result<Self> {
         let c1_key = Confidential1Key::new(key);
         let c1_reader = Confidential1Reader::new(reader, &c1_key)?;
 
@@ -72,13 +77,14 @@ impl BazaState {
 
         Ok(Self {
             file,
+            schema,
             modified: false,
         })
     }
 
-    pub fn read_file(file: &str, key: CryptoKey) -> Result<Self> {
+    pub fn read_file(file: &str, key: CryptoKey, schema: DataSchema) -> Result<Self> {
         let state_reader = create_file_reader(file)?;
-        BazaState::read(state_reader, key)
+        BazaState::read(state_reader, key, schema)
     }
 
     pub fn write(&mut self, writer: impl Write, key: CryptoKey) -> Result<()> {
@@ -111,6 +117,10 @@ impl BazaState {
 
     pub fn get_info(&self) -> &BazaInfo {
         &self.file.info
+    }
+
+    pub fn get_schema(&self) -> &DataSchema {
+        &self.schema
     }
 
     pub fn get_latest_revision(&self) -> HashSet<&Revision> {
@@ -355,7 +365,7 @@ mod tests {
         assert!(!state.is_modified());
         data.set_position(0);
 
-        let state1 = BazaState::read(&mut data, key.clone()).unwrap();
+        let state1 = BazaState::read(&mut data, key.clone(), state.schema).unwrap();
 
         assert_eq!(state.file, state1.file);
     }

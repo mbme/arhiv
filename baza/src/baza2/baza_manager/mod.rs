@@ -76,7 +76,6 @@ pub struct BazaManager {
     paths: BazaPaths,
     key: CryptoKey,
     info: BazaInfo,
-    schema: DataSchema,
 }
 
 impl BazaManager {
@@ -96,7 +95,7 @@ impl BazaManager {
         };
 
         let state = if file_exists(&paths.state_file)? {
-            let state = BazaState::read_file(&paths.state_file, key.clone())?;
+            let state = BazaState::read_file(&paths.state_file, key.clone(), schema)?;
 
             ensure!(state.get_info() == &info, "State info mismatch");
 
@@ -105,7 +104,8 @@ impl BazaManager {
             state
         } else {
             // create state if necessary
-            let mut state = BazaState::new(InstanceId::generate(), info.clone(), HashMap::new());
+            let mut state =
+                BazaState::new(InstanceId::generate(), info.clone(), schema, HashMap::new());
             state.write_to_file(&paths.state_file, key.clone())?;
 
             log::info!("Created new state file in {}", paths.state_file);
@@ -128,7 +128,6 @@ impl BazaManager {
             key,
             info,
             paths,
-            schema,
         };
 
         baza_manager.merge_storages()?;
@@ -148,7 +147,7 @@ impl BazaManager {
     }
 
     pub fn get_schema(&self) -> &DataSchema {
-        &self.schema
+        self.state.get_schema()
     }
 
     pub fn list_document_locks(&self) -> &Locks {
@@ -306,7 +305,7 @@ impl BazaManager {
     }
 
     fn collect_new_blobs(&self, new_snapshots: &[&Document]) -> Result<HashSet<BLOBId>> {
-        let document_expert = DocumentExpert::new(&self.schema);
+        let document_expert = DocumentExpert::new(self.get_schema());
 
         let mut new_blobs = HashSet::new();
 

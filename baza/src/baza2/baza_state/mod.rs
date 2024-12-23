@@ -23,16 +23,18 @@ mod locks;
 pub use document_head::DocumentHead;
 pub use locks::Locks;
 
-// FIXME where to store computed data? refs, backrefs
-// FIXME events?
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct BazaState {
+struct BazaStateFile {
     instance_id: InstanceId,
     info: BazaInfo,
     documents: HashMap<Id, DocumentHead>,
     locks: Locks,
+}
 
-    #[serde(skip)]
+// FIXME where to store computed data? refs, backrefs
+// FIXME events?
+pub struct BazaState {
+    file: BazaStateFile,
     modified: bool,
 }
 
@@ -43,10 +45,12 @@ impl BazaState {
         documents: HashMap<Id, DocumentHead>,
     ) -> Self {
         Self {
-            info,
-            documents,
-            locks: HashMap::new(),
-            instance_id,
+            file: BazaStateFile {
+                info,
+                documents,
+                locks: HashMap::new(),
+                instance_id,
+            },
             modified: false,
         }
     }
@@ -64,7 +68,12 @@ impl BazaState {
         let c1_key = Confidential1Key::new(key);
         let c1_reader = Confidential1Reader::new(reader, &c1_key)?;
 
-        serde_json::from_reader(c1_reader).context("Failed to parse BazaState")
+        let file = serde_json::from_reader(c1_reader).context("Failed to parse BazaStateFile")?;
+
+        Ok(Self {
+            file,
+            modified: false,
+        })
     }
 
     pub fn read_file(file: &str, key: CryptoKey) -> Result<Self> {
@@ -76,7 +85,8 @@ impl BazaState {
         let c1_key = Confidential1Key::new(key);
         let mut c1_writer = Confidential1Writer::new(writer, &c1_key)?;
 
-        serde_json::to_writer(&mut c1_writer, &self).context("Failed to serialize BazaState")?;
+        serde_json::to_writer(&mut c1_writer, &self.file)
+            .context("Failed to serialize BazaStateFile")?;
 
         c1_writer.finish()?;
 
@@ -100,7 +110,7 @@ impl BazaState {
     }
 
     pub fn get_info(&self) -> &BazaInfo {
-        &self.info
+        &self.file.info
     }
 
     pub fn get_latest_revision(&self) -> HashSet<&Revision> {
@@ -126,11 +136,11 @@ impl BazaState {
             .iter_documents()
             .flat_map(|head| head.get_original_revisions());
 
-        Revision::compute_next_rev(all_revs, &self.instance_id)
+        Revision::compute_next_rev(all_revs, &self.file.instance_id)
     }
 
     pub fn get_document(&self, id: &Id) -> Option<&DocumentHead> {
-        self.documents.get(id)
+        self.file.documents.get(id)
     }
 
     pub fn stage_document(
@@ -142,7 +152,7 @@ impl BazaState {
 
         self.check_document_lock(&id, lock_key)?;
 
-        let current_value = self.documents.remove(&id);
+        let current_value = self.file.documents.remove(&id);
 
         document.stage();
 
@@ -153,7 +163,7 @@ impl BazaState {
             DocumentHead::new(document)
         };
 
-        self.documents.insert(id, updated_document);
+        self.file.documents.insert(id, updated_document);
         self.modified = true;
 
         Ok(())
@@ -162,7 +172,7 @@ impl BazaState {
     pub(super) fn insert_snapshot(&mut self, document: Document) -> Result<()> {
         let id = document.id.clone();
 
-        let current_value = self.documents.remove(&id);
+        let current_value = self.file.documents.remove(&id);
 
         let updated_document = if let Some(document_head) = current_value {
             document_head.insert_snapshot(document)?
@@ -170,7 +180,7 @@ impl BazaState {
             DocumentHead::new(document)
         };
 
-        self.documents.insert(id, updated_document);
+        self.file.documents.insert(id, updated_document);
         self.modified = true;
 
         Ok(())
@@ -185,7 +195,7 @@ impl BazaState {
     }
 
     pub fn iter_documents(&self) -> impl Iterator<Item = &DocumentHead> {
-        self.documents.values()
+        self.file.documents.values()
     }
 
     pub fn iter_snapshots(&self) -> impl Iterator<Item = &Document> {
@@ -204,6 +214,7 @@ impl BazaState {
 
     pub fn reset_all_documents(&mut self) -> Result<()> {
         let ids = self
+            .file
             .documents
             .iter()
             .filter_map(|(id, document)| document.is_staged().then_some(id))
@@ -221,12 +232,13 @@ impl BazaState {
         self.check_document_lock(id, lock_key)?;
 
         let (id, document) = self
+            .file
             .documents
             .remove_entry(id)
             .context("Document doesn't exist")?;
 
         if let Some(reset_document) = document.reset() {
-            self.documents.insert(id, reset_document);
+            self.file.documents.insert(id, reset_document);
             self.modified = true;
         }
 
@@ -237,6 +249,7 @@ impl BazaState {
         ensure!(!self.has_document_locks(), "Some documents are locked");
 
         let ids = self
+            .file
             .documents
             .iter()
             .filter_map(|(id, document)| document.is_staged().then_some(id))
@@ -248,11 +261,15 @@ impl BazaState {
         let new_rev = self.calculate_next_revision();
 
         for id in ids {
-            let (id, document_head) = self.documents.remove_entry(&id).expect("entry must exist");
+            let (id, document_head) = self
+                .file
+                .documents
+                .remove_entry(&id)
+                .expect("entry must exist");
 
             let new_head = document_head.commit(new_rev.clone())?;
 
-            self.documents.insert(id, new_head);
+            self.file.documents.insert(id, new_head);
         }
 
         self.modified = true;
@@ -340,7 +357,7 @@ mod tests {
 
         let state1 = BazaState::read(&mut data, key.clone()).unwrap();
 
-        assert_eq!(state, state1);
+        assert_eq!(state.file, state1.file);
     }
 
     #[test]

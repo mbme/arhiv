@@ -10,15 +10,15 @@ pub type Locks = HashMap<Id, DocumentLock>;
 
 impl BazaState {
     pub fn list_document_locks(&self) -> &Locks {
-        &self.locks
+        &self.file.locks
     }
 
     pub fn has_document_locks(&self) -> bool {
-        !self.locks.is_empty()
+        !self.file.locks.is_empty()
     }
 
     pub fn get_document_lock(&self, id: &Id) -> Option<&DocumentLock> {
-        self.locks.get(id)
+        self.file.locks.get(id)
     }
 
     pub fn is_document_locked(&self, id: &Id) -> bool {
@@ -62,14 +62,18 @@ impl BazaState {
 
         let lock = DocumentLock::new(reason.clone());
 
-        self.locks.insert(id.clone(), lock);
+        self.file.locks.insert(id.clone(), lock);
         self.modified = true;
 
         Ok(self.get_document_lock(id).expect("lock is present"))
     }
 
     pub fn unlock_document(&mut self, id: &Id, key: &DocumentLockKey) -> Result<()> {
-        let lock = self.locks.get(id).context("Expected locked document")?;
+        let lock = self
+            .file
+            .locks
+            .get(id)
+            .context("Expected locked document")?;
 
         ensure!(lock.is_valid_key(key), "invalid lock key");
 
@@ -79,7 +83,10 @@ impl BazaState {
     }
 
     pub fn unlock_document_without_key(&mut self, id: &Id) -> Result<()> {
-        self.locks.remove(id).context("Expected locked document")?;
+        self.file
+            .locks
+            .remove(id)
+            .context("Expected locked document")?;
         self.modified = true;
 
         Ok(())

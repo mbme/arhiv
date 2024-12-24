@@ -249,8 +249,9 @@ impl BazaState {
 
         if let Some(reset_document) = document.reset() {
             self.file.documents.insert(id, reset_document);
-            self.modified = true;
         }
+
+        self.modified = true;
 
         Ok(())
     }
@@ -404,5 +405,26 @@ mod tests {
         state.stage_document(doc1.clone(), &Some(key)).unwrap();
 
         assert!(state.commit().is_err());
+    }
+
+    #[test]
+    fn test_reset_document() {
+        let mut state = BazaState::new_test_state();
+
+        let doc1 = new_empty_document();
+
+        state.stage_document(doc1.clone(), &None).unwrap();
+        state.modified = false;
+
+        state.reset_document(&doc1.id, &None).unwrap();
+        assert!(state.is_modified());
+
+        let doc2 = new_empty_document().with_rev(json!({ "a": 1 }));
+        state.insert_snapshot(doc2.clone()).unwrap();
+        state.stage_document(doc2.clone(), &None).unwrap();
+
+        state.modified = false;
+        state.reset_document(&doc2.id, &None).unwrap();
+        assert!(state.is_modified());
     }
 }

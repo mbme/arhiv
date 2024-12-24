@@ -96,7 +96,7 @@ impl<'m> ValidableDB for &'m BazaManager {
     fn get_document(&self, id: &Id) -> Result<Option<Document>> {
         let document = (self as &BazaManager)
             .get_document(id)
-            .map(|head| head.get_single_snapshot().clone()); // FIXME remove clone
+            .map(|head| head.get_single_document().clone()); // FIXME remove clone
 
         Ok(document)
     }

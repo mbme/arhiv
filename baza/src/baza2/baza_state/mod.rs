@@ -208,10 +208,6 @@ impl BazaState {
         self.file.documents.values()
     }
 
-    pub fn iter_snapshots(&self) -> impl Iterator<Item = &Document> {
-        self.iter_documents().flat_map(|head| head.iter_snapshots())
-    }
-
     pub fn has_staged_documents(&self) -> bool {
         self.iter_documents()
             .any(|document_head| document_head.is_staged())

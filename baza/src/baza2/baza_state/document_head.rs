@@ -172,12 +172,16 @@ impl DocumentHead {
         }
     }
 
-    pub fn iter_snapshots<'i>(&'i self) -> Box<dyn Iterator<Item = &'i Document> + 'i> {
-        Box::new(self.original.iter())
+    pub fn iter_original_snapshots(&self) -> impl Iterator<Item = &Document> {
+        self.original.iter()
     }
 
-    pub fn get_single_snapshot(&self) -> &Document {
-        self.iter_snapshots()
+    pub fn iter_all_snapshots(&self) -> impl Iterator<Item = &Document> {
+        self.staged.iter().chain(self.original.iter())
+    }
+
+    pub fn get_single_document(&self) -> &Document {
+        self.iter_all_snapshots()
             .next()
             .expect("snapshots must not be empty")
     }
@@ -359,6 +363,30 @@ mod tests {
             head = head.commit(new_rev.clone()).unwrap();
             assert!(head.is_committed());
             assert!(head.is_original_erased());
+        }
+    }
+
+    #[test]
+    fn test_iter_snapshots() {
+        let doc_a1 = new_document(json!({})).with_rev(json!({ "a": 1 }));
+        let doc_a2 = doc_a1.clone().with_rev(json!({ "b": 1 }));
+        let doc_a3 = doc_a1.clone().with_rev(json!({ "a": 1, "b": 1, "c": 1 }));
+
+        {
+            let mut head = DocumentHead::new(doc_a1.clone());
+            assert_eq!(head.iter_all_snapshots().count(), 1);
+
+            head.modify(doc_a2.clone()).unwrap();
+            assert_eq!(head.iter_all_snapshots().count(), 2);
+        }
+
+        {
+            let mut head =
+                DocumentHead::new_conflict([doc_a1.clone(), doc_a2.clone()].into_iter()).unwrap();
+            assert_eq!(head.iter_all_snapshots().count(), 2);
+
+            head.modify(doc_a3.clone()).unwrap();
+            assert_eq!(head.iter_all_snapshots().count(), 3);
         }
     }
 }

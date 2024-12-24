@@ -258,7 +258,7 @@ impl BazaManager {
         let new_snapshots = self
             .state
             .iter_documents()
-            .flat_map(|head| head.iter_snapshots())
+            .flat_map(|head| head.iter_original_snapshots())
             .filter(|document| !storage.contains(&DocumentKey::for_document(document)))
             .collect::<Vec<_>>();
         log::info!("Commit: {} new document snapshots", new_snapshots.len());

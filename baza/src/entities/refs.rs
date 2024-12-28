@@ -21,6 +21,10 @@ impl Refs {
     pub fn get_all_document_refs(&self) -> Vec<Id> {
         self.collection.union(&self.documents).cloned().collect()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.documents.is_empty() && self.collection.is_empty() && self.blobs.is_empty()
+    }
 }
 
 impl fmt::Display for Refs {

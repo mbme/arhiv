@@ -3,7 +3,7 @@ use std::{
     fmt,
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use ordermap::OrderSet;
 
 use rs_utils::LinesIndex;
@@ -22,7 +22,8 @@ impl DocumentsIndex {
             .iter()
             .skip(1) // skip info file
             .map(DocumentKey::parse)
-            .collect::<Result<OrderSet<_>>>()?;
+            .collect::<Result<OrderSet<_>>>()
+            .context("Failed to parse DocumentKey")?;
 
         Ok(DocumentsIndex(documents_index))
     }

@@ -5,7 +5,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use rs_utils::{now, Timestamp};
 
-use super::{DocumentData, DocumentType, Id, Revision, ERASED_DOCUMENT_TYPE};
+use super::{DocumentData, DocumentKey, DocumentType, Id, Revision, ERASED_DOCUMENT_TYPE};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 #[serde(deny_unknown_fields)]
@@ -34,6 +34,11 @@ impl Document {
     #[must_use]
     pub fn new(document_type: DocumentType) -> Self {
         Document::new_with_data(document_type, DocumentData::new())
+    }
+
+    #[must_use]
+    pub fn create_key(&self) -> DocumentKey {
+        DocumentKey::for_document(self)
     }
 
     #[must_use]

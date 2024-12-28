@@ -98,7 +98,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extracts_refs_on_reset() {
+    fn test_updates_refs_on_reset() {
         let mut state = BazaState::new_test_state();
         let doc1 = new_empty_document().with_rev(json!({ "a": 1 }));
         let doc2 = new_empty_document()
@@ -116,5 +116,39 @@ mod tests {
 
         state.reset_document(&doc2.id, &None).unwrap();
         assert!(!state.get_document_refs(&doc2.id).unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_updates_refs_on_commit() {
+        let mut state = BazaState::new_test_state();
+
+        let doc1 = new_empty_document().with_rev(json!({ "a": 1 }));
+        let doc2 = new_empty_document().with_rev(json!({ "a": 1 }));
+        let doc3 = new_empty_document()
+            .with_rev(json!({ "a": 1 }))
+            .with_data(json!({"ref": doc1.id}));
+        let doc3_1 = new_empty_document()
+            .with_id(doc3.id.clone())
+            .with_data(json!({"ref": doc2.id}));
+
+        state.insert_snapshot(doc1.clone()).unwrap();
+        state.insert_snapshot(doc2.clone()).unwrap();
+        state.insert_snapshot(doc3.clone()).unwrap();
+
+        state.stage_document(doc3_1.clone(), &None).unwrap();
+        assert!(state
+            .get_document_snapshot_refs(&doc3.create_key())
+            .is_some());
+        assert!(state
+            .get_document_snapshot_refs(&doc3_1.create_key())
+            .is_some());
+
+        state.commit().unwrap();
+        assert!(state
+            .get_document_snapshot_refs(&doc3.create_key())
+            .is_none());
+        assert!(state
+            .get_document_refs(&doc3.id)
+            .is_some_and(|refs| !refs.is_empty()));
     }
 }

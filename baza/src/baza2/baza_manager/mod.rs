@@ -18,7 +18,6 @@ use crate::{
     },
     schema::DataSchema,
     validator::Validator,
-    DocumentExpert,
 };
 
 use baza_paths::BazaPaths;
@@ -305,25 +304,25 @@ impl BazaManager {
     }
 
     fn collect_new_blobs(&self, new_snapshots: &[&Document]) -> Result<HashSet<BLOBId>> {
-        let document_expert = DocumentExpert::new(self.get_schema());
-
         let mut new_blobs = HashSet::new();
 
         for document in new_snapshots {
-            let blobs = document_expert
-                .extract_refs(&document.document_type, &document.data)?
-                .blobs;
+            let key = document.create_key();
+            let refs = self
+                .state
+                .get_document_snapshot_refs(&key)
+                .context(anyhow!("Can't find document refs for {key:?}"))?;
 
-            for blob_id in blobs {
-                if new_blobs.contains(&blob_id) {
+            for blob_id in &refs.blobs {
+                if new_blobs.contains(blob_id) {
                     continue;
                 }
 
-                if self.paths.storage_blob_exists(&blob_id)? {
+                if self.paths.storage_blob_exists(blob_id)? {
                     continue;
                 }
 
-                new_blobs.insert(blob_id);
+                new_blobs.insert(blob_id.clone());
             }
         }
 

@@ -3,7 +3,7 @@ use std::{
     collections::{BTreeMap, HashSet},
 };
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -171,25 +171,33 @@ impl Revision {
     }
 
     pub fn from_file_name(value: &str) -> Result<Self> {
+        if value.trim().is_empty() {
+            return Ok(Revision::initial());
+        }
+
         let map = value
             .split("-")
             .map(|segment| {
                 let mut parts = segment.split(":");
 
-                let id = parts
-                    .next()
-                    .context("Failed to extract id from the segment")?;
-                let version = parts
-                    .next()
-                    .context("Failed to extract version from the segment")?;
-                ensure!(parts.next().is_none(), "Got invalid segment {segment}");
+                let id = parts.next().context(anyhow!(
+                    "Failed to extract instance id from revision segment {segment}"
+                ))?;
+                let version = parts.next().context(anyhow!(
+                    "Failed to extract version from revision segment {segment}"
+                ))?;
+                ensure!(
+                    parts.next().is_none(),
+                    "Got invalid revision segment {segment}"
+                );
 
                 let id: InstanceId = id.try_into().context("Failed to parse instance id")?;
                 let version: u32 = version.parse().context("Failed to parse version")?;
 
                 Ok((id, version))
             })
-            .collect::<Result<_>>()?;
+            .collect::<Result<_>>()
+            .context(anyhow!("Failed to parse revision from file name {value}"))?;
 
         Ok(Revision(map))
     }
@@ -598,9 +606,11 @@ mod tests {
     #[test]
     fn test_revision_from_file_name() -> Result<()> {
         {
+            let rev0 = Revision::initial();
             let rev1 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
             let rev2 = Revision::from_value(json!({ "b": 2, "a": 1 }))?;
 
+            assert_eq!(Revision::from_file_name(&rev0.to_file_name())?, rev0);
             assert_eq!(Revision::from_file_name(&rev1.to_file_name())?, rev1);
             assert_eq!(Revision::from_file_name(&rev2.to_file_name())?, rev2);
         }

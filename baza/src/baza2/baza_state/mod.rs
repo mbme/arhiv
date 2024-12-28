@@ -20,9 +20,11 @@ use crate::{
 
 mod document_head;
 mod locks;
+mod refs;
 
 pub use document_head::DocumentHead;
 pub use locks::Locks;
+use refs::BazaRefsState;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 struct BazaStateFile {
@@ -30,9 +32,9 @@ struct BazaStateFile {
     info: BazaInfo,
     documents: HashMap<Id, DocumentHead>,
     locks: Locks,
+    refs: BazaRefsState,
 }
 
-// FIXME where to store computed data? refs, backrefs
 // FIXME events?
 pub struct BazaState {
     file: BazaStateFile,
@@ -46,17 +48,24 @@ impl BazaState {
         info: BazaInfo,
         schema: DataSchema,
         documents: HashMap<Id, DocumentHead>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self> {
+        let is_empty = documents.is_empty();
+
+        let mut baza_state = Self {
             file: BazaStateFile {
                 info,
                 documents,
                 locks: HashMap::new(),
+                refs: HashMap::new(),
                 instance_id,
             },
             schema,
-            modified: false,
-        }
+            modified: !is_empty,
+        };
+
+        baza_state.update_all_documents_refs()?;
+
+        Ok(baza_state)
     }
 
     #[cfg(test)]
@@ -67,6 +76,7 @@ impl BazaState {
             DataSchema::new_test_schema(),
             HashMap::new(),
         )
+        .expect("must create test state")
     }
 
     pub fn read(reader: impl BufRead, key: CryptoKey, schema: DataSchema) -> Result<Self> {
@@ -166,31 +176,35 @@ impl BazaState {
 
         document.stage();
 
-        let updated_document = if let Some(mut document_head) = current_value {
+        let updated_head = if let Some(mut document_head) = current_value {
             document_head.modify(document)?;
             document_head
         } else {
             DocumentHead::new(document)
         };
 
-        self.file.documents.insert(id, updated_document);
+        self.update_document_refs(&updated_head)?;
+        self.file.documents.insert(id, updated_head);
         self.modified = true;
 
         Ok(())
     }
 
     pub(super) fn insert_snapshot(&mut self, document: Document) -> Result<()> {
+        ensure!(!document.is_staged(), "Can't insert staged document");
+
         let id = document.id.clone();
 
         let current_value = self.file.documents.remove(&id);
 
-        let updated_document = if let Some(document_head) = current_value {
+        let updated_head = if let Some(document_head) = current_value {
             document_head.insert_snapshot(document)?
         } else {
             DocumentHead::new(document)
         };
 
-        self.file.documents.insert(id, updated_document);
+        self.update_document_refs(&updated_head)?;
+        self.file.documents.insert(id, updated_head);
         self.modified = true;
 
         Ok(())
@@ -242,9 +256,11 @@ impl BazaState {
             .documents
             .remove_entry(id)
             .context("Document doesn't exist")?;
+        self.remove_document_refs(&id);
 
-        if let Some(reset_document) = document.reset() {
-            self.file.documents.insert(id, reset_document);
+        if let Some(updated_head) = document.reset() {
+            self.update_document_refs(&updated_head)?;
+            self.file.documents.insert(id, updated_head);
         }
 
         self.modified = true;
@@ -274,9 +290,10 @@ impl BazaState {
                 .remove_entry(&id)
                 .expect("entry must exist");
 
-            let new_head = document_head.commit(new_rev.clone())?;
+            let updated_head = document_head.commit(new_rev.clone())?;
 
-            self.file.documents.insert(id, new_head);
+            self.update_document_refs(&updated_head)?;
+            self.file.documents.insert(id, updated_head);
         }
 
         self.modified = true;

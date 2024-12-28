@@ -105,7 +105,7 @@ impl BazaManager {
         } else {
             // create state if necessary
             let mut state =
-                BazaState::new(InstanceId::generate(), info.clone(), schema, HashMap::new());
+                BazaState::new(InstanceId::generate(), info.clone(), schema, HashMap::new())?;
             state.write_to_file(&paths.state_file, key.clone())?;
 
             log::info!("Created new state file in {}", paths.state_file);

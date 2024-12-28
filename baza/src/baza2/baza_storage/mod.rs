@@ -51,7 +51,8 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
         let c1gz_reader = C1GzReader::create(reader, &c1_key)?;
         let reader = ContainerReader::init(c1gz_reader)?;
 
-        let index = DocumentsIndex::parse(reader.get_index())?;
+        let index =
+            DocumentsIndex::parse(reader.get_index()).context("Failed to parse DocumentsIndex")?;
         let inner = ReaderOrLinesIter::Reader(reader);
 
         Ok(BazaStorage {

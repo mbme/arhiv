@@ -3,7 +3,7 @@ use std::{collections::HashSet, fmt};
 use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::entities::{Document, Id, Revision, VectorClockOrder};
+use crate::entities::{Document, DocumentKey, Id, Revision, VectorClockOrder};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct DocumentHead {
@@ -75,6 +75,10 @@ impl DocumentHead {
 
     pub fn get_original_revisions(&self) -> impl Iterator<Item = &Revision> {
         self.original.iter().map(|doc| &doc.rev)
+    }
+
+    pub fn create_key(&self) -> DocumentKey {
+        DocumentKey::new(self.get_id().clone(), self.get_revision().clone())
     }
 
     pub fn is_committed(&self) -> bool {

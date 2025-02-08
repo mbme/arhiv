@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use anyhow::Result;
 
 use crate::{
-    entities::{Document, DocumentKey, Id, Refs},
+    entities::{BLOBId, Document, DocumentKey, Id, Refs},
     DocumentExpert,
 };
 
@@ -60,6 +60,16 @@ impl BazaState {
         let key = document.create_key();
 
         self.get_document_snapshot_refs(&key)
+    }
+
+    pub fn get_all_blob_refs(&self) -> HashSet<BLOBId> {
+        let mut blob_refs = HashSet::new();
+
+        for refs in self.file.refs.values() {
+            blob_refs.extend(refs.blobs.iter().cloned());
+        }
+
+        blob_refs
     }
 }
 

@@ -130,7 +130,11 @@ impl BazaManager {
         };
 
         baza_manager.merge_storages()?;
-        baza_manager.update_state_from_storage()?;
+
+        if !baza_manager.has_staged_documents() {
+            baza_manager.update_state_from_storage()?;
+            baza_manager.remove_unused_storage_blobs()?;
+        }
 
         Ok(baza_manager)
     }
@@ -231,9 +235,7 @@ impl BazaManager {
 
         self.merge_storages()?;
 
-        // TODO erase document history on commit
-        // TODO erased documents after merging storage files
-        if !self.state.has_staged_documents() {
+        if !self.has_staged_documents() {
             log::info!("Commit: nothing to commit");
             return Ok(());
         }
@@ -275,8 +277,10 @@ impl BazaManager {
         }
 
         // write changes to db file
-        let patch = create_container_patch(new_snapshots.into_iter())?;
-        // FIXME handle erased
+        let mut patch = create_container_patch(new_snapshots.into_iter())?;
+        for key in get_storage_keys_to_erase(&storage, &mut self.state)? {
+            patch.insert(key, None);
+        }
         storage.patch_and_save_to_file(&self.paths.storage_main_db_file, patch)?;
 
         // backup state file
@@ -288,6 +292,9 @@ impl BazaManager {
 
         tx.commit()?;
         log::info!("Commit: finished");
+
+        self.update_state_from_storage()?;
+        self.remove_unused_storage_blobs()?;
 
         // remove unused state BLOBs if any
         let unused_state_blobs = self.paths.list_state_blobs()?;
@@ -378,6 +385,36 @@ impl BazaManager {
         merge_storages_to_file(&self.info, storages, main_db_file)?;
 
         tx.commit()?;
+
+        // TODO erase documents after merging storage files
+
+        Ok(())
+    }
+
+    fn remove_unused_storage_blobs(&self) -> Result<()> {
+        let blob_refs = self.state.get_all_blob_refs();
+        let storage_blobs = self.paths.list_storage_blobs()?;
+
+        // warn about missing storage BLOBs if any
+        let missing_blobs = blob_refs.difference(&storage_blobs).collect::<Vec<_>>();
+        if !missing_blobs.is_empty() {
+            log::warn!("There are {} missing BLOBs", missing_blobs.len());
+            log::trace!("Missing BLOBs: {missing_blobs:?}");
+        }
+
+        // remove unused storage BLOBs if any
+        let unused_storage_blobs = storage_blobs.difference(&blob_refs).collect::<Vec<_>>();
+        if !unused_storage_blobs.is_empty() {
+            log::info!(
+                "Removing {} unused storage BLOBs",
+                unused_storage_blobs.len()
+            );
+
+            for blob_id in unused_storage_blobs {
+                let file_path = self.paths.get_storage_blob_path(blob_id);
+                remove_file(file_path).context("Failed to remove unused storage BLOB")?;
+            }
+        }
 
         Ok(())
     }
@@ -473,6 +510,23 @@ fn update_state_from_storage<R: Read>(
     }
 
     Ok(latest_snapshots_count)
+}
+
+/// collect keys of storage documents that are known to be erased in the state
+fn get_storage_keys_to_erase<R: Read>(
+    storage: &BazaStorage<R>,
+    state: &mut BazaState,
+) -> Result<Vec<String>> {
+    let mut keys = Vec::new();
+    for key in storage.index.iter() {
+        if let Some(head) = state.get_document(&key.id) {
+            if head.is_original_erased() && key.rev.is_older_than(head.get_revision()) {
+                keys.push(key.serialize());
+            }
+        }
+    }
+
+    Ok(keys)
 }
 
 #[cfg(test)]
@@ -598,6 +652,49 @@ mod tests {
             .open_storage(&manager.paths.storage_main_db_file)
             .unwrap();
         assert_eq!(storage.index.len(), 2);
+    }
+
+    #[test]
+    fn test_removes_erased_snapshots_from_storage() {
+        let temp_dir = TempFile::new_with_details("test_baza_manager", "");
+        temp_dir.mkdir().unwrap();
+
+        let options = BazaManagerOptions::new_for_tests(&temp_dir.path);
+        let mut manager = options.clone().open().unwrap();
+
+        // Create and stage a new document with a BLOB
+        let blob_file = temp_dir.new_child("blob");
+        blob_file.write_str("blob_content").unwrap();
+        let blob_id = manager.add_blob(&blob_file.path).unwrap();
+
+        let doc_a1 = new_document(json!({ "blob": blob_id }));
+        manager.stage_document(doc_a1.clone(), &None).unwrap();
+        manager.commit().unwrap();
+
+        // Ensure the document and BLOB are in storage
+        let mut manager = options.clone().open().unwrap();
+        let doc_a1_key = manager.get_document(&doc_a1.id).unwrap().create_key();
+        let storage = manager
+            .open_storage(&manager.paths.storage_main_db_file)
+            .unwrap();
+        assert!(storage.contains(&doc_a1_key));
+        assert!(manager.paths.storage_blob_exists(&blob_id).unwrap());
+
+        // Erase the document and commit
+        let mut doc_a2 = doc_a1.clone();
+        doc_a2.erase();
+        manager.state.stage_document(doc_a2.clone(), &None).unwrap();
+        manager.commit().unwrap();
+
+        // Reopen storage and check the snapshot and BLOB are removed
+        let manager = options.clone().open().unwrap();
+        let doc_a2_key = manager.get_document(&doc_a2.id).unwrap().create_key();
+        let storage = manager
+            .open_storage(&manager.paths.storage_main_db_file)
+            .unwrap();
+        assert!(!storage.contains(&doc_a1_key));
+        assert!(storage.contains(&doc_a2_key));
+        assert!(!manager.paths.storage_blob_exists(&blob_id).unwrap());
     }
 
     #[test]

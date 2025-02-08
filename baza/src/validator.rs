@@ -72,7 +72,7 @@ pub trait ValidableDB {
     fn blob_exists(&self, blob_id: &BLOBId) -> Result<bool>;
 }
 
-impl<'c> ValidableDB for &'c BazaConnection {
+impl ValidableDB for &BazaConnection {
     fn get_schema(&self) -> &DataSchema {
         self.get_schema_ref()
     }
@@ -88,7 +88,7 @@ impl<'c> ValidableDB for &'c BazaConnection {
     }
 }
 
-impl<'m> ValidableDB for &'m BazaManager {
+impl ValidableDB for &BazaManager {
     fn get_schema(&self) -> &DataSchema {
         (self as &BazaManager).get_schema()
     }

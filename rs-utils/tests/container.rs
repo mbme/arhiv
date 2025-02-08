@@ -47,7 +47,7 @@ fn test_c1_gz_container_read_write() -> Result<()> {
     let key = Confidential1Key::new_random_key();
 
     let encrypted = {
-        let mut data = Vec::with_capacity(lines.iter().map(|line| line.as_bytes().len()).sum());
+        let mut data = Vec::with_capacity(lines.iter().map(|line| line.len()).sum());
         let mut c1_writer = Confidential1Writer::new(&mut data, &key)?;
         let mut gz_writer = create_gz_writer(&mut c1_writer);
         let mut writer = ContainerWriter::new(&mut gz_writer);
@@ -87,7 +87,7 @@ fn test_crypto_gz_container_read_write() -> Result<()> {
     let nonce = new_random_crypto_byte_array();
 
     let encrypted = {
-        let mut data = Vec::with_capacity(lines.iter().map(|line| line.as_bytes().len()).sum());
+        let mut data = Vec::with_capacity(lines.iter().map(|line| line.len()).sum());
         let mut crypto_writer = CryptoStreamWriter::new_chacha20(&mut data, key.get(), &nonce);
         let mut gz_writer = create_gz_writer(&mut crypto_writer);
         let mut writer = ContainerWriter::new(&mut gz_writer);

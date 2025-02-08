@@ -14,7 +14,7 @@ pub struct DownloadFileNameExpert<'u> {
     pub file_path: String,
 }
 
-impl<'u> DownloadFileNameExpert<'u> {
+impl DownloadFileNameExpert<'_> {
     pub fn deduce_file_name(self) -> Result<String> {
         // use Content-Disposition header if any
         if !self.attachment_file_name.is_empty() {

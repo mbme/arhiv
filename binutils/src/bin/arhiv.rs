@@ -446,7 +446,9 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 .stdout(process::Stdio::null())
                 .stderr(process::Stdio::null())
                 .spawn()
-                .unwrap_or_else(|_| panic!("failed to run browser {browser}"));
+                .unwrap_or_else(|_| panic!("failed to run browser {browser}"))
+                .wait()
+                .expect("Command wasn't running");
         }
         CLICommand::Server { port } => {
             let root_dir = find_root_dir()?;

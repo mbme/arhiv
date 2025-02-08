@@ -15,7 +15,7 @@ use crate::{
 use super::crypto_stream::{CryptoStreamReader, CryptoStreamWriter, CHACHA_NONCE_SIZE};
 
 pub const CONFIDENTIAL1_MAGIC_STRING: &str = "CONFIDENTIAL-1";
-pub const CONFIDENTIAL1_MAGIC_STRING_LEN: usize = CONFIDENTIAL1_MAGIC_STRING.as_bytes().len();
+pub const CONFIDENTIAL1_MAGIC_STRING_LEN: usize = CONFIDENTIAL1_MAGIC_STRING.len();
 
 pub const CONFIDENTIAL1_HEADER_SIZE: usize =
     CONFIDENTIAL1_MAGIC_STRING_LEN + SALT_SIZE + CHACHA_NONCE_SIZE;

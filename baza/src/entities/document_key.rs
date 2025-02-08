@@ -55,7 +55,7 @@ impl Serialize for DocumentKey {
 
 struct DocumentKeyVisitor;
 
-impl<'de> Visitor<'de> for DocumentKeyVisitor {
+impl Visitor<'_> for DocumentKeyVisitor {
     type Value = DocumentKey;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

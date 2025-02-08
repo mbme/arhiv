@@ -14,7 +14,7 @@ use crate::entities::*;
 
 pub struct MarkupStr<'a>(CowStr<'a>);
 
-impl<'a> MarkupStr<'a> {
+impl MarkupStr<'_> {
     #[must_use]
     pub fn parse(&self) -> Parser {
         let mut options = Options::empty();
@@ -244,7 +244,7 @@ impl<'a> From<&'a str> for MarkupStr<'a> {
     }
 }
 
-impl<'a> From<String> for MarkupStr<'a> {
+impl From<String> for MarkupStr<'_> {
     fn from(value: String) -> Self {
         MarkupStr(CowStr::Boxed(value.into_boxed_str()))
     }

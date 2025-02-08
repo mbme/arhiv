@@ -259,9 +259,7 @@ fn json_contains(data: &str, field: &str, value: &str) -> Result<bool> {
     }
 
     if let Some(data) = data.as_array() {
-        let result = data
-            .iter()
-            .any(|item| item.as_str().map_or(false, |item| item == value));
+        let result = data.iter().any(|item| item.as_str() == Some(value));
 
         return Ok(result);
     }

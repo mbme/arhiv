@@ -155,7 +155,7 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
 
 pub type BazaFileStorage<'i> = BazaStorage<'i, BufReader<File>>;
 
-impl<'i> BazaFileStorage<'i> {
+impl BazaFileStorage<'_> {
     pub fn read_file(file: &str, key: CryptoKey) -> Result<Self> {
         let storage_reader = create_file_reader(file)?;
 

@@ -307,7 +307,7 @@ impl Default for &Revision {
 
 pub struct LatestRevComputer<'r>(HashSet<&'r Revision>);
 
-impl<'r> LatestRevComputer<'r> {
+impl LatestRevComputer<'_> {
     pub fn new() -> Self {
         let mut revs = HashSet::new();
         revs.insert(Revision::INITIAL);
@@ -316,7 +316,7 @@ impl<'r> LatestRevComputer<'r> {
     }
 }
 
-impl<'r> Default for LatestRevComputer<'r> {
+impl Default for LatestRevComputer<'_> {
     fn default() -> Self {
         Self::new()
     }

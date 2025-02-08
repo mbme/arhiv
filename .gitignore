@@ -5,6 +5,7 @@ dist/
 .eslintcache
 *.tsbuildinfo
 cargo-timing*
+.aider.*
 
 *.pkg.tar.zst
 

@@ -388,8 +388,6 @@ impl BazaManager {
 
         tx.commit()?;
 
-        // TODO erase documents after merging storage files
-
         Ok(())
     }
 

@@ -21,7 +21,7 @@ impl ArhivServerLock {
     }
 
     pub fn acquire(&mut self) -> Result<()> {
-        self.lock = Some(LockFile::new(&self.lock_file)?);
+        self.lock = Some(LockFile::must_lock(&self.lock_file)?);
 
         Ok(())
     }

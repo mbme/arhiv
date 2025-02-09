@@ -8,7 +8,7 @@ pub struct LockFile {
 }
 
 impl LockFile {
-    pub fn new(file_path: &str) -> Result<Self> {
+    pub fn must_lock(file_path: &str) -> Result<Self> {
         log::debug!("Locking file {file_path}");
 
         let mut lock = fslock::LockFile::open(file_path)?;
@@ -48,7 +48,7 @@ mod tests {
     fn test_lock_file() {
         let lock_file = build_path(get_temp_dir(), "test-lock-file.lock");
 
-        let lock = LockFile::new(&lock_file).unwrap();
+        let lock = LockFile::must_lock(&lock_file).unwrap();
         assert!(file_exists(&lock_file).unwrap());
 
         fs::write(&lock_file, "test").unwrap();
@@ -56,11 +56,11 @@ mod tests {
         let file_content = fs::read_to_string(&lock_file).unwrap();
         assert_eq!(file_content, "test");
 
-        assert!(LockFile::new(&lock_file).is_err());
+        assert!(LockFile::must_lock(&lock_file).is_err());
 
         drop(lock);
         assert!(!file_exists(&lock_file).unwrap());
 
-        assert!(LockFile::new(&lock_file).is_ok());
+        assert!(LockFile::must_lock(&lock_file).is_ok());
     }
 }

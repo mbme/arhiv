@@ -83,7 +83,7 @@ impl BazaConnection {
 
         conn.execute_batch("BEGIN DEFERRED")?;
 
-        let lock_file = LockFile::new(&path_manager.lock_file)?;
+        let lock_file = LockFile::must_lock(&path_manager.lock_file)?;
 
         Ok(BazaConnection::Transaction {
             conn,

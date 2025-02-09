@@ -6,6 +6,7 @@ dist/
 *.tsbuildinfo
 cargo-timing*
 .aider*
+log.md
 
 *.pkg.tar.zst
 

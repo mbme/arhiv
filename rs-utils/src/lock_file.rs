@@ -5,6 +5,7 @@ use anyhow::{bail, Result};
 pub struct LockFile {
     lock: fslock::LockFile,
     file_path: String,
+    cleanup: bool,
 }
 
 impl LockFile {
@@ -22,6 +23,21 @@ impl LockFile {
         Ok(Self {
             lock,
             file_path: file_path.to_string(),
+            cleanup: true,
+        })
+    }
+
+    pub fn wait_for_lock(file_path: &str) -> Result<Self> {
+        log::debug!("Waiting to lock file {file_path}");
+
+        let mut lock = fslock::LockFile::open(file_path)?;
+
+        lock.lock()?;
+
+        Ok(Self {
+            lock,
+            file_path: file_path.to_string(),
+            cleanup: false,
         })
     }
 }
@@ -30,37 +46,71 @@ impl Drop for LockFile {
     fn drop(&mut self) {
         self.lock.unlock().expect("must unlock");
 
-        if let Err(err) = fs::remove_file(&self.file_path) {
-            log::warn!("Failed to remove Lock file {}: {}", self.file_path, err);
+        if self.cleanup {
+            if let Err(err) = fs::remove_file(&self.file_path) {
+                log::warn!("Failed to remove Lock file {}: {}", self.file_path, err);
+            }
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-
-    use crate::{build_path, file_exists, get_temp_dir};
+    use crate::TempFile;
 
     use super::*;
 
     #[test]
-    fn test_lock_file() {
-        let lock_file = build_path(get_temp_dir(), "test-lock-file.lock");
+    fn test_must_lock() {
+        let temp_file = TempFile::new();
 
-        let lock = LockFile::must_lock(&lock_file).unwrap();
-        assert!(file_exists(&lock_file).unwrap());
+        let lock = LockFile::must_lock(&temp_file.path).unwrap();
+        assert!(
+            temp_file.exists(),
+            "Lock file should exist after acquiring the first lock"
+        );
 
-        fs::write(&lock_file, "test").unwrap();
+        temp_file.write_str("test").unwrap();
 
-        let file_content = fs::read_to_string(&lock_file).unwrap();
+        let file_content = temp_file.str_contents().unwrap();
         assert_eq!(file_content, "test");
 
-        assert!(LockFile::must_lock(&lock_file).is_err());
+        assert!(LockFile::must_lock(&temp_file.path).is_err());
 
         drop(lock);
-        assert!(!file_exists(&lock_file).unwrap());
+        assert!(
+            !temp_file.exists(),
+            "Lock file should not exist after releasing the second lock"
+        );
 
-        assert!(LockFile::must_lock(&lock_file).is_ok());
+        assert!(LockFile::must_lock(&temp_file.path).is_ok());
+    }
+
+    #[test]
+    fn test_wait_for_lock() {
+        let temp_file = TempFile::new();
+
+        // Acquire the first lock
+        let lock1 = LockFile::wait_for_lock(&temp_file.path).unwrap();
+        assert!(temp_file.exists());
+
+        // Spawn a new thread to attempt to acquire the lock
+        let temp_file_clone = temp_file.path.clone();
+        let handle = std::thread::spawn(move || LockFile::wait_for_lock(&temp_file_clone).unwrap());
+
+        // Ensure the lock is still held by the first lock
+        std::thread::sleep(std::time::Duration::from_millis(100));
+        assert!(!handle.is_finished());
+
+        // Drop the first lock
+        drop(lock1);
+
+        // Wait for the second lock to be acquired
+        let lock2 = handle.join().unwrap();
+        assert!(temp_file.exists());
+
+        // Clean up
+        drop(lock2);
+        assert!(temp_file.exists());
     }
 }

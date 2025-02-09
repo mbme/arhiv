@@ -14,6 +14,8 @@ pub struct BazaPaths {
     pub state_dir: String,
     pub state_file: String,
     pub state_data_dir: String,
+
+    pub lock_file: String,
 }
 
 impl BazaPaths {
@@ -24,6 +26,8 @@ impl BazaPaths {
         let state_file = format!("{state_dir}/state.c1");
         let state_data_dir = format!("{state_dir}/data");
 
+        let lock_file = format!("{state_dir}/baza.lock");
+
         Self {
             storage_dir,
             storage_main_db_file,
@@ -32,6 +36,8 @@ impl BazaPaths {
             state_dir,
             state_file,
             state_data_dir,
+
+            lock_file,
         }
     }
 

@@ -9,7 +9,7 @@ use std::{
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 
-use rs_utils::{crypto_key::CryptoKey, file_exists, log, FsTransaction};
+use rs_utils::{crypto_key::CryptoKey, file_exists, log, FsTransaction, LockFile};
 
 use crate::{
     baza2::baza_storage::create_container_patch,
@@ -71,6 +71,7 @@ impl BazaManagerOptions {
 }
 
 pub struct BazaManager {
+    _lock: LockFile,
     state: BazaState,
     paths: BazaPaths,
     key: CryptoKey,
@@ -92,6 +93,8 @@ impl BazaManager {
             data_version: schema.get_latest_data_version(),
             storage_version: STORAGE_VERSION,
         };
+
+        let lock = LockFile::wait_for_lock(&paths.lock_file)?;
 
         let state = if file_exists(&paths.state_file)? {
             let state = BazaState::read_file(&paths.state_file, key.clone(), schema)?;
@@ -123,6 +126,7 @@ impl BazaManager {
         }
 
         let mut baza_manager = Self {
+            _lock: lock,
             state,
             key,
             info,
@@ -229,8 +233,6 @@ impl BazaManager {
     }
 
     pub fn commit(mut self) -> Result<()> {
-        // FIXME use read/write locks
-
         self.save_changes()?;
 
         self.merge_storages()?;

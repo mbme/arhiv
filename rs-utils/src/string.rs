@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use rand::{distr::Alphanumeric, Rng};
 
 #[must_use]
 pub fn fuzzy_match(needle: &str, haystack: &str) -> bool {
@@ -56,7 +56,7 @@ pub fn capitalize<S: Into<String>>(s: S) -> String {
 
 #[must_use]
 pub fn generate_alpanumeric_string(length: usize) -> String {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     std::iter::repeat(())
         .map(|()| rng.sample(Alphanumeric))

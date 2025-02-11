@@ -30,7 +30,7 @@ pulldown-cmark = { version = "0.12", default-features = false, features = ["simd
 
 tinytemplate = "1"
 
-rusqlite = { version = "0.32", features = ["chrono", "serde_json", "functions", "collation", "bundled"] }
+rusqlite = { version = "0.33", features = ["chrono", "serde_json", "functions", "collation", "bundled"] }
 
 thiserror = "2" # macro for better errors
 

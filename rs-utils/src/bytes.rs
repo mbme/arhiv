@@ -2,12 +2,12 @@ use std::io::{self, Read, Seek, SeekFrom};
 
 use anyhow::{Context, Result};
 use data_encoding::{BASE64, BASE64URL, HEXUPPER};
-use rand::{rngs::OsRng, thread_rng, RngCore};
+use rand::{rngs::OsRng, RngCore, TryRngCore};
 
 pub fn generate_bytes(n: usize) -> Vec<u8> {
     let mut bytes = vec![0u8; n];
 
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     rng.fill_bytes(&mut bytes);
 
@@ -18,7 +18,9 @@ pub fn generate_bytes(n: usize) -> Vec<u8> {
 pub fn new_random_crypto_byte_array<const SIZE: usize>() -> [u8; SIZE] {
     let mut bytes = [0u8; SIZE];
 
-    OsRng.fill_bytes(&mut bytes);
+    OsRng
+        .try_fill_bytes(&mut bytes)
+        .expect("OsRng must fill bytes slice");
 
     bytes
 }
@@ -193,7 +195,7 @@ mod tests {
     #[test]
     fn test_hex_encode_decode() {
         let mut data = [0u8; 150];
-        rand::thread_rng().fill_bytes(&mut data);
+        rand::rng().fill_bytes(&mut data);
 
         let result = bytes_to_hex_string(&data);
         let result = hex_string_to_bytes(&result).unwrap();

@@ -43,9 +43,9 @@
     "@types/deep-eql": "^4.0.2",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "esbuild": "^0.24.0",
-    "global-jsdom": "^25.0.0",
-    "jsdom": "^25.0.0",
+    "esbuild": "^0.25.0",
+    "global-jsdom": "^26.0.0",
+    "jsdom": "^26.0.0",
     "scraper": "github:mbme/scraper#semver:v2.11.0",
     "tailwindcss": "^4.0.5",
     "tsx": "^4.5.0"

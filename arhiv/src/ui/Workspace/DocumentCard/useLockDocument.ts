@@ -29,7 +29,7 @@ export function useLockDocument(id: DocumentId, lock: boolean) {
             });
           }
         },
-        (e) => {
+        (e: unknown) => {
           console.error(`Failed to lock document ${id}`, e);
           setError(e);
         },
@@ -47,7 +47,7 @@ export function useLockDocument(id: DocumentId, lock: boolean) {
         () => {
           console.debug(`Unlocked document ${id}`);
         },
-        (e) => {
+        (e: unknown) => {
           console.error(`Failed to unlock document ${id}`, e);
         },
       );

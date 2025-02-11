@@ -21,7 +21,6 @@ export type NominalType<Type, Identifier> = Type & {
   readonly [__nominal__type]: Identifier;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
 export const noop = (): void => {};
 
 const _idPrefix = Math.random();
@@ -208,7 +207,7 @@ export function copyTextToClipbard(text: string): Promise<void> {
     () => {
       console.log('Copied text "%s" to clipboard"', text);
     },
-    (e) => {
+    (e: unknown) => {
       console.error('Failed to copy text "%s" to clipboard', text, e);
     },
   );
@@ -239,7 +238,6 @@ export function fuzzySearch(needle: string, haystack: string, ignoreCase = true)
     return needle === haystack;
   }
 
-  // eslint-disable-next-line no-labels
   outer: for (let i = 0, j = 0; i < nlen; i += 1) {
     const nch = needle.charCodeAt(i);
     while (j < hlen) {
@@ -248,7 +246,7 @@ export function fuzzySearch(needle: string, haystack: string, ignoreCase = true)
       j += 1;
 
       if (char === nch) {
-        continue outer; // eslint-disable-line no-labels
+        continue outer;
       }
     }
 

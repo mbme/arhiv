@@ -11,10 +11,10 @@ function formatTime(timeS: number): string {
   const date = new Date(timeS * 1000).toISOString();
 
   if (timeS < 3600) {
-    return date.substr(14, 5);
+    return date.slice(14, 19);
   }
 
-  return date.substr(11, 8);
+  return date.slice(11, 19);
 }
 
 type Props = {

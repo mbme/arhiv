@@ -9,7 +9,7 @@
     "build": "tsx build.ts",
     "prod:build": "NODE_ENV=production npm run build",
     "start": "electron dist/index.cjs",
-    "lint": "eslint --cache --ext .ts src/",
+    "lint": "eslint --cache src/",
     "fmt": "prettier --write src/",
     "check-fmt": "prettier --check src/",
     "test": ""

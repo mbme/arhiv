@@ -81,7 +81,7 @@ export function useQuery<TResult>(
         setInProgress(false);
         optionsRef.current.onSuccess?.(result);
       },
-      (error) => {
+      (error: unknown) => {
         setResult(undefined);
         setError(error as Error | string);
         setInProgress(false);
@@ -231,6 +231,7 @@ export function useUnsavedChangesWarning(warn: boolean) {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
 
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       return (event.returnValue = 'Page has unsaved changes. Are you sure you want to exit?');
     };
 

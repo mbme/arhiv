@@ -26,6 +26,14 @@
 ## Special switches
 * `production-mode` feature flag
 
+# Web UI app
+* typescript for type checking
+* eslint for linting
+* prettier for code formatting 
+* React for rendering
+* tailwindcss for styling
+* esbuild for bundling the app
+
 # Android app
 
 ## Prerequisites
@@ -39,4 +47,3 @@ rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-andro
 
 # Scraper
 Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbme/scraper) userscript or bookmarklet.
-

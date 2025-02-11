@@ -51,7 +51,7 @@ export function Ref({ documentId, documentType, documentTitle, description }: Re
       href={getDocumentUrl(documentId)}
       title={`${typeStr} ${documentTitle}`}
       target="_blank"
-      rel="noopen noreferer"
+      rel="noreferrer"
       className={cx(
         'font-semibold var-active-color var-active-color-hover break-words cursor-pointer',
         isErasedDocument(documentType) && 'line-through text-slate-700/50',

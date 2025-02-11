@@ -17,7 +17,7 @@
     "prod:build:js": "NODE_ENV=production npm run build:js",
     "prod:build:css": "NODE_ENV=production npm run build:css -- --minify",
     "prod:build": "npm run prod:build:js && npm run prod:build:css",
-    "lint": "eslint --cache --ext .ts --ext .tsx src/",
+    "lint": "eslint --cache src/",
     "test": "node --import tsx --test 'src/ui/**/*.test.ts' 'src/ui/**/*.test.tsx' --test-reporter spec",
     "fmt": "prettier --write src/",
     "check-fmt": "prettier --check src/"

@@ -22,7 +22,7 @@ export function suspensify<T>(promise: Promise<T>): Suspender<T> {
     (result) => {
       status = { type: 'resolved', value: result };
     },
-    (err) => {
+    (err: unknown) => {
       status = { type: 'rejected', value: err };
     },
   );
@@ -121,7 +121,7 @@ export function useSuspenseImage(url: string): HTMLImageElement {
     suspender = suspensify(
       image.decode().then(
         () => image,
-        (err) => {
+        (err: unknown) => {
           console.warn('Failed to decode image', image, err);
 
           return image;

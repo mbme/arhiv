@@ -5,7 +5,7 @@
   }
 
   .card-container {
-    @apply var-card-width min-h-[50%] max-h-full overflow-hidden shrink-0 grow-0 var-bg-color drop-shadow relative transition-opacity;
+    @apply var-card-width min-h-[50%] max-h-full overflow-hidden shrink-0 grow-0 var-bg-color drop-shadow-sm relative transition-opacity;
     @apply overscroll-x-contain snap-center snap-always;
   }
 
@@ -14,7 +14,7 @@
   }
 
   .card-toolbar {
-    @apply var-bg-color bg-opacity-95 px-4 py-2;
+    @apply var-bg-color px-4 py-2;
 
     @apply grid gap-4 items-center;
     grid-template-columns: min-content auto auto;

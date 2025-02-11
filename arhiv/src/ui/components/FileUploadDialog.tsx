@@ -52,7 +52,7 @@ export function FileUploadDialog({ onAttachmentCreated, onCancel }: Props) {
   return (
     <Dialog onHide={onHide} title="Upload a file" buttons={buttons}>
       <form>
-        <label className="inline-block bg-blue-500 text-white py-2 px-4 rounded cursor-pointer hover:bg-blue-600">
+        <label className="inline-block bg-blue-500 text-white py-2 px-4 rounded-sm cursor-pointer hover:bg-blue-600">
           Choose a file
           <input
             className="hidden"

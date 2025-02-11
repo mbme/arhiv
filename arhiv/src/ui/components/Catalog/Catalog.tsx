@@ -167,7 +167,7 @@ export function Catalog({
         />
       )}
 
-      <div className="divide-y">
+      <div className="divide-y border-gray-200">
         {items}
         {items.length === 0 && <div className="text-center mb-4">No results 😿</div>}
       </div>

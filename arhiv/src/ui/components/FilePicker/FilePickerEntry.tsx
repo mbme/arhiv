@@ -19,9 +19,9 @@ export function FilePickerEntry({ entry, onClick }: Props) {
       )}
     >
       {entry.typeName === 'Dir' ? (
-        <Icon variant="folder" className="flex-shrink-0 mr-2 mb-1" />
+        <Icon variant="folder" className="shrink-0 mr-2 mb-1" />
       ) : (
-        <div className="w-5 flex-shrink-0">&nbsp;</div>
+        <div className="w-5 shrink-0">&nbsp;</div>
       )}
 
       <div className="flex flex-wrap justify-between w-full">

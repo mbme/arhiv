@@ -38,11 +38,11 @@ export const Spoiler = forwardRef<HTMLDetailsElement, Props>(function Spoiler(
   return (
     <details
       ref={innerRef}
-      className={cx(className, 'w-full shadow-sm')}
+      className={cx(className, 'w-full shadow-xs')}
       open={isOpen}
       onToggle={onToggle}
     >
-      <summary className="cursor-pointer flex flex-row items-center gap-3 var-bg-tertiary-color px-2 py-2 rounded-sm">
+      <summary className="cursor-pointer flex flex-row items-center gap-3 var-bg-tertiary-color px-2 py-2 rounded-xs">
         <Icon
           variant="chevron-up"
           className={cx('text-slate-500', isOpen ? 'rotate-180 transform' : '')}
@@ -50,7 +50,7 @@ export const Spoiler = forwardRef<HTMLDetailsElement, Props>(function Spoiler(
 
         {heading}
       </summary>
-      <div className="var-bg-tertiary-color px-4 py-2 rounded-sm">{children}</div>
+      <div className="var-bg-tertiary-color px-4 py-2 rounded-xs">{children}</div>
     </details>
   );
 });

@@ -42,7 +42,7 @@ export function DropdownMenu({ icon = 'more', align, options }: DropdownMenuProp
           >
             <MenuItems
               className={cx(
-                'rounded w-max flex flex-col gap-2 drop-shadow py-2 absolute mt-2 var-bg-color shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
+                'rounded-sm w-max flex flex-col gap-2 drop-shadow-sm py-2 absolute mt-2 var-bg-color shadow-lg ring-1 ring-black/5 focus:outline-hidden',
                 {
                   'left-0 origin-top-left': align === 'bottom-left',
                   'right-0 origin-top-right': align === 'bottom-right',

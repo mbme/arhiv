@@ -1,6 +1,6 @@
 @layer components {
   .components-demo {
-    @apply divide-y-2 divide-dashed max-w-screen-md mx-auto;
+    @apply divide-y-2 divide-dashed border-gray-200 max-w-screen-md mx-auto;
 
     & > div {
       @apply py-12 px-8;

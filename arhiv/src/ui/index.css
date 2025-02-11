@@ -1,6 +1,4 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import 'tailwindcss';
 
 @import './components/Button.css';
 @import './components/Dialog.css';
@@ -11,90 +9,91 @@
 @import './ComponentsDemo.css';
 @import './Workspace/CardContainer.css';
 
-@layer utilities {
-  .var-bg-color {
-    @apply bg-white dark:bg-gray-900;
+/* Apply dark theme styles when there's .dark class in html tree */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@utility var-bg-color {
+  @apply bg-white dark:bg-gray-900;
+}
+
+@utility var-bg-secondary-color {
+  @apply bg-zinc-100 dark:bg-gray-800;
+}
+
+@utility var-bg-tertiary-color {
+  @apply bg-zinc-100 dark:bg-zinc-900;
+}
+
+@utility var-card-width {
+  width: 39rem;
+  max-width: 98vw;
+}
+
+@utility var-active-color {
+  @apply text-blue-800 dark:text-blue-300;
+}
+
+@utility var-active-color-hover {
+  @apply hover:text-blue-600;
+}
+
+@utility var-item-active-bg-color {
+  @apply bg-blue-100 dark:bg-blue-900;
+}
+
+@utility var-placeholder-color {
+  @apply text-gray-500;
+}
+
+@utility var-form-border-color {
+  @apply border-gray-200 dark:border-zinc-700;
+}
+
+@utility var-form-error-border {
+  @apply border border-red-500;
+}
+
+@utility var-text-heading-color {
+  @apply text-slate-900 dark:text-slate-100;
+}
+
+@utility buttons {
+  @apply flex justify-end gap-8;
+  @apply p-2 sm:p-4 md:p-6;
+}
+
+@utility custom-focus {
+  @apply outline-hidden ring-2 ring-blue-600/75;
+}
+
+@utility custom-scrollbar {
+  --sb-track-color: transparent;
+  --sb-thumb-color: rgb(156 163 175);
+  --sb-size: 4px;
+
+  /* for Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: var(--sb-thumb-color) var(--sb-track-color);
+  /* --- */
+
+  &::-webkit-scrollbar {
+    width: var(--sb-size);
+    height: var(--sb-size);
   }
 
-  .var-bg-secondary-color {
-    @apply bg-zinc-100 dark:bg-gray-800;
+  &::-webkit-scrollbar-track {
+    background: var(--sb-track-color);
+    border-radius: 10px;
   }
 
-  .var-bg-tertiary-color {
-    @apply bg-zinc-100 dark:bg-zinc-900;
+  &::-webkit-scrollbar-thumb {
+    background: var(--sb-thumb-color);
+    border-radius: 10px;
   }
+}
 
-  .var-card-width {
-    width: 39rem;
-    max-width: 98vw;
-  }
-
-  .var-active-color {
-    @apply text-blue-800 dark:text-blue-300;
-  }
-
-  .var-active-color-hover {
-    @apply hover:text-blue-600;
-  }
-
-  .var-item-active-bg-color {
-    @apply bg-blue-100 dark:bg-blue-900;
-  }
-
-  .var-placeholder-color {
-    @apply text-gray-500;
-  }
-
-  .var-form-border-color {
-    @apply border-gray-200 dark:border-zinc-700;
-  }
-
-  .var-form-error-border {
-    @apply border border-red-500;
-  }
-
-  .var-text-heading-color {
-    @apply text-slate-900 dark:text-slate-100;
-  }
-
-  .buttons {
-    @apply flex justify-end gap-8;
-    @apply p-2 sm:p-4 md:p-6;
-  }
-
-  .custom-focus {
-    @apply outline-none ring-2 ring-blue-600 ring-opacity-75;
-  }
-
-  .custom-scrollbar {
-    --sb-track-color: transparent;
-    --sb-thumb-color: rgb(156 163 175);
-    --sb-size: 4px;
-
-    /* for Firefox */
-    scrollbar-width: thin;
-    scrollbar-color: var(--sb-thumb-color) var(--sb-track-color);
-    /* --- */
-
-    &::-webkit-scrollbar {
-      width: var(--sb-size);
-      height: var(--sb-size);
-    }
-
-    &::-webkit-scrollbar-track {
-      background: var(--sb-track-color);
-      border-radius: 10px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: var(--sb-thumb-color);
-      border-radius: 10px;
-    }
-  }
-
-  .break-anywhere {
-    overflow-wrap: anywhere;
-  }
+@utility break-anywhere {
+  overflow-wrap: anywhere;
 }
 
 @layer components {

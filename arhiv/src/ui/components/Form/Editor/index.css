@@ -20,7 +20,7 @@
     }
 
     &.cm-focused {
-      @apply custom-focus border-opacity-0;
+      @apply custom-focus border-transparent;
     }
 
     & .cm-scroller {
@@ -45,7 +45,6 @@
     }
     &.cm-focused .cm-activeLine {
       @apply var-item-active-bg-color;
-      @apply bg-opacity-50 dark:bg-opacity-40;
     }
     & .cm-placeholder {
       @apply var-placeholder-color;

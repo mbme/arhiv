@@ -10,12 +10,12 @@
     "compiler-errors": "tsc --noEmit --project tsconfig.json",
     "clean": "rm -f public/*.js* public/*.css*",
     "build:js": "tsx build.ts",
-    "build:css": "TAILWIND_MODE=build postcss ./src/ui/index.css --dir public/",
+    "build:css": "tailwindcss -i src/ui/index.css -o public/index.css",
     "build": "npm run build:js && npm run build:css",
     "watch:js": "tsx build.ts --watch",
-    "watch:css": "TAILWIND_MODE=watch postcss --watch ./src/ui/index.css --dir public/",
+    "watch:css": "npm run build:css -- --watch",
     "prod:build:js": "NODE_ENV=production npm run build:js",
-    "prod:build:css": "NODE_ENV=production npm run build:css",
+    "prod:build:css": "NODE_ENV=production npm run build:css -- --minify",
     "prod:build": "npm run prod:build:js && npm run prod:build:css",
     "lint": "eslint --cache --ext .ts --ext .tsx src/",
     "test": "node --import tsx --test 'src/ui/**/*.test.ts' 'src/ui/**/*.test.tsx' --test-reporter spec",
@@ -37,19 +37,17 @@
     "shallow-equal": "^3.1.0"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.0.5",
     "@testing-library/dom": "^10.1.0",
     "@testing-library/react": "^16.0.0",
     "@types/deep-eql": "^4.0.2",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "autoprefixer": "^10.2.6",
     "esbuild": "^0.24.0",
     "global-jsdom": "^25.0.0",
     "jsdom": "^25.0.0",
-    "postcss": "^8.3.0",
-    "postcss-cli": "^11.0.0",
     "scraper": "github:mbme/scraper#semver:v2.11.0",
-    "tailwindcss": "^3.0.7",
+    "tailwindcss": "^4.0.5",
     "tsx": "^4.5.0"
   }
 }

@@ -28,7 +28,7 @@
     @apply flex flex-nowrap justify-between gap-4;
 
     &.is-alarming {
-      @apply bg-red-500 bg-opacity-75;
+      @apply bg-red-500/75;
     }
   }
 

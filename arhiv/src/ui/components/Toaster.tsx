@@ -96,7 +96,7 @@ export function Toaster() {
         <div
           key={toast.id}
           className={cx(
-            'px-4 py-2 text-sm rounded shadow hover:shadow-lg cursor-default min-w-[15rem] group flex flex-row',
+            'px-4 py-2 text-sm rounded-sm shadow-sm hover:shadow-lg cursor-default min-w-[15rem] group flex flex-row',
             {
               'bg-sky-50 text-sky-700': toast.level === 'info',
               'bg-orange-200 text-amber-700': toast.level === 'warn',

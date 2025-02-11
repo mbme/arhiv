@@ -101,7 +101,7 @@ export function DocumentEditor({
         </div>
       ))}
 
-      <div className="divide-y divide-dashed">
+      <div className="divide-y divide-dashed border-gray-200">
         {fields.map((field) => (
           <DocumentField
             key={field.name}

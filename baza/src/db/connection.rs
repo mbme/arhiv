@@ -4,14 +4,12 @@ use anyhow::{anyhow, bail, ensure, Context, Result};
 use rusqlite::{params, params_from_iter, Connection, OptionalExtension};
 use serde_json::Value;
 use thiserror::Error;
-use tokio::sync::broadcast::Sender;
 
 use rs_utils::{
     file_exists, is_same_filesystem, log, now, FsTransaction, LockFile, Timestamp, MIN_TIMESTAMP,
 };
 
 use crate::{
-    baza::BazaEvent,
     entities::{
         BLOBId, Document, DocumentLockKey, Id, InstanceId, Refs, Revision, BLOB,
         ERASED_DOCUMENT_TYPE,
@@ -49,9 +47,6 @@ pub enum BazaConnection {
         path_manager: Arc<PathManager>,
         schema: Arc<DataSchema>,
 
-        event_sender: Sender<BazaEvent>,
-        events: Vec<BazaEvent>,
-
         fs_tx: FsTransaction,
         lock_file: LockFile,
 
@@ -72,11 +67,7 @@ impl BazaConnection {
         })
     }
 
-    pub fn new_tx(
-        path_manager: Arc<PathManager>,
-        schema: Arc<DataSchema>,
-        event_sender: Sender<BazaEvent>,
-    ) -> Result<Self> {
+    pub fn new_tx(path_manager: Arc<PathManager>, schema: Arc<DataSchema>) -> Result<Self> {
         let conn = open_connection(&path_manager.db_file, true)?;
 
         init_functions(&conn, &schema)?;
@@ -92,8 +83,6 @@ impl BazaConnection {
             path_manager,
             fs_tx: FsTransaction::new(),
             lock_file,
-            event_sender,
-            events: Vec::new(),
         })
     }
 
@@ -103,8 +92,6 @@ impl BazaConnection {
                 completed,
                 fs_tx,
                 conn,
-                event_sender,
-                events,
                 ..
             } => {
                 ensure!(!*completed, "transaction must not be completed");
@@ -114,12 +101,6 @@ impl BazaConnection {
                 if commit {
                     fs_tx.commit()?;
                     conn.execute_batch("COMMIT")?;
-
-                    for event in events {
-                        if let Err(err) = event_sender.send(event.clone()) {
-                            log::warn!("failed to send event: {err}");
-                        }
-                    }
                 } else {
                     fs_tx.rollback()?;
                     conn.execute_batch("ROLLBACK")?;
@@ -175,19 +156,6 @@ impl BazaConnection {
             BazaConnection::Transaction { ref mut fs_tx, .. } => Ok(fs_tx),
             BazaConnection::ReadOnly { .. } => bail!("not a transaction"),
         }
-    }
-
-    pub(crate) fn register_event(&mut self, event: BazaEvent) -> Result<()> {
-        let events = match self {
-            BazaConnection::ReadOnly { .. } => {
-                bail!("readonly connection doesn't have event sender")
-            }
-            BazaConnection::Transaction { events, .. } => events,
-        };
-
-        events.push(event);
-
-        Ok(())
     }
 
     pub fn get_db_version(&self) -> Result<u8> {
@@ -710,10 +678,6 @@ impl BazaConnection {
         document.updated_at = now();
         self.put_document(document, lock_key)?;
 
-        self.register_event(BazaEvent::DocumentStaged {
-            id: document.id.clone(),
-        })?;
-
         log::info!("Staged document {}", document);
 
         Ok(())
@@ -993,8 +957,6 @@ impl BazaConnection {
 
         self.delete_local_staged_changes()?;
         self.remove_orphaned_blobs()?;
-
-        self.register_event(BazaEvent::DocumentsCommitted {})?;
 
         log::info!("Committed {} documents", staged_documents.len());
 

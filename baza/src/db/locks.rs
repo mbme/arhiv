@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use anyhow::{ensure, Context, Result};
 
 use crate::entities::{DocumentLock, DocumentLockKey, Id};
-use crate::BazaEvent;
 
 use super::kvs::{KvsEntry, KvsKey};
 use super::BazaConnection;
@@ -57,11 +56,6 @@ impl BazaConnection {
 
         self.kvs_set(&key, &lock)?;
 
-        self.register_event(BazaEvent::DocumentLocked {
-            id: id.clone(),
-            reason,
-        })?;
-
         Ok(lock)
     }
 
@@ -82,8 +76,6 @@ impl BazaConnection {
 
         let unlocked = self.kvs_delete(&key)?;
         ensure!(unlocked, "document {id} wasn't locked");
-
-        self.register_event(BazaEvent::DocumentUnlocked { id: id.clone() })?;
 
         Ok(())
     }

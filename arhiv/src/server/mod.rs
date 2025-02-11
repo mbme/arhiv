@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use axum::{
     extract::{Request, State},
     http::HeaderMap,
@@ -11,7 +11,6 @@ use axum::{
 };
 use certificate::generate_ui_crypto_key;
 use reqwest::StatusCode;
-use tokio::sync::oneshot;
 
 use baza::sync::build_rpc_router;
 use rs_utils::{
@@ -36,7 +35,6 @@ pub struct ArhivServer {
     state: Arc<UIState>,
     server: HttpServer,
     _lock: ArhivServerLock,
-    shutdown_sender: oneshot::Sender<()>,
 }
 
 impl ArhivServer {
@@ -45,8 +43,7 @@ impl ArhivServer {
         lock.acquire()?;
         lock.write_server_port(server_port)?;
 
-        let (shutdown_sender, shutdown_receiver) = oneshot::channel();
-        let state = Arc::new(UIState::new(root_dir, options.clone(), shutdown_receiver)?);
+        let state = Arc::new(UIState::new(root_dir, options.clone())?);
 
         let certificate = read_or_generate_certificate(root_dir)?;
         let rpc_router = build_rpc_router(certificate.certificate_der.clone())?.route_layer(
@@ -74,16 +71,11 @@ impl ArhivServer {
         Ok(ArhivServer {
             state,
             server,
-            shutdown_sender,
             _lock: lock,
         })
     }
 
     pub async fn shutdown(self) -> Result<()> {
-        self.shutdown_sender
-            .send(())
-            .map_err(|_err| anyhow!("Arhiv Server shutdown receiver dropped"))?;
-
         self.server.shutdown().await?;
 
         self.state.stop_arhiv()?;

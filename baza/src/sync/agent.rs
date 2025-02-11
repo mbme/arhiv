@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 
 use crate::{
     entities::{InstanceId, BLOB},
-    Baza, BazaEvent,
+    Baza,
 };
 
 use super::{
@@ -51,12 +51,6 @@ impl SyncAgent {
         match self {
             SyncAgent::InMemory { baza, .. } => {
                 let conn = baza.get_connection()?;
-
-                let rev = conn.get_db_rev()?;
-
-                if request.rev.is_concurrent_or_newer_than(&rev) {
-                    baza.publish_event(BazaEvent::InstanceOutdated {})?;
-                }
 
                 conn.get_changeset(&request.rev)
             }

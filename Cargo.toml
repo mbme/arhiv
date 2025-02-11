@@ -28,7 +28,6 @@ serde_json = "1"
 futures = "0.3"
 tokio = { version = "1", features = ["fs", "macros", "signal", "process", "rt-multi-thread", "test-util"] }
 tokio-util = { version = "0.7", features = ["compat", "codec"] }
-tokio-stream = { version = "0.1", features = ["sync"] }
 
 rustls = { version = "*", features = ["dangerous_configuration"]}
 reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls-webpki-roots"] }

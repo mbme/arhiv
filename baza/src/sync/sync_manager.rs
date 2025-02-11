@@ -5,11 +5,11 @@ use std::{
 };
 
 use anyhow::Result;
-use tokio::{sync::broadcast::Sender, task::JoinHandle};
+use tokio::{task::JoinHandle, time::interval};
 
-use rs_utils::{log, now, ScheduledTask};
+use rs_utils::{log, now};
 
-use crate::{entities::InstanceId, Baza, BazaEvent};
+use crate::{entities::InstanceId, Baza};
 
 use super::SyncAgent;
 
@@ -36,8 +36,6 @@ impl SyncManager {
             .lock()
             .expect("must lock")
             .insert(new_agent.get_instance_id().clone(), new_agent);
-
-        self.baza.publish_event(BazaEvent::PeerDiscovered {})?;
 
         Ok(())
     }
@@ -96,7 +94,7 @@ impl SyncManager {
             return Ok(false);
         }
 
-        let _guard = SyncGuard::new(self.sync_in_progress.clone(), self.baza.get_events_sender());
+        let _guard = SyncGuard::new(self.sync_in_progress.clone());
 
         {
             let conn = self.baza.get_connection()?;
@@ -172,33 +170,16 @@ impl SyncManager {
         Ok(updated)
     }
 
-    pub fn start_auto_sync(self: Arc<Self>, auto_sync_delay: Duration) -> Result<AutoSyncTask> {
+    pub fn start_auto_sync(self: Arc<Self>, auto_sync_interval: Duration) -> Result<AutoSyncTask> {
         let task = tokio::spawn(async move {
-            let mut events = self.baza.get_events_channel();
-
-            let scheduled_sync = ScheduledTask::new();
+            let mut interval = interval(auto_sync_interval / 2);
 
             loop {
-                let sync_manager = self.clone();
+                interval.tick().await;
 
-                match events.recv().await {
-                    Ok(BazaEvent::InstanceOutdated {})
-                    | Ok(BazaEvent::DocumentsCommitted {})
-                    | Ok(BazaEvent::PeerDiscovered {}) => {
-                        scheduled_sync.schedule(auto_sync_delay, async move {
-                            if let Err(err) = sync_manager.sync().await {
-                                log::error!("Auto-sync failed: {err}");
-                            }
-                        });
-                    }
-                    Ok(BazaEvent::Synced {}) => {
-                        scheduled_sync.cancel();
-                    }
-                    Ok(_) => {}
-                    Err(err) => {
-                        log::error!("Error while polling events: {err}");
-                        break;
-                    }
+                if let Err(err) = self.sync().await {
+                    log::warn!("Auto-sync failed: {err}");
+                    break;
                 }
             }
 
@@ -206,8 +187,8 @@ impl SyncManager {
         });
 
         log::info!(
-            "Started auto-sync service, auto-sync delay is {} seconds",
-            auto_sync_delay.as_secs()
+            "Started auto-sync service, auto-sync interval is {} seconds",
+            auto_sync_interval.as_secs()
         );
 
         Ok(task)
@@ -216,25 +197,17 @@ impl SyncManager {
 
 struct SyncGuard {
     sync_in_progress: Arc<AtomicBool>,
-    baza_events: Sender<BazaEvent>,
 }
 
 impl SyncGuard {
     #[must_use]
-    pub fn new(sync_in_progress: Arc<AtomicBool>, baza_events: Sender<BazaEvent>) -> Self {
+    pub fn new(sync_in_progress: Arc<AtomicBool>) -> Self {
         sync_in_progress.store(true, std::sync::atomic::Ordering::SeqCst);
 
-        SyncGuard {
-            sync_in_progress,
-            baza_events,
-        }
+        SyncGuard { sync_in_progress }
     }
 
     pub fn release(&self) {
-        if let Err(err) = self.baza_events.send(BazaEvent::Synced {}) {
-            log::error!("Failed to send baza event: {err}");
-        }
-
         self.sync_in_progress
             .store(false, std::sync::atomic::Ordering::SeqCst);
     }

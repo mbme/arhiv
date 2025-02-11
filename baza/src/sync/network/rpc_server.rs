@@ -20,7 +20,7 @@ use rs_utils::{
     log, now,
 };
 
-use crate::{entities::BLOBId, sync::changeset::ChangesetRequest, Baza, BazaEvent};
+use crate::{entities::BLOBId, sync::changeset::ChangesetRequest, Baza};
 
 use super::auth::client_authenticator;
 
@@ -73,7 +73,6 @@ async fn fetch_changes_handler(
 
     if request.rev.is_concurrent_or_newer_than(&rev) {
         log::info!("Instance is outdated, comparing to {}", request.instance_id);
-        baza.publish_event(BazaEvent::InstanceOutdated {})?;
     }
 
     Ok(Json(changeset).into_response())

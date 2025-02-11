@@ -5,10 +5,7 @@ use axum::{
     extract::{DefaultBodyLimit, Path, Query, Request, State},
     http::HeaderMap,
     middleware::{self, Next},
-    response::{
-        sse::{Event, KeepAlive},
-        Html, IntoResponse, Response, Sse,
-    },
+    response::{Html, IntoResponse, Response},
     routing::{get, post},
     Extension, Json, Router,
 };
@@ -16,11 +13,9 @@ use axum_extra::{
     extract::{cookie::Cookie, CookieJar},
     headers, TypedHeader,
 };
-use futures::FutureExt;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tokio_stream::{wrappers::BroadcastStream, Stream, StreamExt};
 
 use baza::{entities::BLOBId, schema::create_attachment, sync::respond_with_blob, Credentials};
 use rs_utils::{
@@ -48,7 +43,6 @@ pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<UIState>> {
         .route("/", get(index_page))
         .route("/create", post(create_arhiv_handler))
         .route("/api", post(api_handler))
-        .route("/events", get(events_handler))
         .route("/blobs", post(create_blob_handler))
         .route("/blobs/:blob_id", get(blob_handler))
         .route("/blobs/images/:blob_id", get(image_handler))
@@ -196,37 +190,6 @@ async fn blob_handler(
     let blob_id = BLOBId::from_string(blob_id);
 
     respond_with_blob(&arhiv.baza, &blob_id, &range.map(|val| val.0)).await
-}
-
-#[tracing::instrument(skip(state), level = "debug")]
-async fn events_handler(
-    state: State<Arc<UIState>>,
-) -> Result<Sse<impl Stream<Item = anyhow::Result<Event>>>, ServerError> {
-    let arhiv = state.must_get_arhiv()?;
-
-    let events_stream = BroadcastStream::new(arhiv.baza.get_events_channel()).map(|result| {
-        let baza_event = result.context("Event stream failed")?;
-
-        log::debug!("Sending BazaEvent {baza_event}");
-
-        let event = Event::default()
-            .json_data(baza_event)
-            .context("Event serialization failed")?;
-
-        Ok(Some(event))
-    });
-
-    let shutdown_stream = state
-        .shutdown_receiver
-        .clone()
-        .into_stream()
-        .map(|_| Ok(None))
-        .take(1);
-
-    let stream = futures::stream::select(events_stream, shutdown_stream)
-        .map_while(|value| value.transpose());
-
-    Ok(Sse::new(stream).keep_alive(KeepAlive::default()))
 }
 
 #[derive(Deserialize)]

@@ -5,7 +5,7 @@ use anyhow::Result;
 use baza::{BazaConnection, KvsConstKey};
 
 const DEFAULT_AUTO_COMMIT_DELAY_IN_SECONDS: u64 = 600;
-const DEFAULT_AUTO_SYNC_DELAY_IN_SECONDS: u64 = 20;
+const DEFAULT_AUTO_SYNC_DELAY_IN_SECONDS: u64 = 600;
 
 const CONFIG_NAMESPACE: &str = "arhiv-config";
 

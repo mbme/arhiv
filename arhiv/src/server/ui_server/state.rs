@@ -1,9 +1,8 @@
 use std::sync::{Arc, RwLock};
 
 use anyhow::{anyhow, bail, Context, Result};
+
 use baza::Credentials;
-use futures::{future::Shared, FutureExt};
-use tokio::sync::oneshot;
 
 use crate::{Arhiv, ArhivOptions};
 
@@ -12,15 +11,10 @@ pub struct UIState {
     options: ArhivOptions,
     arhiv: RwLock<Option<Arc<Arhiv>>>,
     server_port: RwLock<Option<u16>>,
-    pub shutdown_receiver: Shared<oneshot::Receiver<()>>,
 }
 
 impl UIState {
-    pub fn new(
-        root_dir: &str,
-        options: ArhivOptions,
-        shutdown_receiver: oneshot::Receiver<()>,
-    ) -> Result<Self> {
+    pub fn new(root_dir: &str, options: ArhivOptions) -> Result<Self> {
         let arhiv = if Arhiv::exists(root_dir) {
             let arhiv = Arhiv::open(root_dir, options.clone())?;
             let arhiv = Arc::new(arhiv);
@@ -36,7 +30,6 @@ impl UIState {
             options,
             arhiv,
             server_port: Default::default(),
-            shutdown_receiver: shutdown_receiver.shared(),
         })
     }
 

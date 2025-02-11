@@ -13,7 +13,6 @@ mod utils;
 use std::sync::Arc;
 
 use anyhow::{Context, Result};
-use tokio::sync::broadcast::Sender;
 
 pub use connection::{BazaConnection, StagingError};
 pub use dto::{BLOBSCount, DocumentsCount, ListPage};
@@ -25,24 +24,18 @@ pub use utils::get_local_blob_ids;
 use migrations::{apply_db_migrations, create_db};
 use sqlite_connection::{open_connection, vacuum};
 
-use crate::{path_manager::PathManager, schema::DataSchema, BazaEvent};
+use crate::{path_manager::PathManager, schema::DataSchema};
 
 pub struct DB {
     path_manager: Arc<PathManager>,
     schema: Arc<DataSchema>,
-    event_sender: Sender<BazaEvent>,
 }
 
 impl DB {
-    pub fn new(
-        path_manager: Arc<PathManager>,
-        schema: Arc<DataSchema>,
-        event_sender: Sender<BazaEvent>,
-    ) -> Self {
+    pub fn new(path_manager: Arc<PathManager>, schema: Arc<DataSchema>) -> Self {
         DB {
             path_manager,
             schema,
-            event_sender,
         }
     }
 
@@ -83,10 +76,6 @@ impl DB {
     }
 
     pub fn get_tx(&self) -> Result<BazaConnection> {
-        BazaConnection::new_tx(
-            self.path_manager.clone(),
-            self.schema.clone(),
-            self.event_sender.clone(),
-        )
+        BazaConnection::new_tx(self.path_manager.clone(), self.schema.clone())
     }
 }

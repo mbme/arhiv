@@ -7,7 +7,8 @@ import { Button, IconButton } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { NewDocumentDialog } from './NewDocumentDialog';
-import { CommitOrSyncButton } from './CommitOrSyncButton';
+import { CommitButton } from './CommitButton';
+import { SyncButton } from './SyncButton';
 
 export function WorkspaceHeader() {
   const app = useAppController();
@@ -88,7 +89,8 @@ export function WorkspaceHeader() {
           </span>
         </Button>
 
-        <CommitOrSyncButton />
+        <CommitButton />
+        <SyncButton />
 
         {showSearchDialog && (
           <DocumentPicker

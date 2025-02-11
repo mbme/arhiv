@@ -3,7 +3,6 @@ import { useSuspenseQuery } from 'utils/suspense';
 import { copyTextToClipbard } from 'utils';
 import { getDocumentUrl } from 'utils/network';
 import { TASK_DOCUMENT_TYPE } from 'dto';
-import { useBazaEvent } from 'baza-events';
 import { Card, useCardContext } from 'Workspace/controller';
 import { DropdownOptions } from 'components/DropdownMenu';
 import { showToast } from 'components/Toaster';
@@ -17,26 +16,9 @@ type DocumentCard = Extract<Card, { variant: 'document' }>;
 export function DocumentCardContainer() {
   const { card, controller } = useCardContext<DocumentCard>();
 
-  const {
-    value: document,
-    isUpdating,
-    triggerRefresh,
-  } = useSuspenseQuery({ typeName: 'GetDocument', id: card.documentId });
-
-  useBazaEvent((event) => {
-    if (event.typeName === 'Synced') {
-      triggerRefresh();
-    } else if (event.typeName === 'DocumentStaged' && event.id === card.documentId) {
-      triggerRefresh();
-    } else if (event.typeName === 'DocumentStaged') {
-      if (
-        document.refs.includes(event.id) ||
-        document.backrefs.some((backref) => backref.id === event.id) ||
-        document.collections.some((backref) => backref.id === event.id)
-      ) {
-        triggerRefresh(true);
-      }
-    }
+  const { value: document, isUpdating } = useSuspenseQuery({
+    typeName: 'GetDocument',
+    id: card.documentId,
   });
 
   const documentActions: DropdownOptions = [

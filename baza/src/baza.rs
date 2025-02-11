@@ -1,11 +1,9 @@
 use std::sync::{Arc, OnceLock};
 
-use anyhow::{ensure, Context, Result};
-use tokio::sync::broadcast::{channel, Receiver, Sender};
+use anyhow::{ensure, Result};
 
 use rs_utils::{crypto_key::CryptoKey, log, SecretString, MIN_TIMESTAMP};
 
-pub use crate::events::BazaEvent;
 use crate::{
     db::BazaConnection, entities::InstanceId, path_manager::PathManager, schema::DataSchema,
     DocumentExpert, DB,
@@ -51,7 +49,6 @@ impl Credentials {
 pub struct Baza {
     path_manager: Arc<PathManager>,
     schema: Arc<DataSchema>,
-    events: (Sender<BazaEvent>, Receiver<BazaEvent>),
     key: OnceLock<CryptoKey>,
 }
 
@@ -62,7 +59,6 @@ impl Baza {
         Baza {
             path_manager: Arc::new(path_manager),
             schema: Arc::new(schema),
-            events: channel(42),
             key: Default::default(),
         }
     }
@@ -154,11 +150,7 @@ impl Baza {
 
     #[must_use]
     pub fn get_db(&self) -> DB {
-        DB::new(
-            self.path_manager.clone(),
-            self.schema.clone(),
-            self.events.0.clone(),
-        )
+        DB::new(self.path_manager.clone(), self.schema.clone())
     }
 
     pub fn get_connection(&self) -> Result<BazaConnection> {
@@ -187,24 +179,5 @@ impl Baza {
     #[must_use]
     pub fn get_app_name(&self) -> &str {
         self.schema.get_app_name()
-    }
-
-    #[must_use]
-    pub fn get_events_channel(&self) -> Receiver<BazaEvent> {
-        self.events.0.subscribe()
-    }
-
-    #[must_use]
-    pub(crate) fn get_events_sender(&self) -> Sender<BazaEvent> {
-        self.events.0.clone()
-    }
-
-    pub(crate) fn publish_event(&self, event: BazaEvent) -> Result<()> {
-        self.events
-            .0
-            .send(event)
-            .context("failed to publish baza event")?;
-
-        Ok(())
     }
 }

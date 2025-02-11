@@ -56,9 +56,6 @@ export type APIRequest =
       typeName: 'Sync';
     }
   | {
-      typeName: 'GetSaveState';
-    }
-  | {
       typeName: 'LockDocument';
       id: DocumentId;
     }
@@ -130,11 +127,6 @@ export type APIResponse =
     }
   | {
       typeName: 'Sync';
-    }
-  | {
-      typeName: 'GetSaveState';
-      canCommit: boolean;
-      canSync: boolean;
     }
   | {
       typeName: 'LockDocument';

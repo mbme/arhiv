@@ -269,18 +269,6 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             APIResponse::Sync {}
         }
-        APIRequest::GetSaveState {} => {
-            let conn = arhiv.baza.get_connection()?;
-
-            let has_locks = !conn.list_document_locks()?.is_empty();
-            let has_staged_documents = conn.has_staged_documents()?;
-            let has_agents = arhiv.has_sync_agents();
-
-            APIResponse::GetSaveState {
-                can_commit: has_staged_documents && !has_locks,
-                can_sync: !has_staged_documents && !has_locks && has_agents,
-            }
-        }
         APIRequest::LockDocument { id } => {
             let mut tx = arhiv.baza.get_tx()?;
             let lock = tx.lock_document(&id, "UI editor lock".to_string())?;

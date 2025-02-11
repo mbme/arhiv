@@ -1,9 +1,8 @@
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
 use anyhow::Result;
 use axum::Extension;
 use serde_json::{json, Value};
-use tokio::time::{advance, sleep};
 
 use rs_utils::{http_server::HttpServer, workspace_relpath};
 
@@ -376,42 +375,6 @@ async fn test_sync_network_agent_fails_with_wrong_auth() -> Result<()> {
 
     sync_manager0.remove_all_agents(); // clears network connections pool
     server1.shutdown().await?;
-
-    Ok(())
-}
-
-#[tokio::test(flavor = "current_thread", start_paused = true)]
-async fn test_auto_sync_on_commit() -> Result<()> {
-    let baza0 = Arc::new(Baza::new_test_baza());
-    let baza1 = Arc::new(Baza::new_test_baza());
-    baza1.add_document(Id::new(), json!({ "0": 3, "1": 2 }))?;
-
-    let mut sync_manager0 = SyncManager::new(baza0.clone());
-    sync_manager0.add_in_mem_agent(baza1.clone())?;
-    let sync_manager0 = Arc::new(sync_manager0);
-
-    let auto_sync_delay = Duration::from_secs(10);
-    sync_manager0.clone().start_auto_sync(auto_sync_delay)?;
-
-    sleep(Duration::from_secs(1)).await;
-
-    {
-        let mut tx = baza0.get_tx()?;
-        let mut document = new_document_snapshot(Id::new(), Value::Null);
-        tx.stage_document(&mut document, None)?;
-        tx.commit_staged_documents()?;
-        tx.commit()?;
-    }
-
-    let snapshots_count = baza0.get_connection()?.list_all_document_snapshots()?.len();
-    assert_eq!(snapshots_count, 1);
-
-    sleep(Duration::from_secs(1)).await;
-    advance(auto_sync_delay).await;
-    sleep(Duration::from_secs(1)).await;
-
-    let snapshots_count = baza0.get_connection()?.list_all_document_snapshots()?.len();
-    assert_eq!(snapshots_count, 2);
 
     Ok(())
 }

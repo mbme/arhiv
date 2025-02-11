@@ -11,7 +11,7 @@
 # Build dependencies
 * `rust`
 * `cargo`
-* `nodejs`
+* `nodejs` 23.6+
 * `npm`
 * `lld` - a fast linker from the LLVM project
 * `just` command runner https://github.com/casey/just

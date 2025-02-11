@@ -9,10 +9,10 @@
   "scripts": {
     "compiler-errors": "tsc --noEmit --project tsconfig.json",
     "clean": "rm -f public/*.js* public/*.css*",
-    "build:js": "tsx build.ts",
+    "build:js": "node build.ts",
     "build:css": "tailwindcss -i src/ui/index.css -o public/index.css",
     "build": "npm run build:js && npm run build:css",
-    "watch:js": "tsx build.ts --watch",
+    "watch:js": "node build.ts --watch",
     "watch:css": "npm run build:css -- --watch",
     "prod:build:js": "NODE_ENV=production npm run build:js",
     "prod:build:css": "NODE_ENV=production npm run build:css -- --minify",

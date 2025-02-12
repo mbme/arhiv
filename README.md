@@ -5,8 +5,6 @@
 
 ## On ArchLinux, using makepkg
 * `just prod-build-install`
-* `sudo systemctl --user daemon-reload`
-* `sudo systemctl --user enable --now arhiv-service`
 
 # Build dependencies
 * `rust`
@@ -26,13 +24,16 @@
 ## Special switches
 * `production-mode` feature flag
 
+## Release process
+* `just bump-version` - increment major version, create & push git tag
+
 # Web UI app
-* typescript for type checking
-* eslint for linting
-* prettier for code formatting 
+* Typescript for type checking
+* Eslint for linting
+* Prettier for code formatting
 * React for rendering
-* tailwindcss for styling
-* esbuild for bundling the app
+* TailwindCSS for styling
+* Esbuild for bundling the app
 
 # Android app
 
@@ -40,7 +41,7 @@
 * `cargo-ndk` to build android JNI libraries
 * JDK - `jdk-openjdk`
 * Android SDK & NDK
-* Add rust targets for Android: 
+* Add rust targets for Android:
 ```
 rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android
 ```

@@ -48,7 +48,7 @@ pub fn get_local_blob_ids(dir: &str) -> Result<HashSet<BLOBId>> {
                 .file_name()
                 .ok_or_else(|| anyhow!("Failed to read file name"))
                 .map(|value| value.to_string_lossy().to_string())
-                .and_then(|value| BLOBId::from_file_name(&value))
+                .and_then(BLOBId::from_string)
         })
         .collect::<Result<HashSet<_>>>()?;
 

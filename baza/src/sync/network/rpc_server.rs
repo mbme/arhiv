@@ -42,7 +42,7 @@ async fn get_blob_handler(
     Path(blob_id): Path<String>,
     range: Option<TypedHeader<headers::Range>>,
 ) -> impl IntoResponse {
-    let blob_id = BLOBId::from_string(blob_id);
+    let blob_id = BLOBId::from_string(blob_id)?;
 
     respond_with_blob(&baza, &blob_id, &range.map(|range| range.0)).await
 }

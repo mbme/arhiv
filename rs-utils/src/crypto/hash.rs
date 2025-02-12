@@ -8,25 +8,6 @@ use crate::bytes_to_hex_string;
 pub const SHA256_HASH_SIZE: usize = 32;
 pub type Sha256Hash = [u8; SHA256_HASH_SIZE];
 
-pub fn get_file_hash_blake3(mut reader: impl Read) -> Result<Vec<u8>> {
-    let mut hasher = blake3::Hasher::new();
-
-    let mut buffer = [0; 1024 * 1024]; // 1Mb cache
-
-    loop {
-        let count = reader.read(&mut buffer)?;
-        if count == 0 {
-            break;
-        }
-
-        hasher.update(&buffer[..count]);
-    }
-
-    let hash = hasher.finalize();
-
-    Ok(hash.as_bytes().to_vec())
-}
-
 pub fn get_file_hash_sha256(mut reader: impl Read) -> Result<Sha256Hash> {
     let mut hasher = Sha256::new();
 
@@ -156,19 +137,6 @@ impl<W: Write> Write for Sha256HashingWriter<W> {
 mod tests {
     use super::*;
     use crate::{bytes_to_hex_string, create_file_reader, read_all_as_string, workspace_relpath};
-
-    #[test]
-    fn test_get_file_hash_blake3() -> Result<()> {
-        let src = &workspace_relpath("resources/k2.jpg");
-        let reader = create_file_reader(src)?;
-
-        assert_eq!(
-            bytes_to_hex_string(&get_file_hash_blake3(reader)?),
-            "33853BF0E88A13956014F28000EA7E6A8D362178E79ADAF3098F3F0B29D60301"
-        );
-
-        Ok(())
-    }
 
     #[test]
     fn test_get_file_hash_sha256() -> Result<()> {

@@ -187,7 +187,7 @@ async fn blob_handler(
 ) -> impl IntoResponse {
     let arhiv = state.must_get_arhiv()?;
 
-    let blob_id = BLOBId::from_string(blob_id);
+    let blob_id = BLOBId::from_string(blob_id)?;
 
     respond_with_blob(&arhiv.baza, &blob_id, &range.map(|val| val.0)).await
 }

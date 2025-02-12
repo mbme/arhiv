@@ -31,7 +31,7 @@ pub async fn image_handler(
 ) -> Result<impl IntoResponse, ServerError> {
     let arhiv = state.must_get_arhiv()?;
 
-    let blob_id = BLOBId::from_string(blob_id);
+    let blob_id = BLOBId::from_string(blob_id)?;
 
     let blob = arhiv
         .baza

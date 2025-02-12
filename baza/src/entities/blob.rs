@@ -14,7 +14,7 @@ impl BLOB {
     #[must_use]
     pub fn new(id: BLOBId, data_dir: &str) -> Self {
         BLOB {
-            file_path: format!("{}/{}", data_dir, id.get_file_name()),
+            file_path: format!("{data_dir}/{id}"),
             id,
         }
     }

@@ -296,7 +296,9 @@ impl ToSql for Id {
 
 impl FromSql for BLOBId {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        value.as_str().map(BLOBId::from_string)
+        value
+            .as_str()
+            .map(|value| BLOBId::from_string(value).expect("must be valid BLOB id"))
     }
 }
 

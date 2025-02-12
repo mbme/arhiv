@@ -7,8 +7,8 @@ use rs_utils::{
         Confidential1AuthReader, Confidential1Key, Confidential1Reader, Confidential1Writer,
     },
     create_file_reader, create_file_writer, create_gz_reader, create_gz_writer, format_bytes,
-    generate_alpanumeric_string, generate_bytes, get_file_hash_blake3, get_file_hash_sha256,
-    ContainerReader, ContainerWriter, TempFile,
+    generate_alpanumeric_string, generate_bytes, get_file_hash_sha256, ContainerReader,
+    ContainerWriter, TempFile,
 };
 
 fn container_write(mut writer: &mut impl Write, data: &[String]) {
@@ -257,13 +257,6 @@ fn bench_hashes(c: &mut Criterion) {
         b.iter(|| {
             data.set_position(0);
             black_box(get_file_hash_sha256(&mut data).expect("must hash"));
-        })
-    });
-
-    group.bench_function("blake3", |b| {
-        b.iter(|| {
-            data.set_position(0);
-            black_box(get_file_hash_blake3(&mut data).expect("must hash"));
         })
     });
 

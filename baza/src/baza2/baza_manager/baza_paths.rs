@@ -66,11 +66,11 @@ impl BazaPaths {
     }
 
     pub fn get_storage_blob_path(&self, id: &BLOBId) -> String {
-        format!("{}/{}", self.storage_data_dir, id.get_file_name())
+        format!("{}/{}", self.storage_data_dir, id)
     }
 
     pub fn get_state_blob_path(&self, id: &BLOBId) -> String {
-        format!("{}/{}", self.state_data_dir, id.get_file_name())
+        format!("{}/{}", self.state_data_dir, id)
     }
 
     pub fn list_storage_blobs(&self) -> Result<HashSet<BLOBId>> {

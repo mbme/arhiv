@@ -20,10 +20,12 @@ use crate::{
 
 mod document_head;
 mod locks;
+mod query;
 mod refs;
 
 pub use document_head::DocumentHead;
 pub use locks::Locks;
+pub use query::{Filter, ListPage};
 use refs::BazaRefsState;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -35,7 +37,6 @@ struct BazaStateFile {
     refs: BazaRefsState,
 }
 
-// FIXME events?
 pub struct BazaState {
     file: BazaStateFile,
     schema: DataSchema,

@@ -7,7 +7,7 @@ use std::{
 use anyhow::Result;
 use tokio::{task::JoinHandle, time::interval};
 
-use rs_utils::{log, now};
+use rs_utils::log;
 
 use crate::{entities::InstanceId, Baza};
 
@@ -146,8 +146,6 @@ impl SyncManager {
                 );
                 agent.fetch_blob(blob).await?;
             }
-
-            tx.set_last_sync_time(&now())?;
 
             tx.commit()?;
 

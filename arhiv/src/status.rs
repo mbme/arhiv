@@ -23,7 +23,6 @@ pub struct Status {
     pub locks: Locks,
 
     pub db_rev: Revision,
-    pub last_sync_time: Timestamp,
     pub last_update_time: Timestamp,
     pub dev_mode: bool,
     pub root_dir: String,
@@ -41,7 +40,6 @@ impl Status {
         let instance_id = conn.get_instance_id()?.to_string();
         let login = conn.get_login()?;
         let db_rev = conn.get_db_rev()?;
-        let last_sync_time = conn.get_last_sync_time()?;
         let db_version = conn.get_db_version()?;
         let data_version = conn.get_data_version()?;
         let computed_data_version = conn.get_computed_data_version()?;
@@ -65,7 +63,6 @@ impl Status {
             blobs_count,
             conflicts_count,
             db_rev,
-            last_sync_time,
             last_update_time,
             dev_mode: DEV_MODE,
             root_dir,
@@ -118,15 +115,6 @@ impl fmt::Display for Status {
                 "NEVER".to_string()
             } else {
                 default_date_time_format(self.last_update_time)
-            }
-        )?;
-        writeln!(
-            f,
-            "   Last sync time: {}",
-            if self.last_sync_time == MIN_TIMESTAMP {
-                "NEVER".to_string()
-            } else {
-                default_date_time_format(self.last_sync_time)
             }
         )?;
 

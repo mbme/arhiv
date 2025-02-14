@@ -1,7 +1,5 @@
 use anyhow::Result;
 
-use rs_utils::Timestamp;
-
 use crate::entities::InstanceId;
 
 use super::kvs::KvsConstKey;
@@ -17,12 +15,6 @@ const SETTING_COMPUTED_DATA_VERSION: &KvsConstKey<u8> =
 
 const SETTING_INSTANCE_ID: &KvsConstKey<InstanceId> =
     &KvsConstKey::new(SETTINGS_NAMESPACE, "instance_id");
-
-const SETTING_LAST_SYNC_TIME: &KvsConstKey<Timestamp> =
-    &KvsConstKey::new(SETTINGS_NAMESPACE, "last_sync_time");
-
-const SETTING_SCHEMA_NAME: &KvsConstKey<String> =
-    &KvsConstKey::new(SETTINGS_NAMESPACE, "schema_name");
 
 impl BazaConnection {
     pub fn get_instance_id(&self) -> Result<InstanceId> {
@@ -41,14 +33,6 @@ impl BazaConnection {
         self.kvs_const_set(SETTING_DATA_VERSION, &version)
     }
 
-    pub fn get_schema_name(&self) -> Result<String> {
-        self.kvs_const_must_get(SETTING_SCHEMA_NAME)
-    }
-
-    pub(crate) fn set_schema_name(&self, schema_name: &String) -> Result<()> {
-        self.kvs_const_set(SETTING_SCHEMA_NAME, schema_name)
-    }
-
     pub fn get_computed_data_version(&self) -> Result<u8> {
         let computed_data_version = self
             .kvs_const_get(SETTING_COMPUTED_DATA_VERSION)?
@@ -59,13 +43,5 @@ impl BazaConnection {
 
     pub(crate) fn set_computed_data_version(&self, version: u8) -> Result<()> {
         self.kvs_const_set(SETTING_COMPUTED_DATA_VERSION, &version)
-    }
-
-    pub fn get_last_sync_time(&self) -> Result<Timestamp> {
-        self.kvs_const_must_get(SETTING_LAST_SYNC_TIME)
-    }
-
-    pub(crate) fn set_last_sync_time(&self, last_sync_time: &Timestamp) -> Result<()> {
-        self.kvs_const_set(SETTING_LAST_SYNC_TIME, last_sync_time)
     }
 }

@@ -17,7 +17,7 @@ use axum_extra::{
 use rs_utils::{
     create_body_from_file,
     http_server::{add_max_cache_header, ServerCertificate, ServerError},
-    log, now,
+    log,
 };
 
 use crate::{entities::BLOBId, sync::changeset::ChangesetRequest, Baza};
@@ -52,9 +52,9 @@ async fn fetch_changes_handler(
     Extension(baza): Extension<Arc<Baza>>,
     Json(request): Json<ChangesetRequest>,
 ) -> Result<impl IntoResponse, ServerError> {
-    let tx = baza.get_tx()?;
-    let rev = tx.get_db_rev()?;
-    let data_version = tx.get_data_version()?;
+    let conn = baza.get_connection()?;
+    let rev = conn.get_db_rev()?;
+    let data_version = conn.get_data_version()?;
 
     if request.data_version != data_version {
         return Ok((
@@ -67,9 +67,7 @@ async fn fetch_changes_handler(
             .into_response());
     }
 
-    let changeset = tx.get_changeset(&request.rev)?;
-    tx.set_last_sync_time(&now())?;
-    tx.commit()?;
+    let changeset = conn.get_changeset(&request.rev)?;
 
     if request.rev.is_concurrent_or_newer_than(&rev) {
         log::info!("Instance is outdated, comparing to {}", request.instance_id);

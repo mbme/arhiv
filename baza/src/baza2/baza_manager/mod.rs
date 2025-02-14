@@ -89,7 +89,6 @@ impl BazaManager {
         paths.ensure_dirs_exist()?;
 
         let info = BazaInfo {
-            name: schema.get_app_name().to_string(),
             data_version: schema.get_latest_data_version(),
             storage_version: STORAGE_VERSION,
         };

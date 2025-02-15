@@ -750,7 +750,7 @@ impl BazaConnection {
     }
 
     pub fn get_local_blob_ids(&self) -> Result<HashSet<BLOBId>> {
-        get_local_blob_ids(&self.get_path_manager().data_dir)
+        get_local_blob_ids(&self.get_path_manager().data_dir, "")
     }
 
     pub fn get_missing_blob_ids(&self) -> Result<HashSet<BLOBId>> {

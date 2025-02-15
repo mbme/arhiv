@@ -31,7 +31,7 @@ pub fn extract_blob_id(row: &Row) -> Result<BLOBId> {
         .context(anyhow!("failed to extract blob_id"))
 }
 
-pub fn get_local_blob_ids(dir: &str) -> Result<HashSet<BLOBId>> {
+pub fn get_local_blob_ids(dir: &str, trim_ext: &str) -> Result<HashSet<BLOBId>> {
     let items = fs::read_dir(dir)?
         .map(|item| {
             let entry = item.context("Failed to read data entry")?;
@@ -47,7 +47,12 @@ pub fn get_local_blob_ids(dir: &str) -> Result<HashSet<BLOBId>> {
             entry_path
                 .file_name()
                 .ok_or_else(|| anyhow!("Failed to read file name"))
-                .map(|value| value.to_string_lossy().to_string())
+                .map(|value| {
+                    value
+                        .to_string_lossy()
+                        .trim_end_matches(trim_ext)
+                        .to_string()
+                })
                 .and_then(BLOBId::from_string)
         })
         .collect::<Result<HashSet<_>>>()?;

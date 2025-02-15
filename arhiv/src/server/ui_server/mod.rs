@@ -17,7 +17,7 @@ use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use baza::{entities::BLOBId, schema::create_attachment, sync::respond_with_blob, Credentials};
+use baza::{entities::BLOBId, schema::create_attachment, sync::respond_with_blob, Baza};
 use rs_utils::{
     crypto_key::CryptoKey,
     http_server::{add_no_cache_headers, ServerError},
@@ -54,7 +54,6 @@ pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<UIState>> {
 
 #[derive(Deserialize)]
 struct CreateArhivRequest {
-    login: String,
     password: SecretString,
 }
 
@@ -68,9 +67,7 @@ async fn create_arhiv_handler(
 
     log::info!("Creating new arhiv");
 
-    let auth = Credentials::new(create_arhiv_request.login, create_arhiv_request.password)?;
-
-    state.create_arhiv(auth)?;
+    state.create_arhiv(create_arhiv_request.password)?;
 
     Ok(())
 }
@@ -90,8 +87,7 @@ async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, Ser
         use_local_storage: true,
     };
     let features = serde_json::to_string(&features).context("failed to serialize features")?;
-    let min_login_length = Credentials::MIN_LOGIN_LENGTH;
-    let min_password_length = Credentials::MIN_PASSWORD_LENGTH;
+    let min_password_length = Baza::MIN_PASSWORD_LENGTH;
 
     let content = format!(
         r#"
@@ -113,7 +109,6 @@ async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, Ser
                         window.BASE_PATH = "{UI_BASE_PATH}";
                         window.SCHEMA = {schema};
                         window.FEATURES = {features};
-                        window.MIN_LOGIN_LENGTH = {min_login_length};
                         window.MIN_PASSWORD_LENGTH = {min_password_length};
                         window.CREATE_ARHIV = {create_arhiv};
                     </script>

@@ -118,13 +118,13 @@ export async function uploadFile(file: File, signal?: AbortSignal): Promise<Docu
   }
 }
 
-export async function createArhiv(login: string, password: string) {
+export async function createArhiv(password: string) {
   const response = await fetch(`${window.BASE_PATH}/create`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ login, password }),
+    body: JSON.stringify({ password }),
   });
 
   const message = await response.text();

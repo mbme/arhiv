@@ -14,38 +14,6 @@ pub struct BazaOptions {
     pub schema: DataSchema,
 }
 
-pub struct Credentials {
-    login: String,
-    password: SecretString,
-}
-
-impl Credentials {
-    pub const MIN_LOGIN_LENGTH: usize = 3;
-    pub const MIN_PASSWORD_LENGTH: usize = CryptoKey::MIN_PASSWORD_LEN;
-
-    pub fn new(login: impl Into<String>, password: impl Into<SecretString>) -> Result<Self> {
-        let login = login.into();
-        let password = password.into();
-
-        ensure!(
-            login.len() >= Self::MIN_LOGIN_LENGTH,
-            "Login should be at least {} characters long",
-            Self::MIN_LOGIN_LENGTH
-        );
-        ensure!(
-            password.len() >= Self::MIN_PASSWORD_LENGTH,
-            "Password should be at least {} characters long",
-            Self::MIN_PASSWORD_LENGTH
-        );
-
-        Ok(Credentials { login, password })
-    }
-
-    pub fn get_login(&self) -> &str {
-        &self.login
-    }
-}
-
 pub struct Baza {
     path_manager: Arc<PathManager>,
     schema: Arc<DataSchema>,
@@ -53,6 +21,8 @@ pub struct Baza {
 }
 
 impl Baza {
+    pub const MIN_PASSWORD_LENGTH: usize = CryptoKey::MIN_PASSWORD_LEN;
+
     fn new(root_dir: String, schema: DataSchema) -> Self {
         let path_manager = PathManager::new(root_dir);
 
@@ -63,7 +33,15 @@ impl Baza {
         }
     }
 
-    pub fn create(options: BazaOptions, auth: Credentials) -> Result<Baza> {
+    pub fn create(options: BazaOptions, password: impl Into<SecretString>) -> Result<Baza> {
+        let password = password.into();
+
+        ensure!(
+            password.len() >= Self::MIN_PASSWORD_LENGTH,
+            "Password should be at least {} characters long",
+            Self::MIN_PASSWORD_LENGTH
+        );
+
         let baza = Baza::new(options.root_dir, options.schema);
 
         log::info!(
@@ -81,20 +59,27 @@ impl Baza {
 
         tx.commit()?;
 
-        baza.update_credentials(auth)?;
+        baza.update_password(password)?;
 
         Ok(baza)
     }
 
-    pub fn update_credentials(&self, auth: Credentials) -> Result<()> {
+    pub fn update_password(&self, password: impl Into<SecretString>) -> Result<()> {
+        let password = password.into();
+
+        ensure!(
+            password.len() >= Self::MIN_PASSWORD_LENGTH,
+            "Password should be at least {} characters long",
+            Self::MIN_PASSWORD_LENGTH
+        );
+
         let tx = self.get_tx()?;
 
-        tx.set_login(&auth.login)?;
-        tx.set_password(auth.password)?;
+        tx.set_password(password)?;
 
         tx.commit()?;
 
-        log::debug!("Updated login & password");
+        log::debug!("Updated password");
 
         Ok(())
     }
@@ -123,12 +108,11 @@ impl Baza {
         let conn = self.get_connection()?;
 
         let app_name = self.get_app_name();
-        let login = conn.get_login()?;
         let password = conn.get_password()?.into();
 
         CryptoKey::derive_from_password_with_argon2(
             &password,
-            CryptoKey::salt_from_data(format!("{login}@{app_name}"))?,
+            CryptoKey::salt_from_data(format!("{app_name} shared key"))?,
         )
     }
 

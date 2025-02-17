@@ -1,4 +1,4 @@
-/// format: CONFIDENTIAL-1[key-salt:32b][nonce:12b][encrypted-data][sha256-hash:32b]
+/// format: CONFIDENTIAL-1[key-salt:32b][nonce:12b][chacha20-encrypted-data][sha256-hash:32b]
 /// 1. password -> read salt & derive key using Argon2id v19 (m=19456 (19 MiB), t=2, p=1)
 /// 2. crypto key -> read salt & derive subkey using HKDF-sha256
 use core::str;

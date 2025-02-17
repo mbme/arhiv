@@ -77,6 +77,10 @@ impl SecretString {
     pub fn is_empty(&self) -> bool {
         self.as_str().is_empty()
     }
+
+    pub fn duplicate(&self) -> Self {
+        SecretString(self.0.clone())
+    }
 }
 
 impl From<String> for SecretString {

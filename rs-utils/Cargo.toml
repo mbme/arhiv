@@ -45,6 +45,7 @@ chacha20 = "0.9" # fast modern cypher
 zeroize =  { version = "1.8", features = ["zeroize_derive"]}# replace secrets in memory with 0s after use
 rcgen = "0.13" # generate self-signed certificates
 pem = "*" # serialize TLS private key & certificate into PEM file
+age = "0.11" # file encryption format
 
 data-encoding = "2" # base64, hex encodings
 mime_guess = "2"

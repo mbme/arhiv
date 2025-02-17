@@ -19,7 +19,7 @@ anyhow.workspace = true
 tokio.workspace = true
 jni = "0.21"
 
-arhiv = { path = "../arhiv", features = ["debug-embed"] }
+arhiv = { path = "../arhiv" }
 rs-utils = { path = "../rs-utils" }
 
 [build-dependencies]

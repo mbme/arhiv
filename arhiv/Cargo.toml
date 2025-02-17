@@ -13,7 +13,6 @@ doctest = false
 
 [features]
 production-mode = ["baza/production-mode"]
-debug-embed = ["rust-embed/debug-embed"]
 
 [dependencies]
 baza = { path = "../baza" }

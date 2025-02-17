@@ -10,7 +10,5 @@ fn main() {
     if env::var("PROFILE").unwrap() == "release" {
         // build web app in release mode
         run_npm(["run", "prod:build"]);
-    } else if cfg!(feature = "debug-embed") {
-        run_npm(["run", "build"]);
     }
 }

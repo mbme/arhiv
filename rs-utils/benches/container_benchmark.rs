@@ -3,12 +3,13 @@ use std::io::{BufRead, BufReader, Cursor, Write};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 use rs_utils::{
+    age::{AgeReader, AgeWriter, PrivateKey, PublicKey},
     confidential1::{
         Confidential1AuthReader, Confidential1Key, Confidential1Reader, Confidential1Writer,
     },
     create_file_reader, create_file_writer, create_gz_reader, create_gz_writer, format_bytes,
     generate_alpanumeric_string, generate_bytes, get_file_hash_sha256, ContainerReader,
-    ContainerWriter, TempFile,
+    ContainerWriter, SecretString, TempFile,
 };
 
 fn container_write(mut writer: &mut impl Write, data: &[String]) {
@@ -53,6 +54,18 @@ fn confidential1_gz_container_write(
         .expect("must finish confidential1 writer");
 }
 
+fn age_gz_container_write(writer: &mut impl Write, data: &[String], key: &SecretString) {
+    let key = PublicKey::from_age_x25519_key(key.duplicate()).unwrap();
+    let mut age_writer = AgeWriter::new(writer, key).expect("must create age writer");
+    let mut gz_writer = create_gz_writer(&mut age_writer);
+
+    container_write(&mut gz_writer, data);
+
+    gz_writer.finish().expect("must finish gz writer");
+
+    age_writer.finish().expect("must finish age writer");
+}
+
 fn container_read(reader: impl BufRead) -> Vec<String> {
     ContainerReader::init_buffered(reader)
         .expect("must create container reader")
@@ -87,6 +100,17 @@ fn confidential1_auth_gz_container_read(
     let c1_buf_reader = BufReader::new(c1_reader);
 
     let gz_reader = create_gz_reader(c1_buf_reader);
+    let gz_buf_reader = BufReader::new(gz_reader);
+
+    container_read(gz_buf_reader)
+}
+
+fn age_gz_container_read(reader: impl BufRead, key: &SecretString) -> Vec<String> {
+    let key = PrivateKey::from_age_x25519_key(key.duplicate()).unwrap();
+    let age_reader = AgeReader::new(reader, key).expect("must create age reader");
+    let age_buf_reader = BufReader::new(age_reader);
+
+    let gz_reader = create_gz_reader(age_buf_reader);
     let gz_buf_reader = BufReader::new(gz_reader);
 
     container_read(gz_buf_reader)
@@ -246,6 +270,33 @@ fn bench_confidential1_container_file(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_age_container(c: &mut Criterion) {
+    let mut group = c.benchmark_group("age_container");
+    group.sample_size(10);
+    group.sampling_mode(criterion::SamplingMode::Flat);
+
+    let data = gen_data();
+
+    let key = PrivateKey::generate_age_x25519_key();
+    group.bench_function("age_gz_container_write", |b| {
+        b.iter(|| {
+            let mut cursor = new_cursor();
+            age_gz_container_write(&mut cursor, &data, &key)
+        })
+    });
+
+    let mut cursor = new_cursor();
+    age_gz_container_write(&mut cursor, &data, &key);
+    group.bench_function("age_gz_container_read", |b| {
+        b.iter(|| {
+            cursor.set_position(0);
+            black_box(age_gz_container_read(&mut cursor, &key));
+        })
+    });
+
+    group.finish();
+}
+
 fn bench_hashes(c: &mut Criterion) {
     let mut group = c.benchmark_group("hashes");
     group.sample_size(10);
@@ -269,6 +320,7 @@ criterion_group!(
     bench_gz_container,
     bench_confidential1_container,
     bench_confidential1_container_file,
+    bench_age_container,
     bench_hashes
 );
 criterion_main!(benches);

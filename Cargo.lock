@@ -3001,7 +3001,6 @@ dependencies = [
  "axum-extra",
  "axum-server",
  "bytes",
- "chacha20",
  "chrono",
  "criterion",
  "data-encoding",

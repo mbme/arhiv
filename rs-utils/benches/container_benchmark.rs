@@ -4,12 +4,8 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 use rs_utils::{
     age::{AgeKey, AgeReader, AgeWriter},
-    confidential1::{
-        Confidential1AuthReader, Confidential1Key, Confidential1Reader, Confidential1Writer,
-    },
-    create_file_reader, create_file_writer, create_gz_reader, create_gz_writer, format_bytes,
-    generate_alpanumeric_string, generate_bytes, get_file_hash_sha256, ContainerReader,
-    ContainerWriter, TempFile,
+    create_gz_reader, create_gz_writer, generate_alpanumeric_string, generate_bytes,
+    get_file_hash_sha256, ContainerReader, ContainerWriter,
 };
 
 fn container_write(mut writer: &mut impl Write, data: &[String]) {
@@ -36,24 +32,6 @@ fn gz_container_write(writer: &mut impl Write, data: &[String]) {
     gz_writer.finish().expect("must finish gz writer");
 }
 
-fn confidential1_gz_container_write(
-    writer: &mut impl Write,
-    data: &[String],
-    key: &Confidential1Key,
-) {
-    let mut c1_writer =
-        Confidential1Writer::new(writer, key).expect("must create confidential1 writer");
-    let mut gz_writer = create_gz_writer(&mut c1_writer);
-
-    container_write(&mut gz_writer, data);
-
-    gz_writer.finish().expect("must finish gz writer");
-
-    c1_writer
-        .finish()
-        .expect("must finish confidential1 writer");
-}
-
 fn age_gz_container_write(writer: &mut impl Write, data: &[String], key: AgeKey) {
     let mut age_writer = AgeWriter::new(writer, key).expect("must create age writer");
     let mut gz_writer = create_gz_writer(&mut age_writer);
@@ -74,31 +52,6 @@ fn container_read(reader: impl BufRead) -> Vec<String> {
 
 fn gz_container_read(reader: impl BufRead) -> Vec<String> {
     let gz_reader = create_gz_reader(reader);
-    let gz_buf_reader = BufReader::new(gz_reader);
-
-    container_read(gz_buf_reader)
-}
-
-fn confidential1_gz_container_read(reader: impl BufRead, key: &Confidential1Key) -> Vec<String> {
-    let c1_reader =
-        Confidential1Reader::new(reader, key).expect("must create confidential1 reader");
-    let c1_buf_reader = BufReader::new(c1_reader);
-
-    let gz_reader = create_gz_reader(c1_buf_reader);
-    let gz_buf_reader = BufReader::new(gz_reader);
-
-    container_read(gz_buf_reader)
-}
-
-fn confidential1_auth_gz_container_read(
-    reader: impl BufRead,
-    key: &Confidential1Key,
-) -> Vec<String> {
-    let c1_reader =
-        Confidential1AuthReader::new(reader, key).expect("must create confidential1 auth reader");
-    let c1_buf_reader = BufReader::new(c1_reader);
-
-    let gz_reader = create_gz_reader(c1_buf_reader);
     let gz_buf_reader = BufReader::new(gz_reader);
 
     container_read(gz_buf_reader)
@@ -186,88 +139,6 @@ fn bench_gz_container(c: &mut Criterion) {
     group.finish();
 }
 
-fn bench_confidential1_container(c: &mut Criterion) {
-    let mut group = c.benchmark_group("confidential1_container");
-    group.sample_size(10);
-    group.sampling_mode(criterion::SamplingMode::Flat);
-
-    let data = gen_data();
-
-    let key = Confidential1Key::new_random_key();
-    group.bench_function("confidential1_gz_container_write", |b| {
-        b.iter(|| {
-            let mut cursor = new_cursor();
-            confidential1_gz_container_write(&mut cursor, &data, &key)
-        })
-    });
-
-    let mut cursor = new_cursor();
-    confidential1_gz_container_write(&mut cursor, &data, &key);
-    group.bench_function("confidential1_gz_container_read", |b| {
-        b.iter(|| {
-            cursor.set_position(0);
-            black_box(confidential1_gz_container_read(&mut cursor, &key));
-        })
-    });
-
-    group.bench_function("confidential1_auth_gz_container_read", |b| {
-        b.iter(|| {
-            cursor.set_position(0);
-            black_box(confidential1_auth_gz_container_read(&mut cursor, &key));
-        })
-    });
-
-    group.finish();
-}
-
-fn bench_confidential1_container_file(c: &mut Criterion) {
-    let mut group = c.benchmark_group("confidential1_gz_container_file");
-    group.sample_size(10);
-    group.sampling_mode(criterion::SamplingMode::Flat);
-    group.noise_threshold(6.5);
-
-    let data = gen_data();
-
-    let key = Confidential1Key::new_random_key();
-
-    let temp1 = TempFile::new();
-    temp1.create_file().unwrap();
-
-    group.bench_function("confidential1_gz_container_write", |b| {
-        b.iter(|| {
-            let mut writer =
-                create_file_writer(&temp1.path, true).expect("must create file writer");
-            confidential1_gz_container_write(&mut writer, &data, &key);
-        })
-    });
-
-    {
-        let mut writer = create_file_writer(&temp1.path, true).expect("must create file writer");
-        confidential1_gz_container_write(&mut writer, &data, &key);
-
-        println!(
-            "Created confidential1 file size: {}",
-            format_bytes(temp1.size().unwrap()),
-        );
-    }
-
-    group.bench_function("confidential1_gz_container_read", |b| {
-        b.iter(|| {
-            let reader = create_file_reader(&temp1.path).expect("must create file reader");
-            black_box(confidential1_gz_container_read(reader, &key))
-        })
-    });
-
-    group.bench_function("confidential1_auth_gz_container_read", |b| {
-        b.iter(|| {
-            let reader = create_file_reader(&temp1.path).expect("must create file reader");
-            black_box(confidential1_auth_gz_container_read(reader, &key));
-        })
-    });
-
-    group.finish();
-}
-
 fn bench_age_container(c: &mut Criterion) {
     let mut group = c.benchmark_group("age_container");
     group.sample_size(10);
@@ -316,8 +187,6 @@ criterion_group!(
     benches,
     bench_text_container,
     bench_gz_container,
-    bench_confidential1_container,
-    bench_confidential1_container_file,
     bench_age_container,
     bench_hashes
 );

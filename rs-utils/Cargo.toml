@@ -41,7 +41,6 @@ argon2 = "0.5.3" # derive secure cryptographic key from password & salt
 sha2 = "0.10" # popular crypto hash
 hmac = "0.12" # generic HMAC implementation
 hkdf = "0.12" # generic HKDF implementation
-chacha20 = "0.9" # fast modern cypher
 zeroize =  { version = "1.8", features = ["zeroize_derive"]}# replace secrets in memory with 0s after use
 rcgen = "0.13" # generate self-signed certificates
 pem = "*" # serialize TLS private key & certificate into PEM file

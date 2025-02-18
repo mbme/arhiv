@@ -1,5 +1,4 @@
 use anyhow::{anyhow, ensure, Result};
-use argon2::{Argon2, Params};
 use hkdf::Hkdf;
 use hmac::{Hmac, Mac};
 use sha2::{Digest, Sha256};
@@ -60,27 +59,20 @@ impl CryptoKey {
         Ok(hash.into())
     }
 
-    /// Argon2id v19 (m=19456 (19 MiB), t=2, p=1)
-    /// https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#argon2id
-    pub fn derive_from_password_with_argon2(password: &SecretBytes, salt: Salt) -> Result<Self> {
+    pub fn derive_from_password_with_scrypt(password: &SecretBytes, salt: Salt) -> Result<Self> {
         ensure!(
             password.len() >= Self::MIN_PASSWORD_LEN,
             "password must consist of at least {} bytes",
             Self::MIN_PASSWORD_LEN,
         );
 
-        let params = Params::new(19456, 2, 1, Some(KEY_SIZE))
-            .map_err(|err| anyhow!("Failed to construct Argon2 params: {err}"))?;
+        let params = scrypt::Params::new(15, 8, 1, 32).expect("Scrypt params are invalid");
 
-        let mut output_key_material = [0u8; KEY_SIZE];
-        Argon2::new(argon2::Algorithm::Argon2id, argon2::Version::V0x13, params)
-            .hash_password_into(password.as_bytes(), &salt, &mut output_key_material)
-            .map_err(|err| anyhow!("Failed to derive CryptoKey from password: {err}"))?;
+        let mut output = [0u8; KEY_SIZE];
+        scrypt::scrypt(password.as_bytes(), &salt, &params, &mut output)
+            .expect("output is the correct length");
 
-        Ok(CryptoKey {
-            key: output_key_material,
-            salt,
-        })
+        Ok(CryptoKey { key: output, salt })
     }
 
     pub fn derive_subkey(crypto_material: &[u8], salt: Salt) -> Result<Self> {
@@ -136,8 +128,8 @@ mod tests {
     fn test_crypto_key() -> Result<()> {
         let password = "12345678".into();
         let salt = CryptoKey::random_salt();
-        let key1 = CryptoKey::derive_from_password_with_argon2(&password, salt)?;
-        let key2 = CryptoKey::derive_from_password_with_argon2(&password, salt)?;
+        let key1 = CryptoKey::derive_from_password_with_scrypt(&password, salt)?;
+        let key2 = CryptoKey::derive_from_password_with_scrypt(&password, salt)?;
 
         assert_eq!(key1.get(), key2.get());
 

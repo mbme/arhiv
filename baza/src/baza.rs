@@ -110,7 +110,7 @@ impl Baza {
         let app_name = self.get_app_name();
         let password = conn.get_password()?.into();
 
-        CryptoKey::derive_from_password_with_argon2(
+        CryptoKey::derive_from_password_with_scrypt(
             &password,
             CryptoKey::salt_from_data(format!("{app_name} shared key"))?,
         )

@@ -4,9 +4,8 @@ use anyhow::Result;
 use flate2::{bufread::GzDecoder, write::GzEncoder, Compression};
 
 use crate::{
-    age::{AgeWriter, PublicKey},
+    age::{AgeKey, AgeReader, AgeWriter},
     confidential1::{Confidential1Key, Confidential1Reader, Confidential1Writer},
-    crypto::age::{AgeReader, PrivateKey},
 };
 
 pub fn create_gz_reader<R: BufRead>(reader: R) -> GzDecoder<R> {
@@ -22,7 +21,7 @@ pub struct AgeGzReader<R: Read> {
 }
 
 impl<R: Read> AgeGzReader<R> {
-    pub fn create(reader: R, key: PrivateKey) -> Result<Self> {
+    pub fn create(reader: R, key: AgeKey) -> Result<Self> {
         let age_reader = AgeReader::new(reader, key)?;
         let age_buf_reader = BufReader::new(age_reader);
 
@@ -43,7 +42,7 @@ pub struct AgeGzWriter<W: Write> {
 }
 
 impl<W: Write> AgeGzWriter<W> {
-    pub fn create(writer: W, key: PublicKey) -> Result<Self> {
+    pub fn create(writer: W, key: AgeKey) -> Result<Self> {
         let age_writer = AgeWriter::new(writer, key)?;
         let gz_writer = create_gz_writer(age_writer);
 
@@ -124,10 +123,8 @@ mod tests {
     use std::io::Write;
 
     use crate::{
-        age::{PrivateKey, PublicKey},
-        confidential1::Confidential1Key,
-        generate_alpanumeric_string, read_all_as_string, AgeGzReader, AgeGzWriter, C1GzReader,
-        C1GzWriter,
+        age::AgeKey, confidential1::Confidential1Key, generate_alpanumeric_string,
+        read_all_as_string, AgeGzReader, AgeGzWriter, C1GzReader, C1GzWriter,
     };
 
     use super::{create_gz_reader, create_gz_writer};
@@ -167,16 +164,14 @@ mod tests {
     fn test_age_gz_read_write() {
         let data = generate_alpanumeric_string(100);
 
-        let key = PrivateKey::generate_age_x25519_key();
-        let private_key = PrivateKey::from_age_x25519_key(key.duplicate()).unwrap();
-        let public_key = PublicKey::from_age_x25519_key(key.duplicate()).unwrap();
+        let key = AgeKey::generate_age_x25519_key();
 
-        let mut writer = AgeGzWriter::create(Vec::new(), public_key).unwrap();
+        let mut writer = AgeGzWriter::create(Vec::new(), key.clone()).unwrap();
         writer.write_all(data.as_bytes()).unwrap();
 
         let compressed = writer.finish().unwrap();
 
-        let reader = AgeGzReader::create(compressed.as_slice(), private_key).unwrap();
+        let reader = AgeGzReader::create(compressed.as_slice(), key).unwrap();
         let result = read_all_as_string(reader).unwrap();
 
         assert_eq!(result, data);

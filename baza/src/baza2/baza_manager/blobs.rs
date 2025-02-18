@@ -6,10 +6,8 @@ use std::{
 use anyhow::{ensure, Context, Result};
 
 use rs_utils::{
-    confidential1::{Confidential1Key, Confidential1Reader, Confidential1Writer},
-    create_file_reader, create_file_writer,
-    crypto_key::CryptoKey,
-    file_exists, log,
+    age::{AgeReader, AgeWriter},
+    create_file_reader, create_file_writer, file_exists, log,
 };
 
 use crate::entities::BLOBId;
@@ -43,23 +41,14 @@ impl BazaManager {
     pub fn get_blob(&self, blob_id: &BLOBId) -> Result<impl Read> {
         let file_path = self.get_blob_path(blob_id)?.context("BLOB doesn't exist")?;
 
-        let key = self.get_blob_key(blob_id)?;
-
         let file_reader = create_file_reader(&file_path)?;
-        let c1_reader = Confidential1Reader::new(file_reader, &key)?;
+        let age_reader = AgeReader::new(file_reader, self.key.clone())?;
 
-        Ok(c1_reader)
+        Ok(age_reader)
     }
 
     pub fn list_blobs(&self) -> Result<HashSet<BLOBId>> {
         self.paths.list_blobs()
-    }
-
-    fn get_blob_key(&self, blob_id: &BLOBId) -> Result<Confidential1Key> {
-        let salt = CryptoKey::salt_from_data(blob_id.to_string())?;
-        let key = Confidential1Key::from_key_and_salt(&self.key, salt)?;
-
-        Ok(key)
     }
 
     pub fn add_blob(&mut self, file_path: &str) -> Result<BLOBId> {
@@ -75,18 +64,16 @@ impl BazaManager {
             return Ok(blob_id);
         }
 
-        let key = self.get_blob_key(&blob_id)?;
-
         let blob_path = self.get_local_blob_path(&blob_id);
 
         let file_writer = create_file_writer(&blob_path, false)?;
-        let mut c1_writer = Confidential1Writer::new(file_writer, &key)?;
+        let mut age_writer = AgeWriter::new(file_writer, self.key.clone())?;
 
         let mut file_reader = create_file_reader(file_path)?;
 
-        copy(&mut file_reader, &mut c1_writer).context("Failed to copy & encrypt file data")?;
+        copy(&mut file_reader, &mut age_writer).context("Failed to copy & encrypt file data")?;
 
-        c1_writer.finish()?;
+        age_writer.finish()?;
 
         log::info!("Created blob {blob_id} from {file_path}");
 

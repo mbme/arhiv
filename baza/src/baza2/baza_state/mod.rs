@@ -7,9 +7,8 @@ use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 
 use rs_utils::{
-    confidential1::{Confidential1Key, Confidential1Reader, Confidential1Writer},
+    age::{AgeKey, AgeReader, AgeWriter},
     create_file_reader, create_file_writer,
-    crypto_key::CryptoKey,
 };
 
 use crate::{
@@ -80,11 +79,10 @@ impl BazaState {
         .expect("must create test state")
     }
 
-    pub fn read(reader: impl BufRead, key: CryptoKey, schema: DataSchema) -> Result<Self> {
-        let c1_key = Confidential1Key::new(key);
-        let c1_reader = Confidential1Reader::new(reader, &c1_key)?;
+    pub fn read(reader: impl BufRead, key: AgeKey, schema: DataSchema) -> Result<Self> {
+        let age_reader = AgeReader::new(reader, key)?;
 
-        let file = serde_json::from_reader(c1_reader).context("Failed to parse BazaStateFile")?;
+        let file = serde_json::from_reader(age_reader).context("Failed to parse BazaStateFile")?;
 
         Ok(Self {
             file,
@@ -93,26 +91,25 @@ impl BazaState {
         })
     }
 
-    pub fn read_file(file: &str, key: CryptoKey, schema: DataSchema) -> Result<Self> {
+    pub fn read_file(file: &str, key: AgeKey, schema: DataSchema) -> Result<Self> {
         let state_reader = create_file_reader(file)?;
         BazaState::read(state_reader, key, schema)
     }
 
-    pub fn write(&mut self, writer: impl Write, key: CryptoKey) -> Result<()> {
-        let c1_key = Confidential1Key::new(key);
-        let mut c1_writer = Confidential1Writer::new(writer, &c1_key)?;
+    pub fn write(&mut self, writer: impl Write, key: AgeKey) -> Result<()> {
+        let mut age_writer = AgeWriter::new(writer, key)?;
 
-        serde_json::to_writer(&mut c1_writer, &self.file)
+        serde_json::to_writer(&mut age_writer, &self.file)
             .context("Failed to serialize BazaStateFile")?;
 
-        c1_writer.finish()?;
+        age_writer.finish()?;
 
         self.modified = false;
 
         Ok(())
     }
 
-    pub fn write_to_file(&mut self, file: &str, key: CryptoKey) -> Result<()> {
+    pub fn write_to_file(&mut self, file: &str, key: AgeKey) -> Result<()> {
         let mut state_writer = create_file_writer(file, true)?;
 
         self.write(&mut state_writer, key)?;
@@ -307,7 +304,7 @@ impl BazaState {
 mod tests {
     use std::io::Cursor;
 
-    use rs_utils::crypto_key::CryptoKey;
+    use rs_utils::age::AgeKey;
     use serde_json::json;
 
     use crate::{
@@ -361,7 +358,7 @@ mod tests {
 
     #[test]
     fn test_state_read_write() {
-        let key = CryptoKey::new_random_key();
+        let key = AgeKey::generate_age_x25519_key();
         let mut state = BazaState::new_test_state();
 
         let id: Id = "test".into();

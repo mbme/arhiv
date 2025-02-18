@@ -10,8 +10,8 @@ use std::{
 use anyhow::{anyhow, bail, ensure, Context, Result};
 
 use rs_utils::{
-    confidential1::Confidential1Key, create_file_reader, create_file_writer, crypto_key::CryptoKey,
-    C1GzReader, C1GzWriter, ContainerPatch, ContainerReader, ContainerWriter,
+    age::AgeKey, create_file_reader, create_file_writer, AgeGzReader, AgeGzWriter, ContainerPatch,
+    ContainerReader, ContainerWriter,
 };
 
 use crate::entities::{Document, DocumentKey};
@@ -25,7 +25,7 @@ type LinesIter<'i> = Box<dyn Iterator<Item = Result<(String, String)>> + 'i>;
 #[allow(clippy::large_enum_variant)]
 enum ReaderOrLinesIter<'i, R: Read> {
     LinesIter(LinesIter<'i>),
-    Reader(ContainerReader<BufReader<C1GzReader<R>>>),
+    Reader(ContainerReader<BufReader<AgeGzReader<R>>>),
     Undefined,
 }
 
@@ -33,7 +33,7 @@ pub const STORAGE_VERSION: u8 = 1;
 
 pub struct BazaStorage<'i, R: Read + 'i> {
     pub index: DocumentsIndex,
-    key: Confidential1Key,
+    key: AgeKey,
     inner: ReaderOrLinesIter<'i, R>,
     info: Option<BazaInfo>,
 }
@@ -45,11 +45,9 @@ impl<'i, R: Read + 'i> fmt::Debug for BazaStorage<'i, R> {
 }
 
 impl<'i, R: Read + 'i> BazaStorage<'i, R> {
-    pub fn read(reader: R, key: CryptoKey) -> Result<Self> {
-        let c1_key = Confidential1Key::new(key);
-
-        let c1gz_reader = C1GzReader::create(reader, &c1_key)?;
-        let reader = ContainerReader::init(c1gz_reader)?;
+    pub fn read(reader: R, key: AgeKey) -> Result<Self> {
+        let agegz_reader = AgeGzReader::create(reader, key.clone())?;
+        let reader = ContainerReader::init(agegz_reader)?;
 
         let index =
             DocumentsIndex::parse(reader.get_index()).context("Failed to parse DocumentsIndex")?;
@@ -58,7 +56,7 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
         Ok(BazaStorage {
             index,
             inner,
-            key: c1_key,
+            key,
             info: None,
         })
     }
@@ -108,13 +106,13 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
         ensure!(!patch.is_empty(), "container patch must not be empty");
 
         // apply patch & write db
-        let c1writer = C1GzWriter::create(writer, &self.key)?;
-        let container_writer = ContainerWriter::new(c1writer);
+        let agegz_writer = AgeGzWriter::create(writer, self.key)?;
+        let container_writer = ContainerWriter::new(agegz_writer);
 
         match self.inner {
             ReaderOrLinesIter::Reader(reader) => {
-                let c1writer = reader.patch(container_writer, patch)?;
-                c1writer.finish()?;
+                let agegz_writer = reader.patch(container_writer, patch)?;
+                agegz_writer.finish()?;
             }
             _ => bail!("Can only patch Reader"),
         };
@@ -156,7 +154,7 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
 pub type BazaFileStorage<'i> = BazaStorage<'i, BufReader<File>>;
 
 impl BazaFileStorage<'_> {
-    pub fn read_file(file: &str, key: CryptoKey) -> Result<Self> {
+    pub fn read_file(file: &str, key: AgeKey) -> Result<Self> {
         let storage_reader = create_file_reader(file)?;
 
         BazaStorage::read(storage_reader, key)
@@ -216,13 +214,12 @@ pub fn create_container_patch<'d>(
 
 pub fn create_storage(
     writer: impl Write,
-    key: CryptoKey,
+    key: AgeKey,
     info: &BazaInfo,
     new_documents: &[Document],
 ) -> Result<()> {
-    let c1_key = Confidential1Key::new(key);
-    let c1writer = C1GzWriter::create(writer, &c1_key)?;
-    let mut container_writer = ContainerWriter::new(c1writer);
+    let agegz_writer = AgeGzWriter::create(writer, key)?;
+    let mut container_writer = ContainerWriter::new(agegz_writer);
 
     let index =
         DocumentsIndex::from_document_keys(new_documents.iter().map(DocumentKey::for_document));
@@ -245,7 +242,7 @@ pub fn create_storage(
     Ok(())
 }
 
-pub fn create_empty_storage_file(file: &str, key: CryptoKey, info: &BazaInfo) -> Result<()> {
+pub fn create_empty_storage_file(file: &str, key: AgeKey, info: &BazaInfo) -> Result<()> {
     let mut storage_writer = create_file_writer(file, false)?;
     create_storage(&mut storage_writer, key, info, &[])?;
 
@@ -256,7 +253,7 @@ pub fn create_empty_storage_file(file: &str, key: CryptoKey, info: &BazaInfo) ->
 
 #[cfg(test)]
 pub fn create_test_storage<'k>(
-    key: CryptoKey,
+    key: AgeKey,
     new_documents: &[Document],
 ) -> BazaStorage<'k, impl Read> {
     use std::io::Cursor;
@@ -334,8 +331,8 @@ pub fn merge_storages(
     let index = DocumentsIndex::from_document_keys_refs(index_keys);
 
     let key = &keys_per_storage[0].0.key;
-    let c1writer = C1GzWriter::create(writer, key)?;
-    let mut container_writer = ContainerWriter::new(c1writer);
+    let agegz_writer = AgeGzWriter::create(writer, key.clone())?;
+    let mut container_writer = ContainerWriter::new(agegz_writer);
 
     container_writer.write_index(&index)?;
     container_writer.write_line(&serde_json::to_string(&info)?)?;
@@ -389,7 +386,7 @@ mod tests {
 
     use anyhow::Result;
 
-    use rs_utils::crypto_key::CryptoKey;
+    use rs_utils::age::AgeKey;
     use serde_json::json;
 
     use crate::{baza2::baza_storage::create_test_storage, tests::new_document};
@@ -401,7 +398,7 @@ mod tests {
         let mut data = Cursor::new(Vec::<u8>::new());
 
         // create
-        let key = CryptoKey::new_random_key();
+        let key = AgeKey::generate_age_x25519_key();
         let info = BazaInfo::new_test_info();
         let mut docs1 = vec![new_document(json!({ "test": "a" })).with_rev(json!({ "1": 1 }))];
         create_storage(&mut data, key.clone(), &info, &docs1)?;
@@ -458,7 +455,7 @@ mod tests {
 
     #[test]
     fn test_merge_storages() {
-        let key = CryptoKey::new_random_key();
+        let key = AgeKey::generate_age_x25519_key();
         let info = BazaInfo::new_test_info();
 
         let doc_a = new_document(json!({ "test": "a" })).with_rev(json!({ "a": 1 }));

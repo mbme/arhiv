@@ -9,7 +9,7 @@ use std::{
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 
-use rs_utils::{crypto_key::CryptoKey, file_exists, log, FsTransaction, LockFile};
+use rs_utils::{age::AgeKey, file_exists, log, FsTransaction, LockFile};
 
 use crate::{
     baza2::baza_storage::create_container_patch,
@@ -47,7 +47,7 @@ use super::{
 pub struct BazaManagerOptions {
     pub storage_dir: String,
     pub state_dir: String,
-    pub key: CryptoKey,
+    pub key: AgeKey,
     pub schema: DataSchema,
 }
 
@@ -58,7 +58,7 @@ impl BazaManagerOptions {
 
     #[cfg(test)]
     pub fn new_for_tests(test_dir: &str) -> Self {
-        let key = CryptoKey::new_random_key();
+        let key = AgeKey::generate_age_x25519_key();
         let schema = DataSchema::new_test_schema();
 
         BazaManagerOptions {
@@ -74,7 +74,7 @@ pub struct BazaManager {
     _lock: LockFile,
     state: BazaState,
     paths: BazaPaths,
-    key: CryptoKey,
+    key: AgeKey,
     info: BazaInfo,
 }
 
@@ -532,7 +532,7 @@ fn get_storage_keys_to_erase<R: Read>(
 mod tests {
     use serde_json::json;
 
-    use rs_utils::{crypto_key::CryptoKey, dir_exists, file_exists, TempFile};
+    use rs_utils::{age::AgeKey, dir_exists, file_exists, TempFile};
 
     use crate::{
         baza2::{
@@ -545,7 +545,7 @@ mod tests {
 
     #[test]
     fn test_update_state_from_storage() {
-        let key = CryptoKey::new_random_key();
+        let key = AgeKey::generate_age_x25519_key();
 
         let doc_a = new_document(json!({})).with_rev(json!({ "a": 1 }));
         let doc_a1 = doc_a.clone().with_rev(json!({ "b": 1 }));

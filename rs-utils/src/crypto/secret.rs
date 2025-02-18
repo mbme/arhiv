@@ -1,96 +1,60 @@
-use std::borrow::Borrow;
+use secrecy::{SecretBox, SecretSlice};
 
-use serde::Deserialize;
-use zeroize::{Zeroize, ZeroizeOnDrop};
+use crate::new_random_crypto_byte_array;
 
-#[derive(Clone, Zeroize, ZeroizeOnDrop)]
-pub struct SecretBytes(Vec<u8>);
+pub use secrecy::{ExposeSecret, SecretString};
+
+pub struct SecretByteArray<const SIZE: usize>(SecretBox<[u8; SIZE]>);
+
+impl<const SIZE: usize> SecretByteArray<SIZE> {
+    pub fn new(bytes: [u8; SIZE]) -> Self {
+        SecretByteArray(SecretBox::new(Box::new(bytes)))
+    }
+
+    pub fn new_random() -> Self {
+        SecretByteArray::new(new_random_crypto_byte_array())
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.expose_secret().len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
+impl<const SIZE: usize> ExposeSecret<[u8; SIZE]> for SecretByteArray<SIZE> {
+    fn expose_secret(&self) -> &[u8; SIZE] {
+        self.0.expose_secret()
+    }
+}
+
+impl<const SIZE: usize> Clone for SecretByteArray<SIZE> {
+    fn clone(&self) -> Self {
+        Self::new(*self.0.expose_secret())
+    }
+}
+
+#[derive(Clone)]
+pub struct SecretBytes(SecretSlice<u8>);
 
 impl SecretBytes {
     pub fn new(value: Vec<u8>) -> Self {
-        Self(value)
-    }
-
-    pub fn as_bytes(&self) -> &[u8] {
-        self.0.borrow()
+        Self(SecretSlice::new(value.into_boxed_slice()))
     }
 
     pub fn len(&self) -> usize {
-        self.as_bytes().len()
+        self.0.expose_secret().len()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.as_bytes().is_empty()
+        self.len() == 0
     }
 }
 
-impl AsRef<[u8]> for SecretBytes {
-    fn as_ref(&self) -> &[u8] {
-        self.as_bytes()
-    }
-}
-
-impl From<Vec<u8>> for SecretBytes {
-    fn from(value: Vec<u8>) -> Self {
-        Self::new(value)
-    }
-}
-
-impl From<&[u8]> for SecretBytes {
-    fn from(value: &[u8]) -> Self {
-        Self::new(value.into())
-    }
-}
-
-impl From<&str> for SecretBytes {
-    fn from(value: &str) -> Self {
-        Self::new(value.as_bytes().to_vec())
-    }
-}
-
-impl From<SecretString> for SecretBytes {
-    fn from(value: SecretString) -> Self {
-        value.as_ref().into()
-    }
-}
-
-#[derive(Deserialize, Zeroize, ZeroizeOnDrop)]
-pub struct SecretString(String);
-
-impl SecretString {
-    pub fn new(value: String) -> Self {
-        Self(value)
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-
-    pub fn as_string_ref(&self) -> &String {
-        &self.0
-    }
-
-    pub fn len(&self) -> usize {
-        self.as_str().len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.as_str().is_empty()
-    }
-
-    pub fn duplicate(&self) -> Self {
-        SecretString(self.0.clone())
-    }
-}
-
-impl From<String> for SecretString {
-    fn from(value: String) -> Self {
-        Self::new(value)
-    }
-}
-
-impl AsRef<[u8]> for SecretString {
-    fn as_ref(&self) -> &[u8] {
-        self.as_str().as_bytes()
+impl ExposeSecret<[u8]> for SecretBytes {
+    fn expose_secret(&self) -> &[u8] {
+        self.0.expose_secret()
     }
 }

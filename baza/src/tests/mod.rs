@@ -30,7 +30,7 @@ impl Baza {
                 root_dir: temp_dir,
                 schema,
             },
-            "test1234".to_string(),
+            "test1234".into(),
         )
         .expect("must create baza")
     }

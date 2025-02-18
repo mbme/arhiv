@@ -50,7 +50,7 @@ impl UIState {
             .context("UIState.arhiv is None")
     }
 
-    pub fn create_arhiv(&self, password: impl Into<SecretString>) -> Result<()> {
+    pub fn create_arhiv(&self, password: SecretString) -> Result<()> {
         let mut lock_guard = self
             .arhiv
             .write()

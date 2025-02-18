@@ -528,7 +528,7 @@ fn prompt_password(min_length: usize) -> Result<SecretString> {
             }
         })
         .interact()
-        .map(SecretString::new)
+        .map(|value| value.into())
         .context("Failed to prompt password")
 }
 

@@ -2,7 +2,7 @@ use std::sync::{Arc, OnceLock};
 
 use anyhow::{ensure, Result};
 
-use rs_utils::{crypto_key::CryptoKey, log, SecretString};
+use rs_utils::{crypto_key::CryptoKey, log, ExposeSecret, SecretString};
 
 use crate::{
     db::BazaConnection, entities::InstanceId, path_manager::PathManager, schema::DataSchema,
@@ -33,11 +33,9 @@ impl Baza {
         }
     }
 
-    pub fn create(options: BazaOptions, password: impl Into<SecretString>) -> Result<Baza> {
-        let password = password.into();
-
+    pub fn create(options: BazaOptions, password: SecretString) -> Result<Baza> {
         ensure!(
-            password.len() >= Self::MIN_PASSWORD_LENGTH,
+            password.expose_secret().len() >= Self::MIN_PASSWORD_LENGTH,
             "Password should be at least {} characters long",
             Self::MIN_PASSWORD_LENGTH
         );
@@ -64,11 +62,9 @@ impl Baza {
         Ok(baza)
     }
 
-    pub fn update_password(&self, password: impl Into<SecretString>) -> Result<()> {
-        let password = password.into();
-
+    pub fn update_password(&self, password: SecretString) -> Result<()> {
         ensure!(
-            password.len() >= Self::MIN_PASSWORD_LENGTH,
+            password.expose_secret().len() >= Self::MIN_PASSWORD_LENGTH,
             "Password should be at least {} characters long",
             Self::MIN_PASSWORD_LENGTH
         );
@@ -108,7 +104,7 @@ impl Baza {
         let conn = self.get_connection()?;
 
         let app_name = self.get_app_name();
-        let password = conn.get_password()?.into();
+        let password = conn.get_password()?;
 
         CryptoKey::derive_from_password_with_scrypt(
             &password,

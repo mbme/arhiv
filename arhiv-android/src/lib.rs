@@ -46,7 +46,7 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
 
     let arhiv_options = {
         if cfg!(test) {
-            Arhiv::create(root_dir.clone(), "test1234".to_string())?;
+            Arhiv::create(root_dir.clone(), "test1234".into())?;
 
             ArhivOptions {
                 file_browser_root_dir,

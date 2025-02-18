@@ -20,6 +20,7 @@ use axum_server::{
     Handle, Server,
 };
 use hyper::Uri;
+use secrecy::ExposeSecret;
 use tokio::task::JoinHandle;
 
 use crate::SelfSignedCertificate;
@@ -145,7 +146,7 @@ impl HttpServer {
     ) -> Result<Self> {
         let config = RustlsConfig::from_der(
             vec![server_certificate.certificate_der],
-            server_certificate.private_key_der.as_bytes().to_vec(),
+            server_certificate.private_key_der.expose_secret().to_vec(),
         )
         .await?;
 

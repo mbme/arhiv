@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use rcgen::{CertificateParams, DistinguishedName, DnType, KeyPair};
+use secrecy::ExposeSecret;
 
 use super::{SecretBytes, SecretString};
 
@@ -44,14 +45,15 @@ impl SelfSignedCertificate {
 
     pub fn to_pem(&self) -> SecretString {
         pem::encode_many(&[
-            pem::Pem::new("PRIVATE KEY", self.private_key_der.as_bytes().to_vec()),
+            pem::Pem::new("PRIVATE KEY", self.private_key_der.expose_secret()),
             pem::Pem::new("CERTIFICATE", self.certificate_der.clone()),
         ])
         .into()
     }
 
     pub fn from_pem(data: &SecretString) -> Result<Self> {
-        let items = pem::parse_many(data.as_str().as_bytes()).context("Failed to parse .pem")?;
+        let items =
+            pem::parse_many(data.expose_secret().as_bytes()).context("Failed to parse .pem")?;
 
         let private_key = items
             .iter()

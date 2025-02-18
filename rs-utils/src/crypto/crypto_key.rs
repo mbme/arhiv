@@ -1,12 +1,10 @@
 use anyhow::{anyhow, ensure, Result};
 use hkdf::Hkdf;
 use hmac::{Hmac, Mac};
+use secrecy::{ExposeSecret, SecretString};
 use sha2::{Digest, Sha256};
-use zeroize::{Zeroize, ZeroizeOnDrop};
 
-use crate::new_random_crypto_byte_array;
-
-use super::SecretBytes;
+use super::SecretByteArray;
 
 type HmacSha256 = Hmac<Sha256>;
 type HkdfSha256 = Hkdf<Sha256>;
@@ -14,11 +12,10 @@ type HkdfSha256 = Hkdf<Sha256>;
 pub const KEY_SIZE: usize = 32;
 pub const SALT_SIZE: usize = 32;
 
-pub type Salt = [u8; SALT_SIZE];
-pub type Key = [u8; KEY_SIZE];
+pub type Key = SecretByteArray<KEY_SIZE>;
+pub type Salt = SecretByteArray<SALT_SIZE>;
 
 /// Derive secure key from a password & salt.
-#[derive(Clone, Zeroize, ZeroizeOnDrop)]
 pub struct CryptoKey {
     key: Key,
     salt: Salt,
@@ -34,11 +31,7 @@ impl CryptoKey {
     }
 
     pub fn new_random_key() -> Self {
-        Self::new(new_random_crypto_byte_array(), Self::random_salt())
-    }
-
-    pub fn random_salt() -> Salt {
-        new_random_crypto_byte_array()
+        Self::new(Key::new_random(), Salt::new_random())
     }
 
     pub fn salt_from_data(salt_material: impl AsRef<[u8]>) -> Result<Salt> {
@@ -56,12 +49,12 @@ impl CryptoKey {
 
         let hash = hasher.finalize();
 
-        Ok(hash.into())
+        Ok(Salt::new(hash.into()))
     }
 
-    pub fn derive_from_password_with_scrypt(password: &SecretBytes, salt: Salt) -> Result<Self> {
+    pub fn derive_from_password_with_scrypt(password: &SecretString, salt: Salt) -> Result<Self> {
         ensure!(
-            password.len() >= Self::MIN_PASSWORD_LEN,
+            password.expose_secret().len() >= Self::MIN_PASSWORD_LEN,
             "password must consist of at least {} bytes",
             Self::MIN_PASSWORD_LEN,
         );
@@ -69,10 +62,18 @@ impl CryptoKey {
         let params = scrypt::Params::new(15, 8, 1, 32).expect("Scrypt params are invalid");
 
         let mut output = [0u8; KEY_SIZE];
-        scrypt::scrypt(password.as_bytes(), &salt, &params, &mut output)
-            .expect("output is the correct length");
+        scrypt::scrypt(
+            password.expose_secret().as_bytes(),
+            salt.expose_secret(),
+            &params,
+            &mut output,
+        )
+        .expect("output is the correct length");
 
-        Ok(CryptoKey { key: output, salt })
+        Ok(CryptoKey {
+            key: Key::new(output),
+            salt,
+        })
     }
 
     pub fn derive_subkey(crypto_material: &[u8], salt: Salt) -> Result<Self> {
@@ -84,12 +85,15 @@ impl CryptoKey {
         );
 
         // HKDF: derive subkey using crypto hash of the cryptographic key material & salt
-        let hkdf = HkdfSha256::new(Some(&salt), crypto_material);
-        let mut key = [0u8; 32];
+        let hkdf = HkdfSha256::new(Some(salt.expose_secret()), crypto_material);
+        let mut key = [0u8; KEY_SIZE];
         hkdf.expand(&[], &mut key)
             .map_err(|err| anyhow!("Key derivation failed: {err}"))?;
 
-        Ok(Self { key, salt })
+        Ok(Self {
+            key: Key::new(key),
+            salt,
+        })
     }
 
     #[must_use]
@@ -103,7 +107,8 @@ impl CryptoKey {
     }
 
     pub fn sign(&self, msg: &[u8]) -> [u8; 32] {
-        let mut mac = HmacSha256::new_from_slice(&self.key).expect("HMAC can take key of any size");
+        let mut mac = HmacSha256::new_from_slice(self.key.expose_secret())
+            .expect("HMAC can take key of any size");
         mac.update(msg);
 
         let result = mac.finalize();
@@ -112,11 +117,21 @@ impl CryptoKey {
     }
 
     pub fn verify_signature(&self, msg: &[u8], tag: &[u8]) -> bool {
-        let mut mac = HmacSha256::new_from_slice(&self.key).expect("HMAC can take key of any size");
+        let mut mac = HmacSha256::new_from_slice(self.key.expose_secret())
+            .expect("HMAC can take key of any size");
 
         mac.update(msg);
 
         mac.verify_slice(tag).is_ok()
+    }
+}
+
+impl Clone for CryptoKey {
+    fn clone(&self) -> Self {
+        Self::new(
+            Key::new(*self.key.expose_secret()),
+            Salt::new(*self.salt.expose_secret()),
+        )
     }
 }
 
@@ -126,12 +141,12 @@ mod tests {
 
     #[test]
     fn test_crypto_key() -> Result<()> {
-        let password = "12345678".into();
-        let salt = CryptoKey::random_salt();
-        let key1 = CryptoKey::derive_from_password_with_scrypt(&password, salt)?;
+        let password: SecretString = "12345678".into();
+        let salt = Salt::new_random();
+        let key1 = CryptoKey::derive_from_password_with_scrypt(&password, salt.clone())?;
         let key2 = CryptoKey::derive_from_password_with_scrypt(&password, salt)?;
 
-        assert_eq!(key1.get(), key2.get());
+        assert_eq!(key1.get().expose_secret(), key2.get().expose_secret());
 
         Ok(())
     }

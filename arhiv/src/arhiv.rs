@@ -32,7 +32,7 @@ impl Arhiv {
         path_exists(root_dir)
     }
 
-    pub fn create(root_dir: impl Into<String>, password: impl Into<SecretString>) -> Result<()> {
+    pub fn create(root_dir: impl Into<String>, password: SecretString) -> Result<()> {
         let root_dir = root_dir.into();
         log::debug!("Arhiv root dir: {root_dir}");
 

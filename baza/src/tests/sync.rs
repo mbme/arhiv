@@ -344,7 +344,7 @@ async fn test_sync_network_agent_success() -> Result<()> {
 #[tokio::test]
 async fn test_sync_network_agent_fails_with_wrong_auth() -> Result<()> {
     let baza0 = Arc::new(Baza::new_test_baza_with_id("0"));
-    baza0.update_password("other password".to_string())?;
+    baza0.update_password("other password".into())?;
 
     let baza1 = Arc::new(Baza::new_test_baza_with_id("1"));
     {

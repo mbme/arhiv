@@ -41,7 +41,7 @@ scrypt = { version = "0.11", default-features = false } # derive secure cryptogr
 sha2 = "0.10" # popular crypto hash
 hmac = "0.12" # generic HMAC implementation
 hkdf = "0.12" # generic HKDF implementation
-zeroize =  { version = "1.8", features = ["zeroize_derive"]}# replace secrets in memory with 0s after use
+secrecy = { version = "0.10", features = ["serde"]} # replace secrets in memory with 0s after use
 
 age = "0.11" # file encryption format
 

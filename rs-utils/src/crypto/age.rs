@@ -12,17 +12,18 @@ use age::{
 };
 use anyhow::{anyhow, ensure, Context, Result};
 
+#[derive(Clone)]
 pub enum AgeKey {
-    Password(crate::SecretString),
+    Password(SecretString),
     Key(x25519::Identity),
 }
 
 impl AgeKey {
     pub const MIN_PASSWORD_LEN: usize = 8;
 
-    pub fn from_password(password: crate::SecretString) -> Result<Self> {
+    pub fn from_password(password: SecretString) -> Result<Self> {
         ensure!(
-            password.len() >= Self::MIN_PASSWORD_LEN,
+            password.expose_secret().len() >= Self::MIN_PASSWORD_LEN,
             "password must consist of at least {} bytes",
             Self::MIN_PASSWORD_LEN
         );
@@ -30,8 +31,8 @@ impl AgeKey {
         Ok(AgeKey::Password(password))
     }
 
-    pub fn from_age_x25519_key(key: crate::SecretString) -> Result<Self> {
-        let identity = x25519::Identity::from_str(key.as_str())
+    pub fn from_age_x25519_key(key: SecretString) -> Result<Self> {
+        let identity = x25519::Identity::from_str(key.expose_secret())
             .map_err(|err| anyhow!("Failed to parse x25519 key: {err}"))?;
 
         Ok(AgeKey::Key(identity))
@@ -43,17 +44,16 @@ impl AgeKey {
         AgeKey::Key(identity)
     }
 
-    pub fn serialize(&self) -> crate::SecretString {
+    pub fn serialize(&self) -> SecretString {
         match self {
-            AgeKey::Password(password) => password.duplicate(),
-            AgeKey::Key(identity) => identity.to_string().expose_secret().to_string().into(),
+            AgeKey::Password(password) => password.clone(),
+            AgeKey::Key(identity) => identity.to_string(),
         }
     }
 
     fn into_identity(self) -> Box<dyn Identity> {
         match self {
             AgeKey::Password(password) => {
-                let password = SecretString::from(password.as_str());
                 let identity = scrypt::Identity::new(password);
 
                 Box::new(identity)
@@ -65,21 +65,11 @@ impl AgeKey {
     fn into_recipient(self) -> Box<dyn Recipient> {
         match self {
             AgeKey::Password(password) => {
-                let password = SecretString::from(password.as_str());
                 let recipient = scrypt::Recipient::new(password);
 
                 Box::new(recipient)
             }
             AgeKey::Key(identity) => Box::new(identity.to_public()),
-        }
-    }
-}
-
-impl Clone for AgeKey {
-    fn clone(&self) -> Self {
-        match self {
-            Self::Password(password) => Self::Password(password.duplicate()),
-            Self::Key(key) => Self::Key(key.clone()),
         }
     }
 }

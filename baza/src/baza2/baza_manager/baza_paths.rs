@@ -6,11 +6,11 @@ use rs_utils::{create_dir_if_not_exist, file_exists, list_files};
 
 use crate::{entities::BLOBId, get_local_blob_ids};
 
-const BLOB_EXT: &str = ".c1";
+const BLOB_EXT: &str = ".age";
 
-const STORAGE_EXT: &str = ".gz.c1";
+const STORAGE_EXT: &str = ".gz.age";
 
-const STATE_EXT: &str = ".c1";
+const STATE_EXT: &str = ".age";
 
 pub struct BazaPaths {
     pub storage_dir: String,

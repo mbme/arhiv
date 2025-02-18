@@ -235,9 +235,9 @@ pub fn create_storage(
         container_writer.write_line(&value)?;
     }
 
-    let c1writer = container_writer.finish()?;
+    let agegz_writer = container_writer.finish()?;
 
-    c1writer.finish()?;
+    agegz_writer.finish()?;
 
     Ok(())
 }
@@ -360,8 +360,8 @@ pub fn merge_storages(
         }
     }
 
-    let c1writer = container_writer.finish()?;
-    c1writer.finish()?;
+    let agegz_writer = container_writer.finish()?;
+    agegz_writer.finish()?;
 
     Ok(())
 }

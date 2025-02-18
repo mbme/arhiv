@@ -59,7 +59,11 @@ impl CryptoKey {
             Self::MIN_PASSWORD_LEN,
         );
 
-        let params = scrypt::Params::new(15, 8, 1, 32).expect("Scrypt params are invalid");
+        #[cfg(test)]
+        let log_n = 8;
+        #[cfg(not(test))]
+        let log_n = 15;
+        let params = scrypt::Params::new(log_n, 8, 1, 32).expect("Scrypt params are invalid");
 
         let mut output = [0u8; KEY_SIZE];
         scrypt::scrypt(

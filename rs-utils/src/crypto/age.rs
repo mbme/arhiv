@@ -54,9 +54,21 @@ impl AgeKey {
     fn into_identity(self) -> Box<dyn Identity> {
         match self {
             AgeKey::Password(password) => {
-                let identity = scrypt::Identity::new(password);
+                #[cfg(test)]
+                {
+                    let mut identity = scrypt::Identity::new(password);
 
-                Box::new(identity)
+                    identity.set_max_work_factor(1);
+
+                    Box::new(identity)
+                }
+
+                #[cfg(not(test))]
+                {
+                    let identity = scrypt::Identity::new(password);
+
+                    Box::new(identity)
+                }
             }
             AgeKey::Key(identity) => Box::new(identity),
         }
@@ -65,9 +77,20 @@ impl AgeKey {
     fn into_recipient(self) -> Box<dyn Recipient> {
         match self {
             AgeKey::Password(password) => {
-                let recipient = scrypt::Recipient::new(password);
+                #[cfg(test)]
+                {
+                    let mut recipient = scrypt::Recipient::new(password);
+                    recipient.set_work_factor(1);
 
-                Box::new(recipient)
+                    Box::new(recipient)
+                }
+
+                #[cfg(not(test))]
+                {
+                    let recipient = scrypt::Recipient::new(password);
+
+                    Box::new(recipient)
+                }
             }
             AgeKey::Key(identity) => Box::new(identity.to_public()),
         }
@@ -157,6 +180,26 @@ mod tests {
     fn test_write_read() {
         let data = generate_alpanumeric_string(100 * 1024);
         let key = AgeKey::generate_age_x25519_key();
+
+        let encrypted = {
+            let mut writer = AgeWriter::new(Vec::new(), key.clone()).unwrap();
+            writer.write_all(data.as_bytes()).unwrap();
+            writer.finish().unwrap()
+        };
+
+        let decrypted = {
+            let reader = AgeReader::new(Cursor::new(encrypted), key).unwrap();
+
+            read_all_as_string(reader).unwrap()
+        };
+
+        assert_eq!(decrypted, data);
+    }
+
+    #[test]
+    fn test_write_read_with_password() {
+        let data = generate_alpanumeric_string(100 * 1024);
+        let key = AgeKey::from_password("test1234".into()).unwrap();
 
         let encrypted = {
             let mut writer = AgeWriter::new(Vec::new(), key.clone()).unwrap();

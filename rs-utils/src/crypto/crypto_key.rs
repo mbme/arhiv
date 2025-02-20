@@ -60,7 +60,7 @@ impl CryptoKey {
         );
 
         #[cfg(test)]
-        let log_n = 8;
+        let log_n = 1;
         #[cfg(not(test))]
         let log_n = 15;
         let params = scrypt::Params::new(log_n, 8, 1, 32).expect("Scrypt params are invalid");

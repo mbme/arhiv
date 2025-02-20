@@ -1,7 +1,8 @@
 use std::sync::{Arc, RwLock};
 
 use anyhow::{anyhow, bail, Context, Result};
-use rs_utils::SecretString;
+
+use baza::Credentials;
 
 use crate::{Arhiv, ArhivOptions};
 
@@ -50,7 +51,7 @@ impl UIState {
             .context("UIState.arhiv is None")
     }
 
-    pub fn create_arhiv(&self, password: SecretString) -> Result<()> {
+    pub fn create_arhiv(&self, auth: Credentials) -> Result<()> {
         let mut lock_guard = self
             .arhiv
             .write()
@@ -60,7 +61,7 @@ impl UIState {
             bail!("Arhiv already exists");
         }
 
-        Arhiv::create(&self.root_dir, password)?;
+        Arhiv::create(&self.root_dir, auth)?;
 
         let arhiv = Arhiv::open(&self.root_dir, self.options.clone())?;
         let arhiv = Arc::new(arhiv);

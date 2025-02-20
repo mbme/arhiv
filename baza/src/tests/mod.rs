@@ -6,6 +6,7 @@ use serde_json::{json, Value};
 use rs_utils::{generate_temp_path, SelfSignedCertificate};
 
 use crate::{
+    baza::Credentials,
     entities::{BLOBId, Document, DocumentType, Id, Revision, BLOB},
     schema::DataSchema,
     sync::Changeset,
@@ -30,7 +31,7 @@ impl Baza {
                 root_dir: temp_dir,
                 schema,
             },
-            "test1234".into(),
+            Credentials::new("test".to_string(), "test1234".into()).unwrap(),
         )
         .expect("must create baza")
     }

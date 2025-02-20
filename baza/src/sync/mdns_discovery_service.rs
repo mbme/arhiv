@@ -22,9 +22,11 @@ impl MDNSDiscoveryService {
 
         let instance_id = conn.get_instance_id()?;
 
+        let login = conn.get_login()?;
+
         let app_name = baza.get_app_name();
 
-        let mut service_name = format!("_{app_name}");
+        let mut service_name = format!("_{login}@{app_name}");
         if DEV_MODE {
             service_name.push_str("-dev");
         }

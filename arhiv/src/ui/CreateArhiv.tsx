@@ -10,7 +10,7 @@ export function CreateArhiv() {
   const passwordRepeatInputRef = useRef<HTMLInputElement>(null);
 
   const onSubmit = async (values: JSONObj) => {
-    const { password, passwordRepeat } = values;
+    const { login, password, passwordRepeat } = values;
 
     if (password !== passwordRepeat) {
       passwordRepeatInputRef.current?.setCustomValidity(
@@ -23,7 +23,7 @@ export function CreateArhiv() {
     setInProgress(true);
 
     try {
-      await createArhiv(password as string);
+      await createArhiv(login as string, password as string);
 
       location.reload();
     } catch (err) {
@@ -44,6 +44,18 @@ export function CreateArhiv() {
 
       <Form className="flex flex-col max-w-md items-center gap-4" onSubmit={onSubmit}>
         {error && <div className="text-red-500 text-xl pl-1 my-2">{error}</div>}
+
+        <label>
+          Login:
+          <input
+            type="text"
+            name="login"
+            required
+            minLength={window.MIN_LOGIN_LENGTH}
+            autoFocus
+            autoComplete="off"
+          />
+        </label>
 
         <label>
           Password:

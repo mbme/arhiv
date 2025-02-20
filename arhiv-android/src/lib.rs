@@ -11,7 +11,7 @@ use jni::{
 };
 use tokio::runtime::Runtime;
 
-use arhiv::{Arhiv, ArhivOptions, ArhivServer, ServerInfo};
+use arhiv::{Arhiv, ArhivOptions, ArhivServer, Credentials, ServerInfo};
 use rs_utils::log;
 
 static RUNTIME: LazyLock<Mutex<Option<Runtime>>> = LazyLock::new(|| Mutex::new(None));
@@ -46,7 +46,9 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
 
     let arhiv_options = {
         if cfg!(test) {
-            Arhiv::create(root_dir.clone(), "test1234".into())?;
+            let auth = Credentials::new("test".to_string(), "test1234".into())?;
+
+            Arhiv::create(root_dir.clone(), auth)?;
 
             ArhivOptions {
                 file_browser_root_dir,

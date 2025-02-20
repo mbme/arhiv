@@ -4,9 +4,9 @@ use anyhow::{ensure, Result};
 
 use baza::{
     sync::{AutoSyncTask, MDNSClientTask, MDNSDiscoveryService, SyncManager},
-    AutoCommitService, AutoCommitTask, Baza, BazaOptions,
+    AutoCommitService, AutoCommitTask, Baza, BazaOptions, Credentials,
 };
-use rs_utils::{get_home_dir, log, path_exists, SecretString};
+use rs_utils::{get_home_dir, log, path_exists};
 
 use crate::{config::ArhivConfigExt, definitions::get_standard_schema, Status};
 
@@ -32,13 +32,13 @@ impl Arhiv {
         path_exists(root_dir)
     }
 
-    pub fn create(root_dir: impl Into<String>, password: SecretString) -> Result<()> {
+    pub fn create(root_dir: impl Into<String>, auth: Credentials) -> Result<()> {
         let root_dir = root_dir.into();
         log::debug!("Arhiv root dir: {root_dir}");
 
         let schema = get_standard_schema();
 
-        Baza::create(BazaOptions { root_dir, schema }, password)?;
+        Baza::create(BazaOptions { root_dir, schema }, auth)?;
         log::debug!("Created new Arhiv");
 
         Ok(())

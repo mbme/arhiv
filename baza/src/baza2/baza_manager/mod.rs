@@ -11,8 +11,8 @@ use anyhow::{anyhow, bail, ensure, Context, Result};
 
 use rs_utils::{
     age::{AgeKey, AgeReader, AgeWriter},
-    create_file_reader, create_file_writer, file_exists, log, ExposeSecret, FsTransaction,
-    LockFile, SecretString,
+    create_file_reader, create_file_writer, log, ExposeSecret, FsTransaction, LockFile,
+    SecretString,
 };
 
 use crate::{
@@ -71,7 +71,45 @@ impl BazaManager {
 
         let key = self.key.as_ref().context("Key is missing")?;
 
-        Baza::new(self.paths.clone(), key.clone(), self.schema.clone())
+        let lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+
+        let state = if self.paths.state_file_exists()? {
+            log::info!("Reading state file {}", self.paths.state_file);
+
+            let state =
+                BazaState::read_file(&self.paths.state_file, key.clone(), self.schema.clone())?;
+
+            ensure!(
+                state.get_info().data_version == self.schema.get_latest_data_version(),
+                "State data version mismatch"
+            );
+            ensure!(
+                state.get_info().storage_version == STORAGE_VERSION,
+                "Storage version mismatch"
+            );
+
+            state
+        } else {
+            log::info!("Creating new state file {}", self.paths.state_file);
+
+            self.create_state()?
+        };
+
+        let mut baza = Baza {
+            _lock: lock,
+            state,
+            key: key.clone(),
+            paths: self.paths.clone(),
+        };
+
+        baza.merge_storages()?;
+
+        if !baza.has_staged_documents() {
+            baza.update_state_from_storage()?;
+            baza.remove_unused_storage_blobs()?;
+        }
+
+        Ok(baza)
     }
 
     pub fn storage_exists(&self) -> Result<bool> {
@@ -81,8 +119,8 @@ impl BazaManager {
         Ok(have_storage_files && have_key_file)
     }
 
-    pub fn create(&mut self, password: SecretString) -> Result<()> {
-        log::info!("Creating baza {}", self.paths);
+    pub fn create(&mut self, login: String, password: SecretString) -> Result<()> {
+        log::info!("Creating {login} baza in {}", self.paths);
 
         self.paths.ensure_dirs_exist()?;
 
@@ -98,6 +136,7 @@ impl BazaManager {
         let key = self.generate_key_file(key_file_key)?;
 
         let info = BazaInfo {
+            login: login.clone(),
             data_version: self.schema.get_latest_data_version(),
             storage_version: STORAGE_VERSION,
         };
@@ -106,7 +145,7 @@ impl BazaManager {
         self.key = Some(key);
 
         log::info!(
-            "Created new main storage file {}",
+            "Created new {login} main storage file {}",
             self.paths.storage_main_db_file
         );
 
@@ -145,6 +184,37 @@ impl BazaManager {
         Ok(())
     }
 
+    fn create_state(&self) -> Result<BazaState> {
+        log::info!("Creating new state file {}", self.paths.state_file);
+
+        let db_files = self.paths.list_storage_db_files()?;
+        ensure!(!db_files.is_empty(), "No existing db files found");
+
+        // Use main db file if exists, otherwise use the first in the list
+        let mut db_file = &self.paths.storage_main_db_file;
+        if !db_files.contains(db_file) {
+            db_file = &db_files[0];
+        }
+        log::info!("Using {db_file} db file to create new state file");
+
+        let key = self.key.as_ref().context("Key is missing")?;
+        let mut storage = BazaStorage::read_file(db_file, key.clone())?;
+
+        let info = storage.get_info()?;
+
+        let mut state = BazaState::new(
+            InstanceId::generate(),
+            info.clone(),
+            self.schema.clone(),
+            HashMap::new(),
+        )?;
+        state.write_to_file(&self.paths.state_file, key.clone())?;
+
+        log::info!("Created new state file {}", self.paths.state_file);
+
+        Ok(state)
+    }
+
     #[cfg(test)]
     pub fn new_for_tests(test_dir: &str) -> Self {
         let schema = DataSchema::new_test_schema();
@@ -156,7 +226,7 @@ impl BazaManager {
         );
 
         manager
-            .create("test password".into())
+            .create("test login".to_string(), "test password".into())
             .expect("must create test baza");
 
         manager
@@ -168,59 +238,9 @@ pub struct Baza {
     state: BazaState,
     paths: BazaPaths,
     key: AgeKey,
-    info: BazaInfo,
 }
 
 impl Baza {
-    pub fn new(paths: BazaPaths, key: AgeKey, schema: DataSchema) -> Result<Self> {
-        log::info!("Opening baza {paths}");
-
-        paths.ensure_dirs_exist()?;
-
-        let info = BazaInfo {
-            data_version: schema.get_latest_data_version(),
-            storage_version: STORAGE_VERSION,
-        };
-
-        let lock = LockFile::wait_for_lock(&paths.lock_file)?;
-
-        let state = if file_exists(&paths.state_file)? {
-            let state = BazaState::read_file(&paths.state_file, key.clone(), schema)?;
-
-            ensure!(state.get_info() == &info, "State info mismatch");
-
-            log::info!("Read state file in {}", paths.state_file);
-
-            state
-        } else {
-            // create state if necessary
-            let mut state =
-                BazaState::new(InstanceId::generate(), info.clone(), schema, HashMap::new())?;
-            state.write_to_file(&paths.state_file, key.clone())?;
-
-            log::info!("Created new state file in {}", paths.state_file);
-
-            state
-        };
-
-        let mut baza = Self {
-            _lock: lock,
-            state,
-            key,
-            info,
-            paths,
-        };
-
-        baza.merge_storages()?;
-
-        if !baza.has_staged_documents() {
-            baza.update_state_from_storage()?;
-            baza.remove_unused_storage_blobs()?;
-        }
-
-        Ok(baza)
-    }
-
     #[cfg(test)]
     pub fn create_storage_file(&self, file_path: &str, docs: &[Document]) {
         use rs_utils::create_file_writer;
@@ -228,7 +248,11 @@ impl Baza {
         use crate::baza2::baza_storage::create_storage;
 
         let mut storage_writer = create_file_writer(file_path, false).unwrap();
-        create_storage(&mut storage_writer, self.key.clone(), &self.info, docs).unwrap();
+        create_storage(&mut storage_writer, self.key.clone(), self.get_info(), docs).unwrap();
+    }
+
+    pub fn get_info(&self) -> &BazaInfo {
+        self.state.get_info()
     }
 
     pub fn get_schema(&self) -> &DataSchema {
@@ -462,7 +486,7 @@ impl Baza {
             })
             .collect::<Result<Vec<_>>>()?;
 
-        merge_storages_to_file(&self.info, storages, main_db_file)?;
+        merge_storages_to_file(self.get_info(), storages, main_db_file)?;
 
         tx.commit()?;
 

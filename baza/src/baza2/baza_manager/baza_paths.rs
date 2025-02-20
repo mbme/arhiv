@@ -113,10 +113,6 @@ impl BazaPaths {
         file_exists(&self.key_file)
     }
 
-    pub fn storage_main_db_file_exists(&self) -> Result<bool> {
-        file_exists(&self.storage_main_db_file)
-    }
-
     pub fn state_file_exists(&self) -> Result<bool> {
         file_exists(&self.state_file)
     }

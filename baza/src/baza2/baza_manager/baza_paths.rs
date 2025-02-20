@@ -12,7 +12,10 @@ const STORAGE_EXT: &str = ".gz.age";
 
 const STATE_EXT: &str = ".age";
 
+#[derive(Clone)]
 pub struct BazaPaths {
+    pub key_file: String,
+
     pub storage_dir: String,
     pub storage_main_db_file: String,
     pub storage_data_dir: String,
@@ -26,6 +29,8 @@ pub struct BazaPaths {
 
 impl BazaPaths {
     pub fn new(storage_dir: String, state_dir: String) -> Self {
+        let key_file = format!("{state_dir}/key.age");
+
         let storage_main_db_file = format!("{storage_dir}/baza{STORAGE_EXT}");
         let storage_data_dir = format!("{storage_dir}/data");
 
@@ -35,6 +40,8 @@ impl BazaPaths {
         let lock_file = format!("{state_dir}/baza.lock");
 
         Self {
+            key_file,
+
             storage_dir,
             storage_main_db_file,
             storage_data_dir,
@@ -100,6 +107,18 @@ impl BazaPaths {
         let file = self.get_storage_blob_path(id);
 
         file_exists(&file)
+    }
+
+    pub fn key_file_exists(&self) -> Result<bool> {
+        file_exists(&self.key_file)
+    }
+
+    pub fn storage_main_db_file_exists(&self) -> Result<bool> {
+        file_exists(&self.storage_main_db_file)
+    }
+
+    pub fn state_file_exists(&self) -> Result<bool> {
+        file_exists(&self.state_file)
     }
 }
 

@@ -4,12 +4,16 @@ mod blobs;
 use std::{
     collections::{HashMap, HashSet},
     fs::remove_file,
-    io::Read,
+    io::{Read, Write},
 };
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 
-use rs_utils::{age::AgeKey, file_exists, log, FsTransaction, LockFile};
+use rs_utils::{
+    age::{AgeKey, AgeReader, AgeWriter},
+    create_file_reader, create_file_writer, file_exists, log, ExposeSecret, FsTransaction,
+    LockFile, SecretString,
+};
 
 use crate::{
     baza2::baza_storage::create_container_patch,
@@ -43,34 +47,123 @@ use super::{
 // * push updated documents to baza storage
 // * commit changes
 
-#[derive(Clone)]
-pub struct BazaManagerOptions {
-    pub storage_dir: String,
-    pub state_dir: String,
-    pub key: AgeKey,
-    pub schema: DataSchema,
+pub struct BazaManager {
+    schema: DataSchema,
+    paths: BazaPaths,
+    key: Option<AgeKey>,
 }
 
-impl BazaManagerOptions {
-    pub fn open(self) -> Result<BazaManager> {
-        BazaManager::new(self)
+impl BazaManager {
+    pub fn new(storage_dir: String, state_dir: String, schema: DataSchema) -> Self {
+        let paths = BazaPaths::new(storage_dir, state_dir);
+
+        BazaManager {
+            schema,
+            paths,
+            key: None,
+        }
+    }
+
+    pub fn open(&self) -> Result<Baza> {
+        log::info!("Opening baza {}", self.paths);
+
+        ensure!(self.storage_exists()?, "Storage doesn't exist");
+
+        let key = self.key.as_ref().context("Key is missing")?;
+
+        Baza::new(self.paths.clone(), key.clone(), self.schema.clone())
+    }
+
+    pub fn storage_exists(&self) -> Result<bool> {
+        let have_storage_files = !self.paths.list_storage_db_files()?.is_empty();
+        let have_key_file = self.paths.key_file_exists()?;
+
+        Ok(have_storage_files && have_key_file)
+    }
+
+    pub fn create(&mut self, password: SecretString) -> Result<()> {
+        log::info!("Creating baza {}", self.paths);
+
+        self.paths.ensure_dirs_exist()?;
+
+        ensure!(!self.paths.key_file_exists()?, "Key file already exists");
+        ensure!(
+            !self.paths.state_file_exists()?,
+            "State file already exists"
+        );
+
+        let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+
+        let key_file_key = AgeKey::from_password(password)?;
+        let key = self.generate_key_file(key_file_key)?;
+
+        let info = BazaInfo {
+            data_version: self.schema.get_latest_data_version(),
+            storage_version: STORAGE_VERSION,
+        };
+        create_empty_storage_file(&self.paths.storage_main_db_file, key.clone(), &info)?;
+
+        self.key = Some(key);
+
+        log::info!(
+            "Created new main storage file {}",
+            self.paths.storage_main_db_file
+        );
+
+        Ok(())
+    }
+
+    fn generate_key_file(&self, key_file_key: AgeKey) -> Result<AgeKey> {
+        let writer = create_file_writer(&self.paths.key_file, false)?;
+
+        let mut age_writer = AgeWriter::new(writer, key_file_key)?;
+
+        let storage_key = AgeKey::generate_age_x25519_key();
+        age_writer.write_all(storage_key.serialize().expose_secret().as_bytes())?;
+        age_writer.finish()?;
+
+        log::debug!("Generated new key file {}", self.paths.key_file);
+
+        Ok(storage_key)
+    }
+
+    pub fn read_key_file(&mut self, password: SecretString) -> Result<()> {
+        let key_file_key = AgeKey::from_password(password)?;
+
+        let reader = create_file_reader(&self.paths.key_file)?;
+        let mut age_reader = AgeReader::new_buffered(reader, key_file_key)?;
+
+        let mut key = String::new();
+        age_reader.read_to_string(&mut key)?;
+
+        let key = AgeKey::from_age_x25519_key(key.into())?;
+
+        self.key = Some(key);
+
+        log::debug!("Read key from {}", self.paths.key_file);
+
+        Ok(())
     }
 
     #[cfg(test)]
     pub fn new_for_tests(test_dir: &str) -> Self {
-        let key = AgeKey::generate_age_x25519_key();
         let schema = DataSchema::new_test_schema();
 
-        BazaManagerOptions {
-            storage_dir: format!("{test_dir}/storage"),
-            state_dir: format!("{test_dir}/state"),
-            key,
+        let mut manager = BazaManager::new(
+            format!("{test_dir}/storage"),
+            format!("{test_dir}/state"),
             schema,
-        }
+        );
+
+        manager
+            .create("test password".into())
+            .expect("must create test baza");
+
+        manager
     }
 }
 
-pub struct BazaManager {
+pub struct Baza {
     _lock: LockFile,
     state: BazaState,
     paths: BazaPaths,
@@ -78,12 +171,8 @@ pub struct BazaManager {
     info: BazaInfo,
 }
 
-impl BazaManager {
-    pub fn new(options: BazaManagerOptions) -> Result<Self> {
-        let paths = BazaPaths::new(options.storage_dir, options.state_dir);
-        let schema = options.schema;
-        let key = options.key;
-
+impl Baza {
+    pub fn new(paths: BazaPaths, key: AgeKey, schema: DataSchema) -> Result<Self> {
         log::info!("Opening baza {paths}");
 
         paths.ensure_dirs_exist()?;
@@ -114,17 +203,7 @@ impl BazaManager {
             state
         };
 
-        // create main storage file if necessary
-        if !file_exists(&paths.storage_main_db_file)? {
-            create_empty_storage_file(&paths.storage_main_db_file, key.clone(), &info)?;
-
-            log::info!(
-                "Created new main storage file {}",
-                paths.storage_main_db_file
-            );
-        }
-
-        let mut baza_manager = Self {
+        let mut baza = Self {
             _lock: lock,
             state,
             key,
@@ -132,14 +211,14 @@ impl BazaManager {
             paths,
         };
 
-        baza_manager.merge_storages()?;
+        baza.merge_storages()?;
 
-        if !baza_manager.has_staged_documents() {
-            baza_manager.update_state_from_storage()?;
-            baza_manager.remove_unused_storage_blobs()?;
+        if !baza.has_staged_documents() {
+            baza.update_state_from_storage()?;
+            baza.remove_unused_storage_blobs()?;
         }
 
-        Ok(baza_manager)
+        Ok(baza)
     }
 
     #[cfg(test)]
@@ -193,7 +272,7 @@ impl BazaManager {
     ) -> Result<()> {
         log::debug!("Staging document {}", &document.id);
 
-        Validator::new(self as &BazaManager).validate_staged(&document)?;
+        Validator::new(self as &Baza).validate_staged(&document)?;
 
         self.state.stage_document(document, lock_key)?;
 
@@ -419,10 +498,10 @@ impl BazaManager {
     }
 }
 
-impl Drop for BazaManager {
+impl Drop for Baza {
     fn drop(&mut self) {
         if self.has_unsaved_changes() {
-            log::error!("Dropping BazaManager with unsaved changes");
+            log::error!("Dropping Baza with unsaved changes");
         }
     }
 }
@@ -535,9 +614,7 @@ mod tests {
     use rs_utils::{age::AgeKey, dir_exists, file_exists, TempFile};
 
     use crate::{
-        baza2::{
-            baza_manager::BazaManagerOptions, baza_storage::create_test_storage, DocumentHead,
-        },
+        baza2::{baza_manager::BazaManager, baza_storage::create_test_storage, DocumentHead},
         tests::{new_document, new_empty_document},
     };
 
@@ -590,17 +667,17 @@ mod tests {
 
     #[test]
     fn test_commit() {
-        let temp_dir = TempFile::new_with_details("test_baza_manager", "");
+        let temp_dir = TempFile::new_with_details("baza_manager", "");
         temp_dir.mkdir().unwrap();
 
-        let options = BazaManagerOptions::new_for_tests(&temp_dir.path);
-        let mut manager = options.clone().open().unwrap();
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
+        let mut baza = manager.open().unwrap();
 
-        assert!(dir_exists(&manager.paths.storage_dir).unwrap());
-        assert!(dir_exists(&manager.paths.state_dir).unwrap());
+        assert!(dir_exists(&baza.paths.storage_dir).unwrap());
+        assert!(dir_exists(&baza.paths.state_dir).unwrap());
 
-        assert!(file_exists(&manager.paths.state_file).unwrap());
-        assert!(file_exists(&manager.paths.storage_main_db_file).unwrap());
+        assert!(file_exists(&baza.paths.state_file).unwrap());
+        assert!(file_exists(&baza.paths.storage_main_db_file).unwrap());
 
         let blob1_file = temp_dir.new_child("blob1");
         blob1_file.write_str("blob1").unwrap();
@@ -608,154 +685,175 @@ mod tests {
         let blob2_file = temp_dir.new_child("blob2");
         blob2_file.write_str("blob2").unwrap();
 
-        let blob1 = manager.add_blob(&blob1_file.path).unwrap();
-        let blob2 = manager.add_blob(&blob2_file.path).unwrap();
+        let blob1 = baza.add_blob(&blob1_file.path).unwrap();
+        let blob2 = baza.add_blob(&blob2_file.path).unwrap();
 
         assert!(
-            manager
-                .stage_document(new_document(json!({ "blob": "unknown" })), &None)
+            baza.stage_document(new_document(json!({ "blob": "unknown" })), &None)
                 .is_err(),
             "Can't stage document that references unknown BLOB"
         );
         assert!(
-            manager
-                .stage_document(new_document(json!({ "ref": "unknown" })), &None)
+            baza.stage_document(new_document(json!({ "ref": "unknown" })), &None)
                 .is_err(),
             "Can't stage document that references unknown document"
         );
 
-        manager
-            .stage_document(new_document(json!({ "blob": blob1 })), &None)
+        baza.stage_document(new_document(json!({ "blob": blob1 })), &None)
             .unwrap();
 
-        assert!(manager.has_staged_documents());
+        assert!(baza.has_staged_documents());
 
-        manager
-            .insert_snapshot(new_document(json!({})).with_rev(json!({ "a": 1 })))
+        baza.insert_snapshot(new_document(json!({})).with_rev(json!({ "a": 1 })))
             .unwrap();
 
-        manager.commit().unwrap();
+        baza.commit().unwrap();
 
-        let manager = options.clone().open().unwrap();
+        let baza = manager.open().unwrap();
 
         // ensure new BLOB is committed
-        assert!(manager.paths.storage_blob_exists(&blob1).unwrap());
+        assert!(baza.paths.storage_blob_exists(&blob1).unwrap());
 
         // ensure unused state BLOB is removed
-        assert!(!manager.paths.storage_blob_exists(&blob2).unwrap());
-        assert!(manager.paths.list_state_blobs().unwrap().is_empty());
+        assert!(!baza.paths.storage_blob_exists(&blob2).unwrap());
+        assert!(baza.paths.list_state_blobs().unwrap().is_empty());
 
-        assert!(!manager.has_staged_documents());
+        assert!(!baza.has_staged_documents());
 
-        let storage = manager
-            .open_storage(&manager.paths.storage_main_db_file)
-            .unwrap();
+        let storage = baza.open_storage(&baza.paths.storage_main_db_file).unwrap();
         assert_eq!(storage.index.len(), 2);
     }
 
     #[test]
     fn test_removes_erased_snapshots_from_storage() {
-        let temp_dir = TempFile::new_with_details("test_baza_manager", "");
+        let temp_dir = TempFile::new_with_details("baza_manager", "");
         temp_dir.mkdir().unwrap();
 
-        let options = BazaManagerOptions::new_for_tests(&temp_dir.path);
-        let mut manager = options.clone().open().unwrap();
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
+        let mut baza = manager.open().unwrap();
 
         // Create and stage a new document with a BLOB
         let blob_file = temp_dir.new_child("blob");
         blob_file.write_str("blob_content").unwrap();
-        let blob_id = manager.add_blob(&blob_file.path).unwrap();
+        let blob_id = baza.add_blob(&blob_file.path).unwrap();
 
         let doc_a1 = new_document(json!({ "blob": blob_id }));
-        manager.stage_document(doc_a1.clone(), &None).unwrap();
-        manager.commit().unwrap();
+        baza.stage_document(doc_a1.clone(), &None).unwrap();
+        baza.commit().unwrap();
 
         // Ensure the document and BLOB are in storage
-        let mut manager = options.clone().open().unwrap();
-        let doc_a1_key = manager.get_document(&doc_a1.id).unwrap().create_key();
-        let storage = manager
-            .open_storage(&manager.paths.storage_main_db_file)
-            .unwrap();
+        let mut baza = manager.open().unwrap();
+        let doc_a1_key = baza.get_document(&doc_a1.id).unwrap().create_key();
+        let storage = baza.open_storage(&baza.paths.storage_main_db_file).unwrap();
         assert!(storage.contains(&doc_a1_key));
-        assert!(manager.paths.storage_blob_exists(&blob_id).unwrap());
+        assert!(baza.paths.storage_blob_exists(&blob_id).unwrap());
 
         // Erase the document and commit
         let mut doc_a2 = doc_a1.clone();
         doc_a2.erase();
-        manager.state.stage_document(doc_a2.clone(), &None).unwrap();
-        manager.commit().unwrap();
+        baza.state.stage_document(doc_a2.clone(), &None).unwrap();
+        baza.commit().unwrap();
 
         // Reopen storage and check the snapshot and BLOB are removed
-        let manager = options.clone().open().unwrap();
-        let doc_a2_key = manager.get_document(&doc_a2.id).unwrap().create_key();
-        let storage = manager
-            .open_storage(&manager.paths.storage_main_db_file)
-            .unwrap();
+        let baza = manager.open().unwrap();
+        let doc_a2_key = baza.get_document(&doc_a2.id).unwrap().create_key();
+        let storage = baza.open_storage(&baza.paths.storage_main_db_file).unwrap();
         assert!(!storage.contains(&doc_a1_key));
         assert!(storage.contains(&doc_a2_key));
-        assert!(!manager.paths.storage_blob_exists(&blob_id).unwrap());
+        assert!(!baza.paths.storage_blob_exists(&blob_id).unwrap());
     }
 
     #[test]
     fn test_merge_storages() {
-        let temp_dir = TempFile::new_with_details("test_baza_manager", "");
+        let temp_dir = TempFile::new_with_details("baza_manager", "");
         temp_dir.mkdir().unwrap();
 
-        let options = BazaManagerOptions::new_for_tests(&temp_dir.path);
-        let mut manager = options.clone().open().unwrap();
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
+        let mut baza = manager.open().unwrap();
 
-        let db_file_1 = manager.paths.get_storage_file("db1");
-        let db_file_2 = manager.paths.get_storage_file("db2");
+        let db_file_1 = baza.paths.get_storage_file("db1");
+        let db_file_2 = baza.paths.get_storage_file("db2");
 
         let doc_a1 = new_document(json!({ "test": "a" })).with_rev(json!({ "a": 1 }));
         let doc_a2 = doc_a1.clone().with_rev(json!({ "a": 2 }));
 
         let doc_b1 = new_document(json!({ "test": "b" })).with_rev(json!({ "a": 1 }));
 
-        manager.create_storage_file(&db_file_1, &[doc_a1.clone(), doc_b1.clone()]);
-        manager.create_storage_file(&db_file_2, &[doc_a1.clone(), doc_a2.clone()]);
+        baza.create_storage_file(&db_file_1, &[doc_a1.clone(), doc_b1.clone()]);
+        baza.create_storage_file(&db_file_2, &[doc_a1.clone(), doc_a2.clone()]);
 
         assert!(file_exists(&db_file_1).unwrap());
         assert!(file_exists(&db_file_2).unwrap());
 
-        manager
-            .stage_document(new_document(json!({})), &None)
-            .unwrap();
+        baza.stage_document(new_document(json!({})), &None).unwrap();
 
-        manager.commit().unwrap();
-        let manager = options.clone().open().unwrap();
+        baza.commit().unwrap();
+        let baza = manager.open().unwrap();
 
         assert!(!file_exists(&db_file_1).unwrap());
         assert!(!file_exists(&db_file_2).unwrap());
 
-        assert_eq!(manager.iter_documents().count(), 3);
+        assert_eq!(baza.iter_documents().count(), 3);
 
-        let storage = manager
-            .open_storage(&manager.paths.storage_main_db_file)
-            .unwrap();
+        let storage = baza.open_storage(&baza.paths.storage_main_db_file).unwrap();
         assert_eq!(storage.index.len(), 4);
     }
 
     #[test]
     fn test_preserve_state() {
-        let temp_dir = TempFile::new_with_details("test_baza_manager", "");
+        let temp_dir = TempFile::new_with_details("baza_manager", "");
         temp_dir.mkdir().unwrap();
 
-        let options = BazaManagerOptions::new_for_tests(&temp_dir.path);
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
 
         {
-            let mut manager = options.clone().open().unwrap();
+            let mut baza = manager.open().unwrap();
             let document = new_empty_document();
-            manager.stage_document(document.clone(), &None).unwrap();
-            manager.lock_document(&document.id, "test").unwrap();
-            manager.save_changes().unwrap();
+            baza.stage_document(document.clone(), &None).unwrap();
+            baza.lock_document(&document.id, "test").unwrap();
+            baza.save_changes().unwrap();
         }
 
         {
-            let manager = options.clone().open().unwrap();
+            let baza = manager.open().unwrap();
 
-            assert!(manager.has_staged_documents());
-            assert!(manager.has_document_locks());
+            assert!(baza.has_staged_documents());
+            assert!(baza.has_document_locks());
+        }
+    }
+
+    #[test]
+    fn test_open_storage() {
+        let temp_dir = TempFile::new_with_details("baza_manager", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
+        let storage_dir = manager.paths.storage_dir.clone();
+        let state_dir = manager.paths.state_dir.clone();
+        let schema = manager.schema.clone();
+
+        {
+            let mut baza = manager.open().unwrap();
+            let document = new_empty_document();
+            baza.stage_document(document.clone(), &None).unwrap();
+            baza.lock_document(&document.id, "test").unwrap();
+            baza.save_changes().unwrap();
+        }
+
+        {
+            let mut manager = BazaManager::new(storage_dir, state_dir, schema);
+
+            assert!(manager.open().is_err(), "Can't open without password");
+            assert!(
+                manager.read_key_file("wrong password".into()).is_err(),
+                "Can't open with wrong password"
+            );
+            manager.read_key_file("test password".into()).unwrap();
+
+            let baza = manager.open().unwrap();
+
+            assert!(baza.has_staged_documents());
+            assert!(baza.has_document_locks());
         }
     }
 }

@@ -4,7 +4,7 @@ use std::fmt;
 use anyhow::{anyhow, bail, ensure, Result};
 
 use crate::{
-    baza2::BazaManager,
+    baza2::Baza,
     db::BazaConnection,
     entities::{BLOBId, Document, Id},
     schema::{DataSchema, Field},
@@ -88,13 +88,13 @@ impl ValidableDB for &BazaConnection {
     }
 }
 
-impl ValidableDB for &BazaManager {
+impl ValidableDB for &Baza {
     fn get_schema(&self) -> &DataSchema {
-        (self as &BazaManager).get_schema()
+        (self as &Baza).get_schema()
     }
 
     fn get_document(&self, id: &Id) -> Result<Option<Document>> {
-        let document = (self as &BazaManager)
+        let document = (self as &Baza)
             .get_document(id)
             .map(|head| head.get_single_document().clone()); // FIXME remove clone
 
@@ -102,7 +102,7 @@ impl ValidableDB for &BazaManager {
     }
 
     fn blob_exists(&self, blob_id: &BLOBId) -> Result<bool> {
-        (self as &BazaManager).blob_exists(blob_id)
+        (self as &Baza).blob_exists(blob_id)
     }
 }
 

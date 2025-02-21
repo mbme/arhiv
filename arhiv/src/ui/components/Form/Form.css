@@ -21,7 +21,7 @@
     }
 
     &[readonly] {
-      @apply bg-gray-100 dark:bg-gray-600;
+      @apply bg-gray-200 dark:bg-gray-600;
 
       &:is(select) option {
         display: none;

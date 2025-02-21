@@ -44,7 +44,7 @@
       @apply bg-transparent;
     }
     &.cm-focused .cm-activeLine {
-      @apply var-item-active-bg-color;
+      @apply bg-blue-300/30 dark:bg-blue-700/30;
     }
     & .cm-placeholder {
       @apply var-placeholder-color;

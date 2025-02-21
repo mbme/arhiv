@@ -4,15 +4,14 @@ mod blobs;
 use std::{
     collections::{HashMap, HashSet},
     fs::remove_file,
-    io::{Read, Write},
+    io::Read,
 };
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 
 use rs_utils::{
-    age::{AgeKey, AgeReader, AgeWriter},
-    create_file_reader, create_file_writer, log, ExposeSecret, FsTransaction, LockFile,
-    SecretString,
+    age::{encrypt_and_write_file, read_and_decrypt_file, AgeKey},
+    log, FsTransaction, LockFile, SecretString,
 };
 
 use crate::{
@@ -153,33 +152,49 @@ impl BazaManager {
     }
 
     fn generate_key_file(&self, key_file_key: AgeKey) -> Result<AgeKey> {
-        let writer = create_file_writer(&self.paths.key_file, false)?;
+        let key_file = AgeKey::generate_age_x25519_key();
 
-        let mut age_writer = AgeWriter::new(writer, key_file_key)?;
-
-        let storage_key = AgeKey::generate_age_x25519_key();
-        age_writer.write_all(storage_key.serialize().expose_secret().as_bytes())?;
-        age_writer.finish()?;
+        encrypt_and_write_file(
+            &self.paths.key_file,
+            key_file_key,
+            key_file.serialize().into(),
+        )?;
 
         log::debug!("Generated new key file {}", self.paths.key_file);
 
-        Ok(storage_key)
+        Ok(key_file)
     }
 
     pub fn read_key_file(&mut self, password: SecretString) -> Result<()> {
+        log::debug!("Reading key file {}", self.paths.key_file);
+
         let key_file_key = AgeKey::from_password(password)?;
 
-        let reader = create_file_reader(&self.paths.key_file)?;
-        let mut age_reader = AgeReader::new_buffered(reader, key_file_key)?;
+        let key = read_and_decrypt_file(&self.paths.key_file, key_file_key)?;
 
-        let mut key = String::new();
-        age_reader.read_to_string(&mut key)?;
-
-        let key = AgeKey::from_age_x25519_key(key.into())?;
+        let key = AgeKey::from_age_x25519_key(key.try_into()?)?;
 
         self.key = Some(key);
 
-        log::debug!("Read key from {}", self.paths.key_file);
+        Ok(())
+    }
+
+    pub fn change_key_file_password(
+        &self,
+        old_password: SecretString,
+        new_password: SecretString,
+    ) -> Result<()> {
+        log::warn!("Changing key file password {}", self.paths.key_file);
+
+        let old_key_file_key = AgeKey::from_password(old_password)?;
+        let data = read_and_decrypt_file(&self.paths.key_file, old_key_file_key)?;
+
+        let new_key_file_key = AgeKey::from_password(new_password)?;
+
+        let mut fs_tx = FsTransaction::new();
+        fs_tx.move_to_backup(&self.paths.key_file)?;
+        encrypt_and_write_file(&self.paths.key_file, new_key_file_key, data)?;
+        fs_tx.commit()?;
 
         Ok(())
     }
@@ -878,6 +893,31 @@ mod tests {
 
             assert!(baza.has_staged_documents());
             assert!(baza.has_document_locks());
+        }
+    }
+
+    #[test]
+    fn test_change_password() {
+        let temp_dir = TempFile::new_with_details("baza_manager", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
+        let storage_dir = manager.paths.storage_dir.clone();
+        let state_dir = manager.paths.state_dir.clone();
+        let schema = manager.schema.clone();
+
+        manager
+            .change_key_file_password("test password".into(), "new password".into())
+            .unwrap();
+
+        {
+            let mut manager = BazaManager::new(storage_dir, state_dir, schema);
+
+            assert!(
+                manager.read_key_file("test password".into()).is_err(),
+                "Can't open with old password"
+            );
+            manager.read_key_file("new password".into()).unwrap();
         }
     }
 }

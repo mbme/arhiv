@@ -1,3 +1,4 @@
+use anyhow::Context;
 use secrecy::{SecretBox, SecretSlice};
 
 use crate::new_random_crypto_byte_array;
@@ -56,5 +57,24 @@ impl SecretBytes {
 impl ExposeSecret<[u8]> for SecretBytes {
     fn expose_secret(&self) -> &[u8] {
         self.0.expose_secret()
+    }
+}
+
+impl From<SecretString> for SecretBytes {
+    fn from(value: SecretString) -> Self {
+        let data = value.expose_secret().as_bytes().to_vec();
+
+        SecretBytes::new(data)
+    }
+}
+
+impl TryFrom<SecretBytes> for SecretString {
+    type Error = anyhow::Error;
+
+    fn try_from(value: SecretBytes) -> Result<Self, Self::Error> {
+        let str = std::str::from_utf8(value.expose_secret())
+            .context("Failed to read bytes as UTF8 string")?;
+
+        Ok(str.into())
     }
 }

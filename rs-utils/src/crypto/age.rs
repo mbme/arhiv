@@ -12,6 +12,10 @@ use age::{
 };
 use anyhow::{anyhow, ensure, Context, Result};
 
+use crate::{create_file_reader, create_file_writer};
+
+use super::SecretBytes;
+
 #[derive(Clone)]
 pub enum AgeKey {
     Password(SecretString),
@@ -166,6 +170,29 @@ impl<W: Write> Write for AgeWriter<W> {
     fn flush(&mut self) -> io::Result<()> {
         self.inner.flush()
     }
+}
+
+pub fn read_and_decrypt_file(file_path: &str, key: AgeKey) -> Result<SecretBytes> {
+    let reader = create_file_reader(file_path)?;
+    let mut age_reader = AgeReader::new_buffered(reader, key)?;
+
+    let mut data = Vec::new();
+    age_reader.read_to_end(&mut data)?;
+
+    let data = SecretBytes::new(data);
+
+    Ok(data)
+}
+
+pub fn encrypt_and_write_file(file_path: &str, key: AgeKey, data: SecretBytes) -> Result<()> {
+    let writer = create_file_writer(file_path, false)?;
+
+    let mut age_writer = AgeWriter::new(writer, key)?;
+
+    age_writer.write_all(data.expose_secret())?;
+    age_writer.finish()?;
+
+    Ok(())
 }
 
 #[cfg(test)]

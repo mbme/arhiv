@@ -22,7 +22,7 @@ impl DBMigration for MigrationV7 {
         include_str!("./v7.sql")
     }
 
-    fn apply(&self, conn: &Connection, _fs_tx: &mut FsTransaction, data_dir: &str) -> Result<()> {
+    fn apply(&self, conn: &Connection, fs_tx: &mut FsTransaction, data_dir: &str) -> Result<()> {
         conn.execute_batch(
             "INSERT INTO kvs
                        SELECT * FROM old_db.kvs;
@@ -49,7 +49,7 @@ impl DBMigration for MigrationV7 {
                     let new_file_name = new_blob_id.to_string();
                     let new_path = path.with_file_name(new_file_name);
 
-                    fs::rename(&path, &new_path)?;
+                    fs_tx.move_file(path_to_string(&path), path_to_string(&new_path), true)?;
 
                     let blake3_hash = file_name.trim_start_matches("blake3-");
                     blob_ids_map.insert(blake3_hash.to_string(), new_blob_id.to_string());

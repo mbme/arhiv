@@ -10,21 +10,16 @@ import { QueryError } from 'components/QueryError';
 type Props = {
   filePath: string;
   size: number;
-  onAttachmentCreated: (id: DocumentId) => void;
+  onAssetCreated: (id: DocumentId) => void;
   onCancel: Callback;
 };
-export function FilePickerConfirmationDialog({
-  filePath,
-  size,
-  onAttachmentCreated,
-  onCancel,
-}: Props) {
+export function FilePickerConfirmationDialog({ filePath, size, onAssetCreated, onCancel }: Props) {
   const [moveFile, setMoveFile] = useState(false);
 
   const { error, inProgress, triggerRefresh } = useQuery(
     async (abortSignal) => {
-      const { id } = await RPC.CreateAttachment({ filePath, moveFile }, abortSignal);
-      onAttachmentCreated(id);
+      const { id } = await RPC.CreateAsset({ filePath, moveFile }, abortSignal);
+      onAssetCreated(id);
     },
     {
       refreshOnMount: false,
@@ -44,15 +39,15 @@ export function FilePickerConfirmationDialog({
       </Button>
 
       <Button variant="primary" busy={inProgress} onClick={triggerRefresh}>
-        Create attachment
+        Create asset
       </Button>
     </>
   );
 
   return (
-    <Dialog onHide={onHide} title="Attach file" buttons={buttons}>
+    <Dialog onHide={onHide} title="Create asset" buttons={buttons}>
       <div className="mb-6">
-        Do you really want to create attachment from the file <code>{filePath}</code> of size{' '}
+        Do you really want to create asset from the file <code>{filePath}</code> of size{' '}
         <b>{formatBytes(size)}</b>?
       </div>
 

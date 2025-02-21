@@ -1,6 +1,6 @@
 import { useContext, useState } from 'react';
 import { DocumentData, DocumentId, DocumentType, BLOBId } from 'dto';
-import { isAttachment } from 'utils/schema';
+import { isAsset } from 'utils/schema';
 import { isAudio, isImage } from 'utils';
 import { getBlobUrl, getScaledImageUrl } from 'utils/network';
 import { Button } from 'components/Button';
@@ -9,16 +9,12 @@ import { SuspenseImage } from 'components/SuspenseImage';
 import { RefClickHandlerContext } from 'components/Ref';
 import { Dialog } from 'components/Dialog';
 
-type AttachmentPreviewBlockProps = {
+type AssetPreviewBlockProps = {
   documentId: DocumentId;
   data: DocumentData;
   description?: string;
 };
-export function AttachmentPreviewBlock({
-  documentId,
-  data,
-  description,
-}: AttachmentPreviewBlockProps) {
+export function AssetPreviewBlock({ documentId, data, description }: AssetPreviewBlockProps) {
   const refClickHandler = useContext(RefClickHandlerContext);
 
   return (
@@ -39,15 +35,15 @@ export function AttachmentPreviewBlock({
         </Button>
       </span>
 
-      <AttachmentPreview data={data} />
+      <AssetPreview data={data} />
     </span>
   );
 }
 
-type AttachmentPreviewProps = {
+type AssetPreviewProps = {
   data: DocumentData;
 };
-export function AttachmentPreview({ data }: AttachmentPreviewProps) {
+export function AssetPreview({ data }: AssetPreviewProps) {
   const [showImageModal, setShowImageModal] = useState(false);
 
   const blobId = data['blob'] as BLOBId;
@@ -93,7 +89,7 @@ export function AttachmentPreview({ data }: AttachmentPreviewProps) {
 }
 
 export function canPreview(documentType: DocumentType, data: DocumentData): boolean {
-  if (!isAttachment(documentType)) {
+  if (!isAsset(documentType)) {
     return false;
   }
 

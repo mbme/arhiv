@@ -5,7 +5,7 @@ use rs_utils::{is_http_url, is_image_path};
 
 use crate::{
     entities::{Document, DocumentData, DocumentType, Id, Refs},
-    schema::{download_attachment, Attachment, DataSchema, Field, FieldType, ATTACHMENT_TYPE},
+    schema::{download_asset, Asset, DataSchema, Field, FieldType, ASSET_TYPE},
     search::MultiSearch,
     BazaConnection,
 };
@@ -60,12 +60,12 @@ impl<'s> DocumentExpert<'s> {
         Ok(field)
     }
 
-    pub fn get_cover_attachment_id(&self, document: &Document) -> Result<Option<Id>> {
-        if document.document_type.is(ATTACHMENT_TYPE) {
-            let attachment: Attachment = document.clone().convert()?;
+    pub fn get_cover_asset_id(&self, document: &Document) -> Result<Option<Id>> {
+        if document.document_type.is(ASSET_TYPE) {
+            let asset: Asset = document.clone().convert()?;
 
-            if attachment.data.is_image() {
-                return Ok(Some(attachment.id));
+            if asset.data.is_image() {
+                return Ok(Some(asset.id));
             }
         }
 
@@ -203,7 +203,7 @@ impl<'s> DocumentExpert<'s> {
         Ok(())
     }
 
-    pub async fn prepare_attachments(
+    pub async fn prepare_assets(
         &self,
         document: &mut Document,
         tx: &mut BazaConnection,
@@ -211,7 +211,7 @@ impl<'s> DocumentExpert<'s> {
         let fields = self
             .schema
             .iter_fields(&document.document_type)?
-            .filter(|field| field.could_ref_attachments());
+            .filter(|field| field.could_ref_assets());
 
         for field in fields {
             match field.field_type {
@@ -223,12 +223,12 @@ impl<'s> DocumentExpert<'s> {
                         }
 
                         if !is_image_path(value) {
-                            bail!("Only image attachment URLs are supported, got '{value}'");
+                            bail!("Only image asset URLs are supported, got '{value}'");
                         }
 
-                        let attachment = download_attachment(value, tx).await?;
+                        let asset = download_asset(value, tx).await?;
 
-                        document.data.set(field.name, attachment.id);
+                        document.data.set(field.name, asset.id);
                     }
                 }
 
@@ -247,18 +247,18 @@ impl<'s> DocumentExpert<'s> {
                         }
 
                         if !is_image_path(value.clone()) {
-                            bail!("Only image attachment URLs are supported, got '{value}'");
+                            bail!("Only image asset URLs are supported, got '{value}'");
                         }
 
-                        let attachment = download_attachment(value, tx).await?;
+                        let asset = download_asset(value, tx).await?;
 
-                        *value = attachment.id.to_string();
+                        *value = asset.id.to_string();
                     }
 
                     document.data.set(field.name, values);
                 }
                 _ => {
-                    unreachable!("only ref fields might reference attachments");
+                    unreachable!("only ref fields might reference assets");
                 }
             }
         }

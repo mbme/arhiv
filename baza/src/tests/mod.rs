@@ -13,7 +13,7 @@ use crate::{
     Baza, BazaOptions, Filter, ListPage,
 };
 
-mod attachment;
+mod asset;
 mod auto_commit_service;
 mod crud;
 mod locks;

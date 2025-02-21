@@ -223,7 +223,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let status = arhiv.get_status()?;
 
             println!("{status}");
-            // FIXME print number of unused temp attachments
+            // FIXME print number of unused temp assets
         }
         CLICommand::Config {
             auto_commit_delay,

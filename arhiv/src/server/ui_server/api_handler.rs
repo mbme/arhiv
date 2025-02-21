@@ -5,7 +5,7 @@ use anyhow::{bail, Context, Result};
 use baza::{
     entities::{Document, DocumentType, ERASED_DOCUMENT_TYPE},
     markup::MarkupStr,
-    schema::{create_attachment, Attachment, DataSchema},
+    schema::{create_asset, Asset, DataSchema},
     validator::ValidationError,
     DocumentExpert, Filter, StagingError,
 };
@@ -53,13 +53,12 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .items
                 .into_iter()
                 .map(|item| {
-                    let attachment_id = document_expert.get_cover_attachment_id(&item)?;
+                    let asset_id = document_expert.get_cover_asset_id(&item)?;
 
-                    let cover = if let Some(ref attachment_id) = attachment_id {
-                        let attachment: Attachment =
-                            conn.must_get_document(attachment_id)?.convert()?;
+                    let cover = if let Some(ref asset_id) = asset_id {
+                        let asset: Asset = conn.must_get_document(asset_id)?.convert()?;
 
-                        Some(attachment.data.blob)
+                        Some(asset.data.blob)
                     } else {
                         None
                     };
@@ -169,7 +168,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             let document_expert = arhiv.baza.get_document_expert();
             document_expert
-                .prepare_attachments(&mut document, &mut tx)
+                .prepare_assets(&mut document, &mut tx)
                 .await?;
 
             if let Err(err) = tx.stage_document(&mut document, Some(lock_key)) {
@@ -198,7 +197,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             let document_expert = arhiv.baza.get_document_expert();
             document_expert
-                .prepare_attachments(&mut document, &mut tx)
+                .prepare_assets(&mut document, &mut tx)
                 .await?;
 
             if let Err(err) = tx.stage_document(&mut document, None) {
@@ -245,15 +244,15 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 entries,
             }
         }
-        APIRequest::CreateAttachment {
+        APIRequest::CreateAsset {
             ref file_path,
             move_file,
         } => {
             let mut tx = arhiv.baza.get_tx()?;
-            let attachment = create_attachment(&mut tx, file_path, move_file, None)?;
+            let asset = create_asset(&mut tx, file_path, move_file, None)?;
             tx.commit()?;
 
-            APIResponse::CreateAttachment { id: attachment.id }
+            APIResponse::CreateAsset { id: asset.id }
         }
         APIRequest::Commit {} => {
             let mut tx = arhiv.baza.get_tx()?;

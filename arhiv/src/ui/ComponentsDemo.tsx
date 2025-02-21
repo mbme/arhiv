@@ -1,5 +1,11 @@
 import { Suspense, useState } from 'react';
-import { DocumentId, DocumentType } from 'dto';
+import {
+  ASSET_DOCUMENT_TYPE,
+  DocumentId,
+  DocumentType,
+  ERASED_DOCUMENT_TYPE,
+  NOTE_DOCUMENT_TYPE,
+} from 'dto';
 import { setQueryParam, JSONObj } from 'utils';
 import { useScrollRestoration, useSessionState } from 'utils/hooks';
 import { JSXChildren } from 'utils/jsx';
@@ -238,7 +244,7 @@ export function ComponentsDemo() {
               <div className="examples">
                 <Ref
                   documentId={'test123' as DocumentId}
-                  documentType={'note' as DocumentType}
+                  documentType={NOTE_DOCUMENT_TYPE}
                   documentTitle="Very important note"
                 />
               </div>
@@ -248,7 +254,7 @@ export function ComponentsDemo() {
               <div className="examples">
                 <Ref
                   documentId={'test123' as DocumentId}
-                  documentType={'' as DocumentType}
+                  documentType={ERASED_DOCUMENT_TYPE}
                   documentTitle="12342321"
                 />
               </div>
@@ -258,7 +264,7 @@ export function ComponentsDemo() {
               <div className="examples">
                 <Ref
                   documentId={'test123' as DocumentId}
-                  documentType={'note' as DocumentType}
+                  documentType={NOTE_DOCUMENT_TYPE}
                   documentTitle=""
                   description="Note with custom description"
                 />
@@ -271,7 +277,7 @@ export function ComponentsDemo() {
                   Some looooooooooong text and{' '}
                   <Ref
                     documentId={'test123' as DocumentId}
-                    documentType={'attachment' as DocumentType}
+                    documentType={ASSET_DOCUMENT_TYPE}
                     documentTitle="298099334_5292996204070913_386679234432423424242432234323333333333333333_32423-4061939409_n.jpg"
                   />{' '}
                   and lorem ipsum

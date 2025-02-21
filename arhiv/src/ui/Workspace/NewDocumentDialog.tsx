@@ -50,11 +50,11 @@ function ResultsSection({ heading, filter, items }: ResultsSectionProps) {
 
 type Props = {
   onNewDocument: (documentType: DocumentType) => void;
-  onAttach: (attachmentId: DocumentId) => void;
+  onAssetCreated: (assetId: DocumentId) => void;
   onCancel: () => void;
 };
 
-export function NewDocumentDialog({ onNewDocument, onAttach, onCancel }: Props) {
+export function NewDocumentDialog({ onNewDocument, onAssetCreated, onCancel }: Props) {
   const [filter, setFilter] = useState('');
 
   const [showFilePickerDialog, setShowFilePickerDialog] = useState(false);
@@ -70,8 +70,8 @@ export function NewDocumentDialog({ onNewDocument, onAttach, onCancel }: Props) 
   if (showFilePickerDialog) {
     return (
       <FilePickerDialog
-        onAttachmentCreated={(documentId) => {
-          onAttach(documentId);
+        onAssetCreated={(documentId) => {
+          onAssetCreated(documentId);
           setShowFilePickerDialog(false);
         }}
         onCancel={() => {
@@ -84,8 +84,8 @@ export function NewDocumentDialog({ onNewDocument, onAttach, onCancel }: Props) 
   if (showFileUploadDialog) {
     return (
       <FileUploadDialog
-        onAttachmentCreated={(documentId) => {
-          onAttach(documentId);
+        onAssetCreated={(documentId) => {
+          onAssetCreated(documentId);
           setShowFilePickerDialog(false);
         }}
         onCancel={() => {
@@ -111,7 +111,7 @@ export function NewDocumentDialog({ onNewDocument, onAttach, onCancel }: Props) 
           filter={filter}
           items={[
             {
-              name: 'Attach file',
+              name: 'Create asset',
               leadingIcon: 'paperclip',
               onClick: () => {
                 setShowFilePickerDialog(true);

@@ -20,7 +20,7 @@ pub fn get_game_definitions() -> Vec<DataDescription> {
                 },
                 Field {
                     name: "cover",
-                    field_type: FieldType::Ref(&[ATTACHMENT_TYPE]),
+                    field_type: FieldType::Ref(&[ASSET_TYPE]),
                     mandatory: false,
                     readonly: false,
                 },

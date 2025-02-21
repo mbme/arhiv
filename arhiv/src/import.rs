@@ -2,7 +2,7 @@ use anyhow::{bail, ensure, Context, Result};
 
 use baza::{
     entities::{Document, DocumentData, DocumentType},
-    schema::{create_attachment, ATTACHMENT_TYPE},
+    schema::{create_asset, ASSET_TYPE},
 };
 use rs_utils::{ensure_file_exists, remove_file_extension};
 
@@ -19,12 +19,12 @@ impl Arhiv {
 
         match document_type {
             TRACK_TYPE => self.import_track(file_path, move_file),
-            ATTACHMENT_TYPE => {
+            ASSET_TYPE => {
                 let mut tx = self.baza.get_tx()?;
-                let attachment = create_attachment(&mut tx, file_path, move_file, None)?;
+                let asset = create_asset(&mut tx, file_path, move_file, None)?;
                 tx.commit()?;
 
-                attachment.into_document()
+                asset.into_document()
             }
             other => bail!("Don't know how to import document of type '{}'", other),
         }
@@ -33,15 +33,15 @@ impl Arhiv {
     fn import_track(&self, file_path: &str, move_file: bool) -> Result<Document> {
         let mut tx = self.baza.get_tx()?;
 
-        let attachment = create_attachment(&mut tx, file_path, move_file, None)?;
+        let asset = create_asset(&mut tx, file_path, move_file, None)?;
 
         ensure!(
-            attachment.data.is_audio(),
+            asset.data.is_audio(),
             "file type must be audio, got {}",
-            attachment.data.media_type
+            asset.data.media_type
         );
 
-        let file_name = remove_file_extension(&attachment.data.filename)?;
+        let file_name = remove_file_extension(&asset.data.filename)?;
 
         let mut iter = file_name.split('-');
 
@@ -56,7 +56,7 @@ impl Arhiv {
         let mut data = DocumentData::new();
         data.set("artist", artist);
         data.set("title", title);
-        data.set("track", &attachment.id);
+        data.set("track", &asset.id);
 
         let mut document = Document::new_with_data(DocumentType::new(TRACK_TYPE), data);
 

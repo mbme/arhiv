@@ -6,7 +6,7 @@ import { Button } from 'components/Button';
 import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';
 import { useIsFormDirty } from 'components/Form/Form';
-import { AttachmentPreview, canPreview } from 'components/AttachmentPreview';
+import { AssetPreview, canPreview } from 'components/AssetPreview';
 import { ProgressLocker } from 'components/ProgressLocker';
 import { useCardLock } from '../controller';
 import { EraseDocumentConfirmationDialog } from '../DocumentEditor/EraseDocumentConfirmationDialog';
@@ -22,7 +22,7 @@ type Props = {
   options: DropdownOptions;
 };
 
-export function AttachmentCard({ document, isUpdating, options }: Props) {
+export function AssetCard({ document, isUpdating, options }: Props) {
   const [showEraseConfirmation, setShowErasetConfirmation] = useState(false);
 
   const [form, setForm] = useState<HTMLFormElement | null>(null);
@@ -105,7 +105,7 @@ export function AttachmentCard({ document, isUpdating, options }: Props) {
 
       {canPreview(document.documentType, document.data) && (
         <div className="mb-8 empty:hidden">
-          <AttachmentPreview data={document.data} />
+          <AssetPreview data={document.data} />
         </div>
       )}
 

@@ -45,7 +45,7 @@ export type APIRequest =
       showHidden: boolean;
     }
   | {
-      typeName: 'CreateAttachment';
+      typeName: 'CreateAsset';
       filePath: string;
       moveFile: boolean;
     }
@@ -119,7 +119,7 @@ export type APIResponse =
       entries: DirEntry[];
     }
   | {
-      typeName: 'CreateAttachment';
+      typeName: 'CreateAsset';
       id: DocumentId;
     }
   | {
@@ -147,7 +147,7 @@ export type BLOBId = NominalType<string, 'BLOBId'>;
 export type DocumentDTO = Omit<Extract<APIResponse, { typeName: 'GetDocument' }>, 'typeName'>;
 
 export const ERASED_DOCUMENT_TYPE = '' as DocumentType;
-export const ATTACHMENT_DOCUMENT_TYPE = 'attachment' as DocumentType;
+export const ASSET_DOCUMENT_TYPE = 'asset' as DocumentType;
 export const PROJECT_DOCUMENT_TYPE = 'project' as DocumentType;
 export const NOTE_DOCUMENT_TYPE = 'note' as DocumentType;
 export const TASK_DOCUMENT_TYPE = 'task' as DocumentType;

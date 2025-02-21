@@ -6,6 +6,7 @@ mod v4;
 mod v5;
 mod v6;
 mod v7;
+mod v8;
 
 use anyhow::{ensure, Context, Result};
 use rusqlite::{Connection, OpenFlags};
@@ -23,6 +24,7 @@ use self::v4::MigrationV4;
 use self::v5::MigrationV5;
 use self::v6::MigrationV6;
 use self::v7::MigrationV7;
+use self::v8::MigrationV8;
 
 pub fn get_db_version(conn: &Connection) -> Result<u8> {
     conn.pragma_query_value(None, "user_version", |row| row.get(0))
@@ -69,6 +71,7 @@ fn get_db_migrations() -> Vec<Box<dyn DBMigration>> {
         Box::new(MigrationV5),
         Box::new(MigrationV6),
         Box::new(MigrationV7),
+        Box::new(MigrationV8),
     ]
 }
 

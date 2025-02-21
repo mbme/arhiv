@@ -17,7 +17,7 @@ use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use baza::{entities::BLOBId, schema::create_attachment, sync::respond_with_blob, Credentials};
+use baza::{entities::BLOBId, schema::create_asset, sync::respond_with_blob, Credentials};
 use rs_utils::{
     crypto_key::CryptoKey,
     http_server::{add_no_cache_headers, ServerError},
@@ -173,11 +173,11 @@ async fn create_blob_handler(
 
     let mut tx = arhiv.baza.get_tx()?;
 
-    let attachment = create_attachment(&mut tx, &temp_file.path, true, Some(file_name))?;
+    let asset = create_asset(&mut tx, &temp_file.path, true, Some(file_name))?;
 
     tx.commit()?;
 
-    Ok(attachment.id.to_string())
+    Ok(asset.id.to_string())
 }
 
 async fn blob_handler(

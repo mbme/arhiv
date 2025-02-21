@@ -5,10 +5,10 @@ import { FilePickerConfirmationDialog } from 'components/FilePicker/FilePickerCo
 import { Dialog } from 'components/Dialog';
 
 type Props = {
-  onAttachmentCreated: (id: DocumentId) => void;
+  onAssetCreated: (id: DocumentId) => void;
   onCancel: () => void;
 };
-export function FilePickerDialog({ onAttachmentCreated, onCancel }: Props) {
+export function FilePickerDialog({ onAssetCreated, onCancel }: Props) {
   const [selectedFile, setSelectedFile] = useState<FileEntry>();
 
   if (selectedFile) {
@@ -16,7 +16,7 @@ export function FilePickerDialog({ onAttachmentCreated, onCancel }: Props) {
       <FilePickerConfirmationDialog
         filePath={selectedFile.path}
         size={selectedFile.size}
-        onAttachmentCreated={onAttachmentCreated}
+        onAssetCreated={onAssetCreated}
         onCancel={() => {
           setSelectedFile(undefined);
         }}
@@ -25,7 +25,7 @@ export function FilePickerDialog({ onAttachmentCreated, onCancel }: Props) {
   }
 
   return (
-    <Dialog onHide={onCancel} title="Attach file">
+    <Dialog onHide={onCancel} title="Create asset">
       <FilePicker onFileSelected={setSelectedFile} />
     </Dialog>
   );

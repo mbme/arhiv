@@ -47,7 +47,7 @@ pub enum APIRequest {
         show_hidden: bool,
     },
     #[serde(rename_all = "camelCase")]
-    CreateAttachment {
+    CreateAsset {
         file_path: String,
         move_file: bool,
     },
@@ -110,7 +110,7 @@ pub enum APIResponse {
         dir: String,
         entries: Vec<DirEntry>,
     },
-    CreateAttachment {
+    CreateAsset {
         id: Id,
     },
     Commit {},

@@ -9,7 +9,7 @@ use crate::{
 #[derive(Debug)]
 pub struct DownloadFileNameExpert<'u> {
     pub url: &'u Url,
-    pub attachment_file_name: String,
+    pub asset_file_name: String,
     pub content_type: Option<String>,
     pub file_path: String,
 }
@@ -17,8 +17,8 @@ pub struct DownloadFileNameExpert<'u> {
 impl DownloadFileNameExpert<'_> {
     pub fn deduce_file_name(self) -> Result<String> {
         // use Content-Disposition header if any
-        if !self.attachment_file_name.is_empty() {
-            return Ok(self.attachment_file_name);
+        if !self.asset_file_name.is_empty() {
+            return Ok(self.asset_file_name);
         }
 
         // try to guess from url, if file has an extension

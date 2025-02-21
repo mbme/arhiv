@@ -204,7 +204,7 @@ impl Download {
                 None
             };
 
-        let attachment_file_name = if let Some(content_disposition) =
+        let asset_file_name = if let Some(content_disposition) =
             response.headers().get(reqwest::header::CONTENT_DISPOSITION)
         {
             let content_disposition = content_disposition.to_str()?;
@@ -238,7 +238,7 @@ impl Download {
 
         let original_file_name = DownloadFileNameExpert {
             url: &self.url,
-            attachment_file_name: attachment_file_name.unwrap_or_default(),
+            asset_file_name: asset_file_name.unwrap_or_default(),
             content_type,
             file_path: self.completed_file_path.clone(),
         }

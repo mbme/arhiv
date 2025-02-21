@@ -9,10 +9,10 @@ import { QueryError } from 'components/QueryError';
 import { ImageFilePreview } from './ImageFilePreview';
 
 type Props = {
-  onAttachmentCreated: (id: DocumentId) => void;
+  onAssetCreated: (id: DocumentId) => void;
   onCancel: () => void;
 };
-export function FileUploadDialog({ onAttachmentCreated, onCancel }: Props) {
+export function FileUploadDialog({ onAssetCreated, onCancel }: Props) {
   const [file, setFile] = useState<File>();
 
   const { error, inProgress, triggerRefresh } = useQuery(
@@ -26,7 +26,7 @@ export function FileUploadDialog({ onAttachmentCreated, onCancel }: Props) {
     {
       refreshOnMount: false,
       onSuccess(result) {
-        onAttachmentCreated(result);
+        onAssetCreated(result);
       },
     },
   );
@@ -44,7 +44,7 @@ export function FileUploadDialog({ onAttachmentCreated, onCancel }: Props) {
       </Button>
 
       <Button variant="primary" busy={inProgress} disabled={!file} onClick={triggerRefresh}>
-        Create attachment
+        Create asset
       </Button>
     </>
   );

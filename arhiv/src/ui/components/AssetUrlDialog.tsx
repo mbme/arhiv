@@ -6,9 +6,9 @@ type Props = {
   onConfirm: (url: string) => void;
   onCancel: () => void;
 };
-export function AttachmentUrlDialog({ onConfirm, onCancel }: Props) {
+export function AssetUrlDialog({ onConfirm, onCancel }: Props) {
   return (
-    <Dialog onHide={onCancel} title="Create attachment from URL">
+    <Dialog onHide={onCancel} title="Create asset from URL">
       <Form
         onSubmit={(data) => {
           onConfirm(data['url'] as string);

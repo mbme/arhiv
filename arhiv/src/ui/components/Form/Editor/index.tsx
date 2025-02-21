@@ -5,7 +5,7 @@ import { useSignal, useUpdateEffect } from 'utils/hooks';
 import { useAppController } from 'controller';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
 import { FORM_VIEWPORT_CLASSNAME } from 'components/Form/Form';
-import { canPreview } from 'components/AttachmentPreview';
+import { canPreview } from 'components/AssetPreview';
 import { Markup, MarkupRef } from 'components/Markup';
 import { IconButton } from 'components/Button';
 import { CodemirrorEditor } from './CodemirrorEditor';

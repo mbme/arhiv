@@ -1,27 +1,25 @@
 import { useRef, useState } from 'react';
 import { cx, NominalType } from 'utils';
 import { useSuspenseQuery } from 'utils/suspense';
-import { ATTACHMENT_DOCUMENT_TYPE, DocumentId, DocumentType } from 'dto';
+import { ASSET_DOCUMENT_TYPE, DocumentId, DocumentType } from 'dto';
 import { Ref as RefComponent } from 'components/Ref';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { Link } from 'components/Link';
 import { Button, IconButton } from 'components/Button';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
-import { AttachmentPreviewBlock, canPreview } from 'components/AttachmentPreview';
-import { AttachmentUrlDialog } from 'components/AttachmentUrlDialog';
+import { AssetPreviewBlock, canPreview } from 'components/AssetPreview';
+import { AssetUrlDialog } from 'components/AssetUrlDialog';
 
-type AttachmentUrl = NominalType<string, 'AttachmentUrl'>;
+type AssetUrl = NominalType<string, 'AssetUrl'>;
 
-export type Ref = DocumentId | AttachmentUrl;
+export type Ref = DocumentId | AssetUrl;
 
-const isAttachmentUrl = (value: Ref): value is AttachmentUrl =>
+const isAssetUrl = (value: Ref): value is AssetUrl =>
   value.startsWith('http://') || value.startsWith('https://');
 
-const isDocumentId = (value: Ref): value is DocumentId => !isAttachmentUrl(value);
+const isDocumentId = (value: Ref): value is DocumentId => !isAssetUrl(value);
 
-function normalizeRefs(
-  defaultValue: Ref | Ref[] | undefined | null,
-): Array<DocumentId | AttachmentUrl> {
+function normalizeRefs(defaultValue: Ref | Ref[] | undefined | null): Array<DocumentId | AssetUrl> {
   if (!defaultValue) {
     return [];
   }
@@ -91,7 +89,7 @@ export function RefInput({
   });
 
   const canAdd = refs.length === 0 || multiple;
-  const canAddUrls = documentTypes.includes(ATTACHMENT_DOCUMENT_TYPE) && canAdd;
+  const canAddUrls = documentTypes.includes(ASSET_DOCUMENT_TYPE) && canAdd;
 
   return (
     <FormField
@@ -148,7 +146,7 @@ export function RefInput({
           </div>
 
           {canPreview(item.documentType, item.data) && (
-            <AttachmentPreviewBlock documentId={item.id} data={item.data} />
+            <AssetPreviewBlock documentId={item.id} data={item.data} />
           )}
         </div>
       ))}
@@ -168,9 +166,9 @@ export function RefInput({
       )}
 
       {showUrlPicker && (
-        <AttachmentUrlDialog
+        <AssetUrlDialog
           onConfirm={(urlRaw) => {
-            const url = urlRaw as AttachmentUrl;
+            const url = urlRaw as AssetUrl;
 
             if (!refs.includes(url)) {
               updateRefs([...refs, url], true);
@@ -183,10 +181,10 @@ export function RefInput({
         />
       )}
 
-      {refs.filter(isAttachmentUrl).map((attachmentUrl) => (
-        <div key={attachmentUrl}>
+      {refs.filter(isAssetUrl).map((assetUrl) => (
+        <div key={assetUrl}>
           <div className="flex items-center gap-4">
-            <Link url={attachmentUrl}>{attachmentUrl}</Link>
+            <Link url={assetUrl}>{assetUrl}</Link>
 
             {!readonly && !disabled && (
               <IconButton
@@ -194,7 +192,7 @@ export function RefInput({
                 size="sm"
                 onClick={() => {
                   updateRefs(
-                    refs.filter((item) => item !== attachmentUrl),
+                    refs.filter((item) => item !== assetUrl),
                     true,
                   );
                 }}

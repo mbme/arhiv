@@ -11,11 +11,11 @@ use crate::{
 
 use super::DataDescription;
 
-pub const ATTACHMENT_TYPE: &str = "attachment";
+pub const ASSET_TYPE: &str = "asset";
 
-pub fn get_attachment_definition() -> DataDescription {
+pub fn get_asset_definition() -> DataDescription {
     DataDescription {
-        document_type: ATTACHMENT_TYPE,
+        document_type: ASSET_TYPE,
         title_format: "{filename}",
         fields: vec![
             Field {
@@ -48,14 +48,14 @@ pub fn get_attachment_definition() -> DataDescription {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(deny_unknown_fields)]
-pub struct AttachmentData {
+pub struct AssetData {
     pub filename: String,
     pub media_type: String,
     pub blob: BLOBId,
     pub size: u64,
 }
 
-impl AttachmentData {
+impl AssetData {
     #[must_use]
     pub fn is_image(&self) -> bool {
         self.media_type.starts_with("image/")
@@ -67,14 +67,14 @@ impl AttachmentData {
     }
 }
 
-pub type Attachment = Document<AttachmentData>;
+pub type Asset = Document<AssetData>;
 
-pub fn create_attachment(
+pub fn create_asset(
     tx: &mut BazaConnection,
     file_path: &str,
     move_file: bool,
     filename: Option<String>,
-) -> Result<Attachment> {
+) -> Result<Asset> {
     let filename = filename.unwrap_or_else(|| get_file_name(file_path).to_string());
 
     let media_type = get_media_type(file_path)?;
@@ -82,9 +82,9 @@ pub fn create_attachment(
 
     let blob_id = tx.add_blob(file_path, move_file)?;
 
-    let attachment = Document::new_with_data(
-        DocumentType::new(ATTACHMENT_TYPE),
-        AttachmentData {
+    let asset = Document::new_with_data(
+        DocumentType::new(ASSET_TYPE),
+        AssetData {
             filename,
             media_type,
             size,
@@ -92,21 +92,21 @@ pub fn create_attachment(
         },
     );
 
-    let mut document = attachment.into_document()?;
+    let mut document = asset.into_document()?;
     tx.stage_document(&mut document, None)?;
 
     document.convert()
 }
 
-pub async fn download_attachment(url: &str, tx: &mut BazaConnection) -> Result<Document> {
+pub async fn download_asset(url: &str, tx: &mut BazaConnection) -> Result<Document> {
     let download_result = Download::new(url)?.start().await?;
 
-    let attachment = create_attachment(
+    let asset = create_asset(
         tx,
         &download_result.file_path,
         true,
         Some(download_result.original_file_name.clone()),
     )?;
 
-    attachment.into_document()
+    asset.into_document()
 }

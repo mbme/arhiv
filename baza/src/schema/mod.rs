@@ -5,12 +5,12 @@ use serde::Serialize;
 
 use crate::entities::{DocumentType, ERASED_DOCUMENT_TYPE};
 
-pub use attachment::*;
+pub use asset::*;
 pub use data_description::*;
 pub use data_migration::*;
 pub use field::*;
 
-mod attachment;
+mod asset;
 mod data_description;
 mod data_migration;
 mod field;
@@ -64,7 +64,7 @@ impl DataSchema {
                         },
                     ],
                 },
-                get_attachment_definition(),
+                get_asset_definition(),
             ],
         )
     }

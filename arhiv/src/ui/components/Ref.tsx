@@ -4,7 +4,7 @@ import { cx } from 'utils';
 import { getDocumentUrl } from 'utils/network';
 import { formatDocumentType, isErasedDocument } from 'utils/schema';
 import { useSuspenseQuery } from 'utils/suspense';
-import { AttachmentPreviewBlock, canPreview } from 'components/AttachmentPreview';
+import { AssetPreviewBlock, canPreview } from 'components/AssetPreview';
 import { DocumentIcon } from './DocumentIcon';
 
 export const RefClickHandlerContext = createContext((documentId: DocumentId) => {
@@ -14,14 +14,14 @@ export const RefClickHandlerContext = createContext((documentId: DocumentId) => 
 type RefContainerProps = {
   id: DocumentId;
   description?: string;
-  attachmentPreview?: boolean;
+  assetPreview?: boolean;
 };
-export function RefContainer({ id, description, attachmentPreview }: RefContainerProps) {
+export function RefContainer({ id, description, assetPreview }: RefContainerProps) {
   const { value: result } = useSuspenseQuery({ typeName: 'GetDocument', id });
 
-  if (attachmentPreview && canPreview(result.documentType, result.data)) {
+  if (assetPreview && canPreview(result.documentType, result.data)) {
     return (
-      <AttachmentPreviewBlock documentId={result.id} data={result.data} description={description} />
+      <AssetPreviewBlock documentId={result.id} data={result.data} description={description} />
     );
   }
 

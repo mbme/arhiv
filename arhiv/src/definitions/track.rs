@@ -31,13 +31,13 @@ pub fn get_track_definitions() -> Vec<DataDescription> {
                 },
                 Field {
                     name: "track",
-                    field_type: FieldType::Ref(&[ATTACHMENT_TYPE]),
+                    field_type: FieldType::Ref(&[ASSET_TYPE]),
                     mandatory: true,
                     readonly: false,
                 },
                 Field {
                     name: "cover",
-                    field_type: FieldType::Ref(&[ATTACHMENT_TYPE]),
+                    field_type: FieldType::Ref(&[ASSET_TYPE]),
                     mandatory: false,
                     readonly: false,
                 },

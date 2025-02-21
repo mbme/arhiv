@@ -1,4 +1,4 @@
-use baza::schema::{get_attachment_definition, DataSchema};
+use baza::schema::{get_asset_definition, DataSchema};
 
 use data_migrations::get_data_migrations;
 
@@ -26,7 +26,7 @@ pub fn get_standard_schema() -> DataSchema {
     DataSchema::with_migrations(
         "arhiv",
         [
-            vec![get_attachment_definition()],
+            vec![get_asset_definition()],
             note::get_note_definitions(),
             task::get_task_definitions(),
             book::get_book_definitions(),

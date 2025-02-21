@@ -297,7 +297,7 @@ function markupElementToJSX(el: MarkupElement, ref?: JSXRef<HTMLDivElement>): JS
               'inline-block w-full': el.typeName === 'Image',
             })}
           >
-            <RefContainer id={id} attachmentPreview={preview} description={description} />
+            <RefContainer id={id} assetPreview={preview} description={description} />
           </span>
         );
       }

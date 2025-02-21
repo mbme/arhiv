@@ -65,9 +65,9 @@ export function WorkspaceHeader() {
               app.workspace.hideNewDocumentDialog();
               app.workspace.newDocument(documentType);
             }}
-            onAttach={(attachmentId) => {
+            onAssetCreated={(assetId) => {
               app.workspace.hideNewDocumentDialog();
-              app.workspace.openDocument(attachmentId);
+              app.workspace.openDocument(assetId);
             }}
             onCancel={() => {
               app.workspace.hideNewDocumentDialog();

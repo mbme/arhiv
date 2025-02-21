@@ -33,7 +33,7 @@ export function ImageUploadDialog({ file, onSuccess, onCancel }: Props) {
 
   const buttons = (
     <Button type="button" variant="primary" busy={inProgress} onClick={triggerRefresh}>
-      Create attachment
+      Create asset
     </Button>
   );
 

@@ -1,4 +1,4 @@
-import { isAttachment, isErasedDocument, isProject } from 'utils/schema';
+import { isAsset, isErasedDocument, isProject } from 'utils/schema';
 import { useSuspenseQuery } from 'utils/suspense';
 import { copyTextToClipbard } from 'utils';
 import { getDocumentUrl } from 'utils/network';
@@ -8,7 +8,7 @@ import { DropdownOptions } from 'components/DropdownMenu';
 import { showToast } from 'components/Toaster';
 import { DocumentCard } from './DocumentCard';
 import { ErasedDocumentCard } from './ErasedDocumentCard';
-import { AttachmentCard } from './AttachmentCard';
+import { AssetCard } from './AssetCard';
 import { ProjectCard } from './ProjectCard';
 
 type DocumentCard = Extract<Card, { variant: 'document' }>;
@@ -56,8 +56,8 @@ export function DocumentCardContainer() {
     return <ErasedDocumentCard document={document} isUpdating={isUpdating} />;
   }
 
-  if (isAttachment(document.documentType)) {
-    return <AttachmentCard document={document} isUpdating={isUpdating} options={documentActions} />;
+  if (isAsset(document.documentType)) {
+    return <AssetCard document={document} isUpdating={isUpdating} options={documentActions} />;
   }
 
   if (isProject(document.documentType)) {

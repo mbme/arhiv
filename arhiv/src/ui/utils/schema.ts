@@ -1,5 +1,5 @@
 import {
-  ATTACHMENT_DOCUMENT_TYPE,
+  ASSET_DOCUMENT_TYPE,
   DocumentType,
   ERASED_DOCUMENT_TYPE,
   PROJECT_DOCUMENT_TYPE,
@@ -80,8 +80,8 @@ export function isCollection(documentType: DocumentType): boolean {
   return getDocumentTypes(true).includes(documentType);
 }
 
-export function isAttachment(documentType: DocumentType) {
-  return documentType === ATTACHMENT_DOCUMENT_TYPE;
+export function isAsset(documentType: DocumentType) {
+  return documentType === ASSET_DOCUMENT_TYPE;
 }
 
 export function isProject(documentType: DocumentType) {

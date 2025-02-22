@@ -214,6 +214,8 @@ impl MarkupStr<'_> {
                         Tag::DefinitionList => break,
                         Tag::DefinitionListTitle => break,
                         Tag::DefinitionListDefinition => break,
+                        Tag::Superscript => break,
+                        Tag::Subscript => break,
                     };
 
                     stack.push(el);

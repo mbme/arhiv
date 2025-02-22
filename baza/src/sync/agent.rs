@@ -31,13 +31,11 @@ impl SyncAgent {
         Ok(SyncAgent::InMemory { baza, instance_id })
     }
 
-    pub fn new_in_network(instance_id: InstanceId, url: &str, baza: Arc<Baza>) -> Result<Self> {
-        let client = BazaClient::new(url, &baza)?;
-
-        Ok(SyncAgent::Network {
+    pub fn new_in_network(instance_id: InstanceId, client: BazaClient) -> Self {
+        SyncAgent::Network {
             client,
             instance_id,
-        })
+        }
     }
 
     pub fn get_instance_id(&self) -> &InstanceId {

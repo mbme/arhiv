@@ -9,7 +9,7 @@ use tokio::{task::JoinHandle, time::interval};
 
 use rs_utils::log;
 
-use crate::{entities::InstanceId, Baza};
+use crate::{entities::InstanceId, sync::BazaClient, Baza};
 
 use super::SyncAgent;
 
@@ -41,11 +41,16 @@ impl SyncManager {
     }
 
     pub fn add_network_agent(&self, instance_id: InstanceId, url: &str) -> Result<()> {
-        let agent = SyncAgent::new_in_network(instance_id.clone(), url, self.baza.clone())?;
+        log::info!("Adding network agent {instance_id} {url}");
+
+        let downloads_dir = self.baza.get_path_manager().downloads_dir.clone();
+
+        let key = self.baza.get_shared_key();
+
+        let client = BazaClient::new(url, key, downloads_dir)?;
+        let agent = SyncAgent::new_in_network(instance_id.clone(), client);
 
         self.add_agent(agent)?;
-
-        log::info!("Added network agent {instance_id} {url}");
 
         Ok(())
     }

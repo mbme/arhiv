@@ -3,12 +3,11 @@ use std::{str::FromStr, sync::Arc, time::Duration};
 use anyhow::{bail, Context, Result};
 use reqwest::{header, Client, Url};
 
-use rs_utils::{log, AuthToken, Download, ResponseVerifier};
+use rs_utils::{crypto_key::CryptoKey, log, AuthToken, Download, ResponseVerifier};
 
 use crate::{
     entities::BLOB,
     sync::changeset::{Changeset, ChangesetRequest},
-    Baza,
 };
 
 use super::auth::{ServerCertVerifier, CLIENT_AUTH_TOKEN_HEADER};
@@ -22,11 +21,7 @@ pub struct BazaClient {
 }
 
 impl BazaClient {
-    pub fn new(url: &str, baza: &Baza) -> Result<Self> {
-        let downloads_dir = baza.get_path_manager().downloads_dir.clone();
-
-        let key = baza.get_shared_key();
-
+    pub fn new(url: &str, key: &CryptoKey, downloads_dir: String) -> Result<Self> {
         let rpc_server_url = Url::from_str(url).context("failed to parse url")?;
 
         let mut default_headers = header::HeaderMap::new();

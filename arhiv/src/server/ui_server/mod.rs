@@ -44,9 +44,9 @@ pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<UIState>> {
         .route("/create", post(create_arhiv_handler))
         .route("/api", post(api_handler))
         .route("/blobs", post(create_blob_handler))
-        .route("/blobs/:blob_id", get(blob_handler))
-        .route("/blobs/images/:blob_id", get(image_handler))
-        .route("/*fileName", get(public_assets_handler))
+        .route("/blobs/{blob_id}", get(blob_handler))
+        .route("/blobs/images/{blob_id}", get(image_handler))
+        .route("/{*fileName}", get(public_assets_handler))
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(client_authenticator))
         .layer(Extension(Arc::new(ui_key)))
@@ -195,42 +195,44 @@ async fn blob_handler(
 #[derive(Deserialize)]
 struct AuthTokenQuery {
     #[serde(rename = "AuthToken")]
-    auth_token: String,
+    auth_token: Option<String>,
 }
 
 async fn client_authenticator(
     jar: CookieJar,
-    auth_token_query: Option<Query<AuthTokenQuery>>,
+    auth_token_query: Query<AuthTokenQuery>,
     Extension(ui_key): Extension<Arc<CryptoKey>>,
     request: Request,
     next: Next,
 ) -> Response {
-    let auth_token: Option<AuthToken> =
-        if let Some(Query(AuthTokenQuery { auth_token })) = auth_token_query {
-            match AuthToken::parse(&auth_token) {
-                Ok(auth_token) => Some(auth_token),
-                Err(err) => {
-                    return (
-                        StatusCode::BAD_REQUEST,
-                        format!("Failed to parse AuthToken query param: {err}"),
-                    )
-                        .into_response();
-                }
+    let auth_token: Option<AuthToken> = if let Query(AuthTokenQuery {
+        auth_token: Some(auth_token),
+    }) = auth_token_query
+    {
+        match AuthToken::parse(&auth_token) {
+            Ok(auth_token) => Some(auth_token),
+            Err(err) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    format!("Failed to parse AuthToken query param: {err}"),
+                )
+                    .into_response();
             }
-        } else if let Some(auth_token) = jar.get("AuthToken") {
-            match AuthToken::parse(auth_token.value()) {
-                Ok(auth_token) => Some(auth_token),
-                Err(err) => {
-                    return (
-                        StatusCode::BAD_REQUEST,
-                        format!("Failed to parse AuthToken cookie: {err}"),
-                    )
-                        .into_response();
-                }
+        }
+    } else if let Some(auth_token) = jar.get("AuthToken") {
+        match AuthToken::parse(auth_token.value()) {
+            Ok(auth_token) => Some(auth_token),
+            Err(err) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    format!("Failed to parse AuthToken cookie: {err}"),
+                )
+                    .into_response();
             }
-        } else {
-            None
-        };
+        }
+    } else {
+        None
+    };
 
     let auth_token = if let Some(auth_token) = auth_token {
         auth_token

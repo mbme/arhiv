@@ -53,6 +53,9 @@ pub struct BazaManager {
 }
 
 impl BazaManager {
+    pub const MIN_LOGIN_LENGTH: usize = 2;
+    pub const MIN_PASSWORD_LENGTH: usize = AgeKey::MIN_PASSWORD_LEN;
+
     pub fn new(storage_dir: String, state_dir: String, schema: DataSchema) -> Self {
         let paths = BazaPaths::new(storage_dir, state_dir);
 
@@ -120,6 +123,12 @@ impl BazaManager {
 
     pub fn create(&mut self, login: String, password: SecretString) -> Result<()> {
         log::info!("Creating {login} baza in {}", self.paths);
+
+        ensure!(
+            login.len() >= Self::MIN_LOGIN_LENGTH,
+            "Login should be at least {} characters long",
+            Self::MIN_LOGIN_LENGTH
+        );
 
         self.paths.ensure_dirs_exist()?;
 

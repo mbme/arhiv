@@ -358,7 +358,7 @@ impl Baza {
         Ok(())
     }
 
-    pub fn commit(mut self) -> Result<()> {
+    pub fn commit(&mut self) -> Result<()> {
         self.save_changes()?;
 
         self.merge_storages()?;
@@ -756,6 +756,7 @@ mod tests {
             .unwrap();
 
         baza.commit().unwrap();
+        drop(baza);
 
         let baza = manager.open().unwrap();
 
@@ -788,6 +789,7 @@ mod tests {
         let doc_a1 = new_document(json!({ "blob": blob_id }));
         baza.stage_document(doc_a1.clone(), &None).unwrap();
         baza.commit().unwrap();
+        drop(baza);
 
         // Ensure the document and BLOB are in storage
         let mut baza = manager.open().unwrap();
@@ -801,6 +803,7 @@ mod tests {
         doc_a2.erase();
         baza.state.stage_document(doc_a2.clone(), &None).unwrap();
         baza.commit().unwrap();
+        drop(baza);
 
         // Reopen storage and check the snapshot and BLOB are removed
         let baza = manager.open().unwrap();
@@ -836,6 +839,8 @@ mod tests {
         baza.stage_document(new_document(json!({})), &None).unwrap();
 
         baza.commit().unwrap();
+        drop(baza);
+
         let baza = manager.open().unwrap();
 
         assert!(!file_exists(&db_file_1).unwrap());

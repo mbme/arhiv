@@ -11,7 +11,7 @@ use anyhow::{anyhow, bail, ensure, Context, Result};
 
 use rs_utils::{
     age::{encrypt_and_write_file, read_and_decrypt_file, AgeKey},
-    log, FsTransaction, LockFile, SecretString,
+    get_file_modification_time, log, FsTransaction, LockFile, SecretString, Timestamp,
 };
 
 use crate::{
@@ -119,6 +119,10 @@ impl BazaManager {
         let have_key_file = self.paths.key_file_exists()?;
 
         Ok(have_storage_files && have_key_file)
+    }
+
+    pub fn get_state_file_modification_time(&self) -> Result<Timestamp> {
+        get_file_modification_time(&self.paths.state_file)
     }
 
     pub fn create(&mut self, login: String, password: SecretString) -> Result<()> {
@@ -358,18 +362,19 @@ impl Baza {
         Ok(())
     }
 
-    pub fn commit(&mut self) -> Result<()> {
+    pub fn commit(&mut self) -> Result<bool> {
         self.save_changes()?;
 
         self.merge_storages()?;
 
         if !self.has_staged_documents() {
-            log::info!("Commit: nothing to commit");
-            return Ok(());
+            log::debug!("Can't commit: nothing to commit");
+            return Ok(false);
         }
 
         if self.state.has_document_locks() {
-            bail!("Can't commit: some documents are locked");
+            log::debug!("Can't commit: some documents are locked");
+            return Ok(false);
         }
 
         let mut tx = FsTransaction::new();
@@ -435,7 +440,7 @@ impl Baza {
             }
         }
 
-        Ok(())
+        Ok(true)
     }
 
     fn collect_new_blobs(&self, new_snapshots: &[&Document]) -> Result<HashSet<BLOBId>> {

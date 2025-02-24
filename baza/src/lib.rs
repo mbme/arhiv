@@ -1,4 +1,4 @@
-// mod auto_commit_service; FIXME enable
+mod auto_commit_service;
 // mod backup; FIXME enable
 pub mod baza2;
 mod document_expert;
@@ -12,7 +12,7 @@ pub mod validator;
 #[cfg(test)]
 mod tests;
 
-// pub use auto_commit_service::{AutoCommitService, AutoCommitTask};
+pub use auto_commit_service::{AutoCommitService, AutoCommitTask};
 pub use document_expert::DocumentExpert;
 
 pub const DEV_MODE: bool = cfg!(not(feature = "production-mode"));

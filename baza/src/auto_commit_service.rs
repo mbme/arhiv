@@ -1,24 +1,28 @@
 use std::{sync::Arc, time::Duration};
 
-use anyhow::{ensure, Result};
+use anyhow::Result;
 use tokio::{task::JoinHandle, time::interval};
 
-use rs_utils::{log, now, FakeTime, Timestamp};
+use rs_utils::{log, now, FakeTime, Timestamp, MIN_TIMESTAMP};
+
+use crate::baza2::BazaManager;
 
 pub type AutoCommitTask = JoinHandle<()>;
 
 pub struct AutoCommitService {
-    baza: Arc<Baza>,
+    baza_manager: Arc<BazaManager>,
     auto_commit_timeout: Duration,
     fake_time: Option<FakeTime>,
+    last_known_modification_time: Timestamp,
 }
 
 impl AutoCommitService {
-    pub fn new(baza: Arc<Baza>, auto_commit_timeout: Duration) -> Self {
+    pub fn new(baza_manager: Arc<BazaManager>, auto_commit_timeout: Duration) -> Self {
         AutoCommitService {
-            baza,
+            baza_manager,
             auto_commit_timeout,
             fake_time: None,
+            last_known_modification_time: MIN_TIMESTAMP,
         }
     }
 
@@ -36,7 +40,7 @@ impl AutoCommitService {
         }
     }
 
-    pub fn start(self) -> Result<AutoCommitTask> {
+    pub fn start(mut self) -> Result<AutoCommitTask> {
         let auto_commit_timeout = self.auto_commit_timeout;
 
         let task = tokio::spawn(async move {
@@ -62,33 +66,144 @@ impl AutoCommitService {
         Ok(task)
     }
 
-    fn try_auto_commit(&self) -> Result<()> {
-        let mut tx = self.baza.get_tx()?;
+    fn try_auto_commit(&mut self) -> Result<()> {
+        let state_modification_time = self.baza_manager.get_state_file_modification_time()?;
 
-        let last_update_time = tx.get_last_update_time()?;
-        let is_modified = tx.has_staged_documents()?;
+        if self.last_known_modification_time == state_modification_time {
+            log::debug!("Auto-commit: state file didn't change since last check");
+            return Ok(());
+        }
 
-        let time_since_last_update = (self.get_time() - last_update_time).to_std()?;
+        self.last_known_modification_time = state_modification_time;
 
-        let has_locks = !tx.list_document_locks()?.is_empty();
+        let time_since_last_update = (self.get_time() - state_modification_time).to_std()?;
 
-        if is_modified && !has_locks && time_since_last_update > self.auto_commit_timeout {
+        if time_since_last_update > self.auto_commit_timeout {
             log::debug!(
-                "Starting auto-commit: {} seconds elapsed since last update",
+                "Auto-commit: {} seconds elapsed since last update",
                 time_since_last_update.as_secs()
             );
 
-            let documents_count = tx.commit_staged_documents()?;
-            ensure!(
-                documents_count > 0,
-                "Expected a non-zero number of auto-committed documents"
-            );
-            log::info!("Auto-committed {documents_count} documents");
+            let mut baza = self.baza_manager.open()?;
+            baza.commit()?;
+        }
 
-            tx.commit()?;
-        } else {
-            log::debug!("Nothing to auto-commit");
-            tx.rollback()?;
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{sync::Arc, time::Duration};
+
+    use anyhow::Result;
+    use rs_utils::TempFile;
+    use tokio::time::{advance, sleep};
+
+    use crate::{baza2::BazaManager, tests::new_empty_document, AutoCommitService};
+
+    #[tokio::test(flavor = "current_thread", start_paused = true)]
+    async fn test_auto_commit_on_start() -> Result<()> {
+        let temp_dir = TempFile::new_with_details("baza_manager", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = Arc::new(BazaManager::new_for_tests(&temp_dir.path));
+        let mut baza = manager.open().unwrap();
+
+        baza.stage_document(new_empty_document(), &None)?;
+        baza.save_changes()?;
+        drop(baza);
+
+        let auto_commit_timeout = Duration::from_secs(10);
+        let service = AutoCommitService::new(manager.clone(), auto_commit_timeout).with_fake_time();
+
+        {
+            let baza = manager.open().unwrap();
+            assert!(baza.has_staged_documents());
+        }
+
+        advance(auto_commit_timeout * 2).await;
+
+        service.start()?;
+
+        sleep(Duration::from_secs(1)).await;
+
+        {
+            let baza = manager.open().unwrap();
+            assert!(!baza.has_staged_documents());
+        }
+
+        Ok(())
+    }
+
+    #[tokio::test(flavor = "current_thread", start_paused = true)]
+    async fn test_schedule_auto_commit() -> Result<()> {
+        let temp_dir = TempFile::new_with_details("baza_manager", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = Arc::new(BazaManager::new_for_tests(&temp_dir.path));
+
+        let auto_commit_timeout = Duration::from_secs(10);
+        let service = AutoCommitService::new(manager.clone(), auto_commit_timeout).with_fake_time();
+
+        {
+            let mut baza = manager.open().unwrap();
+            baza.stage_document(new_empty_document(), &None)?;
+            assert!(baza.has_staged_documents());
+        }
+
+        advance(auto_commit_timeout * 2).await;
+
+        service.start()?;
+
+        sleep(Duration::from_secs(1)).await;
+
+        {
+            let baza = manager.open().unwrap();
+            assert!(!baza.has_staged_documents());
+        }
+
+        Ok(())
+    }
+
+    #[tokio::test(flavor = "current_thread", start_paused = true)]
+    async fn test_reschedule_auto_commit_on_state_modification() -> Result<()> {
+        let temp_dir = TempFile::new_with_details("baza_manager", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = Arc::new(BazaManager::new_for_tests(&temp_dir.path));
+
+        let auto_commit_timeout = Duration::from_secs(10);
+        let service = AutoCommitService::new(manager.clone(), auto_commit_timeout).with_fake_time();
+
+        service.start()?;
+
+        sleep(Duration::from_secs(1)).await;
+
+        {
+            let mut baza = manager.open().unwrap();
+            baza.stage_document(new_empty_document(), &None)?;
+            baza.save_changes().unwrap();
+        }
+
+        advance(auto_commit_timeout - Duration::from_secs(2)).await;
+        sleep(Duration::from_secs(1)).await;
+
+        {
+            let mut baza = manager.open().unwrap();
+
+            assert!(baza.has_staged_documents());
+
+            baza.stage_document(new_empty_document(), &None)?;
+            baza.save_changes().unwrap();
+        }
+
+        advance(auto_commit_timeout - Duration::from_secs(2)).await;
+        sleep(Duration::from_secs(1)).await;
+
+        {
+            let baza = manager.open().unwrap();
+            assert!(baza.has_staged_documents());
         }
 
         Ok(())

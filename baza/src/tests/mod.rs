@@ -5,7 +5,6 @@ use serde_json::{json, Value};
 
 use crate::entities::{Document, DocumentType, Id, Revision};
 
-// mod auto_commit_service; FIXME enable
 // mod sync; FIXME enable
 // mod validation; FIXME enable
 

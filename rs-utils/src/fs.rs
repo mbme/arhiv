@@ -8,7 +8,7 @@ use std::{
 
 use anyhow::{bail, ensure, Context, Result};
 
-use crate::{bytes_to_hex_string, get_file_hash_sha256, get_string_hash_sha256};
+use crate::{bytes_to_hex_string, get_file_hash_sha256, get_string_hash_sha256, Timestamp};
 
 pub fn path_exists(path: impl AsRef<str>) -> bool {
     fs::metadata(path.as_ref()).is_ok()
@@ -107,6 +107,16 @@ pub fn set_file_size(path: &str, size: u64) -> Result<()> {
         .context("Failed to sync file changes to disk")?;
 
     Ok(())
+}
+
+pub fn get_file_modification_time(path: &str) -> Result<Timestamp> {
+    let metadata = fs::metadata(path).expect("Failed to get metadata");
+
+    let modified_time = metadata
+        .modified()
+        .expect("Failed to get modification time");
+
+    Ok(modified_time.into())
 }
 
 #[must_use]

@@ -8,5 +8,5 @@ mod sync_manager;
 pub use agent::SyncAgent;
 pub use changeset::{Changeset, ChangesetRequest};
 pub use mdns_discovery_service::MDNSDiscoveryService;
-pub use network::{build_rpc_router, respond_with_blob, BazaClient};
+pub use network::{build_rpc_router, create_shared_key, respond_with_blob, BazaClient};
 pub use sync_manager::{AutoSyncTask, MDNSClientTask, SyncManager};

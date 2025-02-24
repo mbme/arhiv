@@ -1,4 +1,4 @@
-use std::sync::{Arc, OnceLock};
+use std::sync::Arc;
 
 use anyhow::{ensure, Result};
 
@@ -46,7 +46,6 @@ impl Credentials {
 pub struct Baza {
     path_manager: Arc<PathManager>,
     schema: Arc<DataSchema>,
-    key: OnceLock<CryptoKey>,
 }
 
 impl Baza {
@@ -56,7 +55,6 @@ impl Baza {
         Baza {
             path_manager: Arc::new(path_manager),
             schema: Arc::new(schema),
-            key: Default::default(),
         }
     }
 
@@ -114,26 +112,6 @@ impl Baza {
         );
 
         Ok(baza)
-    }
-
-    fn create_shared_key(&self) -> Result<CryptoKey> {
-        let conn = self.get_connection()?;
-
-        let app_name = self.get_app_name();
-        let login = conn.get_login()?;
-        let password = conn.get_password()?;
-
-        CryptoKey::derive_from_password_with_scrypt(
-            &password,
-            CryptoKey::salt_from_data(format!("{login}@{app_name}"))?,
-        )
-    }
-
-    pub fn get_shared_key(&self) -> &CryptoKey {
-        self.key.get_or_init(|| {
-            self.create_shared_key()
-                .expect("Baza crypto key must be created successfully")
-        })
     }
 
     #[must_use]

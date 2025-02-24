@@ -102,7 +102,21 @@ async fn extract_baza_from_state(
         }
     };
 
+    let shared_key = match state.must_get_shared_key() {
+        Ok(shared_key) => shared_key.clone(),
+        Err(err) => {
+            log::error!("Attempt to access shared_key that isn't initialized yet: {err}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Shared_key not initialized: {err}"),
+            )
+                .into_response();
+        }
+    };
+
     request.extensions_mut().insert(baza);
+    request.extensions_mut().insert(shared_key);
 
     next.run(request).await
 }

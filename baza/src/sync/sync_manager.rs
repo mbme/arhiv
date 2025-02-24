@@ -7,11 +7,11 @@ use std::{
 use anyhow::Result;
 use tokio::{task::JoinHandle, time::interval};
 
-use rs_utils::log;
+use rs_utils::{crypto_key::CryptoKey, log};
 
 use crate::{entities::InstanceId, sync::BazaClient, Baza};
 
-use super::SyncAgent;
+use super::{create_shared_key, SyncAgent};
 
 pub type AutoSyncTask = JoinHandle<()>;
 pub type MDNSClientTask = JoinHandle<()>;
@@ -20,15 +20,19 @@ pub struct SyncManager {
     baza: Arc<Baza>,
     agents: Arc<Mutex<HashMap<InstanceId, SyncAgent>>>,
     sync_in_progress: Arc<AtomicBool>,
+    key: CryptoKey,
 }
 
 impl SyncManager {
-    pub fn new(baza: Arc<Baza>) -> Self {
-        SyncManager {
+    pub fn new(baza: Arc<Baza>) -> Result<Self> {
+        let key = create_shared_key(&baza)?;
+
+        Ok(SyncManager {
             baza,
             agents: Default::default(),
             sync_in_progress: Default::default(),
-        }
+            key,
+        })
     }
 
     fn add_agent(&self, new_agent: SyncAgent) -> Result<()> {
@@ -45,9 +49,7 @@ impl SyncManager {
 
         let downloads_dir = self.baza.get_path_manager().downloads_dir.clone();
 
-        let key = self.baza.get_shared_key();
-
-        let client = BazaClient::new(url, key, downloads_dir)?;
+        let client = BazaClient::new(url, &self.key, downloads_dir)?;
         let agent = SyncAgent::new_in_network(instance_id.clone(), client);
 
         self.add_agent(agent)?;

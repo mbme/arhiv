@@ -55,7 +55,7 @@ impl Arhiv {
         let baza = Baza::open(baza_options)?;
         let baza = Arc::new(baza);
 
-        let sync_manager = SyncManager::new(baza.clone());
+        let sync_manager = SyncManager::new(baza.clone())?;
         let sync_manager = Arc::new(sync_manager);
 
         let mdns_discovery_service = MDNSDiscoveryService::new(&baza)?;

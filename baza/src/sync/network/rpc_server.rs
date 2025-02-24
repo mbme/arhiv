@@ -25,6 +25,7 @@ use crate::{entities::BLOBId, sync::changeset::ChangesetRequest, Baza};
 use super::auth::client_authenticator;
 
 /// WARN: This router requires Extension<Arc<Baza>> to be available
+/// WARN: This router requires Extension<Arc<CryptoKey>> to be available
 pub fn build_rpc_router(server_certificate_der: Vec<u8>) -> Result<Router> {
     let router = Router::new()
         .route("/changeset", post(fetch_changes_handler))

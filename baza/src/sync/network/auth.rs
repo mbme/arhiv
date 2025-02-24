@@ -20,12 +20,11 @@ pub const CERTIFICATE_SIGNATURE_HEADER: &str = "X-Certificate-Signature";
 pub const CLIENT_AUTH_TOKEN_HEADER: &str = "X-Client-Auth-Token";
 
 pub async fn client_authenticator(
-    Extension(baza): Extension<Arc<Baza>>,
+    Extension(key): Extension<Arc<CryptoKey>>,
     Extension(server_cert): Extension<ServerCertificate>,
     request: Request,
     next: Next,
 ) -> Response {
-    let key = baza.get_shared_key();
     let server_cert_signature = bytes_to_hex_string(&key.sign(server_cert.as_ref()));
 
     let client_auth_token = request
@@ -52,7 +51,7 @@ pub async fn client_authenticator(
         }
     };
 
-    if let Err(err) = client_auth_token.assert_is_valid(key) {
+    if let Err(err) = client_auth_token.assert_is_valid(key.as_ref()) {
         log::warn!("Got unauthenticated client: {err}");
 
         return with_signature_header(
@@ -116,4 +115,17 @@ impl ResponseVerifier for ServerCertVerifier {
 
         Ok(())
     }
+}
+
+pub fn create_shared_key(baza: &Baza) -> Result<CryptoKey> {
+    let conn = baza.get_connection()?;
+
+    let app_name = baza.get_app_name();
+    let login = conn.get_login()?;
+    let password = conn.get_password()?;
+
+    CryptoKey::derive_from_password_with_scrypt(
+        &password,
+        CryptoKey::salt_from_data(format!("{login}@{app_name}"))?,
+    )
 }

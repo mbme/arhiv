@@ -4,7 +4,7 @@ use anyhow::Result;
 use serde_json::Value;
 use tokio::time::{advance, sleep, Instant};
 
-use crate::{entities::Id, tests::new_document_snapshot, AutoCommitService, Baza};
+use crate::{entities::Id, tests::new_document_snapshot, AutoCommitService};
 
 #[tokio::test(flavor = "current_thread", start_paused = true)]
 async fn test_auto_commit_on_start() -> Result<()> {

@@ -1,12 +1,12 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
 use rs_utils::{get_file_name, get_file_size, get_media_type, Download};
 
 use crate::{
+    baza2::Baza,
     entities::{BLOBId, Document, DocumentType},
     schema::{Field, FieldType},
-    BazaConnection,
 };
 
 use super::DataDescription;
@@ -69,18 +69,13 @@ impl AssetData {
 
 pub type Asset = Document<AssetData>;
 
-pub fn create_asset(
-    tx: &mut BazaConnection,
-    file_path: &str,
-    move_file: bool,
-    filename: Option<String>,
-) -> Result<Asset> {
+pub fn create_asset(baza: &mut Baza, file_path: &str, filename: Option<String>) -> Result<Asset> {
     let filename = filename.unwrap_or_else(|| get_file_name(file_path).to_string());
 
     let media_type = get_media_type(file_path)?;
     let size = get_file_size(file_path)?;
 
-    let blob_id = tx.add_blob(file_path, move_file)?;
+    let blob_id = baza.add_blob(file_path)?;
 
     let asset = Document::new_with_data(
         DocumentType::new(ASSET_TYPE),
@@ -92,19 +87,25 @@ pub fn create_asset(
         },
     );
 
-    let mut document = asset.into_document()?;
-    tx.stage_document(&mut document, None)?;
+    let document = asset.into_document()?;
+    let id = document.id.clone();
+    baza.stage_document(document, &None)?;
+
+    let document = baza
+        .get_document(&id)
+        .context("document must exist")?
+        .get_single_document()
+        .clone();
 
     document.convert()
 }
 
-pub async fn download_asset(url: &str, tx: &mut BazaConnection) -> Result<Document> {
+pub async fn download_asset(url: &str, baza: &mut Baza) -> Result<Document> {
     let download_result = Download::new(url)?.start().await?;
 
     let asset = create_asset(
-        tx,
+        baza,
         &download_result.file_path,
-        true,
         Some(download_result.original_file_name.clone()),
     )?;
 

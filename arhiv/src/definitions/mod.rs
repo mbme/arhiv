@@ -1,7 +1,5 @@
 use baza::schema::{get_asset_definition, DataSchema};
 
-use data_migrations::get_data_migrations;
-
 pub use book::{BOOK_COLLECTION_TYPE, BOOK_TYPE};
 pub use contact::{CONTACT_COLLECTION_TYPE, CONTACT_TYPE};
 pub use film::{FILM_COLLECTION_TYPE, FILM_TYPE};
@@ -10,7 +8,6 @@ pub use note::NOTE_TYPE;
 pub use task::{PROJECT_TYPE, TASK_STATUS, TASK_TYPE};
 pub use track::{TrackDocument, TRACK_COLLECTION_TYPE, TRACK_TYPE};
 
-mod data_migrations;
 mod fields;
 
 mod book;
@@ -23,7 +20,7 @@ mod track;
 
 #[must_use]
 pub fn get_standard_schema() -> DataSchema {
-    DataSchema::with_migrations(
+    DataSchema::new(
         "arhiv",
         [
             vec![get_asset_definition()],
@@ -36,6 +33,5 @@ pub fn get_standard_schema() -> DataSchema {
             contact::get_contact_definitions(),
         ]
         .concat(),
-        get_data_migrations(),
     )
 }

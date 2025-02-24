@@ -4,19 +4,24 @@ use anyhow::Result;
 use axum::Extension;
 use serde_json::{json, Value};
 
-use rs_utils::{http_server::HttpServer, workspace_relpath};
+use rs_utils::{http_server::HttpServer, workspace_relpath, SelfSignedCertificate};
 
 use crate::{
     entities::{Id, Revision},
     sync::{build_rpc_router, create_shared_key, SyncManager},
-    tests::{
-        are_equal_files, create_changeset, new_certificate, new_document, new_document_snapshot,
-    },
-    Baza, Credentials,
+    tests::{are_equal_files, new_document, new_document_snapshot},
 };
 
+fn create_changeset(documents: Vec<Document>) -> Changeset {
+    Changeset {
+        data_version: 0,
+        documents,
+    }
+}
+
 async fn start_rpc_server(baza: Arc<Baza>) -> HttpServer {
-    let certificate = new_certificate();
+    let certificate = SelfSignedCertificate::new_x509("test").unwrap();
+
     let key = create_shared_key(&baza).unwrap();
     let router = build_rpc_router(certificate.certificate_der.clone())
         .expect("must create RPC router")

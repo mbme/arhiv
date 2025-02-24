@@ -5,7 +5,6 @@ use anyhow::{anyhow, bail, ensure, Result};
 
 use crate::{
     baza2::Baza,
-    db::BazaConnection,
     entities::{BLOBId, Document, Id},
     schema::{DataSchema, Field},
 };
@@ -64,28 +63,13 @@ impl fmt::Display for ValidationError {
     }
 }
 
+// FIXME refactor this - remove unnecessary trait
 pub trait ValidableDB {
     fn get_schema(&self) -> &DataSchema;
 
     fn get_document(&self, id: &Id) -> Result<Option<Document>>;
 
     fn blob_exists(&self, blob_id: &BLOBId) -> Result<bool>;
-}
-
-impl ValidableDB for &BazaConnection {
-    fn get_schema(&self) -> &DataSchema {
-        self.get_schema_ref()
-    }
-
-    fn get_document(&self, id: &Id) -> Result<Option<Document>> {
-        (self as &BazaConnection).get_document(id)
-    }
-
-    fn blob_exists(&self, blob_id: &BLOBId) -> Result<bool> {
-        let blob = self.get_existing_blob(blob_id)?;
-
-        Ok(blob.is_some())
-    }
 }
 
 impl ValidableDB for &Baza {

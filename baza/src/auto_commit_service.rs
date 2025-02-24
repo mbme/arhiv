@@ -5,8 +5,6 @@ use tokio::{task::JoinHandle, time::interval};
 
 use rs_utils::{log, now, FakeTime, Timestamp};
 
-use crate::Baza;
-
 pub type AutoCommitTask = JoinHandle<()>;
 
 pub struct AutoCommitService {

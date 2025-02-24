@@ -1,10 +1,10 @@
-use std::{collections::HashSet, fmt::Display};
+use std::{collections::HashSet, fmt::Display, fs};
 
-use anyhow::Result;
+use anyhow::{anyhow, ensure, Context, Result};
 
 use rs_utils::{create_dir_if_not_exist, file_exists, list_files};
 
-use crate::{entities::BLOBId, get_local_blob_ids};
+use crate::entities::BLOBId;
 
 const BLOB_EXT: &str = ".age";
 
@@ -126,4 +126,33 @@ impl Display for BazaPaths {
             self.storage_dir, self.state_dir
         )
     }
+}
+
+pub fn get_local_blob_ids(dir: &str, trim_ext: &str) -> Result<HashSet<BLOBId>> {
+    let items = fs::read_dir(dir)?
+        .map(|item| {
+            let entry = item.context("Failed to read data entry")?;
+
+            let entry_path = entry.path();
+
+            ensure!(
+                entry_path.is_file(),
+                "{} isn't a file",
+                entry_path.to_string_lossy()
+            );
+
+            entry_path
+                .file_name()
+                .ok_or_else(|| anyhow!("Failed to read file name"))
+                .map(|value| {
+                    value
+                        .to_string_lossy()
+                        .trim_end_matches(trim_ext)
+                        .to_string()
+                })
+                .and_then(BLOBId::from_string)
+        })
+        .collect::<Result<HashSet<_>>>()?;
+
+    Ok(items)
 }

@@ -6,7 +6,6 @@ use serde_json::{json, Value};
 use crate::entities::{Document, DocumentType, Id, Revision};
 
 // mod sync; FIXME enable
-// mod validation; FIXME enable
 
 pub fn new_document(value: Value) -> Document {
     Document::new_with_data(DocumentType::new("test_type"), value.try_into().unwrap())

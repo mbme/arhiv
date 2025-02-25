@@ -79,7 +79,7 @@ impl Document {
         self
     }
 
-    pub(crate) fn erase(&mut self) {
+    pub fn erase(&mut self) {
         self.document_type = DocumentType::erased();
         self.data = DocumentData::new();
         self.updated_at = now();

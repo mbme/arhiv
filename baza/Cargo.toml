@@ -30,13 +30,6 @@ pulldown-cmark = { version = "0.13", default-features = false, features = ["simd
 
 tinytemplate = "1"
 
-rusqlite = { version = "0.33", features = ["chrono", "serde_json", "functions", "collation", "bundled"] }
-
-thiserror = "2" # macro for better errors
-
-reqwest.workspace = true
-axum.workspace = true
-axum-extra.workspace = true
 ordermap.workspace = true
 
 rs-utils = { path = "../rs-utils" }

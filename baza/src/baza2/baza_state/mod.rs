@@ -127,6 +127,10 @@ impl BazaState {
         &self.file.info
     }
 
+    pub fn get_instance_id(&self) -> &InstanceId {
+        &self.file.instance_id
+    }
+
     pub fn get_schema(&self) -> &DataSchema {
         &self.schema
     }

@@ -7,7 +7,7 @@ use std::{
     io::Read,
 };
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 
 use rs_utils::{
     age::{encrypt_and_write_file, read_and_decrypt_file, AgeKey},
@@ -281,6 +281,18 @@ impl Baza {
 
     pub fn get_info(&self) -> &BazaInfo {
         self.state.get_info()
+    }
+
+    pub fn get_instance_id(&self) -> &InstanceId {
+        self.state.get_instance_id()
+    }
+
+    pub fn get_data_version(&self) -> u8 {
+        self.state.get_info().data_version
+    }
+
+    pub fn get_single_latest_revision(&self) -> &Revision {
+        self.state.get_single_latest_revision()
     }
 
     pub fn get_schema(&self) -> &DataSchema {

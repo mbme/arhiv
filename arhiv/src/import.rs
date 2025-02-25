@@ -4,7 +4,7 @@ use baza::{
     entities::{Document, DocumentData, DocumentType},
     schema::{create_asset, ASSET_TYPE},
 };
-use rs_utils::{ensure_file_exists, remove_file_extension};
+use rs_utils::{ensure_file_exists, remove_file_extension, remove_file_if_exists};
 
 use crate::{definitions::TRACK_TYPE, Arhiv};
 
@@ -13,16 +13,20 @@ impl Arhiv {
         &self,
         document_type: &str,
         file_path: &str,
-        move_file: bool,
+        remove_original: bool,
     ) -> Result<Document> {
         ensure_file_exists(file_path)?;
 
         match document_type {
-            TRACK_TYPE => self.import_track(file_path, move_file),
+            TRACK_TYPE => self.import_track(file_path, remove_original),
             ASSET_TYPE => {
-                let mut tx = self.baza.get_tx()?;
-                let asset = create_asset(&mut tx, file_path, move_file, None)?;
-                tx.commit()?;
+                let mut baza = self.baza.open()?;
+                let asset = create_asset(&mut baza, file_path, None)?;
+                baza.save_changes()?;
+
+                if remove_original {
+                    remove_file_if_exists(file_path)?;
+                }
 
                 asset.into_document()
             }
@@ -30,10 +34,10 @@ impl Arhiv {
         }
     }
 
-    fn import_track(&self, file_path: &str, move_file: bool) -> Result<Document> {
-        let mut tx = self.baza.get_tx()?;
+    fn import_track(&self, file_path: &str, remove_original: bool) -> Result<Document> {
+        let mut baza = self.baza.open()?;
 
-        let asset = create_asset(&mut tx, file_path, move_file, None)?;
+        let asset = create_asset(&mut baza, file_path, None)?;
 
         ensure!(
             asset.data.is_audio(),
@@ -58,11 +62,15 @@ impl Arhiv {
         data.set("title", title);
         data.set("track", &asset.id);
 
-        let mut document = Document::new_with_data(DocumentType::new(TRACK_TYPE), data);
+        let document = Document::new_with_data(DocumentType::new(TRACK_TYPE), data);
 
-        tx.stage_document(&mut document, None)?;
+        let document = baza.stage_document(document, &None)?.clone();
 
-        tx.commit()?;
+        baza.save_changes()?;
+
+        if remove_original {
+            remove_file_if_exists(file_path)?;
+        }
 
         Ok(document)
     }

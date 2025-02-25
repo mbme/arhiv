@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use rs_utils::{get_file_name, get_file_size, get_media_type, Download};
@@ -88,14 +88,7 @@ pub fn create_asset(baza: &mut Baza, file_path: &str, filename: Option<String>) 
     );
 
     let document = asset.into_document()?;
-    let id = document.id.clone();
-    baza.stage_document(document, &None)?;
-
-    let document = baza
-        .get_document(&id)
-        .context("document must exist")?
-        .get_single_document()
-        .clone();
+    let document = baza.stage_document(document, &None)?.clone();
 
     document.convert()
 }

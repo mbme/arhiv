@@ -3,78 +3,75 @@ use std::fmt;
 use anyhow::Result;
 use serde::Serialize;
 
-use baza::{entities::Revision, BLOBSCount, BazaConnection, DocumentsCount, Locks, DEV_MODE};
-use rs_utils::{default_date_time_format, get_crate_version, Timestamp, MIN_TIMESTAMP};
+use baza::{
+    baza2::{BLOBSCount, Baza, DocumentsCount, Locks},
+    entities::Revision,
+    AutoCommitService, DEV_MODE,
+};
+use rs_utils::{default_date_time_format, get_crate_version, Timestamp};
 
-use crate::{ArhivConfigExt, ServerInfo};
+use crate::ServerInfo;
 
 #[derive(Serialize)]
-pub struct Status {
+pub struct Status<'b> {
     pub app_version: String,
     pub instance_id: String,
     pub login: String,
 
-    pub db_version: u8,
+    pub storage_version: u8,
     pub data_version: u8,
-    pub computed_data_version: u8,
     pub documents_count: DocumentsCount,
     pub blobs_count: BLOBSCount,
-    pub conflicts_count: usize,
-    pub locks: Locks,
+    pub locks: &'b Locks,
 
     pub db_rev: Revision,
-    pub last_update_time: Timestamp,
+    pub last_update_time: Option<Timestamp>,
     pub dev_mode: bool,
     pub root_dir: String,
 
-    pub auto_sync_delay_in_seconds: u64,
     pub auto_commit_delay_in_seconds: u64,
 
     pub server_port: Option<u16>,
 }
 
-impl Status {
-    pub fn read(conn: &BazaConnection) -> Result<Self> {
-        let root_dir = conn.get_path_manager().root_dir.clone();
+impl<'b> Status<'b> {
+    pub fn read(baza: &'b Baza) -> Result<Self> {
+        let root_dir = baza.get_storage_dir().to_string();
 
-        let instance_id = conn.get_instance_id()?.to_string();
-        let login = conn.get_login()?;
-        let db_rev = conn.get_db_rev()?;
-        let db_version = conn.get_db_version()?;
-        let data_version = conn.get_data_version()?;
-        let computed_data_version = conn.get_computed_data_version()?;
-        let documents_count = conn.count_documents()?;
-        let blobs_count = conn.count_blobs()?;
-        let conflicts_count = conn.get_coflicting_documents()?.len();
-        let last_update_time = conn.get_last_update_time()?;
-        let locks = conn.list_document_locks()?;
+        let info = baza.get_info();
+
+        let instance_id = baza.get_instance_id().to_string();
+        let login = info.login.clone();
+        let db_rev = baza.get_single_latest_revision().clone();
+        let storage_version = info.storage_version;
+        let data_version = info.data_version;
+        let documents_count = baza.count_documents()?;
+        let blobs_count = baza.count_blobs()?;
+        let last_update_time = baza.find_last_modification_time();
+        let locks = baza.list_document_locks();
         let server_port = ServerInfo::get_server_port(&root_dir)?;
-        let auto_sync_delay_in_seconds = conn.get_auto_sync_delay()?.as_secs();
-        let auto_commit_delay_in_seconds = conn.get_auto_commit_delay()?.as_secs();
+        let auto_commit_delay_in_seconds = AutoCommitService::DEFAULT_AUTO_COMMIT_DELAY.as_secs();
 
         Ok(Status {
             instance_id,
             login,
             app_version: get_crate_version().to_string(),
-            db_version,
+            storage_version,
             data_version,
-            computed_data_version,
             documents_count,
             blobs_count,
-            conflicts_count,
             db_rev,
             last_update_time,
             dev_mode: DEV_MODE,
             root_dir,
             locks,
-            auto_sync_delay_in_seconds,
             auto_commit_delay_in_seconds,
             server_port,
         })
     }
 }
 
-impl fmt::Display for Status {
+impl<'b> fmt::Display for Status<'b> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.dev_mode {
             writeln!(f)?;
@@ -93,9 +90,8 @@ impl fmt::Display for Status {
         writeln!(f)?;
 
         writeln!(f, "          App version: {}", self.app_version)?;
-        writeln!(f, "           DB version: {}", self.db_version)?;
+        writeln!(f, "      Storage version: {}", self.storage_version)?;
         writeln!(f, "       Schema version: {}", self.data_version)?;
-        writeln!(f, "Computed data version: {}", self.computed_data_version)?;
         writeln!(f, "          DB revision: {}", self.db_rev.serialize())?;
 
         writeln!(f)?;
@@ -111,11 +107,8 @@ impl fmt::Display for Status {
         writeln!(
             f,
             " Last update time: {}",
-            if self.last_update_time == MIN_TIMESTAMP {
-                "NEVER".to_string()
-            } else {
-                default_date_time_format(self.last_update_time)
-            }
+            self.last_update_time
+                .map_or("NEVER".to_string(), default_date_time_format)
         )?;
 
         writeln!(f)?;
@@ -123,11 +116,6 @@ impl fmt::Display for Status {
             f,
             "Auto-commit delay: {} seconds",
             self.auto_commit_delay_in_seconds
-        )?;
-        writeln!(
-            f,
-            "  Auto-sync delay: {} seconds",
-            self.auto_sync_delay_in_seconds
         )?;
 
         writeln!(f)?;
@@ -162,22 +150,26 @@ impl fmt::Display for Status {
 
         writeln!(
             f,
-            "            BLOBs: {} total ({} new), {} local ({} unused)",
-            self.blobs_count.total_blobs_count,
+            "            BLOBs: {} referenced; {} present: {} new, {} in storage",
+            self.blobs_count.total_referenced_blobs,
+            self.blobs_count.count_present_blobs(),
             self.blobs_count.blobs_staged,
-            self.blobs_count.local_blobs_count,
-            self.blobs_count.local_blobs_count - self.blobs_count.local_used_blobs_count,
+            self.blobs_count.blobs_in_storage,
         )?;
 
         writeln!(f)?;
         writeln!(f, "            Locks: {}", self.locks.len())?;
-        for (id, reason) in &self.locks {
+        for (id, reason) in self.locks {
             writeln!(f, "   {:>30}: {reason}", id)?;
         }
 
-        if self.conflicts_count > 0 {
+        if self.documents_count.conflicts_count > 0 {
             writeln!(f)?;
-            writeln!(f, "        WARN:  found {} conflicts", self.conflicts_count)?;
+            writeln!(
+                f,
+                "        WARN:  found {} conflicts",
+                self.documents_count.conflicts_count
+            )?;
             writeln!(f)?;
         }
 

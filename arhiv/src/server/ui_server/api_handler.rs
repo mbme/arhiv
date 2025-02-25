@@ -3,11 +3,12 @@ use std::{cmp::Ordering, fs, path::Path};
 use anyhow::{bail, Context, Result};
 
 use baza::{
+    baza2::StagingError,
     entities::{Document, DocumentType, ERASED_DOCUMENT_TYPE},
     markup::MarkupStr,
     schema::{create_asset, Asset, DataSchema},
     validator::ValidationError,
-    DocumentExpert, Filter, StagingError,
+    DocumentExpert,
 };
 use rs_utils::{ensure_dir_exists, get_symlink_target_path, is_readable, path_to_string};
 

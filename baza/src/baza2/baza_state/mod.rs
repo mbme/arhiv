@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use rs_utils::{
     age::{AgeKey, AgeReader, AgeWriter},
-    create_file_reader, create_file_writer,
+    create_file_reader, create_file_writer, Timestamp,
 };
 
 use crate::{
@@ -135,6 +135,12 @@ impl BazaState {
         &self.schema
     }
 
+    pub fn find_last_modification_time(&self) -> Option<Timestamp> {
+        self.iter_documents()
+            .map(|head| head.get_single_document().updated_at)
+            .max()
+    }
+
     pub fn get_latest_revision(&self) -> HashSet<&Revision> {
         let mut latest_rev_computer = LatestRevComputer::new();
 
@@ -169,7 +175,7 @@ impl BazaState {
         &mut self,
         mut document: Document,
         lock_key: &Option<DocumentLockKey>,
-    ) -> Result<()> {
+    ) -> Result<&Document> {
         let id = document.id.clone();
 
         self.check_document_lock(&id, lock_key)?;
@@ -186,10 +192,15 @@ impl BazaState {
         };
 
         self.update_document_refs(&updated_head)?;
-        self.file.documents.insert(id, updated_head);
+        self.file.documents.insert(id.clone(), updated_head);
         self.modified = true;
 
-        Ok(())
+        let document = self
+            .get_document(&id)
+            .context("Document must exist")?
+            .get_single_document();
+
+        Ok(document)
     }
 
     pub(super) fn insert_snapshot(&mut self, document: Document) -> Result<()> {

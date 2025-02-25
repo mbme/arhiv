@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{ops::Bound, str::FromStr, sync::Arc};
 
 use anyhow::{anyhow, Context};
 use axum::{
@@ -11,16 +11,18 @@ use axum::{
 };
 use axum_extra::{
     extract::{cookie::Cookie, CookieJar},
-    headers, TypedHeader,
+    headers::{self, HeaderMapExt},
+    TypedHeader,
 };
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use baza::{entities::BLOBId, schema::create_asset, sync::respond_with_blob, Credentials};
+use baza::{entities::BLOBId, schema::create_asset, Credentials};
 use rs_utils::{
+    create_body_from_file,
     crypto_key::CryptoKey,
-    http_server::{add_no_cache_headers, ServerError},
+    http_server::{add_max_cache_header, add_no_cache_headers, ServerError},
     log, stream_to_file, AuthToken, SecretString,
 };
 
@@ -263,4 +265,70 @@ async fn client_authenticator(
     );
 
     response
+}
+
+async fn respond_with_blob(
+    baza: &Baza,
+    blob_id: &BLOBId,
+    range: &Option<headers::Range>,
+) -> Result<Response, ServerError> {
+    let conn = baza.get_connection()?;
+    let blob = conn.get_blob(blob_id);
+
+    if !blob.exists()? {
+        return Ok(StatusCode::NOT_FOUND.into_response());
+    }
+
+    let size = blob.get_size()?;
+
+    let mut headers = HeaderMap::new();
+    add_max_cache_header(&mut headers);
+    headers.typed_insert(headers::ContentLength(size));
+    headers.typed_insert(headers::AcceptRanges::bytes());
+    headers.typed_insert(headers::ContentType::from_str(&blob.get_media_type()?)?);
+
+    let ranges = range
+        .as_ref()
+        .map(|range| range.satisfiable_ranges(size).collect::<Vec<_>>())
+        .unwrap_or_default();
+    if ranges.len() == 1 {
+        let (start_pos, end_pos) = ranges[0];
+
+        let start_pos = match start_pos {
+            Bound::Included(start_pos) => start_pos,
+            Bound::Excluded(start_pos) => start_pos + 1,
+            Bound::Unbounded => 0,
+        };
+
+        let end_pos = match end_pos {
+            Bound::Included(end_pos) => end_pos,
+            Bound::Excluded(end_pos) => end_pos - 1,
+            Bound::Unbounded => size - 1,
+        };
+
+        if start_pos >= size || end_pos >= size {
+            log::warn!(
+                "blob {}: range {}-{} out of {} not satisfiable",
+                blob_id,
+                start_pos,
+                end_pos,
+                size
+            );
+
+            return Ok(StatusCode::RANGE_NOT_SATISFIABLE.into_response());
+        }
+
+        let range_size = end_pos + 1 - start_pos;
+        let body = create_body_from_file(&blob.file_path, start_pos, Some(range_size)).await?;
+
+        let content_range = headers::ContentRange::bytes(start_pos..end_pos, size)?;
+
+        headers.typed_insert(content_range);
+
+        Ok((StatusCode::PARTIAL_CONTENT, headers, body).into_response())
+    } else {
+        let body = create_body_from_file(&blob.file_path, 0, None).await?;
+
+        Ok((StatusCode::OK, headers, body).into_response())
+    }
 }

@@ -32,6 +32,8 @@ tinytemplate = "1"
 
 ordermap.workspace = true
 
+thiserror = "2" # macro for better errors
+
 rs-utils = { path = "../rs-utils" }
 
 [dev-dependencies]

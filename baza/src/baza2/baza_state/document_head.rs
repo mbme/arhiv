@@ -89,6 +89,10 @@ impl DocumentHead {
         self.staged.is_some()
     }
 
+    pub fn is_staged_erased(&self) -> bool {
+        self.staged.as_ref().is_some_and(|doc| doc.is_erased())
+    }
+
     pub fn is_original_erased(&self) -> bool {
         !self.is_conflict()
             && self

@@ -1,5 +1,6 @@
 mod baza_paths;
 mod blobs;
+pub mod stats;
 
 use std::{
     collections::{HashMap, HashSet},
@@ -8,6 +9,7 @@ use std::{
 };
 
 use anyhow::{anyhow, ensure, Context, Result};
+use thiserror::Error;
 
 use rs_utils::{
     age::{encrypt_and_write_file, read_and_decrypt_file, AgeKey},
@@ -20,7 +22,7 @@ use crate::{
         BLOBId, Document, DocumentKey, DocumentLock, DocumentLockKey, Id, InstanceId, Revision,
     },
     schema::DataSchema,
-    validator::Validator,
+    validator::{ValidationError, Validator},
 };
 
 use baza_paths::BazaPaths;
@@ -33,18 +35,12 @@ use super::{
     BazaInfo, BazaState, BazaStorage, DocumentHead,
 };
 
-// create?
-// on startup:
-// * read baza state
-// * merge all baza storage files into 1
-// * read (if no local changes)? baza storage info
-// * what if baza storage is newer than baza state? - pull changes
-// on commit:
-// * acquire write lock on lockfile
-// * increment baza_rev
-// * update revision on local documents
-// * push updated documents to baza storage
-// * commit changes
+#[derive(Error, Debug)]
+#[error(transparent)]
+pub enum StagingError {
+    Validation(#[from] ValidationError),
+    Other(#[from] anyhow::Error),
+}
 
 pub struct BazaManager {
     schema: DataSchema,
@@ -299,6 +295,14 @@ impl Baza {
         self.state.get_schema()
     }
 
+    pub fn get_storage_dir(&self) -> &str {
+        &self.paths.storage_dir
+    }
+
+    pub fn find_last_modification_time(&self) -> Option<Timestamp> {
+        self.state.find_last_modification_time()
+    }
+
     pub fn list_document_locks(&self) -> &Locks {
         self.state.list_document_locks()
     }
@@ -333,14 +337,14 @@ impl Baza {
         &mut self,
         document: Document,
         lock_key: &Option<DocumentLockKey>,
-    ) -> Result<()> {
+    ) -> std::result::Result<&Document, StagingError> {
         log::debug!("Staging document {}", &document.id);
 
         Validator::new(self as &Baza).validate_staged(&document)?;
 
-        self.state.stage_document(document, lock_key)?;
+        let document = self.state.stage_document(document, lock_key)?;
 
-        Ok(())
+        Ok(document)
     }
 
     pub fn has_staged_documents(&self) -> bool {

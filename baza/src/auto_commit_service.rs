@@ -17,6 +17,8 @@ pub struct AutoCommitService {
 }
 
 impl AutoCommitService {
+    pub const DEFAULT_AUTO_COMMIT_DELAY: Duration = Duration::from_secs(600);
+
     pub fn new(baza_manager: Arc<BazaManager>, auto_commit_timeout: Duration) -> Self {
         AutoCommitService {
             baza_manager,

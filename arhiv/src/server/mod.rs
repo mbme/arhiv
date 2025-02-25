@@ -1,22 +1,11 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use axum::{
-    extract::{Request, State},
-    http::HeaderMap,
-    middleware::{self, Next},
-    response::{IntoResponse, Response},
-    routing::get,
-    Router,
-};
+use axum::{http::HeaderMap, response::IntoResponse, routing::get, Router};
 use certificate::generate_ui_crypto_key;
 use reqwest::StatusCode;
 
-use baza::sync::build_rpc_router;
-use rs_utils::{
-    http_server::{add_no_cache_headers, fallback_route, HttpServer},
-    log,
-};
+use rs_utils::http_server::{add_no_cache_headers, fallback_route, HttpServer};
 
 use self::ui_server::{build_ui_router, UIState, UI_BASE_PATH};
 use self::{certificate::read_or_generate_certificate, server_lock::ArhivServerLock};
@@ -46,15 +35,11 @@ impl ArhivServer {
         let state = Arc::new(UIState::new(root_dir, options.clone())?);
 
         let certificate = read_or_generate_certificate(root_dir)?;
-        let rpc_router = build_rpc_router(certificate.certificate_der.clone())?.route_layer(
-            middleware::from_fn_with_state(state.clone(), extract_baza_from_state),
-        );
 
         let ui_key = generate_ui_crypto_key(certificate.private_key_der.clone())?;
         let ui_router = build_ui_router(ui_key).with_state(state.clone());
 
         let router = Router::new()
-            .merge(rpc_router)
             .nest(UI_BASE_PATH, ui_router)
             .route(HEALTH_PATH, get(health_handler))
             .fallback(fallback_route);
@@ -63,10 +48,6 @@ impl ArhivServer {
 
         let actual_server_port = server.get_address().port();
         lock.write_server_port(actual_server_port)?;
-
-        if options.discover_peers {
-            state.start_mdns_server(actual_server_port)?;
-        }
 
         Ok(ArhivServer {
             state,
@@ -82,43 +63,6 @@ impl ArhivServer {
 
         Ok(())
     }
-}
-
-async fn extract_baza_from_state(
-    State(state): State<Arc<UIState>>,
-    mut request: Request,
-    next: Next,
-) -> Response {
-    let baza = match state.must_get_arhiv() {
-        Ok(arhiv) => arhiv.baza.clone(),
-        Err(err) => {
-            log::error!("Attempt to access Arhiv that isn't initialized yet: {err}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Arhiv not initialized: {err}"),
-            )
-                .into_response();
-        }
-    };
-
-    let shared_key = match state.must_get_shared_key() {
-        Ok(shared_key) => shared_key.clone(),
-        Err(err) => {
-            log::error!("Attempt to access shared_key that isn't initialized yet: {err}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Shared_key not initialized: {err}"),
-            )
-                .into_response();
-        }
-    };
-
-    request.extensions_mut().insert(baza);
-    request.extensions_mut().insert(shared_key);
-
-    next.run(request).await
 }
 
 #[allow(clippy::unused_async)]

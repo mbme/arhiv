@@ -14,11 +14,11 @@ type Props = {
   onCancel: Callback;
 };
 export function FilePickerConfirmationDialog({ filePath, size, onAssetCreated, onCancel }: Props) {
-  const [moveFile, setMoveFile] = useState(false);
+  const [removeFile, setRemoveFile] = useState(false);
 
   const { error, inProgress, triggerRefresh } = useQuery(
     async (abortSignal) => {
-      const { id } = await RPC.CreateAsset({ filePath, moveFile }, abortSignal);
+      const { id } = await RPC.CreateAsset({ filePath, removeFile }, abortSignal);
       onAssetCreated(id);
     },
     {
@@ -58,11 +58,11 @@ export function FilePickerConfirmationDialog({ filePath, size, onAssetCreated, o
       >
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
-            name="move_file"
+            name="remove_file"
             type="checkbox"
-            checked={moveFile}
+            checked={removeFile}
             onChange={() => {
-              setMoveFile(!moveFile);
+              setRemoveFile(!removeFile);
             }}
           />
           Remove original file

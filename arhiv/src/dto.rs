@@ -49,7 +49,7 @@ pub enum APIRequest {
     #[serde(rename_all = "camelCase")]
     CreateAsset {
         file_path: String,
-        move_file: bool,
+        remove_file: bool,
     },
     Commit {},
     Sync {},

@@ -47,7 +47,7 @@ export type APIRequest =
   | {
       typeName: 'CreateAsset';
       filePath: string;
-      moveFile: boolean;
+      removeFile: boolean;
     }
   | {
       typeName: 'Commit';

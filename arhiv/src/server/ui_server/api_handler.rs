@@ -10,7 +10,10 @@ use baza::{
     validator::ValidationError,
     DocumentExpert,
 };
-use rs_utils::{ensure_dir_exists, get_symlink_target_path, is_readable, path_to_string};
+use rs_utils::{
+    ensure_dir_exists, get_symlink_target_path, is_readable, log, path_to_string,
+    remove_file_if_exists,
+};
 
 use crate::{
     dto::{
@@ -247,11 +250,16 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
         }
         APIRequest::CreateAsset {
             ref file_path,
-            move_file,
+            remove_file,
         } => {
-            let mut tx = arhiv.baza.get_tx()?;
-            let asset = create_asset(&mut tx, file_path, move_file, None)?;
-            tx.commit()?;
+            let mut baza = arhiv.baza.open()?;
+            let asset = create_asset(&mut baza, file_path, None)?;
+            baza.save_changes()?;
+
+            if remove_file {
+                log::debug!("CreateAsset: removing original file {file_path}");
+                remove_file_if_exists(file_path)?;
+            }
 
             APIResponse::CreateAsset { id: asset.id }
         }

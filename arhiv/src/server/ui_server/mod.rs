@@ -23,7 +23,7 @@ use rs_utils::{
     create_body_from_file,
     crypto_key::CryptoKey,
     http_server::{add_max_cache_header, add_no_cache_headers, ServerError},
-    log, stream_to_file, AuthToken, SecretString,
+    log, stream_to_file, AuthToken, SecretString, TempFile,
 };
 
 use crate::{definitions::get_standard_schema, dto::APIRequest};
@@ -168,16 +168,16 @@ async fn create_blob_handler(
         .context("Failed to read X-File-Name header as a string")?
         .to_string();
 
-    let temp_file = arhiv.baza.get_path_manager().new_temp_file("arhiv-blob");
+    let temp_file = TempFile::new_in_downloads_dir("arhiv-blob")?;
     let stream = request.into_body().into_data_stream();
 
     stream_to_file(temp_file.open_tokio_file(0).await?, stream).await?;
 
-    let mut tx = arhiv.baza.get_tx()?;
+    let mut baza = arhiv.baza.open()?;
 
-    let asset = create_asset(&mut tx, &temp_file.path, true, Some(file_name))?;
+    let asset = create_asset(&mut baza, &temp_file.path, Some(file_name))?;
 
-    tx.commit()?;
+    baza.save_changes()?;
 
     Ok(asset.id.to_string())
 }

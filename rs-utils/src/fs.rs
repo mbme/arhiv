@@ -184,7 +184,7 @@ pub fn get_config_home() -> Option<String> {
     None
 }
 
-/// `$XDG_DOWNLOAD_DIR` or `$HOME/Downloads`
+/// `$XDG_DOWNLOAD_DIR` or `$HOME/Downloads` FIXME ensure on Android
 #[must_use]
 pub fn get_downloads_dir() -> Option<String> {
     if let Some(path) = env::var_os("XDG_DOWNLOAD_DIR") {

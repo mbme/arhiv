@@ -1,4 +1,4 @@
-use std::{str::FromStr, sync::Arc};
+use std::{io::BufReader, str::FromStr, sync::Arc};
 
 use anyhow::Context;
 use axum::{
@@ -9,7 +9,7 @@ use axum::{
 use axum_extra::headers::{self, HeaderMapExt};
 use serde::Deserialize;
 
-use baza::entities::BLOBId;
+use baza::{entities::BLOBId, schema::get_asset_by_blob_id};
 use rs_utils::{
     http_server::{add_max_cache_header, ServerError},
     image::scale_image_async,
@@ -33,15 +33,14 @@ pub async fn image_handler(
 
     let blob_id = BLOBId::from_string(blob_id)?;
 
-    let blob = arhiv
-        .baza
-        .get_connection()?
-        .get_existing_blob(&blob_id)?
-        .context("BLOB is missing")?;
+    let baza = arhiv.baza.open()?;
+    let blob_reader = baza.get_blob(&blob_id)?;
+    let buf_reader = BufReader::new(blob_reader);
+    let asset = get_asset_by_blob_id(&baza, &blob_id).context("Failed to find asset by blob id")?;
 
-    let original_size = blob.get_size()?;
+    let original_size = asset.data.size;
 
-    let body = scale_image_async(&blob.file_path, params.max_w, params.max_h)
+    let body = scale_image_async(buf_reader, params.max_w, params.max_h)
         .await
         .context("failed to scale image")?;
 

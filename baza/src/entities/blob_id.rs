@@ -25,6 +25,12 @@ impl Deref for BLOBId {
     }
 }
 
+impl AsRef<str> for BLOBId {
+    fn as_ref(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
 impl BLOBId {
     pub fn is_valid_blob_id(id: &str) -> Result<()> {
         ensure!(

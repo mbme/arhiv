@@ -104,3 +104,20 @@ pub async fn download_asset(url: &str, baza: &mut Baza) -> Result<Document> {
 
     asset.into_document()
 }
+
+pub fn get_asset_by_blob_id(baza: &Baza, blob_id: &BLOBId) -> Option<Asset> {
+    baza.iter_documents()
+        .filter_map(|head| {
+            let doc = head.get_single_document();
+
+            if doc.document_type.as_ref() == ASSET_TYPE
+                && doc.data.get_mandatory_str("blob") == blob_id.as_ref()
+            {
+                let asset: Asset = doc.clone().convert().expect("must convert to Asset");
+                Some(asset)
+            } else {
+                None
+            }
+        })
+        .next()
+}

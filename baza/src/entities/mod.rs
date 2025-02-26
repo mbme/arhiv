@@ -1,4 +1,3 @@
-mod blob;
 mod blob_id;
 mod document;
 mod document_data;
@@ -10,7 +9,6 @@ mod instance_id;
 mod refs;
 mod revision;
 
-pub use blob::BLOB;
 pub use blob_id::BLOBId;
 pub use document::Document;
 pub use document_data::DocumentData;

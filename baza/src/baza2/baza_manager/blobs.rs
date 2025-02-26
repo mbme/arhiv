@@ -1,6 +1,6 @@
 use std::{
     collections::HashSet,
-    io::{copy, Read},
+    io::{copy, Read, Seek},
 };
 
 use anyhow::{ensure, Context, Result};
@@ -14,6 +14,7 @@ use crate::entities::BLOBId;
 
 use super::Baza;
 
+// FIXME ensure can't add the same BLOB twice
 impl Baza {
     fn get_local_blob_path(&self, id: &BLOBId) -> String {
         self.paths.get_state_blob_path(id)
@@ -38,7 +39,7 @@ impl Baza {
         self.get_blob_path(blob_id).map(|path| path.is_some())
     }
 
-    pub fn get_blob(&self, blob_id: &BLOBId) -> Result<impl Read> {
+    pub fn get_blob(&self, blob_id: &BLOBId) -> Result<impl Read + Seek> {
         let file_path = self.get_blob_path(blob_id)?.context("BLOB doesn't exist")?;
 
         let file_reader = create_file_reader(&file_path)?;

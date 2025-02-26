@@ -10,9 +10,9 @@ use super::BazaState;
 
 #[derive(Default)]
 pub struct Filter {
-    document_types: Vec<DocumentType>,
-    query: String,
-    page: u8,
+    pub document_types: Vec<DocumentType>,
+    pub query: String,
+    pub page: u8,
 }
 
 #[derive(Debug, Serialize)]

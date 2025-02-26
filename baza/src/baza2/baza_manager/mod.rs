@@ -23,6 +23,7 @@ use crate::{
     },
     schema::DataSchema,
     validator::{ValidationError, Validator},
+    DocumentExpert,
 };
 
 use baza_paths::BazaPaths;
@@ -32,7 +33,7 @@ use super::{
     baza_storage::{
         create_empty_storage_file, merge_storages_to_file, BazaFileStorage, STORAGE_VERSION,
     },
-    BazaInfo, BazaState, BazaStorage, DocumentHead,
+    BazaInfo, BazaState, BazaStorage, DocumentHead, Filter, ListPage,
 };
 
 #[derive(Error, Debug)]
@@ -255,6 +256,14 @@ impl BazaManager {
 
         manager
     }
+
+    pub fn get_schema(&self) -> &DataSchema {
+        &self.schema
+    }
+
+    pub fn get_document_expert(&self) -> DocumentExpert {
+        DocumentExpert::new(&self.schema)
+    }
 }
 
 pub struct Baza {
@@ -333,6 +342,12 @@ impl Baza {
         self.state.get_document(id)
     }
 
+    pub fn must_get_document(&self, id: &Id) -> Result<&Document> {
+        let head = self.get_document(id).context("Can't find document")?;
+
+        Ok(head.get_single_document())
+    }
+
     pub fn stage_document(
         &mut self,
         document: Document,
@@ -358,6 +373,10 @@ impl Baza {
     #[cfg(test)]
     pub fn insert_snapshot(&mut self, document: Document) -> Result<()> {
         self.state.insert_snapshot(document)
+    }
+
+    pub fn list_documents(&self, filter: &Filter) -> Result<ListPage> {
+        self.state.list_documents(filter)
     }
 
     fn open_storage<'s>(&self, file_path: &str) -> Result<BazaFileStorage<'s>> {

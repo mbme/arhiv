@@ -3,8 +3,8 @@ use std::{cmp::Ordering, fs, path::Path};
 use anyhow::{bail, Context, Result};
 
 use baza::{
-    baza2::StagingError,
-    entities::{Document, DocumentType, ERASED_DOCUMENT_TYPE},
+    baza2::{Filter, StagingError},
+    entities::{Document, DocumentType},
     markup::MarkupStr,
     schema::{create_asset, Asset, DataSchema},
     validator::ValidationError,
@@ -23,8 +23,6 @@ use crate::{
     Arhiv,
 };
 
-const PAGE_SIZE: u8 = 10;
-
 pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<APIResponse> {
     let response = match request {
         APIRequest::ListDocuments {
@@ -32,26 +30,17 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             query,
             page,
         } => {
-            let mut filter = Filter::default()
-                .search(query)
-                .page_size(PAGE_SIZE)
-                .on_page(page)
-                .skip_erased(true)
-                .recently_updated_first();
+            let document_types = document_types.into_iter().map(DocumentType::new).collect();
+            let filter = Filter {
+                query,
+                document_types,
+                page,
+            };
 
-            if !document_types.is_empty() {
-                if document_types.contains(&ERASED_DOCUMENT_TYPE.into()) {
-                    filter = filter.skip_erased(false);
-                }
+            let document_expert = arhiv.baza.get_document_expert();
 
-                filter = filter.with_document_types(document_types);
-            }
-
-            let schema = arhiv.baza.get_schema();
-            let document_expert = DocumentExpert::new(schema);
-
-            let conn = arhiv.baza.get_connection()?;
-            let page = conn.list_documents(&filter)?;
+            let baza = arhiv.baza.open()?;
+            let page = baza.list_documents(&filter)?;
 
             let documents = page
                 .items
@@ -60,7 +49,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                     let asset_id = document_expert.get_cover_asset_id(&item)?;
 
                     let cover = if let Some(ref asset_id) = asset_id {
-                        let asset: Asset = conn.must_get_document(asset_id)?.convert()?;
+                        let asset: Asset = baza.must_get_document(asset_id)?.convert()?;
 
                         Some(asset.data.blob)
                     } else {
@@ -84,13 +73,13 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             }
         }
         APIRequest::GetDocuments { ids } => {
-            let conn = arhiv.baza.get_connection()?;
+            let baza = arhiv.baza.open()?;
 
             let schema = arhiv.baza.get_schema();
 
             let documents = ids
                 .iter()
-                .map(|id| conn.must_get_document(id))
+                .map(|id| baza.must_get_document(id))
                 .collect::<Result<Vec<_>>>()?;
 
             APIResponse::GetDocuments {
@@ -105,13 +94,12 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             }
         }
         APIRequest::GetDocument { ref id } => {
-            let conn = arhiv.baza.get_connection()?;
-            let document = conn.must_get_document(id)?;
+            let baza = arhiv.baza.open()?;
+            let document = baza.must_get_document(id)?;
 
-            let schema = arhiv.baza.get_schema();
-            let document_expert = DocumentExpert::new(schema);
+            let document_expert = arhiv.baza.get_document_expert();
 
-            let backrefs = conn
+            let backrefs = baza
                 .list_document_backrefs(id)?
                 .into_iter()
                 .map(|item| {
@@ -123,7 +111,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 })
                 .collect::<Result<_>>()?;
 
-            let collections = conn
+            let collections = baza
                 .list_document_collections(id)?
                 .into_iter()
                 .map(|item| {
@@ -164,18 +152,18 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             data,
             collections,
         } => {
-            let mut tx = arhiv.baza.get_tx()?;
+            let mut baza = arhiv.baza.open()?;
 
-            let mut document = tx.must_get_document(&id)?;
+            let mut document = baza.must_get_document(&id)?;
 
             document.data = data;
 
             let document_expert = arhiv.baza.get_document_expert();
             document_expert
-                .prepare_assets(&mut document, &mut tx)
+                .prepare_assets(&mut document, &mut baza)
                 .await?;
 
-            if let Err(err) = tx.stage_document(&mut document, Some(lock_key)) {
+            if let Err(err) = baza.stage_document(&mut document, Some(lock_key)) {
                 match err {
                     StagingError::Validation(validation_error) => APIResponse::SaveDocument {
                         errors: Some(validation_error.into()),
@@ -183,8 +171,8 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                     StagingError::Other(error) => return Err(error),
                 }
             } else {
-                tx.update_document_collections(&document, &collections)?;
-                tx.commit()?;
+                baza.update_document_collections(&document, &collections)?;
+                baza.commit()?;
 
                 APIResponse::SaveDocument { errors: None }
             }
@@ -197,14 +185,14 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             let document_type = DocumentType::new(document_type);
             let mut document = Document::new_with_data(document_type, data);
 
-            let mut tx = arhiv.baza.get_tx()?;
+            let mut baza = arhiv.baza.open()?;
 
             let document_expert = arhiv.baza.get_document_expert();
             document_expert
-                .prepare_assets(&mut document, &mut tx)
+                .prepare_assets(&mut document, &mut baza)
                 .await?;
 
-            if let Err(err) = tx.stage_document(&mut document, None) {
+            if let Err(err) = baza.stage_document(&mut document, None) {
                 match err {
                     StagingError::Validation(validation_error) => APIResponse::CreateDocument {
                         id: None,
@@ -213,9 +201,9 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                     StagingError::Other(error) => return Err(error),
                 }
             } else {
-                tx.update_document_collections(&document, &collections)?;
+                baza.update_document_collections(&document, &collections)?;
 
-                tx.commit()?;
+                baza.commit()?;
 
                 APIResponse::CreateDocument {
                     id: Some(document.id.clone()),
@@ -224,9 +212,9 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             }
         }
         APIRequest::EraseDocument { ref id } => {
-            let tx = arhiv.baza.get_tx()?;
-            tx.erase_document(id)?;
-            tx.commit()?;
+            let baza = arhiv.baza.open()?;
+            baza.erase_document(id)?;
+            baza.save_changes()?;
 
             APIResponse::EraseDocument {}
         }
@@ -264,11 +252,9 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             APIResponse::CreateAsset { id: asset.id }
         }
         APIRequest::Commit {} => {
-            let mut tx = arhiv.baza.get_tx()?;
+            let mut baza = arhiv.baza.open()?;
 
-            tx.commit_staged_documents()?;
-
-            tx.commit()?;
+            baza.commit()?;
 
             APIResponse::Commit {}
         }
@@ -278,9 +264,9 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             APIResponse::Sync {}
         }
         APIRequest::LockDocument { id } => {
-            let mut tx = arhiv.baza.get_tx()?;
-            let lock = tx.lock_document(&id, "UI editor lock".to_string())?;
-            tx.commit()?;
+            let mut baza = arhiv.baza.open()?;
+            let lock = baza.lock_document(&id, "UI editor lock".to_string())?;
+            baza.save_changes()?;
 
             APIResponse::LockDocument {
                 lock_key: lock.get_key().clone(),
@@ -291,16 +277,16 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             lock_key,
             force_unlock,
         } => {
-            let mut tx = arhiv.baza.get_tx()?;
+            let mut baza = arhiv.baza.open()?;
 
             if force_unlock.unwrap_or_default() {
-                tx.unlock_document_without_key(&id)?;
+                baza.unlock_document_without_key(&id)?;
             } else if let Some(lock_key) = lock_key {
-                tx.unlock_document(&id, &lock_key)?;
+                baza.unlock_document(&id, &lock_key)?;
             } else {
                 bail!("Can't unlock document {id} without a key");
             }
-            tx.commit()?;
+            baza.save_changes()?;
 
             APIResponse::UnlockDocument {}
         }
@@ -309,20 +295,20 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             id,
             new_pos,
         } => {
-            let mut tx = arhiv.baza.get_tx()?;
-            if tx.is_document_locked(&collection_id)? {
+            let mut baza = arhiv.baza.open()?;
+            if baza.is_document_locked(&collection_id)? {
                 bail!("Collection {collection_id} is locked")
             }
 
-            let mut collection = tx.must_get_document(&collection_id)?;
-            let document = tx.must_get_document(&id)?;
+            let mut collection = baza.must_get_document(&collection_id)?;
+            let document = baza.must_get_document(&id)?;
             let document_expert = arhiv.baza.get_document_expert();
 
             document_expert.reorder_refs(&mut collection, &document, new_pos)?;
 
-            tx.stage_document(&mut collection, None)?;
+            baza.stage_document(&mut collection, None)?;
 
-            tx.commit()?;
+            baza.commit()?;
 
             APIResponse::ReorderCollectionRefs {}
         }
@@ -429,7 +415,7 @@ fn sort_entries(entries: &mut [DirEntry]) {
 }
 
 fn documents_into_results(
-    documents: Vec<Document>,
+    documents: Vec<&Document>,
     schema: &DataSchema,
 ) -> Result<Vec<GetDocumentsResult>> {
     let document_expert = DocumentExpert::new(schema);
@@ -439,10 +425,10 @@ fn documents_into_results(
         .map(|item| {
             Ok(GetDocumentsResult {
                 title: document_expert.get_title(&item.document_type, &item.data)?,
-                id: item.id,
-                document_type: item.document_type.into(),
+                id: item.id.clone(),
+                document_type: item.document_type.clone().into(),
                 updated_at: item.updated_at,
-                data: item.data,
+                data: item.data.clone(),
             })
         })
         .collect::<Result<_>>()

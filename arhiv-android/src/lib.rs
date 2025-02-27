@@ -57,7 +57,6 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
         } else {
             ArhivOptions {
                 auto_commit: true,
-                discover_peers: true,
                 file_browser_root_dir,
             }
         }

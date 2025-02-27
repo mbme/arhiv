@@ -69,10 +69,15 @@ impl AutoCommitService {
     }
 
     fn try_auto_commit(&mut self) -> Result<()> {
+        if !self.baza_manager.storage_exists()? {
+            log::trace!("Auto-commit: storage doesn't exist");
+            return Ok(());
+        }
+
         let state_modification_time = self.baza_manager.get_state_file_modification_time()?;
 
         if self.last_known_modification_time == state_modification_time {
-            log::debug!("Auto-commit: state file didn't change since last check");
+            log::trace!("Auto-commit: state file didn't change since last check");
             return Ok(());
         }
 

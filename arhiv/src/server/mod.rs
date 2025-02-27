@@ -5,11 +5,18 @@ use axum::{http::HeaderMap, response::IntoResponse, routing::get, Router};
 use certificate::generate_ui_crypto_key;
 use reqwest::StatusCode;
 
-use rs_utils::http_server::{add_no_cache_headers, fallback_route, HttpServer};
+use rs_utils::{
+    create_dir_if_not_exist,
+    http_server::{add_no_cache_headers, fallback_route, HttpServer},
+    log,
+};
 
-use self::ui_server::{build_ui_router, UIState, UI_BASE_PATH};
-use self::{certificate::read_or_generate_certificate, server_lock::ArhivServerLock};
-use crate::ArhivOptions;
+use self::{
+    certificate::read_or_generate_certificate,
+    server_lock::ArhivServerLock,
+    ui_server::{build_ui_router, UI_BASE_PATH},
+};
+use crate::{Arhiv, ArhivOptions};
 
 pub use self::server_info::ServerInfo;
 
@@ -21,23 +28,28 @@ mod ui_server;
 pub const HEALTH_PATH: &str = "/health";
 
 pub struct ArhivServer {
-    state: Arc<UIState>,
+    arhiv: Arc<Arhiv>,
     server: HttpServer,
     _lock: ArhivServerLock,
 }
 
 impl ArhivServer {
-    pub async fn start(root_dir: &str, options: ArhivOptions, server_port: u16) -> Result<Self> {
-        let mut lock = ArhivServerLock::new(root_dir);
+    pub async fn start(options: ArhivOptions, server_port: u16) -> Result<Self> {
+        let state_dir = options.state_dir.clone();
+        log::info!("Starting server in {state_dir}");
+
+        create_dir_if_not_exist(&state_dir)?;
+
+        let mut lock = ArhivServerLock::new(&state_dir);
         lock.acquire()?;
         lock.write_server_port(server_port)?;
 
-        let state = Arc::new(UIState::new(root_dir, options.clone())?);
+        let arhiv = Arc::new(Arhiv::new(options.clone()));
 
-        let certificate = read_or_generate_certificate(root_dir)?;
+        let certificate = read_or_generate_certificate(&state_dir)?;
 
         let ui_key = generate_ui_crypto_key(certificate.private_key_der.clone())?;
-        let ui_router = build_ui_router(ui_key).with_state(state.clone());
+        let ui_router = build_ui_router(ui_key).with_state(arhiv.clone());
 
         let router = Router::new()
             .nest(UI_BASE_PATH, ui_router)
@@ -50,7 +62,7 @@ impl ArhivServer {
         lock.write_server_port(actual_server_port)?;
 
         Ok(ArhivServer {
-            state,
+            arhiv,
             server,
             _lock: lock,
         })
@@ -59,7 +71,7 @@ impl ArhivServer {
     pub async fn shutdown(self) -> Result<()> {
         self.server.shutdown().await?;
 
-        self.state.stop_arhiv()?;
+        self.arhiv.stop();
 
         Ok(())
     }

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::{ensure, Result};
 
 use baza::{baza2::BazaManager, AutoCommitService, AutoCommitTask};
-use rs_utils::{get_home_dir, log, path_exists};
+use rs_utils::{get_home_dir, log};
 
 use crate::{definitions::get_standard_schema, Status};
 
@@ -11,6 +11,8 @@ use crate::{definitions::get_standard_schema, Status};
 pub struct ArhivOptions {
     pub auto_commit: bool,
     pub file_browser_root_dir: Option<String>,
+    pub storage_dir: String,
+    pub state_dir: String,
 }
 
 pub struct Arhiv {
@@ -20,46 +22,19 @@ pub struct Arhiv {
 }
 
 impl Arhiv {
-    pub fn exists(root_dir: &str) -> bool {
-        path_exists(root_dir)
-    }
-
-    pub fn create(root_dir: impl Into<String>, auth: Credentials) -> Result<()> {
-        let root_dir = root_dir.into();
-        log::info!("Creating new Arhiv in {root_dir}");
-
+    pub fn new(options: ArhivOptions) -> Self {
         let schema = get_standard_schema();
 
-        Baza::create(BazaOptions { root_dir, schema }, auth)?;
-        log::info!("Created new Arhiv");
+        let baza_manager = BazaManager::new(options.storage_dir, options.state_dir, schema);
 
-        Ok(())
-    }
-
-    pub fn open(root_dir: impl Into<String>, options: ArhivOptions) -> Result<Arhiv> {
-        let root_dir = root_dir.into();
-        log::debug!("Arhiv root dir: {root_dir}");
-
-        let schema = get_standard_schema();
-
-        let baza_options = BazaOptions { root_dir, schema };
-
-        let baza = Baza::open(baza_options)?;
-        let baza = Arc::new(baza);
-
-        let mut arhiv = Arhiv {
-            baza,
+        Arhiv {
+            baza: Arc::new(baza_manager),
             auto_commit_task: None,
             file_browser_root_dir: options
                 .file_browser_root_dir
                 .or_else(get_home_dir)
                 .unwrap_or_else(|| "/".to_string()),
-        };
-        if options.auto_commit {
-            arhiv.init_auto_commit_service()?;
         }
-
-        Ok(arhiv)
     }
 
     fn init_auto_commit_service(&mut self) -> Result<()> {

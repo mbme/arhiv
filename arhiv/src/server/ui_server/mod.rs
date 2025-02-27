@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use baza::{
-    baza2::{Baza, BazaManager},
+    baza2::BazaManager,
     entities::BLOBId,
     schema::{create_asset, get_asset_by_blob_id},
 };
@@ -30,21 +30,19 @@ use rs_utils::{
     log, stream_to_file, AuthToken, SecretString, TempFile,
 };
 
-use crate::{definitions::get_standard_schema, dto::APIRequest};
+use crate::{definitions::get_standard_schema, dto::APIRequest, Arhiv};
 
 use self::api_handler::handle_api_request;
 use self::image_handler::image_handler;
 use self::public_assets_handler::public_assets_handler;
-pub use self::state::UIState;
 
 mod api_handler;
 mod image_handler;
 mod public_assets_handler;
-mod state;
 
 pub const UI_BASE_PATH: &str = "/ui";
 
-pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<UIState>> {
+pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<Arhiv>> {
     Router::new()
         .route("/", get(index_page))
         .route("/create", post(create_arhiv_handler))
@@ -64,16 +62,16 @@ struct CreateArhivRequest {
 }
 
 async fn create_arhiv_handler(
-    state: State<Arc<UIState>>,
+    arhiv: State<Arc<Arhiv>>,
     Json(create_arhiv_request): Json<CreateArhivRequest>,
 ) -> Result<impl IntoResponse, ServerError> {
-    if state.arhiv_exists()? {
+    if arhiv.baza.storage_exists()? {
         return Err(anyhow!("Arhiv already exists").into());
     }
 
     log::info!("Creating new arhiv");
 
-    state.create_arhiv(create_arhiv_request.password)?;
+    arhiv.baza.create(create_arhiv_request.password)?;
 
     Ok(())
 }
@@ -83,8 +81,8 @@ struct Features {
     use_local_storage: bool,
 }
 
-async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, ServerError> {
-    let create_arhiv = !state.arhiv_exists()?;
+async fn index_page(arhiv: State<Arc<Arhiv>>) -> Result<impl IntoResponse, ServerError> {
+    let create_arhiv = !arhiv.baza.storage_exists()?;
 
     let schema =
         serde_json::to_string(&get_standard_schema()).context("failed to serialize schema")?;
@@ -130,13 +128,11 @@ async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, Ser
     Ok((headers, Html(content)))
 }
 
-#[tracing::instrument(skip(state, request_value), level = "debug")]
+#[tracing::instrument(skip(arhiv, request_value), level = "debug")]
 async fn api_handler(
-    state: State<Arc<UIState>>,
+    arhiv: State<Arc<Arhiv>>,
     Json(request_value): Json<Value>,
 ) -> Result<impl IntoResponse, ServerError> {
-    let arhiv = state.must_get_arhiv()?;
-
     log::info!(
         "API request: {}",
         request_value.get("typeName").unwrap_or(&Value::Null)
@@ -152,13 +148,11 @@ async fn api_handler(
     Ok((headers, Json(response)))
 }
 
-#[tracing::instrument(skip(state, request), level = "debug")]
+#[tracing::instrument(skip(arhiv, request), level = "debug")]
 async fn create_blob_handler(
-    state: State<Arc<UIState>>,
+    arhiv: State<Arc<Arhiv>>,
     request: Request,
 ) -> Result<impl IntoResponse, ServerError> {
-    let arhiv = state.must_get_arhiv()?;
-
     let file_name = request
         .headers()
         .get("X-File-Name")
@@ -182,12 +176,10 @@ async fn create_blob_handler(
 }
 
 async fn blob_handler(
-    state: State<Arc<UIState>>,
+    arhiv: State<Arc<Arhiv>>,
     Path(blob_id): Path<String>,
     range: Option<TypedHeader<headers::Range>>,
 ) -> impl IntoResponse {
-    let arhiv = state.must_get_arhiv()?;
-
     let blob_id = BLOBId::from_string(blob_id)?;
 
     respond_with_blob(&arhiv.baza, &blob_id, &range.map(|val| val.0)).await
@@ -267,17 +259,20 @@ async fn client_authenticator(
 }
 
 async fn respond_with_blob(
-    baza: &Baza,
+    baza_manager: &BazaManager,
     blob_id: &BLOBId,
     range: &Option<headers::Range>,
 ) -> Result<Response, ServerError> {
+    let baza = baza_manager.open()?;
+
     if !baza.blob_exists(blob_id)? {
         return Ok(StatusCode::NOT_FOUND.into_response());
     }
 
-    let blob = baza.get_blob(blob_id);
-    let asset = get_asset_by_blob_id(baza, blob_id).context("Can't find asset by blob id")?;
+    let asset = get_asset_by_blob_id(&baza, blob_id).context("Can't find asset by blob id")?;
     let size = asset.data.size;
+
+    let blob = baza.get_blob(blob_id)?;
 
     let mut headers = HeaderMap::new();
     add_max_cache_header(&mut headers);

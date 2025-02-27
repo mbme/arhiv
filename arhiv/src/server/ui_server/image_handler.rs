@@ -15,7 +15,7 @@ use rs_utils::{
     image::scale_image_async,
 };
 
-use super::UIState;
+use crate::Arhiv;
 
 #[derive(Deserialize, Debug)]
 pub struct ImageParams {
@@ -23,14 +23,12 @@ pub struct ImageParams {
     pub max_h: Option<u32>,
 }
 
-#[tracing::instrument(skip(state), level = "debug")]
+#[tracing::instrument(skip(arhiv), level = "debug")]
 pub async fn image_handler(
-    state: State<Arc<UIState>>,
+    arhiv: State<Arc<Arhiv>>,
     Path(blob_id): Path<String>,
     Query(params): Query<ImageParams>,
 ) -> Result<impl IntoResponse, ServerError> {
-    let arhiv = state.must_get_arhiv()?;
-
     let blob_id = BLOBId::from_string(blob_id)?;
 
     let baza = arhiv.baza.open()?;

@@ -6,6 +6,7 @@ use std::{
     collections::{HashMap, HashSet},
     fs::remove_file,
     io::Read,
+    sync::RwLock,
 };
 
 use anyhow::{anyhow, ensure, Context, Result};
@@ -46,7 +47,7 @@ pub enum StagingError {
 pub struct BazaManager {
     schema: DataSchema,
     paths: BazaPaths,
-    key: Option<AgeKey>,
+    key: RwLock<Option<AgeKey>>,
 }
 
 impl BazaManager {
@@ -58,7 +59,7 @@ impl BazaManager {
         BazaManager {
             schema,
             paths,
-            key: None,
+            key: RwLock::new(None),
         }
     }
 
@@ -67,7 +68,11 @@ impl BazaManager {
 
         ensure!(self.storage_exists()?, "Storage doesn't exist");
 
-        let key = self.key.as_ref().context("Key is missing")?;
+        let key = self
+            .key
+            .read()
+            .map_err(|err| anyhow!("Failed to acquire read lock for the key: {err}"))?;
+        let key = key.as_ref().context("Key is missing")?;
 
         let lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
 
@@ -121,11 +126,15 @@ impl BazaManager {
         get_file_modification_time(&self.paths.state_file)
     }
 
-    pub fn create(&mut self, password: SecretString) -> Result<()> {
+    pub fn create(&self, password: SecretString) -> Result<()> {
         log::info!("Creating baza in {}", self.paths);
 
         self.paths.ensure_dirs_exist()?;
 
+        ensure!(
+            self.paths.list_storage_db_files()?.is_empty(),
+            "Storage files already exist"
+        );
         ensure!(!self.paths.key_file_exists()?, "Key file already exists");
         ensure!(
             !self.paths.state_file_exists()?,
@@ -143,7 +152,11 @@ impl BazaManager {
         };
         create_empty_storage_file(&self.paths.storage_main_db_file, key.clone(), &info)?;
 
-        self.key = Some(key);
+        let mut key_guard = self
+            .key
+            .write()
+            .map_err(|err| anyhow!("Failed to acquire write lock for the key: {err}"))?;
+        key_guard.replace(key);
 
         log::info!(
             "Created new main storage file {}",
@@ -167,7 +180,7 @@ impl BazaManager {
         Ok(key_file)
     }
 
-    pub fn read_key_file(&mut self, password: SecretString) -> Result<()> {
+    pub fn read_key_file(&self, password: SecretString) -> Result<()> {
         log::debug!("Reading key file {}", self.paths.key_file);
 
         let key_file_key = AgeKey::from_password(password)?;
@@ -176,7 +189,11 @@ impl BazaManager {
 
         let key = AgeKey::from_age_x25519_key(key.try_into()?)?;
 
-        self.key = Some(key);
+        let mut key_guard = self
+            .key
+            .write()
+            .map_err(|err| anyhow!("Failed to acquire write lock for the key: {err}"))?;
+        key_guard.replace(key);
 
         Ok(())
     }
@@ -214,7 +231,12 @@ impl BazaManager {
         }
         log::info!("Using {db_file} db file to create new state file");
 
-        let key = self.key.as_ref().context("Key is missing")?;
+        let key = self
+            .key
+            .read()
+            .map_err(|err| anyhow!("Failed to acquire read lock for the key: {err}"))?;
+        let key = key.as_ref().context("Key is missing")?;
+
         let mut storage = BazaStorage::read_file(db_file, key.clone())?;
 
         let info = storage.get_info()?;
@@ -236,7 +258,7 @@ impl BazaManager {
     pub fn new_for_tests(test_dir: &str) -> Self {
         let schema = DataSchema::new_test_schema();
 
-        let mut manager = BazaManager::new(
+        let manager = BazaManager::new(
             format!("{test_dir}/storage"),
             format!("{test_dir}/state"),
             schema,
@@ -953,7 +975,7 @@ mod tests {
         }
 
         {
-            let mut manager = BazaManager::new(storage_dir, state_dir, schema);
+            let manager = BazaManager::new(storage_dir, state_dir, schema);
 
             assert!(manager.open().is_err(), "Can't open without password");
             assert!(
@@ -984,7 +1006,7 @@ mod tests {
             .unwrap();
 
         {
-            let mut manager = BazaManager::new(storage_dir, state_dir, schema);
+            let manager = BazaManager::new(storage_dir, state_dir, schema);
 
             assert!(
                 manager.read_key_file("test password".into()).is_err(),

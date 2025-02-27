@@ -26,12 +26,12 @@ impl Arhiv {
 
     pub fn create(root_dir: impl Into<String>, auth: Credentials) -> Result<()> {
         let root_dir = root_dir.into();
-        log::debug!("Arhiv root dir: {root_dir}");
+        log::info!("Creating new Arhiv in {root_dir}");
 
         let schema = get_standard_schema();
 
         Baza::create(BazaOptions { root_dir, schema }, auth)?;
-        log::debug!("Created new Arhiv");
+        log::info!("Created new Arhiv");
 
         Ok(())
     }

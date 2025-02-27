@@ -49,7 +49,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                     let asset_id = document_expert.get_cover_asset_id(&item)?;
 
                     let cover = if let Some(ref asset_id) = asset_id {
-                        let asset: Asset = baza.must_get_document(asset_id)?.convert()?;
+                        let asset: Asset = baza.must_get_document(asset_id)?.clone().convert()?;
 
                         Some(asset.data.blob)
                     } else {
@@ -59,10 +59,10 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                     Ok(ListDocumentsResult {
                         title: document_expert.get_title(&item.document_type, &item.data)?,
                         cover,
-                        id: item.id,
-                        document_type: item.document_type.into(),
+                        id: item.id.clone(),
+                        document_type: item.document_type.clone().into(),
                         updated_at: item.updated_at,
-                        data: item.data,
+                        data: item.data.clone(),
                     })
                 })
                 .collect::<Result<_>>()?;
@@ -107,8 +107,8 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
                     Ok(DocumentBackref {
                         title: document_expert.get_title(&item.document_type, &item.data)?,
-                        id: item.id,
-                        document_type: item.document_type.into(),
+                        id: item.id.clone(),
+                        document_type: item.document_type.clone().into(),
                     })
                 })
                 .collect::<Result<_>>()?;
@@ -121,8 +121,8 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
                     Ok(DocumentBackref {
                         title: document_expert.get_title(&item.document_type, &item.data)?,
-                        id: item.id,
-                        document_type: item.document_type.into(),
+                        id: item.id.clone(),
+                        document_type: item.document_type.clone().into(),
                     })
                 })
                 .collect::<Result<_>>()?;
@@ -132,11 +132,11 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             let refs = document_expert.extract_refs(&document.document_type, &document.data)?;
 
             APIResponse::GetDocument {
-                id: document.id,
+                id: document.id.clone(),
                 title,
-                document_type: document.document_type.into(),
+                document_type: document.document_type.clone().into(),
                 updated_at: document.updated_at,
-                data: document.data,
+                data: document.data.clone(),
                 backrefs,
                 collections,
                 refs: refs.get_all_document_refs(),
@@ -175,7 +175,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                     StagingError::Other(error) => return Err(error),
                 }
             } else {
-                baza.update_document_collections(&document.id, &collections)?;
+                baza.update_document_collections(&id, &collections)?;
                 baza.save_changes()?;
 
                 APIResponse::SaveDocument { errors: None }
@@ -188,6 +188,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
         } => {
             let document_type = DocumentType::new(document_type);
             let mut document = Document::new_with_data(document_type, data);
+            let id = document.id.clone();
 
             let mut baza = arhiv.baza.open()?;
 
@@ -205,18 +206,18 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                     StagingError::Other(error) => return Err(error),
                 }
             } else {
-                baza.update_document_collections(&document.id, &collections)?;
+                baza.update_document_collections(&id, &collections)?;
 
                 baza.save_changes()?;
 
                 APIResponse::CreateDocument {
-                    id: Some(document.id.clone()),
+                    id: Some(id.clone()),
                     errors: None,
                 }
             }
         }
         APIRequest::EraseDocument { ref id } => {
-            let baza = arhiv.baza.open()?;
+            let mut baza = arhiv.baza.open()?;
             baza.erase_document(id)?;
             baza.save_changes()?;
 
@@ -264,12 +265,12 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
         }
         APIRequest::LockDocument { id } => {
             let mut baza = arhiv.baza.open()?;
+
             let lock = baza.lock_document(&id, "UI editor lock".to_string())?;
+            let lock_key = lock.get_key().clone();
             baza.save_changes()?;
 
-            APIResponse::LockDocument {
-                lock_key: lock.get_key().clone(),
-            }
+            APIResponse::LockDocument { lock_key }
         }
         APIRequest::UnlockDocument {
             id,

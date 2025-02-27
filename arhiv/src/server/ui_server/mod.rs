@@ -18,7 +18,11 @@ use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use baza::{entities::BLOBId, schema::create_asset, Credentials};
+use baza::{
+    baza2::{Baza, BazaManager},
+    entities::BLOBId,
+    schema::create_asset,
+};
 use rs_utils::{
     create_body_from_file,
     crypto_key::CryptoKey,
@@ -92,8 +96,8 @@ async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, Ser
         use_local_storage: true,
     };
     let features = serde_json::to_string(&features).context("failed to serialize features")?;
-    let min_login_length = Credentials::MIN_LOGIN_LENGTH;
-    let min_password_length = Credentials::MIN_PASSWORD_LENGTH;
+    let min_login_length = BazaManager::MIN_LOGIN_LENGTH;
+    let min_password_length = BazaManager::MIN_PASSWORD_LENGTH;
 
     let content = format!(
         r#"
@@ -272,8 +276,7 @@ async fn respond_with_blob(
     blob_id: &BLOBId,
     range: &Option<headers::Range>,
 ) -> Result<Response, ServerError> {
-    let conn = baza.get_connection()?;
-    let blob = conn.get_blob(blob_id);
+    let blob = baza.get_blob(blob_id);
 
     if !blob.exists()? {
         return Ok(StatusCode::NOT_FOUND.into_response());

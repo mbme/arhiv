@@ -341,7 +341,7 @@ impl BazaState {
         }
 
         for collection_id in collections {
-            if !old_collections_ids.contains(&collection_id) {
+            if !old_collections_ids.contains(collection_id) {
                 let document = self.must_get_document(document_id)?;
                 let mut collection = self.must_get_document(collection_id)?.clone();
 

@@ -262,11 +262,6 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             APIResponse::Commit {}
         }
-        APIRequest::Sync {} => {
-            arhiv.sync().await?;
-
-            APIResponse::Sync {}
-        }
         APIRequest::LockDocument { id } => {
             let mut baza = arhiv.baza.open()?;
             let lock = baza.lock_document(&id, "UI editor lock".to_string())?;

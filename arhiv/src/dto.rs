@@ -52,7 +52,6 @@ pub enum APIRequest {
         remove_file: bool,
     },
     Commit {},
-    Sync {},
     LockDocument {
         id: Id,
     },
@@ -114,7 +113,6 @@ pub enum APIResponse {
         id: Id,
     },
     Commit {},
-    Sync {},
     #[serde(rename_all = "camelCase")]
     LockDocument {
         lock_key: DocumentLockKey,

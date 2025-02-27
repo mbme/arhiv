@@ -8,7 +8,6 @@ import { DropdownMenu } from 'components/DropdownMenu';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { NewDocumentDialog } from './NewDocumentDialog';
 import { CommitButton } from './CommitButton';
-import { SyncButton } from './SyncButton';
 
 export function WorkspaceHeader() {
   const app = useAppController();
@@ -90,7 +89,6 @@ export function WorkspaceHeader() {
         </Button>
 
         <CommitButton />
-        <SyncButton />
 
         {showSearchDialog && (
           <DocumentPicker

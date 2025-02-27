@@ -63,12 +63,6 @@ enum CLICommand {
     /// Update Arhiv credentials
     #[clap(name = "update-credentials")]
     UpdateCredentials,
-    /// One-shot sync without starting a server
-    Sync {
-        /// Number of seconds to wait for peers before sync
-        #[clap(long, default_value = "8")]
-        peer_discovery_timeout: u8,
-    },
     /// Backup Arhiv data
     Backup {
         /// Directory to store backup.
@@ -343,26 +337,6 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             println!("Committed {count} staged documents");
         }
-        CLICommand::Sync {
-            peer_discovery_timeout,
-        } => {
-            let root_dir = find_root_dir()?;
-            let arhiv = Arhiv::open(
-                root_dir,
-                ArhivOptions {
-                    auto_commit: true,
-                    discover_peers: true,
-                    ..Default::default()
-                },
-            )?;
-
-            log::info!(
-                "waiting {peer_discovery_timeout}s until initial MDNS client discovery is complete"
-            );
-            sleep(Duration::from_secs(peer_discovery_timeout.into())).await;
-
-            arhiv.sync().await?;
-        }
         CLICommand::Get { id } => {
             let arhiv = must_open_arhiv();
 
@@ -457,7 +431,6 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 &root_dir,
                 ArhivOptions {
                     auto_commit: true,
-                    discover_peers: true,
                     ..Default::default()
                 },
                 port,

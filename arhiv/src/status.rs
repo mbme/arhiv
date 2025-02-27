@@ -16,7 +16,6 @@ use crate::ServerInfo;
 pub struct Status<'b> {
     pub app_version: String,
     pub instance_id: String,
-    pub login: String,
 
     pub storage_version: u8,
     pub data_version: u8,
@@ -41,7 +40,6 @@ impl<'b> Status<'b> {
         let info = baza.get_info();
 
         let instance_id = baza.get_instance_id().to_string();
-        let login = info.login.clone();
         let db_rev = baza.get_single_latest_revision().clone();
         let storage_version = info.storage_version;
         let data_version = info.data_version;
@@ -54,7 +52,6 @@ impl<'b> Status<'b> {
 
         Ok(Status {
             instance_id,
-            login,
             app_version: get_crate_version().to_string(),
             storage_version,
             data_version,
@@ -85,7 +82,6 @@ impl<'b> fmt::Display for Status<'b> {
 
         writeln!(f, "             Root dir: {}", self.root_dir)?;
         writeln!(f, "          Instance id: {}", self.instance_id)?;
-        writeln!(f, "                Login: {}", self.login)?;
 
         writeln!(f)?;
 

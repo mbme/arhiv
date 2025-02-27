@@ -50,7 +50,6 @@ pub struct BazaManager {
 }
 
 impl BazaManager {
-    pub const MIN_LOGIN_LENGTH: usize = 2;
     pub const MIN_PASSWORD_LENGTH: usize = AgeKey::MIN_PASSWORD_LEN;
 
     pub fn new(storage_dir: String, state_dir: String, schema: DataSchema) -> Self {
@@ -122,14 +121,8 @@ impl BazaManager {
         get_file_modification_time(&self.paths.state_file)
     }
 
-    pub fn create(&mut self, login: String, password: SecretString) -> Result<()> {
-        log::info!("Creating {login} baza in {}", self.paths);
-
-        ensure!(
-            login.len() >= Self::MIN_LOGIN_LENGTH,
-            "Login should be at least {} characters long",
-            Self::MIN_LOGIN_LENGTH
-        );
+    pub fn create(&mut self, password: SecretString) -> Result<()> {
+        log::info!("Creating baza in {}", self.paths);
 
         self.paths.ensure_dirs_exist()?;
 
@@ -145,7 +138,6 @@ impl BazaManager {
         let key = self.generate_key_file(key_file_key)?;
 
         let info = BazaInfo {
-            login: login.clone(),
             data_version: self.schema.get_latest_data_version(),
             storage_version: STORAGE_VERSION,
         };
@@ -154,7 +146,7 @@ impl BazaManager {
         self.key = Some(key);
 
         log::info!(
-            "Created new {login} main storage file {}",
+            "Created new main storage file {}",
             self.paths.storage_main_db_file
         );
 
@@ -251,7 +243,7 @@ impl BazaManager {
         );
 
         manager
-            .create("test login".to_string(), "test password".into())
+            .create("test password".into())
             .expect("must create test baza");
 
         manager

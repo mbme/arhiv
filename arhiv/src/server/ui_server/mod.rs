@@ -21,7 +21,7 @@ use serde_json::Value;
 use baza::{
     baza2::{Baza, BazaManager},
     entities::BLOBId,
-    schema::create_asset,
+    schema::{create_asset, get_asset_by_blob_id},
 };
 use rs_utils::{
     create_body_from_file,
@@ -60,7 +60,6 @@ pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<UIState>> {
 
 #[derive(Deserialize)]
 struct CreateArhivRequest {
-    login: String,
     password: SecretString,
 }
 
@@ -74,9 +73,7 @@ async fn create_arhiv_handler(
 
     log::info!("Creating new arhiv");
 
-    let auth = Credentials::new(create_arhiv_request.login, create_arhiv_request.password)?;
-
-    state.create_arhiv(auth)?;
+    state.create_arhiv(create_arhiv_request.password)?;
 
     Ok(())
 }
@@ -96,7 +93,6 @@ async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, Ser
         use_local_storage: true,
     };
     let features = serde_json::to_string(&features).context("failed to serialize features")?;
-    let min_login_length = BazaManager::MIN_LOGIN_LENGTH;
     let min_password_length = BazaManager::MIN_PASSWORD_LENGTH;
 
     let content = format!(
@@ -119,7 +115,6 @@ async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, Ser
                         window.BASE_PATH = "{UI_BASE_PATH}";
                         window.SCHEMA = {schema};
                         window.FEATURES = {features};
-                        window.MIN_LOGIN_LENGTH = {min_login_length};
                         window.MIN_PASSWORD_LENGTH = {min_password_length};
                         window.CREATE_ARHIV = {create_arhiv};
                     </script>
@@ -276,19 +271,19 @@ async fn respond_with_blob(
     blob_id: &BLOBId,
     range: &Option<headers::Range>,
 ) -> Result<Response, ServerError> {
-    let blob = baza.get_blob(blob_id);
-
-    if !blob.exists()? {
+    if !baza.blob_exists(blob_id)? {
         return Ok(StatusCode::NOT_FOUND.into_response());
     }
 
-    let size = blob.get_size()?;
+    let blob = baza.get_blob(blob_id);
+    let asset = get_asset_by_blob_id(baza, blob_id).context("Can't find asset by blob id")?;
+    let size = asset.data.size;
 
     let mut headers = HeaderMap::new();
     add_max_cache_header(&mut headers);
     headers.typed_insert(headers::ContentLength(size));
     headers.typed_insert(headers::AcceptRanges::bytes());
-    headers.typed_insert(headers::ContentType::from_str(&blob.get_media_type()?)?);
+    headers.typed_insert(headers::ContentType::from_str(&asset.data.media_type)?);
 
     let ranges = range
         .as_ref()

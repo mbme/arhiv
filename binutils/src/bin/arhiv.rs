@@ -14,7 +14,7 @@ use arhiv::{
 };
 use baza::{
     entities::{Document, DocumentData, DocumentLockKey, DocumentType, Id},
-    Credentials, KvsEntry, KvsKey, DEV_MODE,
+    KvsEntry, KvsKey, DEV_MODE,
 };
 use rs_utils::{get_crate_version, into_absolute_path, log, shutdown_signal, SecretString};
 
@@ -505,16 +505,6 @@ fn prompt_password(min_length: usize) -> Result<SecretString> {
         .context("Failed to prompt password")
 }
 
-fn prompt_login() -> Result<String> {
-    Input::<String>::with_theme(&ColorfulTheme::default())
-        .with_prompt("Login:")
-        .interact()
-        .context("Failed to prompt login")
-}
-
-fn prompt_credentials() -> Result<Credentials> {
-    let login = prompt_login()?;
-    let password = prompt_password(Credentials::MIN_PASSWORD_LENGTH)?;
-
-    Credentials::new(login, password)
+fn prompt_credentials() -> Result<SecretString> {
+    prompt_password(Credentials::MIN_PASSWORD_LENGTH)
 }

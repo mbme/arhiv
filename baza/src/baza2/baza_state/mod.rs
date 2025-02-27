@@ -15,6 +15,7 @@ use crate::{
     baza2::BazaInfo,
     entities::{Document, DocumentLockKey, Id, InstanceId, LatestRevComputer, Revision},
     schema::DataSchema,
+    DocumentExpert,
 };
 
 mod document_head;
@@ -171,6 +172,12 @@ impl BazaState {
         self.file.documents.get(id)
     }
 
+    pub fn must_get_document(&self, id: &Id) -> Result<&Document> {
+        let head = self.get_document(id).context("Can't find document")?;
+
+        Ok(head.get_single_document())
+    }
+
     pub fn stage_document(
         &mut self,
         mut document: Document,
@@ -310,6 +317,50 @@ impl BazaState {
         }
 
         self.modified = true;
+
+        Ok(())
+    }
+
+    pub fn update_document_collections(
+        &mut self,
+        document_id: &Id,
+        collections: &Vec<Id>,
+    ) -> Result<()> {
+        let old_collections_ids = self.find_document_collections(document_id);
+
+        for collection_id in &old_collections_ids {
+            if !collections.contains(collection_id) {
+                let document = self.must_get_document(document_id)?;
+                let mut old_collection = self.must_get_document(collection_id)?.clone();
+
+                let document_expert = DocumentExpert::new(&self.schema);
+                document_expert.remove_document_from_collection(document, &mut old_collection)?;
+
+                self.stage_document(old_collection, &None)?;
+            }
+        }
+
+        for collection_id in collections {
+            if !old_collections_ids.contains(&collection_id) {
+                let document = self.must_get_document(document_id)?;
+                let mut collection = self.must_get_document(collection_id)?.clone();
+
+                let document_expert = DocumentExpert::new(&self.schema);
+                document_expert.add_document_to_collection(document, &mut collection)?;
+
+                self.stage_document(collection, &None)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn erase_document(&mut self, id: &Id) -> Result<()> {
+        let mut document = self.must_get_document(id)?.clone();
+
+        document.erase();
+
+        self.stage_document(document, &None)?;
 
         Ok(())
     }

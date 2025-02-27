@@ -320,6 +320,10 @@ impl Baza {
         self.state.has_document_locks()
     }
 
+    pub fn is_document_locked(&self, id: &Id) -> bool {
+        self.state.is_document_locked(id)
+    }
+
     pub fn lock_document(&mut self, id: &Id, reason: impl Into<String>) -> Result<&DocumentLock> {
         let reason = reason.into();
         log::debug!("Locking document {id}: {reason}");
@@ -343,9 +347,7 @@ impl Baza {
     }
 
     pub fn must_get_document(&self, id: &Id) -> Result<&Document> {
-        let head = self.get_document(id).context("Can't find document")?;
-
-        Ok(head.get_single_document())
+        self.state.must_get_document(id)
     }
 
     pub fn stage_document(
@@ -360,6 +362,12 @@ impl Baza {
         let document = self.state.stage_document(document, lock_key)?;
 
         Ok(document)
+    }
+
+    pub fn erase_document(&mut self, id: &Id) -> Result<()> {
+        log::debug!("Erasing document {id}");
+
+        self.state.erase_document(id)
     }
 
     pub fn has_staged_documents(&self) -> bool {
@@ -377,6 +385,25 @@ impl Baza {
 
     pub fn list_documents(&self, filter: &Filter) -> Result<ListPage> {
         self.state.list_documents(filter)
+    }
+
+    pub fn find_document_backrefs(&self, id: &Id) -> HashSet<Id> {
+        self.state.find_document_backrefs(id)
+    }
+
+    pub fn find_document_collections(&self, id: &Id) -> HashSet<Id> {
+        self.state.find_document_collections(id)
+    }
+
+    pub fn update_document_collections(
+        &mut self,
+        document_id: &Id,
+        collections: &Vec<Id>,
+    ) -> Result<()> {
+        log::debug!("Updating collections of document {document_id}");
+
+        self.state
+            .update_document_collections(document_id, collections)
     }
 
     fn open_storage<'s>(&self, file_path: &str) -> Result<BazaFileStorage<'s>> {

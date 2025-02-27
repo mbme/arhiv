@@ -100,9 +100,11 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             let document_expert = arhiv.baza.get_document_expert();
 
             let backrefs = baza
-                .list_document_backrefs(id)?
+                .find_document_backrefs(id)
                 .into_iter()
-                .map(|item| {
+                .map(|id| {
+                    let item = baza.must_get_document(&id)?;
+
                     Ok(DocumentBackref {
                         title: document_expert.get_title(&item.document_type, &item.data)?,
                         id: item.id,
@@ -112,9 +114,11 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .collect::<Result<_>>()?;
 
             let collections = baza
-                .list_document_collections(id)?
+                .find_document_collections(id)
                 .into_iter()
-                .map(|item| {
+                .map(|id| {
+                    let item = baza.must_get_document(&id)?;
+
                     Ok(DocumentBackref {
                         title: document_expert.get_title(&item.document_type, &item.data)?,
                         id: item.id,
@@ -154,7 +158,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
         } => {
             let mut baza = arhiv.baza.open()?;
 
-            let mut document = baza.must_get_document(&id)?;
+            let mut document = baza.must_get_document(&id)?.clone();
 
             document.data = data;
 
@@ -163,7 +167,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .prepare_assets(&mut document, &mut baza)
                 .await?;
 
-            if let Err(err) = baza.stage_document(&mut document, Some(lock_key)) {
+            if let Err(err) = baza.stage_document(document, &Some(lock_key)) {
                 match err {
                     StagingError::Validation(validation_error) => APIResponse::SaveDocument {
                         errors: Some(validation_error.into()),
@@ -171,8 +175,8 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                     StagingError::Other(error) => return Err(error),
                 }
             } else {
-                baza.update_document_collections(&document, &collections)?;
-                baza.commit()?;
+                baza.update_document_collections(&document.id, &collections)?;
+                baza.save_changes()?;
 
                 APIResponse::SaveDocument { errors: None }
             }
@@ -192,7 +196,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .prepare_assets(&mut document, &mut baza)
                 .await?;
 
-            if let Err(err) = baza.stage_document(&mut document, None) {
+            if let Err(err) = baza.stage_document(document, &None) {
                 match err {
                     StagingError::Validation(validation_error) => APIResponse::CreateDocument {
                         id: None,
@@ -201,9 +205,9 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                     StagingError::Other(error) => return Err(error),
                 }
             } else {
-                baza.update_document_collections(&document, &collections)?;
+                baza.update_document_collections(&document.id, &collections)?;
 
-                baza.commit()?;
+                baza.save_changes()?;
 
                 APIResponse::CreateDocument {
                     id: Some(document.id.clone()),
@@ -296,19 +300,19 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             new_pos,
         } => {
             let mut baza = arhiv.baza.open()?;
-            if baza.is_document_locked(&collection_id)? {
+            if baza.is_document_locked(&collection_id) {
                 bail!("Collection {collection_id} is locked")
             }
 
-            let mut collection = baza.must_get_document(&collection_id)?;
+            let mut collection = baza.must_get_document(&collection_id)?.clone();
             let document = baza.must_get_document(&id)?;
             let document_expert = arhiv.baza.get_document_expert();
 
             document_expert.reorder_refs(&mut collection, &document, new_pos)?;
 
-            baza.stage_document(&mut collection, None)?;
+            baza.stage_document(collection, &None)?;
 
-            baza.commit()?;
+            baza.save_changes()?;
 
             APIResponse::ReorderCollectionRefs {}
         }

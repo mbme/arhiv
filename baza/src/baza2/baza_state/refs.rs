@@ -71,6 +71,46 @@ impl BazaState {
 
         blob_refs
     }
+
+    pub fn find_document_backrefs(&self, id: &Id) -> HashSet<Id> {
+        let mut backrefs = HashSet::new();
+
+        let keys = self
+            .iter_documents()
+            .map(|head| head.get_single_document().create_key());
+
+        for key in keys {
+            let refs = self
+                .get_document_snapshot_refs(&key)
+                .expect("Document refs must be known");
+
+            if refs.documents.contains(id) {
+                backrefs.insert(key.id.clone());
+            }
+        }
+
+        backrefs
+    }
+
+    pub fn find_document_collections(&self, id: &Id) -> HashSet<Id> {
+        let mut collections = HashSet::new();
+
+        let keys = self
+            .iter_documents()
+            .map(|head| head.get_single_document().create_key());
+
+        for key in keys {
+            let refs = self
+                .get_document_snapshot_refs(&key)
+                .expect("Document refs must be known");
+
+            if refs.collection.contains(id) {
+                collections.insert(key.id);
+            }
+        }
+
+        collections
+    }
 }
 
 #[cfg(test)]

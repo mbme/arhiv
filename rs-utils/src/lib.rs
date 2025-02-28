@@ -3,8 +3,7 @@ use std::io::Write;
 use std::process;
 use std::process::{Command, Stdio};
 
-use anyhow::{anyhow, bail, Context, Result};
-use gethostname::gethostname;
+use anyhow::{bail, Context, Result};
 use tokio::signal;
 
 pub use bytes::*;
@@ -39,7 +38,6 @@ mod iter;
 mod json;
 mod lock_file;
 pub mod log;
-pub mod mdns;
 mod streams;
 mod string;
 mod time;
@@ -126,15 +124,6 @@ pub fn run_npm<'a>(commands: impl AsRef<[&'a str]>) {
 
 pub fn get_crate_version() -> &'static str {
     option_env!("TYPED_V_VERSION").unwrap_or("dev-build")
-}
-
-pub fn get_hostname() -> Result<String> {
-    gethostname().into_string().map_err(|err| {
-        anyhow!(
-            "failed to convert hostname into string: {}",
-            err.to_string_lossy()
-        )
-    })
 }
 
 pub async fn shutdown_signal() {

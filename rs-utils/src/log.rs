@@ -7,8 +7,7 @@ use tracing_subscriber::{
 
 pub use log::{debug, error, info, trace, warn, Level};
 
-const DEFAULT_LOG_LEVELS: &str =
-    "hyper=info,h2=info,rustls=info,mdns_sd=info,axum::rejection=trace";
+const DEFAULT_LOG_LEVELS: &str = "hyper=info,h2=info,rustls=info,axum::rejection=trace";
 
 #[cfg(target_os = "android")]
 pub fn setup_android_logger(package: &str) {

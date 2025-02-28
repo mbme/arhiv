@@ -2,7 +2,7 @@
 
 home := env("HOME")
 root := home + "/temp/arhiv"
-debug_log_level := "debug,h2=info,rustls=info,mdns_sd=info,rs_utils=info,hyper=info,axum::rejection=trace"
+debug_log_level := "debug,h2=info,rustls=info,rs_utils=info,hyper=info,axum::rejection=trace"
 
 alias c := check
 
@@ -28,9 +28,6 @@ desktop *ARGS:
   ARHIV_BIN="{{justfile_directory()}}/target/debug/arhiv" \
   ELECTRON_OZONE_PLATFORM_HINT=wayland \
   npm run start --workspace arhiv-desktop -- {{ARGS}}
-
-mdns-tester:
-  cargo run --bin mdns-tester
 
 bump-version:
   ./bump-version.sh

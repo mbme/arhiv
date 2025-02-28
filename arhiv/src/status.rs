@@ -68,7 +68,7 @@ impl<'b> Status<'b> {
     }
 }
 
-impl<'b> fmt::Display for Status<'b> {
+impl fmt::Display for Status<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.dev_mode {
             writeln!(f)?;

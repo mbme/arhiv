@@ -62,6 +62,7 @@ gethostname = "1" # for MDNS discovery
 rayon = "1.8.0"
 fslock = "0.2"
 flate2 = "1" # for compressed container
+async-stream = "0.3" # macro for creating async streams
 
 [target.'cfg(android)'.dependencies]
 tracing-android = "0.2"

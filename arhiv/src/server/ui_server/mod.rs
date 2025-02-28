@@ -1,4 +1,4 @@
-use std::{ops::Bound, str::FromStr, sync::Arc};
+use std::{io::Seek, ops::Bound, str::FromStr, sync::Arc};
 
 use anyhow::{anyhow, Context};
 use axum::{
@@ -24,7 +24,7 @@ use baza::{
     schema::{create_asset, get_asset_by_blob_id},
 };
 use rs_utils::{
-    create_body_from_file,
+    create_body_from_reader,
     crypto_key::CryptoKey,
     http_server::{add_max_cache_header, add_no_cache_headers, ServerError},
     log, stream_to_file, AuthToken, SecretString, TempFile,
@@ -272,7 +272,8 @@ async fn respond_with_blob(
     let asset = get_asset_by_blob_id(&baza, blob_id).context("Can't find asset by blob id")?;
     let size = asset.data.size;
 
-    let blob = baza.get_blob(blob_id)?;
+    let mut blob = baza.get_blob(blob_id)?;
+    drop(baza); // release baza lock ASAP
 
     let mut headers = HeaderMap::new();
     add_max_cache_header(&mut headers);
@@ -311,8 +312,10 @@ async fn respond_with_blob(
             return Ok(StatusCode::RANGE_NOT_SATISFIABLE.into_response());
         }
 
+        blob.seek(std::io::SeekFrom::Start(start_pos))?;
+
         let range_size = end_pos + 1 - start_pos;
-        let body = create_body_from_file(&blob.file_path, start_pos, Some(range_size)).await?;
+        let body = create_body_from_reader(blob, Some(range_size)).await?;
 
         let content_range = headers::ContentRange::bytes(start_pos..end_pos, size)?;
 
@@ -320,7 +323,7 @@ async fn respond_with_blob(
 
         Ok((StatusCode::PARTIAL_CONTENT, headers, body).into_response())
     } else {
-        let body = create_body_from_file(&blob.file_path, 0, None).await?;
+        let body = create_body_from_reader(blob, None).await?;
 
         Ok((StatusCode::OK, headers, body).into_response())
     }

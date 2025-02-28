@@ -46,7 +46,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .items
                 .into_iter()
                 .map(|item| {
-                    let asset_id = document_expert.get_cover_asset_id(&item)?;
+                    let asset_id = document_expert.get_cover_asset_id(item)?;
 
                     let cover = if let Some(ref asset_id) = asset_id {
                         let asset: Asset = baza.must_get_document(asset_id)?.clone().convert()?;
@@ -304,7 +304,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             let document = baza.must_get_document(&id)?;
             let document_expert = arhiv.baza.get_document_expert();
 
-            document_expert.reorder_refs(&mut collection, &document, new_pos)?;
+            document_expert.reorder_refs(&mut collection, document, new_pos)?;
 
             baza.stage_document(collection, &None)?;
 

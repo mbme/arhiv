@@ -44,7 +44,7 @@ impl ArhivServer {
         lock.acquire()?;
         lock.write_server_port(server_port)?;
 
-        let arhiv = Arc::new(Arhiv::new(options.clone()));
+        let arhiv = Arc::new(Arhiv::new(options)?);
 
         let certificate = read_or_generate_certificate(&state_dir)?;
 

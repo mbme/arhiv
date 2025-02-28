@@ -1,10 +1,11 @@
-use std::sync::LazyLock;
+use std::{io::Read, sync::LazyLock};
 
 use anyhow::{bail, ensure, Context, Result};
 use axum::{
     body::Body,
     response::{IntoResponse, Response},
 };
+use futures::StreamExt;
 use regex::Regex;
 use tokio::{
     fs as tokio_fs,
@@ -12,6 +13,8 @@ use tokio::{
 };
 use tokio_util::codec::{BytesCodec, FramedRead};
 use url::Url;
+
+use crate::reader_to_stream;
 
 #[must_use]
 pub fn extract_file_name_from_url(url: &Url) -> String {
@@ -191,6 +194,23 @@ pub async fn create_body_from_file(
     } else {
         let stream = FramedRead::new(file, BytesCodec::new());
         Body::from_stream(stream).into_response()
+    };
+
+    Ok(body)
+}
+
+pub async fn create_body_from_reader<R: Read + Send + 'static>(
+    reader: R,
+    limit: Option<u64>,
+) -> Result<Body> {
+    let s = reader_to_stream(reader, 1024 * 1024);
+
+    let body = if let Some(limit) = limit {
+        let s = s.take(limit as usize);
+
+        Body::from_stream(s)
+    } else {
+        Body::from_stream(s)
     };
 
     Ok(body)

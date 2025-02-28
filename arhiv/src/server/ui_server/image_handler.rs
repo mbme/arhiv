@@ -35,6 +35,7 @@ pub async fn image_handler(
     let blob_reader = baza.get_blob(&blob_id)?;
     let buf_reader = BufReader::new(blob_reader);
     let asset = get_asset_by_blob_id(&baza, &blob_id).context("Failed to find asset by blob id")?;
+    drop(baza); // release baza lock ASAP
 
     let original_size = asset.data.size;
 

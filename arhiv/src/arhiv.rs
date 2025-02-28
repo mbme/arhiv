@@ -22,19 +22,24 @@ pub struct Arhiv {
 }
 
 impl Arhiv {
-    pub fn new(options: ArhivOptions) -> Self {
+    pub fn new(options: ArhivOptions) -> Result<Self> {
         let schema = get_standard_schema();
 
         let baza_manager = BazaManager::new(options.storage_dir, options.state_dir, schema);
 
-        Arhiv {
+        let mut arhiv = Arhiv {
             baza: Arc::new(baza_manager),
             auto_commit_task: None,
             file_browser_root_dir: options
                 .file_browser_root_dir
                 .or_else(get_home_dir)
                 .unwrap_or_else(|| "/".to_string()),
+        };
+        if options.auto_commit {
+            arhiv.init_auto_commit_service()?;
         }
+
+        Ok(arhiv)
     }
 
     fn init_auto_commit_service(&mut self) -> Result<()> {

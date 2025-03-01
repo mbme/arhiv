@@ -28,7 +28,7 @@ mod ui_server;
 pub const HEALTH_PATH: &str = "/health";
 
 pub struct ArhivServer {
-    arhiv: Arc<Arhiv>,
+    pub arhiv: Arc<Arhiv>,
     server: HttpServer,
     _lock: ArhivServerLock,
 }
@@ -44,7 +44,10 @@ impl ArhivServer {
         lock.acquire()?;
         lock.write_server_port(server_port)?;
 
-        let arhiv = Arc::new(Arhiv::new(options)?);
+        let mut arhiv = Arhiv::new(options);
+        arhiv.init_auto_commit_service();
+
+        let arhiv = Arc::new(arhiv);
 
         let certificate = read_or_generate_certificate(&state_dir)?;
 

@@ -278,6 +278,19 @@ impl BazaManager {
     pub fn get_document_expert(&self) -> DocumentExpert {
         DocumentExpert::new(&self.schema)
     }
+
+    pub fn get_state_dir(&self) -> &str {
+        &self.paths.state_dir
+    }
+
+    pub fn is_unlocked(&self) -> bool {
+        let key = self
+            .key
+            .read()
+            .expect("Failed to acquire read lock for the key");
+
+        key.is_some()
+    }
 }
 
 pub struct Baza {

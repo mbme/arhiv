@@ -172,13 +172,25 @@ pub fn get_config_home() -> Option<String> {
             .into();
     }
 
-    if let Some(path) = env::var_os("HOME") {
-        return format!(
-            "{}/.config",
-            path.into_string()
-                .expect("HOME env var must be a valid string")
-        )
-        .into();
+    if let Some(home_dir) = get_home_dir() {
+        return format!("{home_dir}/.config").into();
+    }
+
+    None
+}
+
+/// `$XDG_DATA_HOME` or `$HOME/.local/share`
+#[must_use]
+pub fn get_data_home() -> Option<String> {
+    if let Some(path) = env::var_os("XDG_DATA_HOME") {
+        return path
+            .into_string()
+            .expect("XDG_DATA_HOME env var must be a valid string")
+            .into();
+    }
+
+    if let Some(home_dir) = get_home_dir() {
+        return format!("{home_dir}/.local/share").into();
     }
 
     None

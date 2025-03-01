@@ -1,18 +1,55 @@
 use std::sync::Arc;
 
-use anyhow::{ensure, Result};
+use anyhow::Result;
 
-use baza::{baza2::BazaManager, AutoCommitService, AutoCommitTask};
-use rs_utils::{get_home_dir, log};
+use baza::{baza2::BazaManager, AutoCommitService, AutoCommitTask, DEV_MODE};
+use rs_utils::{get_data_home, get_home_dir, into_absolute_path, log};
 
-use crate::{definitions::get_standard_schema, Status};
+use crate::{definitions::get_standard_schema, ServerInfo, Status};
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct ArhivOptions {
-    pub auto_commit: bool,
-    pub file_browser_root_dir: Option<String>,
     pub storage_dir: String,
     pub state_dir: String,
+    pub file_browser_root_dir: String,
+}
+
+impl ArhivOptions {
+    pub fn new_desktop() -> Self {
+        let home_dir = get_home_dir();
+        let data_dir = get_data_home();
+
+        let file_browser_root_dir = home_dir.clone().unwrap_or("/".to_string());
+
+        if DEV_MODE {
+            let dev_root =
+                std::env::var("DEV_ARHIV_ROOT").expect("env variable DEV_ARHIV_ROOT is missing");
+
+            let dev_root = into_absolute_path(dev_root, false)
+                .expect("can't turn DEV_ARHIV_ROOT into absolute path");
+
+            return ArhivOptions {
+                storage_dir: format!("{dev_root}/storage"),
+                state_dir: format!("{dev_root}/state"),
+                file_browser_root_dir,
+            };
+        }
+
+        let storage_dir = home_dir
+            .as_ref()
+            .map_or("/arhiv-storage".to_string(), |home_dir| {
+                format!("{home_dir}/arhiv")
+            });
+        let state_dir = data_dir.map_or("/arhiv-state".to_string(), |data_dir| {
+            format!("{data_dir}/arhiv-state")
+        });
+
+        ArhivOptions {
+            storage_dir,
+            state_dir,
+            file_browser_root_dir,
+        }
+    }
 }
 
 pub struct Arhiv {
@@ -22,39 +59,36 @@ pub struct Arhiv {
 }
 
 impl Arhiv {
-    pub fn new(options: ArhivOptions) -> Result<Self> {
+    pub fn new(options: ArhivOptions) -> Self {
         let schema = get_standard_schema();
 
         let baza_manager = BazaManager::new(options.storage_dir, options.state_dir, schema);
 
-        let mut arhiv = Arhiv {
+        Arhiv {
             baza: Arc::new(baza_manager),
             auto_commit_task: None,
-            file_browser_root_dir: options
-                .file_browser_root_dir
-                .or_else(get_home_dir)
-                .unwrap_or_else(|| "/".to_string()),
-        };
-        if options.auto_commit {
-            arhiv.init_auto_commit_service()?;
+            file_browser_root_dir: options.file_browser_root_dir,
         }
-
-        Ok(arhiv)
     }
 
-    fn init_auto_commit_service(&mut self) -> Result<()> {
+    pub fn new_desktop() -> Self {
+        Arhiv::new(ArhivOptions::new_desktop())
+    }
+
+    pub fn init_auto_commit_service(&mut self) {
         let auto_commit_delay = AutoCommitService::DEFAULT_AUTO_COMMIT_DELAY;
-        ensure!(
-            !auto_commit_delay.is_zero(),
-            "Config auto-commit delay must not be zero"
-        );
+        if auto_commit_delay.is_zero() {
+            panic!("Config auto-commit delay must not be zero");
+        }
 
         let service = AutoCommitService::new(self.baza.clone(), auto_commit_delay);
-        let task = service.start()?;
+        let task = service.start();
 
         self.auto_commit_task = Some(task);
+    }
 
-        Ok(())
+    pub fn collect_server_info(&self) -> Result<Option<ServerInfo>> {
+        ServerInfo::collect(self.baza.get_state_dir())
     }
 
     pub fn get_status(&self) -> Result<String> {

@@ -42,7 +42,7 @@ impl AutoCommitService {
         }
     }
 
-    pub fn start(mut self) -> Result<AutoCommitTask> {
+    pub fn start(mut self) -> AutoCommitTask {
         let auto_commit_timeout = self.auto_commit_timeout;
 
         let task = tokio::spawn(async move {
@@ -65,12 +65,17 @@ impl AutoCommitService {
             auto_commit_timeout.as_secs()
         );
 
-        Ok(task)
+        task
     }
 
     fn try_auto_commit(&mut self) -> Result<()> {
         if !self.baza_manager.storage_exists()? {
             log::trace!("Auto-commit: storage doesn't exist");
+            return Ok(());
+        }
+
+        if !self.baza_manager.is_unlocked() {
+            log::trace!("Auto-commit: storage is locked");
             return Ok(());
         }
 

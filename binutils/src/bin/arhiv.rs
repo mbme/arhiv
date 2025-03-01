@@ -1,20 +1,17 @@
-use std::{env, process, time::Duration};
+use std::process;
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use clap::{
     builder::PossibleValuesParser, ArgAction, CommandFactory, Parser, Subcommand, ValueHint,
 };
 use clap_complete::{generate, Shell};
-use dialoguer::{theme::ColorfulTheme, Input, Password};
-use serde_json::Value;
-use tokio::time::sleep;
+use dialoguer::{theme::ColorfulTheme, Password};
 
-use arhiv::{
-    definitions::get_standard_schema, Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer, ServerInfo,
-};
+use arhiv::{definitions::get_standard_schema, Arhiv, ArhivOptions, ArhivServer, ServerInfo};
 use baza::{
+    baza2::BazaManager,
     entities::{Document, DocumentData, DocumentLockKey, DocumentType, Id},
-    KvsEntry, KvsKey, DEV_MODE,
+    DEV_MODE,
 };
 use rs_utils::{get_crate_version, into_absolute_path, log, shutdown_signal, SecretString};
 
@@ -32,52 +29,17 @@ struct CLIArgs {
 }
 
 #[derive(Subcommand, Debug)]
-enum KVSCommand {
-    /// List all entries
-    List {
-        /// Optional namespace of the entries
-        namespace: Option<String>,
-    },
-    /// Get entry
-    Get {
-        /// Namespace of the entry
-        namespace: String,
-        /// Key of the entry
-        key: String,
-    },
-    /// Set entry
-    Set {
-        /// Namespace of the entry
-        namespace: String,
-        /// Key of the entry
-        key: String,
-        /// Value of the entry, serialized as JSON. If not provided, the entry will be removed.
-        value: Option<String>,
-    },
-}
-
-#[derive(Subcommand, Debug)]
 enum CLICommand {
     /// Initialize Arhiv instance on local machine
     Init,
-    /// Update Arhiv credentials
-    #[clap(name = "update-credentials")]
-    UpdateCredentials,
+    /// Change Arhiv password
+    #[clap(name = "change-password")]
+    ChangePassword,
     /// Backup Arhiv data
     Backup {
         /// Directory to store backup.
         #[arg(value_hint = ValueHint::DirPath)]
         backup_dir: String,
-    },
-    /// Open UI for a document
-    #[clap(name = "ui-open")]
-    UIOpen {
-        /// Document id to open
-        #[arg()]
-        id: Option<Id>,
-        /// Open using provided browser or fall back to $BROWSER env variable
-        #[clap(long, env = "BROWSER")]
-        browser: String,
     },
     /// Run server
     Server {
@@ -90,19 +52,6 @@ enum CLICommand {
     ServerInfo,
     /// Print current status
     Status,
-    /// Print or update config
-    Config {
-        /// Auto-commit delay in seconds
-        #[arg(long)]
-        auto_commit_delay: Option<u64>,
-
-        /// Auto-sync delay in seconds
-        #[arg(long)]
-        auto_sync_delay: Option<u64>,
-    },
-    /// Operations with KVS entries
-    #[clap(subcommand)]
-    Kvs(KVSCommand),
     /// List document locks
     Locks,
     /// Lock document
@@ -177,128 +126,60 @@ async fn main() {
     handle_command(args.command).await.expect("command failed");
 }
 
-fn find_root_dir() -> Result<String> {
-    let dir = if DEV_MODE {
-        env::var("DEV_ARHIV_ROOT").context("env variable DEV_ARHIV_ROOT is missing")?
-    } else {
-        env::var("ARHIV_ROOT").context("env variable ARHIV_ROOT is missing")?
-    };
+fn unlock_arhiv(arhiv: &Arhiv) {
+    println!("Please enter password");
+    let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)
+        .expect("failed to prompt arhiv password");
 
-    into_absolute_path(dir, false)
-}
-
-fn must_open_arhiv() -> Arhiv {
-    let root_dir = find_root_dir().expect("must find root dir");
-
-    Arhiv::open(root_dir, ArhivOptions::default()).expect("must be able to open arhiv")
+    arhiv
+        .baza
+        .read_key_file(password)
+        .expect("Failed to unlock arhiv")
 }
 
 async fn handle_command(command: CLICommand) -> Result<()> {
     match command {
         CLICommand::Init => {
-            let root_dir = find_root_dir()?;
+            let arhiv = Arhiv::new_desktop();
 
-            let auth = prompt_credentials()?;
+            if arhiv.baza.storage_exists()? {
+                bail!("Can't init: arhiv storage already exists");
+            }
 
-            Arhiv::create(root_dir, auth).context("must be able to create arhiv")?;
+            let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, true)?;
+
+            arhiv.baza.create(password)?;
+
+            println!("Done")
         }
-        CLICommand::UpdateCredentials => {
-            let arhiv = must_open_arhiv();
+        CLICommand::ChangePassword => {
+            let arhiv = Arhiv::new_desktop();
 
-            println!("Please enter new credentials");
-            let auth = prompt_credentials()?;
+            println!("Enter password");
+            let old_password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)?;
 
-            arhiv.baza.update_credentials(auth)?;
+            println!("Enter new password");
+            let new_password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, true)?;
 
-            println!("Credentials updated");
+            arhiv
+                .baza
+                .change_key_file_password(old_password, new_password)?;
+
+            println!("Password changed");
         }
         CLICommand::Status => {
-            let arhiv = must_open_arhiv();
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
             let status = arhiv.get_status()?;
 
             println!("{status}");
-            // FIXME print number of unused temp assets
-        }
-        CLICommand::Config {
-            auto_commit_delay,
-            auto_sync_delay,
-        } => {
-            let arhiv = must_open_arhiv();
-
-            let tx = arhiv.baza.get_tx()?;
-
-            if let Some(auto_commit_delay) = auto_commit_delay {
-                tx.set_auto_commit_delay(auto_commit_delay)?;
-            }
-
-            if let Some(auto_sync_delay) = auto_sync_delay {
-                tx.set_auto_sync_delay(auto_sync_delay)?;
-            }
-
-            println!(
-                "  Auto-sync delay: {} seconds",
-                tx.get_auto_sync_delay()?.as_secs()
-            );
-            println!(
-                "Auto-commit delay: {} seconds",
-                tx.get_auto_commit_delay()?.as_secs()
-            );
-
-            tx.commit()?;
-        }
-        CLICommand::Kvs(command) => {
-            let arhiv = must_open_arhiv();
-
-            match command {
-                KVSCommand::List { namespace } => {
-                    let conn = arhiv.baza.get_connection()?;
-
-                    let kvs_entries = conn.kvs_list(namespace.as_deref())?;
-
-                    println!("{} entries", kvs_entries.len());
-                    for KvsEntry(kvs_key, value) in kvs_entries {
-                        println!("{kvs_key}: {value}");
-                    }
-                }
-                KVSCommand::Get { namespace, key } => {
-                    let conn = arhiv.baza.get_connection()?;
-
-                    let kvs_key = KvsKey::new(namespace, key);
-                    let value = conn.kvs_get_raw(&kvs_key)?;
-
-                    if let Some(value) = value {
-                        println!("{kvs_key}: {value}");
-                    } else {
-                        println!("{kvs_key} not found");
-                    }
-                }
-                KVSCommand::Set {
-                    namespace,
-                    key,
-                    value,
-                } => {
-                    let tx = arhiv.baza.get_tx()?;
-
-                    let kvs_key = &KvsKey::new(namespace, key);
-                    if let Some(value) = value {
-                        let value: Value = serde_json::from_str(&value)
-                            .context("Failed to parse provided value as JSON")?;
-
-                        tx.kvs_set(kvs_key, &value)?;
-                        println!("{kvs_key}: {value}");
-                    } else {
-                        tx.kvs_delete(kvs_key)?;
-                        println!("Deleted {kvs_key}");
-                    }
-
-                    tx.commit()?;
-                }
-            };
         }
         CLICommand::Locks => {
-            let arhiv = must_open_arhiv();
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
 
-            let locks = arhiv.baza.get_connection()?.list_document_locks()?;
+            let locks = arhiv.baza.open()?.list_document_locks();
 
             println!("Arhiv locks, {} entries", locks.len());
             for (id, lock) in locks {
@@ -306,41 +187,46 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             }
         }
         CLICommand::Lock { id, reason } => {
-            let arhiv = must_open_arhiv();
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
 
-            let mut tx = arhiv.baza.get_tx()?;
-            tx.lock_document(&id, reason)?;
-            tx.commit()?;
+            let mut baza = arhiv.baza.open()?;
+            baza.lock_document(&id, reason)?;
+            baza.save_changes()?;
 
             println!("Locked document {id}");
         }
         CLICommand::Unlock { id, key } => {
-            let arhiv = must_open_arhiv();
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
 
-            let mut tx = arhiv.baza.get_tx()?;
+            let mut baza = arhiv.baza.open()?;
             if let Some(key) = key {
-                tx.unlock_document(&id, &DocumentLockKey::from_string(key))?;
+                baza.unlock_document(&id, &DocumentLockKey::from_string(key))?;
             } else {
                 println!("Lock key wasn't provided, unlocking without key check");
-                tx.unlock_document_without_key(&id)?;
+                baza.unlock_document_without_key(&id)?;
             }
-            tx.commit()?;
+            baza.save_changes()?;
 
             println!("Unlocked document {id}");
         }
         CLICommand::Commit => {
-            let arhiv = must_open_arhiv();
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
 
-            let mut tx = arhiv.baza.get_tx()?;
-            let count = tx.commit_staged_documents()?;
-            tx.commit()?;
+            let mut baza = arhiv.baza.open()?;
+            let success = baza.commit()?;
 
-            println!("Committed {count} staged documents");
+            if success {
+                println!("Committed documents");
+            }
         }
         CLICommand::Get { id } => {
-            let arhiv = must_open_arhiv();
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
 
-            let document = arhiv.baza.get_connection()?.get_document(&id)?;
+            let document = arhiv.baza.open()?.get_document(&id);
 
             if let Some(document) = document {
                 serde_json::to_writer_pretty(std::io::stdout(), &document)?;
@@ -358,21 +244,15 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             let mut document = Document::new_with_data(DocumentType::new(document_type), data);
 
-            let root_dir = find_root_dir()?;
-            let arhiv = Arhiv::open(
-                root_dir.clone(),
-                ArhivOptions {
-                    auto_commit: true,
-                    ..Default::default()
-                },
-            )?;
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
 
-            let mut tx = arhiv.baza.get_tx()?;
-            tx.stage_document(&mut document, None)?;
+            let mut baza = arhiv.baza.open()?;
+            let document = baza.stage_document(document, &None)?;
 
-            tx.commit()?;
+            baza.save_changes()?;
 
-            let server_info = ServerInfo::collect(&root_dir)?;
+            let server_info = arhiv.collect_server_info()?;
 
             print_document(&document, &server_info);
         }
@@ -381,15 +261,10 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             file_paths,
             move_file,
         } => {
-            let root_dir = find_root_dir()?;
-            let arhiv = Arhiv::open(
-                root_dir.clone(),
-                ArhivOptions {
-                    auto_commit: true,
-                    ..Default::default()
-                },
-            )?;
-            let server_info = ServerInfo::collect(&root_dir)?;
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
+            let server_info = arhiv.collect_server_info()?;
 
             println!("Importing {} files", file_paths.len());
 
@@ -404,42 +279,14 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 print_document(&document, &server_info);
             }
         }
-        CLICommand::UIOpen { id, browser } => {
-            log::info!("Opening arhiv UI in {}", browser);
-
-            let root_dir = find_root_dir()?;
-            let server_info =
-                ServerInfo::collect(&root_dir)?.context("Failed to collect server info")?;
-
-            let url = id
-                .map(|id| server_info.get_document_url(&id))
-                .unwrap_or(server_info.ui_url);
-
-            process::Command::new(&browser)
-                .arg(url)
-                .stdout(process::Stdio::null())
-                .stderr(process::Stdio::null())
-                .spawn()
-                .unwrap_or_else(|_| panic!("failed to run browser {browser}"))
-                .wait()
-                .expect("Command wasn't running");
-        }
         CLICommand::Server { port } => {
-            let root_dir = find_root_dir()?;
-
-            let server = ArhivServer::start(
-                &root_dir,
-                ArhivOptions {
-                    auto_commit: true,
-                    ..Default::default()
-                },
-                port,
-            )
-            .await?;
+            let server = ArhivServer::start(ArhivOptions::new_desktop(), port).await?;
 
             if DEV_MODE {
-                let server_info =
-                    ServerInfo::collect(&root_dir)?.context("Failed to collect server info")?;
+                let server_info = server
+                    .arhiv
+                    .collect_server_info()?
+                    .context("Failed to collect server info")?;
                 log::info!("Dev server url: {}", server_info.ui_url_with_auth_token);
             }
 
@@ -448,15 +295,18 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             server.shutdown().await?;
         }
         CLICommand::ServerInfo => {
-            let root_dir = find_root_dir()?;
-            let server_info = ServerInfo::collect(&root_dir)?;
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
+            let server_info = arhiv.collect_server_info()?;
 
             let server_info =
                 serde_json::to_string(&server_info).context("Failed to serialize ServerInfo")?;
             println!("{}", server_info);
         }
         CLICommand::Backup { backup_dir } => {
-            let arhiv = must_open_arhiv();
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
 
             let backup_dir = into_absolute_path(backup_dir, true)?;
 
@@ -489,22 +339,26 @@ fn print_document(document: &Document, server_info: &Option<ServerInfo>) {
     );
 }
 
-fn prompt_password(min_length: usize) -> Result<SecretString> {
-    Password::with_theme(&ColorfulTheme::default())
-        .with_prompt(format!("Password (min {min_length} symbols):"))
-        .with_confirmation("Repeat password", "Error: the passwords don't match.")
-        .validate_with(|input: &String| -> Result<(), &str> {
-            if input.chars().count() >= min_length {
-                Ok(())
-            } else {
-                Err("Password must be longer than {min_length}")
-            }
-        })
+fn prompt_password(min_length: usize, with_confirmation: bool) -> Result<SecretString> {
+    let theme = ColorfulTheme::default();
+
+    let mut input =
+        Password::with_theme(&theme).with_prompt(format!("Password (min {min_length} symbols):"));
+
+    if with_confirmation {
+        input = input.with_confirmation("Repeat password", "Error: the passwords don't match.");
+    }
+
+    input = input.validate_with(|input: &String| -> Result<(), &str> {
+        if input.chars().count() >= min_length {
+            Ok(())
+        } else {
+            Err("Password must be longer than {min_length}")
+        }
+    });
+
+    input
         .interact()
         .map(|value| value.into())
         .context("Failed to prompt password")
-}
-
-fn prompt_credentials() -> Result<SecretString> {
-    prompt_password(Credentials::MIN_PASSWORD_LENGTH)
 }

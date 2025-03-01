@@ -179,7 +179,8 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let arhiv = Arhiv::new_desktop();
             unlock_arhiv(&arhiv);
 
-            let locks = arhiv.baza.open()?.list_document_locks();
+            let baza = arhiv.baza.open()?;
+            let locks = baza.list_document_locks();
 
             println!("Arhiv locks, {} entries", locks.len());
             for (id, lock) in locks {
@@ -226,7 +227,8 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let arhiv = Arhiv::new_desktop();
             unlock_arhiv(&arhiv);
 
-            let document = arhiv.baza.open()?.get_document(&id);
+            let baza = arhiv.baza.open()?;
+            let document = baza.get_document(&id);
 
             if let Some(document) = document {
                 serde_json::to_writer_pretty(std::io::stdout(), &document)?;
@@ -242,13 +244,13 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let data: DocumentData =
                 serde_json::from_str(&data).context("data must be a JSON object")?;
 
-            let mut document = Document::new_with_data(DocumentType::new(document_type), data);
+            let document = Document::new_with_data(DocumentType::new(document_type), data);
 
             let arhiv = Arhiv::new_desktop();
             unlock_arhiv(&arhiv);
 
             let mut baza = arhiv.baza.open()?;
-            let document = baza.stage_document(document, &None)?;
+            let document = baza.stage_document(document, &None)?.clone();
 
             baza.save_changes()?;
 

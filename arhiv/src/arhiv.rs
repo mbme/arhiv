@@ -50,6 +50,16 @@ impl ArhivOptions {
             file_browser_root_dir,
         }
     }
+
+    pub fn new_android(app_files_dir: String, external_storage_dir: String) -> Self {
+        let storage_dir = format!("{external_storage_dir}/Arhiv");
+
+        ArhivOptions {
+            storage_dir,
+            state_dir: app_files_dir,
+            file_browser_root_dir: external_storage_dir,
+        }
+    }
 }
 
 pub struct Arhiv {

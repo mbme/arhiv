@@ -11,21 +11,13 @@ use jni::{
 };
 use tokio::runtime::Runtime;
 
-use arhiv::{Arhiv, ArhivOptions, ArhivServer, Credentials, ServerInfo};
+use arhiv::{ArhivOptions, ArhivServer};
 use rs_utils::log;
 
 static RUNTIME: LazyLock<Mutex<Option<Runtime>>> = LazyLock::new(|| Mutex::new(None));
 static ARHIV_SERVER: LazyLock<Mutex<Option<ArhivServer>>> = LazyLock::new(|| Mutex::new(None));
 
-fn get_root_dir(files_dir: &str) -> String {
-    if cfg!(feature = "production-mode") {
-        format!("{files_dir}/arhiv")
-    } else {
-        format!("{files_dir}/arhiv-debug")
-    }
-}
-
-fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Result<String> {
+fn start_server(options: ArhivOptions) -> Result<String> {
     let mut runtime_lock = RUNTIME
         .lock()
         .map_err(|err| anyhow!("Failed to lock RUNTIME: {err}"))?;
@@ -36,40 +28,26 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
         .map_err(|err| anyhow!("Failed to lock ARHIV_SERVER: {err}"))?;
     ensure!(server_lock.is_none(), "Server already started");
 
-    let root_dir = get_root_dir(files_dir);
-
     let mut builder = tokio::runtime::Builder::new_multi_thread();
     builder.enable_all();
     let runtime = builder.build().context("failed to create tokio runtime")?;
 
     let _guard = runtime.enter();
 
-    let arhiv_options = {
-        if cfg!(test) {
-            let auth = Credentials::new("test".to_string(), "test1234".into())?;
+    let server = runtime.block_on(ArhivServer::start(options, 0))?;
 
-            Arhiv::create(root_dir.clone(), auth)?;
-
-            ArhivOptions {
-                file_browser_root_dir,
-                ..Default::default()
-            }
-        } else {
-            ArhivOptions {
-                auto_commit: true,
-                file_browser_root_dir,
-            }
-        }
-    };
-
-    let server = runtime.block_on(ArhivServer::start(&root_dir, arhiv_options, 0))?;
-    let port = ServerInfo::get_server_port(&root_dir)?.context("Can't find server port")?;
-    let ui_url = ServerInfo::get_ui_base_url(port);
+    if cfg!(test) {
+        server.arhiv.baza.create("test1234".into())?;
+    }
+    let server_info = server
+        .arhiv
+        .collect_server_info()?
+        .context("Failed to collect server info")?;
 
     *server_lock = Some(server);
     *runtime_lock = Some(runtime);
 
-    Ok(ui_url)
+    Ok(server_info.ui_url)
 }
 
 fn stop_server() -> Result<()> {
@@ -95,24 +73,25 @@ fn stop_server() -> Result<()> {
 pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer(
     mut env: JNIEnv,
     _class: JClass,
-    files_dir: JString,
-    storage_dir: JString,
+    app_files_dir: JString,
+    external_storage_dir: JString,
 ) -> jstring {
     log::setup_android_logger("me.mbsoftware.arhiv");
 
-    let files_dir: String = env
-        .get_string(&files_dir)
-        .expect("Must read JNI string files_dir")
+    let app_files_dir: String = env
+        .get_string(&app_files_dir)
+        .expect("Must read JNI string app_files_dir")
         .into();
-    log::debug!("Files dir: {files_dir}");
+    log::debug!("Files dir: {app_files_dir}");
 
-    let storage_dir: String = env
-        .get_string(&storage_dir)
-        .expect("Must read JNI string storage_dir")
+    let external_storage_dir: String = env
+        .get_string(&external_storage_dir)
+        .expect("Must read JNI string external_storage_dir")
         .into();
-    log::debug!("Storage dir: {storage_dir}");
+    log::debug!("Storage dir: {external_storage_dir}");
 
-    let url = start_server(&files_dir, Some(storage_dir)).expect("must start server");
+    let options = ArhivOptions::new_android(app_files_dir, external_storage_dir);
+    let url = start_server(options).expect("must start server");
     log::info!("Started server: {url}");
 
     let output = env.new_string(url).expect("Couldn't create java string!");
@@ -131,6 +110,7 @@ mod tests {
     use core::time;
     use std::thread;
 
+    use arhiv::ArhivOptions;
     use rs_utils::TempFile;
 
     use crate::{start_server, stop_server};
@@ -140,7 +120,12 @@ mod tests {
         let temp_dir = TempFile::new_with_details("AndroidTest", "");
         temp_dir.mkdir().expect("must create temp dir");
 
-        start_server(temp_dir.as_ref(), None).expect("must start server");
+        let options = ArhivOptions {
+            storage_dir: format!("{temp_dir}/storage"),
+            state_dir: format!("{temp_dir}/state"),
+            file_browser_root_dir: temp_dir.to_string(),
+        };
+        start_server(options).expect("must start server");
 
         thread::sleep(time::Duration::from_secs(1));
 

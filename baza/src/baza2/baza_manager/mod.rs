@@ -46,7 +46,7 @@ pub enum StagingError {
 
 pub struct BazaManager {
     schema: DataSchema,
-    paths: BazaPaths,
+    pub(crate) paths: BazaPaths,
     key: RwLock<Option<AgeKey>>,
 }
 
@@ -433,7 +433,7 @@ impl Baza {
             .update_document_collections(document_id, collections)
     }
 
-    fn open_storage<'s>(&self, file_path: &str) -> Result<BazaFileStorage<'s>> {
+    pub(crate) fn open_storage<'s>(&self, file_path: &str) -> Result<BazaFileStorage<'s>> {
         BazaStorage::read_file(file_path, self.key.clone())
     }
 

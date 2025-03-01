@@ -1,5 +1,5 @@
 mod auto_commit_service;
-// mod backup; FIXME enable
+mod backup;
 pub mod baza2;
 mod document_expert;
 pub mod entities;

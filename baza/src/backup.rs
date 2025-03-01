@@ -1,102 +1,88 @@
 use std::{fs, path::Path};
 
-use anyhow::{bail, ensure, Result};
+use anyhow::{ensure, Result};
 
-use rs_utils::{ensure_dir_exists, file_exists, format_time, log, now, ZStd};
+use rs_utils::{ensure_dir_exists, file_exists, format_time, get_file_name, list_files, log, now};
 
-use crate::{entities::BLOBId, Baza};
+use crate::baza2::BazaManager;
 
-impl Baza {
+impl BazaManager {
     pub fn backup(&self, backup_dir: &str) -> Result<()> {
         log::debug!("backup_dir: {backup_dir}");
 
-        let zstd = ZStd::check()?;
-
-        let app_name = self.get_schema().get_app_name();
-
-        let backup = BackupPaths::new(app_name, backup_dir.to_string());
-        backup.check()?;
-
-        // 1. cleanup the db
-        self.get_db().vacuum()?;
-
-        // 2. copy & compress db file
-        zstd.compress(&self.get_path_manager().db_file, &backup.backup_db_file)?;
-        log::info!("Created {app_name} backup: {}", &backup.backup_db_file);
-
-        // 3. copy all data files if needed
-        let mut blob_count = 0;
-        let conn = self.get_connection()?;
-        for blob_id in conn.get_local_blob_ids()? {
-            // check if backup file exists
-            if backup.blob_exists(&blob_id)? {
-                log::trace!("Blob {} backup already exists, skipping", &blob_id);
-                continue;
-            }
-
-            // copy blob
-            fs::copy(
-                &conn.get_blob(&blob_id).file_path,
-                backup.get_blob_path(&blob_id),
-            )?;
-            log::debug!("Created blob {} backup", &blob_id);
-
-            blob_count += 1;
-        }
-
-        if blob_count > 0 {
-            log::info!("Backed up {} new blobs", blob_count);
-        } else {
-            log::info!("No new blobs to backup");
-        }
-
-        Ok(())
-    }
-}
-
-struct BackupPaths {
-    pub backup_dir: String,
-    pub data_dir: String,
-    pub backup_db_file: String,
-}
-
-impl BackupPaths {
-    pub fn new(file_name: &str, backup_dir: String) -> Self {
-        let data_dir = format!("{backup_dir}/data");
-
-        let now = format_time(now(), "%Y-%m-%d_%H-%M-%S");
-        let backup_db_file = format!("{backup_dir}/{file_name}_{now}.sqlite.zst");
-
-        BackupPaths {
-            backup_dir,
-            data_dir,
-            backup_db_file,
-        }
-    }
-
-    pub fn check(&self) -> Result<()> {
         ensure!(
-            Path::new(&self.backup_dir).is_absolute(),
+            Path::new(backup_dir).is_absolute(),
             "backup dir path must be absolute"
         );
 
-        ensure_dir_exists(&self.backup_dir)?;
+        ensure_dir_exists(backup_dir)?;
 
-        if Path::new(&self.backup_db_file).exists() {
-            bail!("Backup {} already exists", &self.backup_db_file);
+        let baza = self.open()?;
+
+        // if there are existing storage file backups, try decrypting them with current key
+        let backup_storage_files =
+            list_backup_storage_db_files(backup_dir, &self.paths.storage_main_db_file_name)?;
+        if let Some(backup_storage_file) = backup_storage_files.first() {
+            baza.open_storage(backup_storage_file)?;
+            log::debug!("Backup: can decrypt backup storage files with current key");
         }
 
-        // create data dir if needed
-        fs::create_dir_all(&self.data_dir)?;
+        // warn if there are uncommitted changes
+        if baza.has_staged_documents() {
+            log::warn!("Backup: there are uncommitted changes, they won't be backed up");
+        }
+
+        let data_dir = format!("{backup_dir}/data");
+        let now = format_time(now(), "%Y-%m-%d_%H-%M-%S");
+
+        // copy key file as [timestamp].key.age
+        let backup_key_file = format!("{backup_dir}/{now}.{}", self.paths.key_file_name);
+        fs::copy(&self.paths.key_file, &backup_key_file)?;
+        log::info!("Backup: copied key file into {backup_key_file}");
+
+        // copy storage file as [timestamp].baza.gz.age
+        let backup_storage_file = format!(
+            "{backup_dir}/{now}.{}",
+            self.paths.storage_main_db_file_name
+        );
+        fs::copy(&self.paths.storage_main_db_file, &backup_storage_file)?;
+        log::info!("Backup: copied main storage file into {backup_storage_file}");
+
+        // copy blobs if needed
+        let mut blob_count = 0;
+        for blob_file_path in list_files(&self.paths.storage_data_dir)? {
+            let blob_file_name = get_file_name(&blob_file_path);
+
+            let backup_blob_path = format!("{data_dir}/{blob_file_name}");
+
+            // check if backup file exists
+            if !file_exists(&backup_blob_path)? {
+                // copy blob
+                fs::copy(&blob_file_path, &backup_blob_path)?;
+                log::debug!("Created blob backup {backup_blob_path}");
+
+                blob_count += 1;
+            }
+        }
+
+        if blob_count > 0 {
+            log::info!("Back up: copied {blob_count} new blobs");
+        } else {
+            log::info!("Back up: no new blobs to backup");
+        }
 
         Ok(())
     }
+}
 
-    pub fn get_blob_path(&self, id: &BLOBId) -> String {
-        format!("{}/{}", &self.data_dir, id)
-    }
+fn list_backup_storage_db_files(
+    backup_dir: &str,
+    main_storage_file_name: &str,
+) -> Result<Vec<String>> {
+    let result = list_files(backup_dir)?
+        .into_iter()
+        .filter(|file| file.ends_with(main_storage_file_name))
+        .collect();
 
-    pub fn blob_exists(&self, id: &BLOBId) -> Result<bool> {
-        file_exists(&self.get_blob_path(id))
-    }
+    Ok(result)
 }

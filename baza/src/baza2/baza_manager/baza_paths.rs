@@ -14,9 +14,11 @@ const STATE_EXT: &str = ".age";
 
 #[derive(Clone)]
 pub struct BazaPaths {
+    pub key_file_name: String,
     pub key_file: String,
 
     pub storage_dir: String,
+    pub storage_main_db_file_name: String,
     pub storage_main_db_file: String,
     pub storage_data_dir: String,
 
@@ -29,9 +31,11 @@ pub struct BazaPaths {
 
 impl BazaPaths {
     pub fn new(storage_dir: String, state_dir: String) -> Self {
-        let key_file = format!("{state_dir}/key.age");
+        let key_file_name = "key.age".to_string();
+        let key_file = format!("{state_dir}/{key_file_name}");
 
-        let storage_main_db_file = format!("{storage_dir}/baza{STORAGE_EXT}");
+        let storage_main_db_file_name = format!("baza{STORAGE_EXT}");
+        let storage_main_db_file = format!("{storage_dir}/{storage_main_db_file_name}");
         let storage_data_dir = format!("{storage_dir}/data");
 
         let state_file = format!("{state_dir}/state{STATE_EXT}");
@@ -40,9 +44,11 @@ impl BazaPaths {
         let lock_file = format!("{state_dir}/baza.lock");
 
         Self {
+            key_file_name,
             key_file,
 
             storage_dir,
+            storage_main_db_file_name,
             storage_main_db_file,
             storage_data_dir,
 

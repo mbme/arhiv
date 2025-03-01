@@ -136,7 +136,7 @@ mod tests {
 
         advance(auto_commit_timeout * 2).await;
 
-        service.start()?;
+        service.start();
 
         sleep(Duration::from_secs(1)).await;
 
@@ -166,7 +166,7 @@ mod tests {
 
         advance(auto_commit_timeout * 2).await;
 
-        service.start()?;
+        service.start();
 
         sleep(Duration::from_secs(1)).await;
 
@@ -188,7 +188,7 @@ mod tests {
         let auto_commit_timeout = Duration::from_secs(10);
         let service = AutoCommitService::new(manager.clone(), auto_commit_timeout).with_fake_time();
 
-        service.start()?;
+        service.start();
 
         sleep(Duration::from_secs(1)).await;
 

@@ -91,7 +91,7 @@ enum CLICommand {
         #[arg()]
         data: String,
     },
-    /// Import files and create documents. Will hard link or copy files to Arhiv.
+    /// Import files and create documents.
     Import {
         /// One of known document types
         #[arg(value_parser = PossibleValuesParser::new(
@@ -101,9 +101,9 @@ enum CLICommand {
         /// Files to import
         #[arg(num_args = 1.., value_hint = ValueHint::FilePath)]
         file_paths: Vec<String>,
-        /// Move file to arhiv
+        /// Remove original files
         #[arg(short, default_value = "false")]
-        move_file: bool,
+        remove_original_file: bool,
     },
     #[clap(name = "generate-completions", hide = true)]
     GenerateCompletions {
@@ -127,6 +127,14 @@ async fn main() {
 }
 
 fn unlock_arhiv(arhiv: &Arhiv) {
+    if !arhiv
+        .baza
+        .storage_exists()
+        .expect("Failed to check if storage exists")
+    {
+        panic!("Arhiv not initialized");
+    }
+
     println!("Please enter password");
     let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)
         .expect("failed to prompt arhiv password");
@@ -261,7 +269,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::Import {
             document_type,
             file_paths,
-            move_file,
+            remove_original_file,
         } => {
             let arhiv = Arhiv::new_desktop();
             unlock_arhiv(&arhiv);
@@ -275,7 +283,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                     .context("failed to convert path into absolute path")?;
 
                 let document = arhiv
-                    .import_document_from_file(&document_type, &file_path, move_file)
+                    .import_document_from_file(&document_type, &file_path, remove_original_file)
                     .context("failed to import file")?;
 
                 print_document(&document, &server_info);
@@ -309,8 +317,6 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::Backup { backup_dir } => {
             let arhiv = Arhiv::new_desktop();
             unlock_arhiv(&arhiv);
-
-            let backup_dir = into_absolute_path(backup_dir, true)?;
 
             arhiv
                 .baza
@@ -351,11 +357,11 @@ fn prompt_password(min_length: usize, with_confirmation: bool) -> Result<SecretS
         input = input.with_confirmation("Repeat password", "Error: the passwords don't match.");
     }
 
-    input = input.validate_with(|input: &String| -> Result<(), &str> {
+    input = input.validate_with(|input: &String| -> Result<(), String> {
         if input.chars().count() >= min_length {
             Ok(())
         } else {
-            Err("Password must be longer than {min_length}")
+            Err(format!("Password must be longer than {min_length}"))
         }
     });
 

@@ -14,7 +14,7 @@ use thiserror::Error;
 
 use rs_utils::{
     age::{encrypt_and_write_file, read_and_decrypt_file, AgeKey},
-    get_file_modification_time, log, FsTransaction, LockFile, SecretString, Timestamp,
+    file_exists, get_file_modification_time, log, FsTransaction, LockFile, SecretString, Timestamp,
 };
 
 use crate::{
@@ -28,6 +28,7 @@ use crate::{
 };
 
 use baza_paths::BazaPaths;
+use blobs::write_and_encrypt_blob;
 
 use super::{
     baza_state::Locks,
@@ -95,7 +96,7 @@ impl BazaManager {
         } else {
             log::info!("Creating new state file {}", self.paths.state_file);
 
-            self.create_state()?
+            self.create_state(InstanceId::generate())?
         };
 
         let mut baza = Baza {
@@ -116,10 +117,15 @@ impl BazaManager {
     }
 
     pub fn storage_exists(&self) -> Result<bool> {
-        let have_storage_files = !self.paths.list_storage_db_files()?.is_empty();
+        let storage_dir_exists = self.paths.storage_dir_exists()?;
+        if !storage_dir_exists {
+            return Ok(false);
+        }
+
+        let have_storage_db_files = !self.paths.list_storage_db_files()?.is_empty();
         let have_key_file = self.paths.key_file_exists()?;
 
-        Ok(have_storage_files && have_key_file)
+        Ok(have_storage_db_files && have_key_file)
     }
 
     pub fn get_state_file_modification_time(&self) -> Result<Timestamp> {
@@ -218,8 +224,16 @@ impl BazaManager {
         Ok(())
     }
 
-    fn create_state(&self) -> Result<BazaState> {
-        log::info!("Creating new state file {}", self.paths.state_file);
+    pub fn create_state(&self, instance_id: InstanceId) -> Result<BazaState> {
+        log::info!(
+            "Creating new state file {} for instance {instance_id}",
+            self.paths.state_file
+        );
+
+        ensure!(
+            !self.paths.state_file_exists()?,
+            "State file already exists"
+        );
 
         let db_files = self.paths.list_storage_db_files()?;
         ensure!(!db_files.is_empty(), "No existing db files found");
@@ -242,7 +256,7 @@ impl BazaManager {
         let info = storage.get_info()?;
 
         let mut state = BazaState::new(
-            InstanceId::generate(),
+            instance_id,
             info.clone(),
             self.schema.clone(),
             HashMap::new(),
@@ -252,6 +266,63 @@ impl BazaManager {
         log::info!("Created new state file {}", self.paths.state_file);
 
         Ok(state)
+    }
+
+    pub fn dangerously_insert_snapshots_into_storage(
+        &self,
+        new_snapshots: &[Document],
+    ) -> Result<()> {
+        log::warn!(
+            "Inserting {} documents into storage db {}",
+            new_snapshots.len(),
+            self.paths.storage_main_db_file
+        );
+
+        let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+
+        let key = self
+            .key
+            .read()
+            .map_err(|err| anyhow!("Failed to acquire read lock for the key: {err}"))?;
+        let key = key.as_ref().context("Key is missing")?;
+
+        let mut tx = FsTransaction::new();
+
+        let old_db_file = tx.move_to_backup(self.paths.storage_main_db_file.clone())?;
+
+        let storage = BazaStorage::read_file(&old_db_file, key.clone())?;
+
+        let patch = create_container_patch(new_snapshots.iter())?;
+        storage.patch_and_save_to_file(&self.paths.storage_main_db_file, patch)?;
+
+        tx.commit()?;
+
+        Ok(())
+    }
+
+    pub fn dangerously_insert_blob_into_storage(&self, file_path: &str) -> Result<()> {
+        log::warn!("Adding file {file_path} to storage");
+
+        let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+
+        ensure!(
+            file_exists(file_path)?,
+            "BLOB source must exist and must be a file"
+        );
+
+        let blob_id = BLOBId::from_file(file_path)?;
+        let blob_path = self.paths.get_storage_blob_path(&blob_id);
+        ensure!(!file_exists(&blob_path)?, "storage BLOB already exists");
+
+        let key = self
+            .key
+            .read()
+            .map_err(|err| anyhow!("Failed to acquire read lock for the key: {err}"))?;
+        let key = key.as_ref().context("Key is missing")?;
+
+        write_and_encrypt_blob(file_path, &blob_path, key.clone())?;
+
+        Ok(())
     }
 
     #[cfg(test)]

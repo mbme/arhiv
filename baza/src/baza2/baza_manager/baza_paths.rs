@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt::Display, fs};
 
 use anyhow::{anyhow, ensure, Context, Result};
 
-use rs_utils::{create_dir_if_not_exist, file_exists, list_files};
+use rs_utils::{create_dir_if_not_exist, dir_exists, file_exists, list_files};
 
 use crate::entities::BLOBId;
 
@@ -107,6 +107,10 @@ impl BazaPaths {
         ids.extend(local_ids);
 
         Ok(ids)
+    }
+
+    pub fn storage_dir_exists(&self) -> Result<bool> {
+        dir_exists(&self.storage_dir)
     }
 
     pub fn storage_blob_exists(&self, id: &BLOBId) -> Result<bool> {

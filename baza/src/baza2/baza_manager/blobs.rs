@@ -6,7 +6,7 @@ use std::{
 use anyhow::{ensure, Context, Result};
 
 use rs_utils::{
-    age::{AgeReader, AgeWriter},
+    age::{AgeKey, AgeReader, AgeWriter},
     create_file_reader, create_file_writer, file_exists, log,
 };
 
@@ -14,7 +14,7 @@ use crate::entities::BLOBId;
 
 use super::Baza;
 
-// FIXME ensure can't add the same BLOB twice
+// FIXME ensure can't add the same BLOB? (maybe asset?) twice
 impl Baza {
     fn get_local_blob_path(&self, id: &BLOBId) -> String {
         self.paths.get_state_blob_path(id)
@@ -60,26 +60,31 @@ impl Baza {
 
         let blob_id = BLOBId::from_file(file_path)?;
         if self.blob_exists(&blob_id)? {
-            log::debug!("blob {blob_id} already exists");
+            log::warn!("BLOB {blob_id} already exists");
 
             return Ok(blob_id);
         }
 
         let blob_path = self.get_local_blob_path(&blob_id);
+        write_and_encrypt_blob(file_path, &blob_path, self.key.clone())?;
 
-        let file_writer = create_file_writer(&blob_path, false)?;
-        let mut age_writer = AgeWriter::new(file_writer, self.key.clone())?;
-
-        let mut file_reader = create_file_reader(file_path)?;
-
-        copy(&mut file_reader, &mut age_writer).context("Failed to copy & encrypt file data")?;
-
-        age_writer.finish()?;
-
-        log::info!("Created blob {blob_id} from {file_path}");
+        log::info!("Created BLOB {blob_id} from {file_path}");
 
         Ok(blob_id)
     }
+}
+
+pub fn write_and_encrypt_blob(file_path: &str, blob_path: &str, key: AgeKey) -> Result<()> {
+    let file_writer = create_file_writer(blob_path, false)?;
+    let mut age_writer = AgeWriter::new(file_writer, key)?;
+
+    let mut file_reader = create_file_reader(file_path)?;
+
+    copy(&mut file_reader, &mut age_writer).context("Failed to copy & encrypt file data")?;
+
+    age_writer.finish()?;
+
+    Ok(())
 }
 
 #[cfg(test)]

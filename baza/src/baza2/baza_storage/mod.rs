@@ -161,7 +161,8 @@ impl BazaFileStorage<'_> {
     }
 
     pub fn patch_and_save_to_file(self, file: &str, patch: ContainerPatch) -> Result<()> {
-        let mut storage_writer = create_file_writer(file, false)?;
+        let mut storage_writer =
+            create_file_writer(file, false).context("Failed to create storage file writer")?;
 
         self.patch(&mut storage_writer, patch)?;
 

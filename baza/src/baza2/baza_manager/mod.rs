@@ -204,6 +204,16 @@ impl BazaManager {
         Ok(())
     }
 
+    pub fn lock(&self) -> Result<()> {
+        let mut key_guard = self
+            .key
+            .write()
+            .map_err(|err| anyhow!("Failed to acquire write lock for the key: {err}"))?;
+        key_guard.take();
+
+        Ok(())
+    }
+
     pub fn change_key_file_password(
         &self,
         old_password: SecretString,

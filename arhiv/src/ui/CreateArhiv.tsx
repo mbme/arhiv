@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { JSONObj } from 'utils';
-import { createArhiv } from 'utils/network';
+import { RPC } from 'utils/network';
 import { Form } from 'components/Form/Form';
 import { Button } from 'components/Button';
 import { LoginContainer } from 'components/LoginContainer';
@@ -24,7 +24,7 @@ export function CreateArhiv() {
     setInProgress(true);
 
     try {
-      await createArhiv(password as string);
+      await RPC.CreateArhiv({ password: password as string });
 
       location.reload();
     } catch (err) {

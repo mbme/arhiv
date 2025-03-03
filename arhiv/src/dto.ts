@@ -67,6 +67,17 @@ export type APIRequest =
       collectionId: DocumentId;
       id: DocumentId;
       newPos: number;
+    }
+  | {
+      typeName: 'CreateArhiv';
+      password: string;
+    }
+  | {
+      typeName: 'LockArhiv';
+    }
+  | {
+      typeName: 'UnlockArhiv';
+      password: string;
     };
 
 export type APIResponse =
@@ -131,6 +142,15 @@ export type APIResponse =
     }
   | {
       typeName: 'ReorderCollectionRefs';
+    }
+  | {
+      typeName: 'CreateArhiv';
+    }
+  | {
+      typeName: 'LockArhiv';
+    }
+  | {
+      typeName: 'UnlockArhiv';
     };
 
 export type DocumentId = NominalType<string, 'DocumentId'>;

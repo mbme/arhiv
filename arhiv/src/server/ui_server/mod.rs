@@ -1,6 +1,6 @@
 use std::{io::Seek, ops::Bound, str::FromStr, sync::Arc};
 
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use axum::{
     extract::{DefaultBodyLimit, Path, Query, Request, State},
     http::HeaderMap,
@@ -27,7 +27,7 @@ use rs_utils::{
     create_body_from_reader,
     crypto_key::CryptoKey,
     http_server::{add_max_cache_header, add_no_cache_headers, ServerError},
-    log, stream_to_file, AuthToken, SecretString, TempFile,
+    log, stream_to_file, AuthToken, TempFile,
 };
 
 use crate::{definitions::get_standard_schema, dto::APIRequest, Arhiv};
@@ -45,8 +45,6 @@ pub const UI_BASE_PATH: &str = "/ui";
 pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<Arhiv>> {
     Router::new()
         .route("/", get(index_page))
-        .route("/create", post(create_arhiv_handler)) // FIXME move this into api
-        .route("/unlock", post(unlock_arhiv_handler)) // FIXME move this into api
         .route("/api", post(api_handler))
         .route("/blobs", post(create_blob_handler))
         .route("/blobs/{blob_id}", get(blob_handler))
@@ -55,41 +53,6 @@ pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<Arhiv>> {
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(client_authenticator))
         .layer(Extension(Arc::new(ui_key)))
-}
-
-#[derive(Deserialize)]
-struct CreateArhivRequest {
-    password: SecretString,
-}
-
-async fn create_arhiv_handler(
-    arhiv: State<Arc<Arhiv>>,
-    Json(create_arhiv_request): Json<CreateArhivRequest>,
-) -> Result<impl IntoResponse, ServerError> {
-    if arhiv.baza.storage_exists()? {
-        return Err(anyhow!("Arhiv already exists").into());
-    }
-
-    log::info!("Creating new arhiv");
-
-    arhiv.baza.create(create_arhiv_request.password)?;
-
-    Ok(())
-}
-
-#[derive(Deserialize)]
-struct UnlockArhivRequest {
-    password: SecretString,
-}
-async fn unlock_arhiv_handler(
-    arhiv: State<Arc<Arhiv>>,
-    Json(unlock_arhiv_request): Json<UnlockArhivRequest>,
-) -> Result<impl IntoResponse, ServerError> {
-    log::info!("Unlocking arhiv");
-
-    arhiv.baza.unlock(unlock_arhiv_request.password)?;
-
-    Ok(())
 }
 
 #[derive(Serialize)]

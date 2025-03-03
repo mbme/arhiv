@@ -312,6 +312,31 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             APIResponse::ReorderCollectionRefs {}
         }
+        APIRequest::CreateArhiv { password } => {
+            if arhiv.baza.storage_exists()? {
+                bail!("Arhiv already exists");
+            }
+
+            log::info!("Creating new arhiv");
+
+            arhiv.baza.create(password)?;
+
+            APIResponse::CreateArhiv {}
+        }
+        APIRequest::LockArhiv {} => {
+            log::info!("Locking Arhiv");
+
+            arhiv.baza.lock()?;
+
+            APIResponse::LockArhiv {}
+        }
+        APIRequest::UnlockArhiv { password } => {
+            log::info!("Unlocking Arhiv");
+
+            arhiv.baza.unlock(password)?;
+
+            APIResponse::UnlockArhiv {}
+        }
     };
 
     Ok(response)

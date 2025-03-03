@@ -1,33 +1,27 @@
 import { useState } from 'react';
-import { JSONObj } from 'utils';
-import { unlockArhiv } from 'utils/network';
+import { RPC } from 'utils/network';
+import { useQuery } from 'utils/hooks';
 import { LoginContainer } from 'components/LoginContainer';
 import { Form } from 'components/Form/Form';
 import { Button } from 'components/Button';
 
 export function UnlockArhiv() {
-  const [error, setError] = useState('');
-  const [inProgress, setInProgress] = useState(false);
+  const [password, setPassword] = useState('');
 
-  const onSubmit = async ({ password }: JSONObj) => {
-    setInProgress(true);
-
-    try {
-      await unlockArhiv(password as string);
-
-      location.reload();
-    } catch (err) {
-      console.error('Failed to unlock Arhiv:', err);
-      setError(`Failed to unlock Arhiv: ${String(err)}`);
-    } finally {
-      setInProgress(false);
-    }
-  };
+  const { error, inProgress, triggerRefresh } = useQuery(
+    (abortSignal) => RPC.UnlockArhiv({ password }, abortSignal),
+    {
+      refreshOnMount: false,
+      onSuccess() {
+        location.reload();
+      },
+    },
+  );
 
   return (
     <LoginContainer>
-      <Form className="flex flex-col max-w-md items-center gap-4" onSubmit={onSubmit}>
-        {error && <div className="text-red-500 text-xl pl-1 my-2">{error}</div>}
+      <Form className="flex flex-col max-w-md items-center gap-4" onSubmit={triggerRefresh}>
+        {error && <div className="text-red-500 text-xl pl-1 my-2">{String(error)}</div>}
 
         <label>
           Password:
@@ -37,6 +31,9 @@ export function UnlockArhiv() {
             required
             minLength={window.MIN_PASSWORD_LENGTH}
             autoComplete="off"
+            onChange={(e) => {
+              setPassword(e.currentTarget.value);
+            }}
           />
         </label>
 

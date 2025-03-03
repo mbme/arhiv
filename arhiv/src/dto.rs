@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use baza::entities::{BLOBId, DocumentData, DocumentLockKey, Id};
-use rs_utils::Timestamp;
+use rs_utils::{SecretString, Timestamp};
 
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields, tag = "typeName")]
@@ -67,6 +67,13 @@ pub enum APIRequest {
         id: Id,
         new_pos: usize,
     },
+    CreateArhiv {
+        password: SecretString,
+    },
+    LockArhiv {},
+    UnlockArhiv {
+        password: SecretString,
+    },
 }
 
 #[derive(Serialize)]
@@ -119,6 +126,9 @@ pub enum APIResponse {
     },
     UnlockDocument {},
     ReorderCollectionRefs {},
+    CreateArhiv {},
+    LockArhiv {},
+    UnlockArhiv {},
 }
 
 #[derive(Serialize)]

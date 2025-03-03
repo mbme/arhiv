@@ -1,6 +1,7 @@
 import { startTransition } from 'react';
 import { NOTE_DOCUMENT_TYPE } from 'dto';
 import { useKeydown, useSignal } from 'utils/hooks';
+import { RPC } from 'utils/network';
 import { useAppController } from 'controller';
 import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
 import { Button, IconButton } from 'components/Button';
@@ -151,6 +152,21 @@ export function WorkspaceHeader() {
               icon: 'x',
               onClick: () => {
                 app.workspace.closeAll();
+              },
+            },
+
+            {
+              text: 'Lock arhiv',
+              icon: 'lock',
+              onClick: () => {
+                RPC.LockArhiv({}).then(
+                  () => {
+                    location.reload();
+                  },
+                  (err: unknown) => {
+                    console.error('Failed to lock Arhiv:', err);
+                  },
+                );
               },
             },
           ]}

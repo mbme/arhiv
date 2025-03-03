@@ -1,15 +1,5 @@
-import {
-  app,
-  Tray,
-  Menu,
-  nativeImage,
-  BrowserWindow,
-  session,
-  Notification,
-  shell,
-} from 'electron';
+import { app, BrowserWindow, session, Notification, shell } from 'electron';
 import { ExtendedServerInfo, getServerInfo, startServer, waitForServer } from './arhiv';
-import favicon from '../../resources/favicon-16x16.png';
 
 export type Action = { type: 'open'; documentId?: string } | { type: 'search'; query: string };
 
@@ -31,32 +21,6 @@ function parseAction(args: string[]): Action | undefined {
 }
 
 let win: BrowserWindow | undefined;
-let tray: Tray | undefined;
-
-function showTrayIcon(serverInfo: ExtendedServerInfo) {
-  const icon = nativeImage.createFromDataURL(favicon);
-  tray = new Tray(icon);
-
-  const contextMenu = Menu.buildFromTemplate([
-    { label: 'Open', type: 'normal', click: () => void handleAction({ type: 'open' }, serverInfo) },
-    {
-      label: 'Search',
-      type: 'normal',
-      click: () => void handleAction({ type: 'search', query: '' }, serverInfo),
-    },
-    { type: 'separator' },
-    {
-      label: 'Quit',
-      type: 'normal',
-      click: () => {
-        app.quit();
-      },
-    },
-  ]);
-
-  tray.setToolTip('Arhiv Desktop App');
-  tray.setContextMenu(contextMenu);
-}
 
 async function handleAction(action: Action, serverInfo: ExtendedServerInfo) {
   console.log('Handling action', action);
@@ -181,21 +145,12 @@ async function start(args: string[]) {
   // needed to prevent quiting the app when last window is closed
   app.on('window-all-closed', () => {
     console.log('last window closed');
-    if (!tray) {
-      app.quit();
-    }
+    app.quit();
   });
 
   await app.whenReady();
 
-  if (args.includes('--tray')) {
-    showTrayIcon(serverInfo);
-    if (action) {
-      await handleAction(action, serverInfo);
-    }
-  } else {
-    await handleAction(action ?? DEFAULT_ACTION, serverInfo);
-  }
+  await handleAction(action ?? DEFAULT_ACTION, serverInfo);
 }
 
 const args = process.argv.slice(2);

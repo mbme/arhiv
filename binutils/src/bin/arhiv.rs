@@ -139,10 +139,7 @@ fn unlock_arhiv(arhiv: &Arhiv) {
     let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)
         .expect("failed to prompt arhiv password");
 
-    arhiv
-        .baza
-        .read_key_file(password)
-        .expect("Failed to unlock arhiv")
+    arhiv.baza.unlock(password).expect("Failed to unlock arhiv")
 }
 
 async fn handle_command(command: CLICommand) -> Result<()> {

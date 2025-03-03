@@ -3,6 +3,7 @@ import { effect } from '@preact/signals-core';
 import { App } from 'App';
 import { ComponentsDemo } from 'ComponentsDemo';
 import { CreateArhiv } from 'CreateArhiv';
+import { UnlockArhiv } from 'UnlockArhiv';
 import { appController } from 'controller';
 
 window.APP = appController;
@@ -21,6 +22,8 @@ const root = createRoot(rootEl);
 function renderApp() {
   if (window.CREATE_ARHIV) {
     root.render(<CreateArhiv />);
+  } else if (window.ARHIV_LOCKED) {
+    root.render(<UnlockArhiv />);
   } else if (process.env.NODE_ENV === 'development' && location.search.includes('DEMO')) {
     root.render(<ComponentsDemo />);
   } else {

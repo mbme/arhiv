@@ -45,7 +45,8 @@ pub const UI_BASE_PATH: &str = "/ui";
 pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<Arhiv>> {
     Router::new()
         .route("/", get(index_page))
-        .route("/create", post(create_arhiv_handler))
+        .route("/create", post(create_arhiv_handler)) // FIXME move this into api
+        .route("/unlock", post(unlock_arhiv_handler)) // FIXME move this into api
         .route("/api", post(api_handler))
         .route("/blobs", post(create_blob_handler))
         .route("/blobs/{blob_id}", get(blob_handler))
@@ -76,6 +77,21 @@ async fn create_arhiv_handler(
     Ok(())
 }
 
+#[derive(Deserialize)]
+struct UnlockArhivRequest {
+    password: SecretString,
+}
+async fn unlock_arhiv_handler(
+    arhiv: State<Arc<Arhiv>>,
+    Json(unlock_arhiv_request): Json<UnlockArhivRequest>,
+) -> Result<impl IntoResponse, ServerError> {
+    log::info!("Unlocking arhiv");
+
+    arhiv.baza.unlock(unlock_arhiv_request.password)?;
+
+    Ok(())
+}
+
 #[derive(Serialize)]
 struct Features {
     use_local_storage: bool,
@@ -83,6 +99,7 @@ struct Features {
 
 async fn index_page(arhiv: State<Arc<Arhiv>>) -> Result<impl IntoResponse, ServerError> {
     let create_arhiv = !arhiv.baza.storage_exists()?;
+    let is_locked = arhiv.baza.is_locked();
 
     let schema =
         serde_json::to_string(&get_standard_schema()).context("failed to serialize schema")?;
@@ -115,6 +132,7 @@ async fn index_page(arhiv: State<Arc<Arhiv>>) -> Result<impl IntoResponse, Serve
                         window.FEATURES = {features};
                         window.MIN_PASSWORD_LENGTH = {min_password_length};
                         window.CREATE_ARHIV = {create_arhiv};
+                        window.ARHIV_LOCKED = {is_locked};
                     </script>
 
                     <script src="{UI_BASE_PATH}/index.js"></script>
@@ -191,6 +209,7 @@ struct AuthTokenQuery {
     auth_token: Option<String>,
 }
 
+/// Extract AuthToken either from url query param, or from the cookie
 async fn client_authenticator(
     jar: CookieJar,
     auth_token_query: Query<AuthTokenQuery>,

@@ -135,6 +135,23 @@ export async function createArhiv(password: string) {
   }
 }
 
+export async function unlockArhiv(password: string) {
+  const response = await fetch(`${window.BASE_PATH}/unlock`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ password }),
+  });
+
+  const message = await response.text();
+
+  if (!response.ok) {
+    console.error(`Failed to unlock arhiv: ${response.status}\n${message}`);
+    throw new Error(`Failed to unlock arhiv: ${message}`);
+  }
+}
+
 export function getDocumentUrl(documentId: string): string {
   return `${window.location.origin}${window.BASE_PATH}?id=${documentId}`;
 }

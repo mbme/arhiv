@@ -186,7 +186,7 @@ impl BazaManager {
         Ok(key_file)
     }
 
-    pub fn read_key_file(&self, password: SecretString) -> Result<()> {
+    pub fn unlock(&self, password: SecretString) -> Result<()> {
         log::debug!("Reading key file {}", self.paths.key_file);
 
         let key_file_key = AgeKey::from_password(password)?;
@@ -352,6 +352,10 @@ impl BazaManager {
 
     pub fn get_state_dir(&self) -> &str {
         &self.paths.state_dir
+    }
+
+    pub fn is_locked(&self) -> bool {
+        !self.is_unlocked()
     }
 
     pub fn is_unlocked(&self) -> bool {
@@ -1063,10 +1067,10 @@ mod tests {
 
             assert!(manager.open().is_err(), "Can't open without password");
             assert!(
-                manager.read_key_file("wrong password".into()).is_err(),
+                manager.unlock("wrong password".into()).is_err(),
                 "Can't open with wrong password"
             );
-            manager.read_key_file("test password".into()).unwrap();
+            manager.unlock("test password".into()).unwrap();
 
             let baza = manager.open().unwrap();
 
@@ -1093,10 +1097,10 @@ mod tests {
             let manager = BazaManager::new(storage_dir, state_dir, schema);
 
             assert!(
-                manager.read_key_file("test password".into()).is_err(),
+                manager.unlock("test password".into()).is_err(),
                 "Can't open with old password"
             );
-            manager.read_key_file("new password".into()).unwrap();
+            manager.unlock("new password".into()).unwrap();
         }
     }
 }

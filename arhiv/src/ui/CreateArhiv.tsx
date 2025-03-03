@@ -3,6 +3,7 @@ import { JSONObj } from 'utils';
 import { createArhiv } from 'utils/network';
 import { Form } from 'components/Form/Form';
 import { Button } from 'components/Button';
+import { LoginContainer } from 'components/LoginContainer';
 
 export function CreateArhiv() {
   const [error, setError] = useState('');
@@ -27,21 +28,15 @@ export function CreateArhiv() {
 
       location.reload();
     } catch (err) {
-      console.error('Failed to create arhiv:', err);
-      setError(`Failed to create arhiv: ${String(err)}`);
+      console.error('Failed to create Arhiv:', err);
+      setError(`Failed to create Arhiv: ${String(err)}`);
     } finally {
       setInProgress(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center pt-32">
-      <img
-        src={`${window.BASE_PATH}/favicon.svg`}
-        alt="Arhiv logo"
-        className="size-24 rounded-md shadow-lg mb-8"
-      />
-
+    <LoginContainer>
       <Form className="flex flex-col max-w-md items-center gap-4" onSubmit={onSubmit}>
         {error && <div className="text-red-500 text-xl pl-1 my-2">{error}</div>}
 
@@ -75,6 +70,6 @@ export function CreateArhiv() {
           Create arhiv
         </Button>
       </Form>
-    </div>
+    </LoginContainer>
   );
 }

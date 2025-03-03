@@ -12,6 +12,7 @@ declare global {
     FEATURES: Features;
     MIN_PASSWORD_LENGTH: number;
     CREATE_ARHIV: boolean;
+    ARHIV_LOCKED: boolean;
 
     APP: AppController;
   }

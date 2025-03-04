@@ -8,7 +8,7 @@ use baza::{
     entities::Revision,
     AutoCommitService, DEV_MODE,
 };
-use rs_utils::{default_date_time_format, get_crate_version, Timestamp};
+use rs_utils::{default_date_time_format, get_crate_version, log, Timestamp};
 
 use crate::ServerInfo;
 
@@ -35,6 +35,7 @@ pub struct Status<'b> {
 
 impl<'b> Status<'b> {
     pub fn read(baza: &'b Baza) -> Result<Self> {
+        log::debug!("Collecting Arhiv status");
         let root_dir = baza.get_storage_dir().to_string();
 
         let info = baza.get_info();

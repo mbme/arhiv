@@ -1,6 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     io::{BufRead, Write},
+    time::Instant,
 };
 
 use anyhow::{ensure, Context, Result};
@@ -8,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use rs_utils::{
     age::{AgeKey, AgeReader, AgeWriter},
-    create_file_reader, create_file_writer, Timestamp,
+    create_file_reader, create_file_writer, log, Timestamp,
 };
 
 use crate::{
@@ -93,8 +94,17 @@ impl BazaState {
     }
 
     pub fn read_file(file: &str, key: AgeKey, schema: DataSchema) -> Result<Self> {
+        log::debug!("Reading state from file {file}");
+
+        let start_time = Instant::now();
+
         let state_reader = create_file_reader(file)?;
-        BazaState::read(state_reader, key, schema)
+        let state = BazaState::read(state_reader, key, schema)?;
+
+        let duration = start_time.elapsed();
+        log::info!("Read state from file in {:?}", duration);
+
+        Ok(state)
     }
 
     pub fn write(&mut self, writer: impl Write, key: AgeKey) -> Result<()> {
@@ -111,11 +121,18 @@ impl BazaState {
     }
 
     pub fn write_to_file(&mut self, file: &str, key: AgeKey) -> Result<()> {
+        log::debug!("Writing state to file {file}");
+
+        let start_time = Instant::now();
+
         let mut state_writer = create_file_writer(file, true)?;
 
         self.write(&mut state_writer, key)?;
 
         state_writer.flush()?;
+
+        let duration = start_time.elapsed();
+        log::info!("Wrote state to file in {:?}", duration);
 
         Ok(())
     }

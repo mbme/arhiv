@@ -5,13 +5,14 @@ use std::{
     fmt,
     fs::File,
     io::{BufReader, Read, Write},
+    time::Instant,
 };
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 
 use rs_utils::{
-    age::AgeKey, create_file_reader, create_file_writer, AgeGzReader, AgeGzWriter, ContainerPatch,
-    ContainerReader, ContainerWriter,
+    age::AgeKey, create_file_reader, create_file_writer, log, AgeGzReader, AgeGzWriter,
+    ContainerPatch, ContainerReader, ContainerWriter,
 };
 
 use crate::entities::{Document, DocumentKey};
@@ -155,18 +156,34 @@ pub type BazaFileStorage<'i> = BazaStorage<'i, BufReader<File>>;
 
 impl BazaFileStorage<'_> {
     pub fn read_file(file: &str, key: AgeKey) -> Result<Self> {
+        log::debug!("Reading storage from file {file}");
+
+        let start_time = Instant::now();
+
         let storage_reader = create_file_reader(file)?;
 
-        BazaStorage::read(storage_reader, key)
+        let storage = BazaStorage::read(storage_reader, key)?;
+
+        let duration = start_time.elapsed();
+        log::info!("Read storage from file in {:?}", duration);
+
+        Ok(storage)
     }
 
     pub fn patch_and_save_to_file(self, file: &str, patch: ContainerPatch) -> Result<()> {
+        log::debug!("Writing storage to file {file}");
+
+        let start_time = Instant::now();
+
         let mut storage_writer =
             create_file_writer(file, false).context("Failed to create storage file writer")?;
 
         self.patch(&mut storage_writer, patch)?;
 
         storage_writer.flush()?;
+
+        let duration = start_time.elapsed();
+        log::info!("Wrote storage to file in {:?}", duration);
 
         Ok(())
     }
@@ -372,11 +389,18 @@ pub fn merge_storages_to_file(
     storages: Vec<BazaStorage<impl Read>>,
     file: &str,
 ) -> Result<()> {
+    log::debug!("Merging {} storages to file {file}", storages.len());
+
+    let start_time = Instant::now();
+
     let mut storage_writer = create_file_writer(file, false)?;
 
     merge_storages(info, storages, &mut storage_writer)?;
 
     storage_writer.flush()?;
+
+    let duration = start_time.elapsed();
+    log::info!("Merged storages to file in {:?}", duration);
 
     Ok(())
 }

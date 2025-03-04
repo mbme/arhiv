@@ -46,7 +46,7 @@ impl<'i, R: Read + 'i> fmt::Debug for BazaStorage<'i, R> {
 
 impl<'i, R: Read + 'i> BazaStorage<'i, R> {
     pub fn read(reader: R, key: AgeKey) -> Result<Self> {
-        let agegz_reader = AgeGzReader::create(reader, key.clone())?;
+        let agegz_reader = AgeGzReader::new(reader, key.clone())?;
         let reader = ContainerReader::init(agegz_reader)?;
 
         let index =
@@ -106,7 +106,7 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
         ensure!(!patch.is_empty(), "container patch must not be empty");
 
         // apply patch & write db
-        let agegz_writer = AgeGzWriter::create(writer, self.key)?;
+        let agegz_writer = AgeGzWriter::new(writer, self.key)?;
         let container_writer = ContainerWriter::new(agegz_writer);
 
         match self.inner {
@@ -219,7 +219,7 @@ pub fn create_storage(
     info: &BazaInfo,
     new_documents: &[Document],
 ) -> Result<()> {
-    let agegz_writer = AgeGzWriter::create(writer, key)?;
+    let agegz_writer = AgeGzWriter::new(writer, key)?;
     let mut container_writer = ContainerWriter::new(agegz_writer);
 
     let index =
@@ -332,7 +332,7 @@ pub fn merge_storages(
     let index = DocumentsIndex::from_document_keys_refs(index_keys);
 
     let key = &keys_per_storage[0].0.key;
-    let agegz_writer = AgeGzWriter::create(writer, key.clone())?;
+    let agegz_writer = AgeGzWriter::new(writer, key.clone())?;
     let mut container_writer = ContainerWriter::new(agegz_writer);
 
     container_writer.write_index(&index)?;

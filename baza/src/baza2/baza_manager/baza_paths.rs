@@ -10,7 +10,7 @@ const BLOB_EXT: &str = ".age";
 
 const STORAGE_EXT: &str = ".gz.age";
 
-const STATE_EXT: &str = ".age";
+const STATE_EXT: &str = ".gz.age";
 
 #[derive(Clone)]
 pub struct BazaPaths {

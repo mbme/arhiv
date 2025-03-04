@@ -8,8 +8,7 @@ use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 
 use rs_utils::{
-    age::{AgeKey, AgeReader, AgeWriter},
-    create_file_reader, create_file_writer, log, Timestamp,
+    age::AgeKey, create_file_reader, create_file_writer, log, AgeGzReader, AgeGzWriter, Timestamp,
 };
 
 use crate::{
@@ -82,9 +81,10 @@ impl BazaState {
     }
 
     pub fn read(reader: impl BufRead, key: AgeKey, schema: DataSchema) -> Result<Self> {
-        let age_reader = AgeReader::new(reader, key)?;
+        let agegz_reader = AgeGzReader::new(reader, key)?;
 
-        let file = serde_json::from_reader(age_reader).context("Failed to parse BazaStateFile")?;
+        let file =
+            serde_json::from_reader(agegz_reader).context("Failed to parse BazaStateFile")?;
 
         Ok(Self {
             file,
@@ -108,12 +108,12 @@ impl BazaState {
     }
 
     pub fn write(&mut self, writer: impl Write, key: AgeKey) -> Result<()> {
-        let mut age_writer = AgeWriter::new(writer, key)?;
+        let mut agegz_writer = AgeGzWriter::new(writer, key)?;
 
-        serde_json::to_writer(&mut age_writer, &self.file)
+        serde_json::to_writer(&mut agegz_writer, &self.file)
             .context("Failed to serialize BazaStateFile")?;
 
-        age_writer.finish()?;
+        agegz_writer.finish()?;
 
         self.modified = false;
 

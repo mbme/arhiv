@@ -78,8 +78,6 @@ impl BazaManager {
         let lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
 
         let state = if self.paths.state_file_exists()? {
-            log::info!("Reading state file {}", self.paths.state_file);
-
             let state =
                 BazaState::read_file(&self.paths.state_file, key.clone(), self.schema.clone())?;
 

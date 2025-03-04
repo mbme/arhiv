@@ -2,6 +2,12 @@
 [profile.dev]
 debug = 0
 
+# Always max optimize flate2 & miniz_oxide otherwise it's VERY slow
+[profile.dev.package.miniz_oxide]
+opt-level = 3
+[profile.dev.package.flate2]
+opt-level = 3
+
 [profile.release]
 lto = true
 codegen-units = 1

@@ -17,7 +17,7 @@ use rs_utils::{
 };
 
 use crate::{
-    baza2::baza_storage::create_container_patch,
+    baza2::baza_storage::{create_container_patch, merge_storages_to_file},
     entities::{BLOBId, Document, DocumentKey, Id, InstanceId, Revision},
     schema::DataSchema,
     DocumentExpert,
@@ -91,7 +91,7 @@ impl BazaManager {
             paths: self.paths.clone(),
         };
 
-        baza.merge_storages()?;
+        self.merge_storages()?;
 
         if !baza.has_staged_documents() {
             baza.update_state_from_storage()?;
@@ -111,6 +111,51 @@ impl BazaManager {
         let have_key_file = self.paths.key_file_exists()?;
 
         Ok(have_storage_db_files && have_key_file)
+    }
+
+    fn merge_storages(&self) -> Result<()> {
+        let db_files = self.paths.list_storage_db_files()?;
+
+        if db_files.is_empty() {
+            log::debug!("No existing db files found");
+            return Ok(());
+        }
+
+        let main_db_file = &self.paths.storage_main_db_file;
+        if db_files.len() == 1 && db_files[0] == *main_db_file {
+            log::debug!("There's only main db file");
+            return Ok(());
+        }
+
+        // if more than 1 storage
+        // or if no main storage file
+
+        log::info!("Merging {} db files into one", db_files.len());
+
+        let key = self
+            .key
+            .read()
+            .map_err(|err| anyhow!("Failed to acquire read lock for the key: {err}"))?;
+        let key = key.as_ref().context("Key is missing")?;
+
+        let mut tx = FsTransaction::new();
+
+        // backup db files and open storages
+        let storages = db_files
+            .iter()
+            .map(|db_file| {
+                let new_db_file = tx.move_to_backup(db_file)?;
+
+                BazaStorage::read_file(&new_db_file, key.clone())
+                    .context(anyhow!("Failed to open storage for db {db_file}"))
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        merge_storages_to_file(storages, main_db_file)?;
+
+        tx.commit()?;
+
+        Ok(())
     }
 
     pub fn get_state_file_modification_time(&self) -> Result<Timestamp> {

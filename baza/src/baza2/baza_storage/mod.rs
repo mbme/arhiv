@@ -285,20 +285,16 @@ pub fn create_test_storage<'k>(
     BazaStorage::read(data, key).unwrap()
 }
 
-pub fn merge_storages(
-    info: &BazaInfo,
-    mut storages: Vec<BazaStorage<impl Read>>,
-    writer: impl Write,
-) -> Result<()> {
+pub fn merge_storages(mut storages: Vec<BazaStorage<impl Read>>, writer: impl Write) -> Result<()> {
     ensure!(!storages.is_empty(), "storages must not be empty");
 
     let is_same_info = storages
         .iter_mut()
         .map(|s| s.get_info())
         .collect::<Result<Vec<_>>>()?
-        .into_iter()
-        .all(|s_info| s_info == info);
-    ensure!(is_same_info, "all storages must have same info");
+        .windows(2)
+        .all(|w| w[0] == w[1]);
+    ensure!(is_same_info, "all storages must have the same info");
 
     let mut keys_per_storage = storages
         .into_iter()
@@ -349,6 +345,7 @@ pub fn merge_storages(
     let index = DocumentsIndex::from_document_keys_refs(index_keys);
 
     let key = &keys_per_storage[0].0.key;
+    let info = &keys_per_storage[0].0.info;
     let agegz_writer = AgeGzWriter::new(writer, key.clone())?;
     let mut container_writer = ContainerWriter::new(agegz_writer);
 
@@ -384,18 +381,14 @@ pub fn merge_storages(
     Ok(())
 }
 
-pub fn merge_storages_to_file(
-    info: &BazaInfo,
-    storages: Vec<BazaStorage<impl Read>>,
-    file: &str,
-) -> Result<()> {
+pub fn merge_storages_to_file(storages: Vec<BazaStorage<impl Read>>, file: &str) -> Result<()> {
     log::debug!("Merging {} storages to file {file}", storages.len());
 
     let start_time = Instant::now();
 
     let mut storage_writer = create_file_writer(file, false)?;
 
-    merge_storages(info, storages, &mut storage_writer)?;
+    merge_storages(storages, &mut storage_writer)?;
 
     storage_writer.flush()?;
 
@@ -502,7 +495,7 @@ mod tests {
 
         // merge storages
         let mut result = Cursor::new(Vec::<u8>::new());
-        merge_storages(&info, vec![storage1, storage2, storage3], &mut result).unwrap();
+        merge_storages(vec![storage1, storage2, storage3], &mut result).unwrap();
         result.set_position(0);
 
         let mut storage = BazaStorage::read(&mut result, key.clone()).unwrap();

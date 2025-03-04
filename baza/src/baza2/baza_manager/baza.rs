@@ -7,7 +7,7 @@ use rs_utils::{age::AgeKey, log, FsTransaction, LockFile, Timestamp};
 
 use crate::{
     baza2::{
-        baza_storage::{create_container_patch, merge_storages_to_file, BazaFileStorage},
+        baza_storage::{create_container_patch, BazaFileStorage},
         BazaInfo, BazaState, BazaStorage, DocumentHead, Filter, ListPage, Locks,
     },
     entities::{
@@ -187,8 +187,6 @@ impl Baza {
     pub fn commit(&mut self) -> Result<bool> {
         self.save_changes()?;
 
-        self.merge_storages()?;
-
         if !self.has_staged_documents() {
             log::debug!("Can't commit: nothing to commit");
             return Ok(false);
@@ -301,45 +299,6 @@ impl Baza {
             self.state
                 .write_to_file(&self.paths.state_file, self.key.clone())?;
         }
-
-        Ok(())
-    }
-
-    pub(super) fn merge_storages(&self) -> Result<()> {
-        let db_files = self.paths.list_storage_db_files()?;
-
-        if db_files.is_empty() {
-            log::debug!("No existing db files found");
-            return Ok(());
-        }
-
-        let main_db_file = &self.paths.storage_main_db_file;
-        if db_files.len() == 1 && db_files[0] == *main_db_file {
-            log::debug!("There's only main db file");
-            return Ok(());
-        }
-
-        // if more than 1 storage
-        // or if no main storage file
-
-        log::info!("Merging {} db files into one", db_files.len());
-
-        let mut tx = FsTransaction::new();
-
-        // backup db files and open storages
-        let storages = db_files
-            .iter()
-            .map(|db_file| {
-                let new_db_file = tx.move_to_backup(db_file)?;
-
-                self.open_storage(&new_db_file)
-                    .context(anyhow!("Failed to open storage for db {db_file}"))
-            })
-            .collect::<Result<Vec<_>>>()?;
-
-        merge_storages_to_file(self.get_info(), storages, main_db_file)?;
-
-        tx.commit()?;
 
         Ok(())
     }

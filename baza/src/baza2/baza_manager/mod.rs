@@ -1,16 +1,15 @@
+mod baza;
 mod baza_paths;
 mod blobs;
 pub mod stats;
 
 use std::{
     collections::{HashMap, HashSet},
-    fs::remove_file,
     io::Read,
     sync::RwLock,
 };
 
 use anyhow::{anyhow, ensure, Context, Result};
-use thiserror::Error;
 
 use rs_utils::{
     age::{encrypt_and_write_file, read_and_decrypt_file, AgeKey},
@@ -19,31 +18,19 @@ use rs_utils::{
 
 use crate::{
     baza2::baza_storage::create_container_patch,
-    entities::{
-        BLOBId, Document, DocumentKey, DocumentLock, DocumentLockKey, Id, InstanceId, Revision,
-    },
+    entities::{BLOBId, Document, DocumentKey, Id, InstanceId, Revision},
     schema::DataSchema,
-    validator::{ValidationError, Validator},
     DocumentExpert,
 };
 
+pub use baza::{Baza, StagingError};
 use baza_paths::BazaPaths;
 use blobs::write_and_encrypt_blob;
 
 use super::{
-    baza_state::Locks,
-    baza_storage::{
-        create_empty_storage_file, merge_storages_to_file, BazaFileStorage, STORAGE_VERSION,
-    },
-    BazaInfo, BazaState, BazaStorage, DocumentHead, Filter, ListPage,
+    baza_storage::{create_empty_storage_file, STORAGE_VERSION},
+    BazaInfo, BazaState, BazaStorage,
 };
-
-#[derive(Error, Debug)]
-#[error(transparent)]
-pub enum StagingError {
-    Validation(#[from] ValidationError),
-    Other(#[from] anyhow::Error),
-}
 
 pub struct BazaManager {
     schema: DataSchema,
@@ -376,361 +363,6 @@ impl BazaManager {
     }
 }
 
-pub struct Baza {
-    _lock: LockFile,
-    state: BazaState,
-    paths: BazaPaths,
-    key: AgeKey,
-}
-
-impl Baza {
-    #[cfg(test)]
-    pub fn create_storage_file(&self, file_path: &str, docs: &[Document]) {
-        use rs_utils::create_file_writer;
-
-        use crate::baza2::baza_storage::create_storage;
-
-        let mut storage_writer = create_file_writer(file_path, false).unwrap();
-        create_storage(&mut storage_writer, self.key.clone(), self.get_info(), docs).unwrap();
-    }
-
-    pub fn get_info(&self) -> &BazaInfo {
-        self.state.get_info()
-    }
-
-    pub fn get_instance_id(&self) -> &InstanceId {
-        self.state.get_instance_id()
-    }
-
-    pub fn get_data_version(&self) -> u8 {
-        self.state.get_info().data_version
-    }
-
-    pub fn get_single_latest_revision(&self) -> &Revision {
-        self.state.get_single_latest_revision()
-    }
-
-    pub fn get_schema(&self) -> &DataSchema {
-        self.state.get_schema()
-    }
-
-    pub fn get_storage_dir(&self) -> &str {
-        &self.paths.storage_dir
-    }
-
-    pub fn find_last_modification_time(&self) -> Option<Timestamp> {
-        self.state.find_last_modification_time()
-    }
-
-    pub fn list_document_locks(&self) -> &Locks {
-        self.state.list_document_locks()
-    }
-
-    pub fn has_document_locks(&self) -> bool {
-        self.state.has_document_locks()
-    }
-
-    pub fn is_document_locked(&self, id: &Id) -> bool {
-        self.state.is_document_locked(id)
-    }
-
-    pub fn lock_document(&mut self, id: &Id, reason: impl Into<String>) -> Result<&DocumentLock> {
-        let reason = reason.into();
-        log::debug!("Locking document {id}: {reason}");
-        self.state.lock_document(id, reason)
-    }
-
-    pub fn unlock_document(&mut self, id: &Id, key: &DocumentLockKey) -> Result<()> {
-        log::debug!("Unlocking document {id}");
-
-        self.state.unlock_document(id, key)
-    }
-
-    pub fn unlock_document_without_key(&mut self, id: &Id) -> Result<()> {
-        log::info!("Unlocking document {id} without a key");
-
-        self.state.unlock_document_without_key(id)
-    }
-
-    pub fn get_document(&self, id: &Id) -> Option<&DocumentHead> {
-        self.state.get_document(id)
-    }
-
-    pub fn must_get_document(&self, id: &Id) -> Result<&Document> {
-        self.state.must_get_document(id)
-    }
-
-    pub fn stage_document(
-        &mut self,
-        document: Document,
-        lock_key: &Option<DocumentLockKey>,
-    ) -> std::result::Result<&Document, StagingError> {
-        log::debug!("Staging document {}", &document.id);
-
-        Validator::new(self as &Baza).validate_staged(&document)?;
-
-        let document = self.state.stage_document(document, lock_key)?;
-
-        Ok(document)
-    }
-
-    pub fn erase_document(&mut self, id: &Id) -> Result<()> {
-        log::debug!("Erasing document {id}");
-
-        self.state.erase_document(id)
-    }
-
-    pub fn has_staged_documents(&self) -> bool {
-        self.state.has_staged_documents()
-    }
-
-    pub fn iter_documents(&self) -> impl Iterator<Item = &DocumentHead> {
-        self.state.iter_documents()
-    }
-
-    #[cfg(test)]
-    pub fn insert_snapshot(&mut self, document: Document) -> Result<()> {
-        self.state.insert_snapshot(document)
-    }
-
-    pub fn list_documents(&self, filter: &Filter) -> Result<ListPage> {
-        self.state.list_documents(filter)
-    }
-
-    pub fn find_document_backrefs(&self, id: &Id) -> HashSet<Id> {
-        self.state.find_document_backrefs(id)
-    }
-
-    pub fn find_document_collections(&self, id: &Id) -> HashSet<Id> {
-        self.state.find_document_collections(id)
-    }
-
-    pub fn update_document_collections(
-        &mut self,
-        document_id: &Id,
-        collections: &Vec<Id>,
-    ) -> Result<()> {
-        log::debug!("Updating collections of document {document_id}");
-
-        self.state
-            .update_document_collections(document_id, collections)
-    }
-
-    pub(crate) fn open_storage<'s>(&self, file_path: &str) -> Result<BazaFileStorage<'s>> {
-        BazaStorage::read_file(file_path, self.key.clone())
-    }
-
-    pub fn has_unsaved_changes(&self) -> bool {
-        self.state.is_modified()
-    }
-
-    pub fn save_changes(&mut self) -> Result<()> {
-        if self.state.is_modified() {
-            self.state
-                .write_to_file(&self.paths.state_file, self.key.clone())?;
-            log::info!("Saved state changes to the file");
-        }
-
-        Ok(())
-    }
-
-    pub fn commit(&mut self) -> Result<bool> {
-        self.save_changes()?;
-
-        self.merge_storages()?;
-
-        if !self.has_staged_documents() {
-            log::debug!("Can't commit: nothing to commit");
-            return Ok(false);
-        }
-
-        if self.state.has_document_locks() {
-            log::debug!("Can't commit: some documents are locked");
-            return Ok(false);
-        }
-
-        let mut tx = FsTransaction::new();
-
-        // backup db file
-        let old_db_file = tx.move_to_backup(self.paths.storage_main_db_file.clone())?;
-
-        // open old db file
-        let storage = self.open_storage(&old_db_file)?;
-
-        // update state
-        self.state.commit()?;
-
-        // collect snapshots that aren't present in the storage
-        let new_snapshots = self
-            .state
-            .iter_documents()
-            .flat_map(|head| head.iter_original_snapshots())
-            .filter(|document| !storage.contains(&DocumentKey::for_document(document)))
-            .collect::<Vec<_>>();
-        log::info!("Commit: {} new document snapshots", new_snapshots.len());
-
-        // collect new blobs that are used by new snapshots
-        let new_blobs = self.collect_new_blobs(&new_snapshots)?;
-        log::info!("Commit: {} new BLOBs", new_blobs.len());
-
-        // move blobs
-        for new_blob_id in new_blobs {
-            let state_blob_path = self.paths.get_state_blob_path(&new_blob_id);
-            let storage_blob_path = self.paths.get_storage_blob_path(&new_blob_id);
-
-            tx.move_file(state_blob_path, storage_blob_path, true)?;
-        }
-
-        // write changes to db file
-        let mut patch = create_container_patch(new_snapshots.into_iter())?;
-        for key in get_storage_keys_to_erase(&storage, &mut self.state)? {
-            patch.insert(key, None);
-        }
-        storage.patch_and_save_to_file(&self.paths.storage_main_db_file, patch)?;
-
-        // backup state file
-        tx.move_to_backup(self.paths.state_file.clone())?;
-
-        // write changes to state file
-        self.state
-            .write_to_file(&self.paths.state_file, self.key.clone())?;
-
-        tx.commit()?;
-        log::info!("Commit: finished");
-
-        self.update_state_from_storage()?;
-        self.remove_unused_storage_blobs()?;
-
-        // remove unused state BLOBs if any
-        let unused_state_blobs = self.paths.list_state_blobs()?;
-        if !unused_state_blobs.is_empty() {
-            log::info!("Removing {} unused state BLOBs", unused_state_blobs.len());
-
-            for blob_id in unused_state_blobs {
-                let file_path = self.paths.get_state_blob_path(&blob_id);
-                remove_file(file_path).context("Failed to remove unused state BLOB")?;
-            }
-        }
-
-        Ok(true)
-    }
-
-    fn collect_new_blobs(&self, new_snapshots: &[&Document]) -> Result<HashSet<BLOBId>> {
-        let mut new_blobs = HashSet::new();
-
-        for document in new_snapshots {
-            let key = document.create_key();
-            let refs = self
-                .state
-                .get_document_snapshot_refs(&key)
-                .context(anyhow!("Can't find document refs for {key:?}"))?;
-
-            for blob_id in &refs.blobs {
-                if new_blobs.contains(blob_id) {
-                    continue;
-                }
-
-                if self.paths.storage_blob_exists(blob_id)? {
-                    continue;
-                }
-
-                new_blobs.insert(blob_id.clone());
-            }
-        }
-
-        Ok(new_blobs)
-    }
-
-    fn update_state_from_storage(&mut self) -> Result<()> {
-        let mut storage = self.open_storage(&self.paths.storage_main_db_file)?;
-
-        let latest_snapshots_count = update_state_from_storage(&mut self.state, &mut storage)?;
-
-        if latest_snapshots_count > 0 {
-            log::info!("Got {latest_snapshots_count} latest snapshots from the storage");
-            self.state
-                .write_to_file(&self.paths.state_file, self.key.clone())?;
-        }
-
-        Ok(())
-    }
-
-    fn merge_storages(&self) -> Result<()> {
-        let db_files = self.paths.list_storage_db_files()?;
-
-        if db_files.is_empty() {
-            log::debug!("No existing db files found");
-            return Ok(());
-        }
-
-        let main_db_file = &self.paths.storage_main_db_file;
-        if db_files.len() == 1 && db_files[0] == *main_db_file {
-            log::debug!("There's only main db file");
-            return Ok(());
-        }
-
-        // if more than 1 storage
-        // or if no main storage file
-
-        log::info!("Merging {} db files into one", db_files.len());
-
-        let mut tx = FsTransaction::new();
-
-        // backup db files and open storages
-        let storages = db_files
-            .iter()
-            .map(|db_file| {
-                let new_db_file = tx.move_to_backup(db_file)?;
-
-                self.open_storage(&new_db_file)
-                    .context(anyhow!("Failed to open storage for db {db_file}"))
-            })
-            .collect::<Result<Vec<_>>>()?;
-
-        merge_storages_to_file(self.get_info(), storages, main_db_file)?;
-
-        tx.commit()?;
-
-        Ok(())
-    }
-
-    fn remove_unused_storage_blobs(&self) -> Result<()> {
-        let blob_refs = self.state.get_all_blob_refs();
-        let storage_blobs = self.paths.list_storage_blobs()?;
-
-        // warn about missing storage BLOBs if any
-        let missing_blobs = blob_refs.difference(&storage_blobs).collect::<Vec<_>>();
-        if !missing_blobs.is_empty() {
-            log::warn!("There are {} missing BLOBs", missing_blobs.len());
-            log::trace!("Missing BLOBs: {missing_blobs:?}");
-        }
-
-        // remove unused storage BLOBs if any
-        let unused_storage_blobs = storage_blobs.difference(&blob_refs).collect::<Vec<_>>();
-        if !unused_storage_blobs.is_empty() {
-            log::info!(
-                "Removing {} unused storage BLOBs",
-                unused_storage_blobs.len()
-            );
-
-            for blob_id in unused_storage_blobs {
-                let file_path = self.paths.get_storage_blob_path(blob_id);
-                remove_file(file_path).context("Failed to remove unused storage BLOB")?;
-            }
-        }
-
-        Ok(())
-    }
-}
-
-impl Drop for Baza {
-    fn drop(&mut self) {
-        if self.has_unsaved_changes() {
-            log::error!("Dropping Baza with unsaved changes");
-        }
-    }
-}
-
 fn add_keys<'r>(
     keys: &mut HashSet<DocumentKey>,
     id: &Id,
@@ -815,23 +447,6 @@ fn update_state_from_storage<R: Read>(
     Ok(latest_snapshots_count)
 }
 
-/// collect keys of storage documents that are known to be erased in the state
-fn get_storage_keys_to_erase<R: Read>(
-    storage: &BazaStorage<R>,
-    state: &mut BazaState,
-) -> Result<Vec<String>> {
-    let mut keys = Vec::new();
-    for key in storage.index.iter() {
-        if let Some(head) = state.get_document(&key.id) {
-            if head.is_original_erased() && key.rev.is_older_than(head.get_revision()) {
-                keys.push(key.serialize());
-            }
-        }
-    }
-
-    Ok(keys)
-}
-
 #[cfg(test)]
 mod tests {
     use serde_json::json;
@@ -898,11 +513,11 @@ mod tests {
         let manager = BazaManager::new_for_tests(&temp_dir.path);
         let mut baza = manager.open().unwrap();
 
-        assert!(dir_exists(&baza.paths.storage_dir).unwrap());
-        assert!(dir_exists(&baza.paths.state_dir).unwrap());
+        assert!(dir_exists(&manager.paths.storage_dir).unwrap());
+        assert!(dir_exists(&manager.paths.state_dir).unwrap());
 
-        assert!(file_exists(&baza.paths.state_file).unwrap());
-        assert!(file_exists(&baza.paths.storage_main_db_file).unwrap());
+        assert!(file_exists(&manager.paths.state_file).unwrap());
+        assert!(file_exists(&manager.paths.storage_main_db_file).unwrap());
 
         let blob1_file = temp_dir.new_child("blob1");
         blob1_file.write_str("blob1").unwrap();
@@ -938,15 +553,17 @@ mod tests {
         let baza = manager.open().unwrap();
 
         // ensure new BLOB is committed
-        assert!(baza.paths.storage_blob_exists(&blob1).unwrap());
+        assert!(manager.paths.storage_blob_exists(&blob1).unwrap());
 
         // ensure unused state BLOB is removed
-        assert!(!baza.paths.storage_blob_exists(&blob2).unwrap());
-        assert!(baza.paths.list_state_blobs().unwrap().is_empty());
+        assert!(!manager.paths.storage_blob_exists(&blob2).unwrap());
+        assert!(manager.paths.list_state_blobs().unwrap().is_empty());
 
         assert!(!baza.has_staged_documents());
 
-        let storage = baza.open_storage(&baza.paths.storage_main_db_file).unwrap();
+        let storage = baza
+            .open_storage(&manager.paths.storage_main_db_file)
+            .unwrap();
         assert_eq!(storage.index.len(), 2);
     }
 
@@ -971,24 +588,26 @@ mod tests {
         // Ensure the document and BLOB are in storage
         let mut baza = manager.open().unwrap();
         let doc_a1_key = baza.get_document(&doc_a1.id).unwrap().create_key();
-        let storage = baza.open_storage(&baza.paths.storage_main_db_file).unwrap();
+        let storage = baza
+            .open_storage(&manager.paths.storage_main_db_file)
+            .unwrap();
         assert!(storage.contains(&doc_a1_key));
-        assert!(baza.paths.storage_blob_exists(&blob_id).unwrap());
+        assert!(manager.paths.storage_blob_exists(&blob_id).unwrap());
 
         // Erase the document and commit
-        let mut doc_a2 = doc_a1.clone();
-        doc_a2.erase();
-        baza.state.stage_document(doc_a2.clone(), &None).unwrap();
+        baza.erase_document(&doc_a1.id).unwrap();
         baza.commit().unwrap();
         drop(baza);
 
         // Reopen storage and check the snapshot and BLOB are removed
         let baza = manager.open().unwrap();
-        let doc_a2_key = baza.get_document(&doc_a2.id).unwrap().create_key();
-        let storage = baza.open_storage(&baza.paths.storage_main_db_file).unwrap();
+        let doc_a2_key = baza.get_document(&doc_a1.id).unwrap().create_key();
+        let storage = baza
+            .open_storage(&manager.paths.storage_main_db_file)
+            .unwrap();
         assert!(!storage.contains(&doc_a1_key));
         assert!(storage.contains(&doc_a2_key));
-        assert!(!baza.paths.storage_blob_exists(&blob_id).unwrap());
+        assert!(!manager.paths.storage_blob_exists(&blob_id).unwrap());
     }
 
     #[test]
@@ -999,8 +618,8 @@ mod tests {
         let manager = BazaManager::new_for_tests(&temp_dir.path);
         let mut baza = manager.open().unwrap();
 
-        let db_file_1 = baza.paths.get_storage_file("db1");
-        let db_file_2 = baza.paths.get_storage_file("db2");
+        let db_file_1 = manager.paths.get_storage_file("db1");
+        let db_file_2 = manager.paths.get_storage_file("db2");
 
         let doc_a1 = new_document(json!({ "test": "a" })).with_rev(json!({ "a": 1 }));
         let doc_a2 = doc_a1.clone().with_rev(json!({ "a": 2 }));
@@ -1025,7 +644,9 @@ mod tests {
 
         assert_eq!(baza.iter_documents().count(), 3);
 
-        let storage = baza.open_storage(&baza.paths.storage_main_db_file).unwrap();
+        let storage = baza
+            .open_storage(&manager.paths.storage_main_db_file)
+            .unwrap();
         assert_eq!(storage.index.len(), 4);
     }
 

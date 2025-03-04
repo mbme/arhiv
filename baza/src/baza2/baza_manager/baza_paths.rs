@@ -32,7 +32,7 @@ pub struct BazaPaths {
 impl BazaPaths {
     pub fn new(storage_dir: String, state_dir: String) -> Self {
         let key_file_name = "key.age".to_string();
-        let key_file = format!("{state_dir}/{key_file_name}");
+        let key_file = format!("{storage_dir}/{key_file_name}");
 
         let storage_main_db_file_name = format!("baza{STORAGE_EXT}");
         let storage_main_db_file = format!("{storage_dir}/{storage_main_db_file_name}");

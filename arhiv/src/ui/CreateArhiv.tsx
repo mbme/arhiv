@@ -48,6 +48,7 @@ export function CreateArhiv() {
             required
             minLength={window.MIN_PASSWORD_LENGTH}
             autoComplete="off"
+            autoFocus
           />
         </label>
 

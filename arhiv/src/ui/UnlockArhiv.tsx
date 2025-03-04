@@ -31,6 +31,7 @@ export function UnlockArhiv() {
             required
             minLength={window.MIN_PASSWORD_LENGTH}
             autoComplete="off"
+            autoFocus
             onChange={(e) => {
               setPassword(e.currentTarget.value);
             }}

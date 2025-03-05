@@ -1,6 +1,8 @@
 use anyhow::Result;
 use serde::Serialize;
 
+use crate::baza2::BazaStorage;
+
 use super::Baza;
 
 #[derive(Serialize, Debug, PartialEq, Eq)]
@@ -83,7 +85,7 @@ impl Baza {
             }
         }
 
-        let storage = self.open_storage(&self.paths.storage_main_db_file)?;
+        let storage = BazaStorage::read_file(&self.paths.storage_main_db_file, self.key.clone())?;
         count.snapshots = storage.index.len();
 
         Ok(count)

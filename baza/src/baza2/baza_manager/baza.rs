@@ -7,8 +7,8 @@ use rs_utils::{age::AgeKey, log, FsTransaction, LockFile, Timestamp};
 
 use crate::{
     baza2::{
-        baza_storage::{create_container_patch, BazaFileStorage},
-        BazaInfo, BazaState, BazaStorage, DocumentHead, Filter, ListPage, Locks,
+        baza_storage::create_container_patch, BazaInfo, BazaState, BazaStorage, DocumentHead,
+        Filter, ListPage, Locks,
     },
     entities::{
         BLOBId, Document, DocumentKey, DocumentLock, DocumentLockKey, Id, InstanceId, Revision,
@@ -17,7 +17,7 @@ use crate::{
     validator::{ValidationError, Validator},
 };
 
-use super::{baza_paths::BazaPaths, update_state_from_storage};
+use super::baza_paths::BazaPaths;
 
 #[derive(Error, Debug)]
 #[error(transparent)]
@@ -166,10 +166,6 @@ impl Baza {
             .update_document_collections(document_id, collections)
     }
 
-    pub(crate) fn open_storage<'s>(&self, file_path: &str) -> Result<BazaFileStorage<'s>> {
-        BazaStorage::read_file(file_path, self.key.clone())
-    }
-
     pub fn has_unsaved_changes(&self) -> bool {
         self.state.is_modified()
     }
@@ -197,13 +193,13 @@ impl Baza {
             return Ok(false);
         }
 
-        let mut tx = FsTransaction::new();
+        let mut fs_tx = FsTransaction::new();
 
         // backup db file
-        let old_db_file = tx.move_to_backup(self.paths.storage_main_db_file.clone())?;
+        let old_db_file = fs_tx.move_to_backup(self.paths.storage_main_db_file.clone())?;
 
         // open old db file
-        let storage = self.open_storage(&old_db_file)?;
+        let storage = BazaStorage::read_file(&old_db_file, self.key.clone())?;
 
         // update state
         self.state.commit()?;
@@ -226,28 +222,25 @@ impl Baza {
             let state_blob_path = self.paths.get_state_blob_path(&new_blob_id);
             let storage_blob_path = self.paths.get_storage_blob_path(&new_blob_id);
 
-            tx.move_file(state_blob_path, storage_blob_path, true)?;
+            fs_tx.move_file(state_blob_path, storage_blob_path, true)?;
         }
 
         // write changes to db file
         let mut patch = create_container_patch(new_snapshots.into_iter())?;
-        for key in get_storage_keys_to_erase(&storage, &mut self.state)? {
+        for key in self.get_storage_keys_to_erase(&storage)? {
             patch.insert(key, None);
         }
         storage.patch_and_save_to_file(&self.paths.storage_main_db_file, patch)?;
 
         // backup state file
-        tx.move_to_backup(self.paths.state_file.clone())?;
+        fs_tx.move_to_backup(self.paths.state_file.clone())?;
 
         // write changes to state file
         self.state
             .write_to_file(&self.paths.state_file, self.key.clone())?;
 
-        tx.commit()?;
+        fs_tx.commit()?;
         log::info!("Commit: finished");
-
-        self.update_state_from_storage()?;
-        self.remove_unused_storage_blobs()?;
 
         // remove unused state BLOBs if any
         let unused_state_blobs = self.paths.list_state_blobs()?;
@@ -289,46 +282,18 @@ impl Baza {
         Ok(new_blobs)
     }
 
-    pub(super) fn update_state_from_storage(&mut self) -> Result<()> {
-        let mut storage = self.open_storage(&self.paths.storage_main_db_file)?;
-
-        let latest_snapshots_count = update_state_from_storage(&mut self.state, &mut storage)?;
-
-        if latest_snapshots_count > 0 {
-            log::info!("Got {latest_snapshots_count} latest snapshots from the storage");
-            self.state
-                .write_to_file(&self.paths.state_file, self.key.clone())?;
-        }
-
-        Ok(())
-    }
-
-    pub(super) fn remove_unused_storage_blobs(&self) -> Result<()> {
-        let blob_refs = self.state.get_all_blob_refs();
-        let storage_blobs = self.paths.list_storage_blobs()?;
-
-        // warn about missing storage BLOBs if any
-        let missing_blobs = blob_refs.difference(&storage_blobs).collect::<Vec<_>>();
-        if !missing_blobs.is_empty() {
-            log::warn!("There are {} missing BLOBs", missing_blobs.len());
-            log::trace!("Missing BLOBs: {missing_blobs:?}");
-        }
-
-        // remove unused storage BLOBs if any
-        let unused_storage_blobs = storage_blobs.difference(&blob_refs).collect::<Vec<_>>();
-        if !unused_storage_blobs.is_empty() {
-            log::info!(
-                "Removing {} unused storage BLOBs",
-                unused_storage_blobs.len()
-            );
-
-            for blob_id in unused_storage_blobs {
-                let file_path = self.paths.get_storage_blob_path(blob_id);
-                remove_file(file_path).context("Failed to remove unused storage BLOB")?;
+    /// collect keys of storage documents that are known to be erased in the state
+    fn get_storage_keys_to_erase<R: Read>(&self, storage: &BazaStorage<R>) -> Result<Vec<String>> {
+        let mut keys = Vec::new();
+        for key in storage.index.iter() {
+            if let Some(head) = self.state.get_document(&key.id) {
+                if head.is_original_erased() && key.rev.is_older_than(head.get_revision()) {
+                    keys.push(key.serialize());
+                }
             }
         }
 
-        Ok(())
+        Ok(keys)
     }
 }
 
@@ -338,21 +303,4 @@ impl Drop for Baza {
             log::error!("Dropping Baza with unsaved changes");
         }
     }
-}
-
-/// collect keys of storage documents that are known to be erased in the state
-fn get_storage_keys_to_erase<R: Read>(
-    storage: &BazaStorage<R>,
-    state: &mut BazaState,
-) -> Result<Vec<String>> {
-    let mut keys = Vec::new();
-    for key in storage.index.iter() {
-        if let Some(head) = state.get_document(&key.id) {
-            if head.is_original_erased() && key.rev.is_older_than(head.get_revision()) {
-                keys.push(key.serialize());
-            }
-        }
-    }
-
-    Ok(keys)
 }

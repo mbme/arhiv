@@ -5,6 +5,7 @@ pub mod stats;
 
 use std::{
     collections::{HashMap, HashSet},
+    fs::remove_file,
     io::Read,
     sync::RwLock,
 };
@@ -28,14 +29,14 @@ use baza_paths::BazaPaths;
 use blobs::write_and_encrypt_blob;
 
 use super::{
-    baza_storage::{create_empty_storage_file, STORAGE_VERSION},
+    baza_storage::{create_empty_storage_file, BazaFileStorage, STORAGE_VERSION},
     BazaInfo, BazaState, BazaStorage,
 };
 
 pub struct BazaManager {
     schema: DataSchema,
     pub(crate) paths: BazaPaths,
-    key: RwLock<Option<AgeKey>>,
+    pub(crate) key: RwLock<Option<AgeKey>>,
 }
 
 impl BazaManager {
@@ -64,7 +65,7 @@ impl BazaManager {
 
         let lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
 
-        let state = if self.paths.state_file_exists()? {
+        let mut state = if self.paths.state_file_exists()? {
             let state =
                 BazaState::read_file(&self.paths.state_file, key.clone(), self.schema.clone())?;
 
@@ -84,19 +85,19 @@ impl BazaManager {
             self.create_state(InstanceId::generate())?
         };
 
-        let mut baza = Baza {
+        self.merge_storages()?;
+
+        if !state.has_staged_documents() {
+            self.update_state_from_storage(&mut state)?;
+            self.remove_unused_storage_blobs(&state)?;
+        }
+
+        let baza = Baza {
             _lock: lock,
             state,
             key: key.clone(),
             paths: self.paths.clone(),
         };
-
-        self.merge_storages()?;
-
-        if !baza.has_staged_documents() {
-            baza.update_state_from_storage()?;
-            baza.remove_unused_storage_blobs()?;
-        }
 
         Ok(baza)
     }
@@ -113,11 +114,21 @@ impl BazaManager {
         Ok(have_storage_db_files && have_key_file)
     }
 
+    pub(crate) fn open_storage<'s>(&self, file_path: &str) -> Result<BazaFileStorage<'s>> {
+        let key = self
+            .key
+            .read()
+            .map_err(|err| anyhow!("Failed to acquire read lock for the key: {err}"))?;
+        let key = key.as_ref().context("Key is missing")?;
+
+        BazaStorage::read_file(file_path, key.clone())
+    }
+
     fn merge_storages(&self) -> Result<()> {
         let db_files = self.paths.list_storage_db_files()?;
 
         if db_files.is_empty() {
-            log::debug!("No existing db files found");
+            log::trace!("No existing db files found");
             return Ok(());
         }
 
@@ -132,28 +143,70 @@ impl BazaManager {
 
         log::info!("Merging {} db files into one", db_files.len());
 
-        let key = self
-            .key
-            .read()
-            .map_err(|err| anyhow!("Failed to acquire read lock for the key: {err}"))?;
-        let key = key.as_ref().context("Key is missing")?;
-
-        let mut tx = FsTransaction::new();
+        let mut fs_tx = FsTransaction::new();
 
         // backup db files and open storages
         let storages = db_files
             .iter()
             .map(|db_file| {
-                let new_db_file = tx.move_to_backup(db_file)?;
+                let new_db_file = fs_tx.move_to_backup(db_file)?;
 
-                BazaStorage::read_file(&new_db_file, key.clone())
+                self.open_storage(&new_db_file)
                     .context(anyhow!("Failed to open storage for db {db_file}"))
             })
             .collect::<Result<Vec<_>>>()?;
 
         merge_storages_to_file(storages, main_db_file)?;
 
-        tx.commit()?;
+        fs_tx.commit()?;
+
+        Ok(())
+    }
+
+    fn remove_unused_storage_blobs(&self, state: &BazaState) -> Result<()> {
+        let blob_refs = state.get_all_blob_refs();
+        let storage_blobs = self.paths.list_storage_blobs()?;
+
+        // warn about missing storage BLOBs if any
+        let missing_blobs = blob_refs.difference(&storage_blobs).collect::<Vec<_>>();
+        if !missing_blobs.is_empty() {
+            log::warn!("There are {} missing BLOBs", missing_blobs.len());
+            log::trace!("Missing BLOBs: {missing_blobs:?}");
+        }
+
+        // remove unused storage BLOBs if any
+        let unused_storage_blobs = storage_blobs.difference(&blob_refs).collect::<Vec<_>>();
+        if !unused_storage_blobs.is_empty() {
+            log::info!(
+                "Removing {} unused storage BLOBs",
+                unused_storage_blobs.len()
+            );
+
+            for blob_id in unused_storage_blobs {
+                let file_path = self.paths.get_storage_blob_path(blob_id);
+                remove_file(file_path).context("Failed to remove unused storage BLOB")?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn update_state_from_storage(&self, state: &mut BazaState) -> Result<()> {
+        let key = self
+            .key
+            .read()
+            .map_err(|err| anyhow!("Failed to acquire read lock for the key: {err}"))?;
+        let key = key.as_ref().context("Key is missing")?;
+
+        let mut storage = BazaStorage::read_file(&self.paths.storage_main_db_file, key.clone())?;
+
+        let latest_snapshots_count = update_state_from_storage(state, &mut storage)?;
+
+        if latest_snapshots_count > 0 {
+            log::info!("Got {latest_snapshots_count} latest snapshots from the storage");
+
+            state.write_to_file(&self.paths.state_file, key.clone())?;
+        }
 
         Ok(())
     }
@@ -320,17 +373,11 @@ impl BazaManager {
 
         let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
 
-        let key = self
-            .key
-            .read()
-            .map_err(|err| anyhow!("Failed to acquire read lock for the key: {err}"))?;
-        let key = key.as_ref().context("Key is missing")?;
-
         let mut tx = FsTransaction::new();
 
         let old_db_file = tx.move_to_backup(self.paths.storage_main_db_file.clone())?;
 
-        let storage = BazaStorage::read_file(&old_db_file, key.clone())?;
+        let storage = self.open_storage(&old_db_file)?;
 
         let patch = create_container_patch(new_snapshots.iter())?;
         storage.patch_and_save_to_file(&self.paths.storage_main_db_file, patch)?;
@@ -606,7 +653,7 @@ mod tests {
 
         assert!(!baza.has_staged_documents());
 
-        let storage = baza
+        let storage = manager
             .open_storage(&manager.paths.storage_main_db_file)
             .unwrap();
         assert_eq!(storage.index.len(), 2);
@@ -633,7 +680,7 @@ mod tests {
         // Ensure the document and BLOB are in storage
         let mut baza = manager.open().unwrap();
         let doc_a1_key = baza.get_document(&doc_a1.id).unwrap().create_key();
-        let storage = baza
+        let storage = manager
             .open_storage(&manager.paths.storage_main_db_file)
             .unwrap();
         assert!(storage.contains(&doc_a1_key));
@@ -647,7 +694,7 @@ mod tests {
         // Reopen storage and check the snapshot and BLOB are removed
         let baza = manager.open().unwrap();
         let doc_a2_key = baza.get_document(&doc_a1.id).unwrap().create_key();
-        let storage = baza
+        let storage = manager
             .open_storage(&manager.paths.storage_main_db_file)
             .unwrap();
         assert!(!storage.contains(&doc_a1_key));
@@ -689,7 +736,7 @@ mod tests {
 
         assert_eq!(baza.iter_documents().count(), 3);
 
-        let storage = baza
+        let storage = manager
             .open_storage(&manager.paths.storage_main_db_file)
             .unwrap();
         assert_eq!(storage.index.len(), 4);

@@ -23,7 +23,7 @@ impl BazaManager {
         let backup_storage_files =
             list_backup_storage_db_files(backup_dir, &self.paths.storage_main_db_file_name)?;
         if let Some(backup_storage_file) = backup_storage_files.first() {
-            baza.open_storage(backup_storage_file)?;
+            self.open_storage(backup_storage_file)?;
             log::debug!("Backup: can decrypt backup storage files with current key");
         }
 

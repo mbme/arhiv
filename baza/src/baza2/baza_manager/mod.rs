@@ -1,5 +1,4 @@
 mod baza;
-mod baza_paths;
 mod blobs;
 pub mod stats;
 
@@ -25,10 +24,10 @@ use crate::{
 };
 
 pub use baza::{Baza, StagingError};
-use baza_paths::BazaPaths;
 use blobs::write_and_encrypt_blob;
 
 use super::{
+    baza_paths::BazaPaths,
     baza_storage::{create_empty_storage_file, BazaFileStorage, STORAGE_VERSION},
     BazaInfo, BazaState, BazaStorage,
 };

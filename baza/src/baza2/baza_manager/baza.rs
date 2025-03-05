@@ -7,8 +7,8 @@ use rs_utils::{age::AgeKey, log, FsTransaction, LockFile, Timestamp};
 
 use crate::{
     baza2::{
-        baza_storage::create_container_patch, BazaInfo, BazaState, BazaStorage, DocumentHead,
-        Filter, ListPage, Locks,
+        baza_paths::BazaPaths, baza_storage::create_container_patch, BazaInfo, BazaState,
+        BazaStorage, DocumentHead, Filter, ListPage, Locks,
     },
     entities::{
         BLOBId, Document, DocumentKey, DocumentLock, DocumentLockKey, Id, InstanceId, Revision,
@@ -16,8 +16,6 @@ use crate::{
     schema::DataSchema,
     validator::{ValidationError, Validator},
 };
-
-use super::baza_paths::BazaPaths;
 
 #[derive(Error, Debug)]
 #[error(transparent)]

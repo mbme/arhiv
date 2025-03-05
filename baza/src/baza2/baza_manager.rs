@@ -1,7 +1,3 @@
-mod baza;
-mod blobs;
-pub mod stats;
-
 use std::{
     collections::{HashMap, HashSet},
     fs::remove_file,
@@ -17,25 +13,25 @@ use rs_utils::{
 };
 
 use crate::{
-    baza2::baza_storage::{create_container_patch, merge_storages_to_file},
     entities::{BLOBId, Document, DocumentKey, Id, InstanceId, Revision},
     schema::DataSchema,
     DocumentExpert,
 };
 
-pub use baza::{Baza, StagingError};
-use blobs::write_and_encrypt_blob;
-
 use super::{
+    baza::write_and_encrypt_blob,
     baza_paths::BazaPaths,
-    baza_storage::{create_empty_storage_file, BazaFileStorage, STORAGE_VERSION},
-    BazaInfo, BazaState, BazaStorage,
+    baza_storage::{
+        create_container_patch, create_empty_storage_file, merge_storages_to_file, BazaFileStorage,
+        STORAGE_VERSION,
+    },
+    Baza, BazaInfo, BazaState, BazaStorage,
 };
 
 pub struct BazaManager {
     schema: DataSchema,
     pub(crate) paths: BazaPaths,
-    pub(crate) key: RwLock<Option<AgeKey>>,
+    key: RwLock<Option<AgeKey>>,
 }
 
 impl BazaManager {
@@ -372,16 +368,16 @@ impl BazaManager {
 
         let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
 
-        let mut tx = FsTransaction::new();
+        let mut fs_tx = FsTransaction::new();
 
-        let old_db_file = tx.move_to_backup(self.paths.storage_main_db_file.clone())?;
+        let old_db_file = fs_tx.move_to_backup(self.paths.storage_main_db_file.clone())?;
 
         let storage = self.open_storage(&old_db_file)?;
 
         let patch = create_container_patch(new_snapshots.iter())?;
         storage.patch_and_save_to_file(&self.paths.storage_main_db_file, patch)?;
 
-        tx.commit()?;
+        fs_tx.commit()?;
 
         Ok(())
     }

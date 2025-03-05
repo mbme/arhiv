@@ -1,3 +1,6 @@
+mod blobs;
+mod stats;
+
 use std::{collections::HashSet, fs::remove_file, io::Read};
 
 use anyhow::{anyhow, Context, Result};
@@ -16,6 +19,9 @@ use crate::{
     schema::DataSchema,
     validator::{ValidationError, Validator},
 };
+
+pub use blobs::write_and_encrypt_blob;
+pub use stats::{BLOBSCount, DocumentsCount};
 
 #[derive(Error, Debug)]
 #[error(transparent)]

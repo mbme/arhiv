@@ -1,6 +1,6 @@
 mod file_name_expert;
 
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use anyhow::{bail, ensure, Context, Result};
 use reqwest::{Client, Response};
@@ -15,10 +15,6 @@ use crate::{
     },
     log, remove_file_if_exists, stream_to_file,
 };
-
-pub trait ResponseVerifier: Send + Sync {
-    fn verify(&self, response: &Response) -> Result<()>;
-}
 
 pub struct DownloadResult {
     pub original_file_name: String,
@@ -35,7 +31,6 @@ pub struct Download {
     keep_download_file: bool,
     keep_completed_file: bool,
     client: Client,
-    response_verifier: Option<Arc<dyn ResponseVerifier>>,
 }
 
 impl Download {
@@ -74,7 +69,6 @@ impl Download {
             keep_download_file: false,
             keep_completed_file: false,
             client,
-            response_verifier: None,
         })
     }
 
@@ -88,10 +82,6 @@ impl Download {
 
     pub fn use_custom_http_client(&mut self, client: Client) {
         self.client = client;
-    }
-
-    pub fn use_response_verifier(&mut self, response_verifier: Arc<dyn ResponseVerifier>) {
-        self.response_verifier = Some(response_verifier);
     }
 
     fn deduce_start_pos(&self) -> Result<u64> {
@@ -142,12 +132,6 @@ impl Download {
         let mut start_pos = self.deduce_start_pos()?;
 
         let response = self.send_request(start_pos).await?;
-
-        if let Some(ref response_verifier) = self.response_verifier {
-            response_verifier
-                .verify(&response)
-                .context("Response verification failed")?;
-        }
 
         let status = response.status();
         log::debug!("HTTP response status: {}", &status);

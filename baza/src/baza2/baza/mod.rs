@@ -1,17 +1,22 @@
 mod blobs;
 mod stats;
 
-use std::{collections::HashSet, fs::remove_file, io::Read};
+use std::{
+    collections::{HashMap, HashSet},
+    fs::remove_file,
+    io::Read,
+};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use thiserror::Error;
 
-use rs_utils::{age::AgeKey, log, FsTransaction, LockFile, Timestamp};
+use rs_utils::{age::AgeKey, log, FsTransaction, Timestamp};
 
 use crate::{
     baza2::{
-        baza_paths::BazaPaths, baza_storage::create_container_patch, BazaInfo, BazaState,
-        BazaStorage, DocumentHead, Filter, ListPage, Locks,
+        baza_paths::BazaPaths,
+        baza_storage::{create_container_patch, STORAGE_VERSION},
+        BazaInfo, BazaState, BazaStorage, DocumentHead, Filter, ListPage, Locks,
     },
     entities::{
         BLOBId, Document, DocumentKey, DocumentLock, DocumentLockKey, Id, InstanceId, Revision,
@@ -31,13 +36,121 @@ pub enum StagingError {
 }
 
 pub struct Baza {
-    pub(super) _lock: LockFile,
     pub(crate) state: BazaState,
+    pub(crate) state_file_modification_time: Timestamp,
     pub(crate) paths: BazaPaths,
     pub(crate) key: AgeKey,
 }
 
 impl Baza {
+    pub fn create(
+        instance_id: InstanceId,
+        key: AgeKey,
+        paths: BazaPaths,
+        schema: DataSchema,
+    ) -> Result<Self> {
+        log::info!(
+            "Creating new state file {} for instance {instance_id}",
+            paths.state_file
+        );
+
+        ensure!(!paths.state_file_exists()?, "State file already exists");
+
+        let db_files = paths.list_storage_db_files()?;
+        ensure!(!db_files.is_empty(), "No existing db files found");
+
+        // Use main db file if exists, otherwise use the first in the list
+        let mut db_file = &paths.storage_main_db_file;
+        if !db_files.contains(db_file) {
+            db_file = &db_files[0];
+        }
+        log::info!("Using {db_file} db file to create new state file");
+
+        let mut storage = BazaStorage::read_file(db_file, key.clone())?;
+
+        let info = storage.get_info()?;
+
+        let mut state = BazaState::new(instance_id, info.clone(), schema, HashMap::new())?;
+        state.write_to_file(&paths.state_file, key.clone())?;
+
+        let state_file_modification_time = paths.read_state_file_modification_time()?;
+
+        log::info!("Created new state file {}", paths.state_file);
+
+        Ok(Baza {
+            state,
+            state_file_modification_time,
+            paths,
+            key,
+        })
+    }
+
+    pub fn read(key: AgeKey, paths: BazaPaths, schema: DataSchema) -> Result<Self> {
+        let latest_data_version = schema.get_latest_data_version();
+
+        let state = BazaState::read_file(&paths.state_file, key.clone(), schema)?;
+        let state_file_modification_time = paths.read_state_file_modification_time()?;
+
+        ensure!(
+            state.get_info().data_version == latest_data_version,
+            "State data version mismatch"
+        );
+        ensure!(
+            state.get_info().storage_version == STORAGE_VERSION,
+            "Storage version mismatch"
+        );
+
+        Ok(Baza {
+            state,
+            state_file_modification_time,
+            paths,
+            key,
+        })
+    }
+
+    pub(crate) fn remove_unused_storage_blobs(&self) -> Result<()> {
+        let blob_refs = self.state.get_all_blob_refs();
+        let storage_blobs = self.paths.list_storage_blobs()?;
+
+        // warn about missing storage BLOBs if any
+        let missing_blobs = blob_refs.difference(&storage_blobs).collect::<Vec<_>>();
+        if !missing_blobs.is_empty() {
+            log::warn!("There are {} missing BLOBs", missing_blobs.len());
+            log::trace!("Missing BLOBs: {missing_blobs:?}");
+        }
+
+        // remove unused storage BLOBs if any
+        let unused_storage_blobs = storage_blobs.difference(&blob_refs).collect::<Vec<_>>();
+        if !unused_storage_blobs.is_empty() {
+            log::info!(
+                "Removing {} unused storage BLOBs",
+                unused_storage_blobs.len()
+            );
+
+            for blob_id in unused_storage_blobs {
+                let file_path = self.paths.get_storage_blob_path(blob_id);
+                remove_file(file_path).context("Failed to remove unused storage BLOB")?;
+            }
+        }
+
+        Ok(())
+    }
+
+    pub(crate) fn update_state_from_storage(&mut self) -> Result<()> {
+        let mut storage =
+            BazaStorage::read_file(&self.paths.storage_main_db_file, self.key.clone())?;
+
+        let latest_snapshots_count = update_state_from_storage(&mut self.state, &mut storage)?;
+
+        if latest_snapshots_count > 0 {
+            log::info!("Got {latest_snapshots_count} latest snapshots from the storage");
+
+            self.save_changes()?;
+        }
+
+        Ok(())
+    }
+
     #[cfg(test)]
     pub fn create_storage_file(&self, file_path: &str, docs: &[Document]) {
         use rs_utils::create_file_writer;
@@ -174,10 +287,18 @@ impl Baza {
         self.state.is_modified()
     }
 
+    pub fn is_up_to_date_with_file(&self) -> Result<bool> {
+        let is_up_to_date =
+            self.state_file_modification_time == self.paths.read_state_file_modification_time()?;
+
+        Ok(is_up_to_date)
+    }
+
     pub fn save_changes(&mut self) -> Result<()> {
         if self.state.is_modified() {
             self.state
                 .write_to_file(&self.paths.state_file, self.key.clone())?;
+            self.state_file_modification_time = self.paths.read_state_file_modification_time()?;
             log::info!("Saved state changes to the file");
         }
 
@@ -306,5 +427,148 @@ impl Drop for Baza {
         if self.has_unsaved_changes() {
             log::error!("Dropping Baza with unsaved changes");
         }
+    }
+}
+
+fn update_state_from_storage<R: Read>(
+    state: &mut BazaState,
+    storage: &mut BazaStorage<R>,
+) -> Result<usize> {
+    if state.has_staged_documents() {
+        return Ok(0);
+    }
+
+    let storage_info = storage.get_info()?;
+    ensure!(
+        storage_info == state.get_info(),
+        "state info and storage info must match"
+    );
+
+    let mut latest_snapshot_keys: HashSet<DocumentKey> = HashSet::new();
+
+    // compare storage index with state
+    for (id, index_revs) in storage.index.as_index_map() {
+        let index_rev = index_revs
+            .iter()
+            .next()
+            .context("index revs must not be empty")?;
+
+        let document_head = if let Some(document_head) = state.get_document(id) {
+            document_head
+        } else {
+            add_keys(&mut latest_snapshot_keys, id, index_revs.iter());
+            continue;
+        };
+
+        ensure!(
+            document_head.is_committed(),
+            "Document {id} must be committed"
+        );
+
+        let state_rev = document_head.get_revision();
+
+        if state_rev > index_rev {
+            continue;
+        }
+
+        if state_rev < index_rev {
+            add_keys(&mut latest_snapshot_keys, id, index_revs.iter());
+            continue;
+        }
+
+        let all_state_revs = document_head.get_original_revisions().collect();
+        // conflicting revs
+        add_keys(
+            &mut latest_snapshot_keys,
+            id,
+            index_revs.difference(&all_state_revs),
+        );
+    }
+
+    let latest_snapshots_count = latest_snapshot_keys.len();
+
+    // read documents from storage & update state if needed
+    while !latest_snapshot_keys.is_empty() {
+        let (ref key, ref raw_document) = storage.next().context("No records in the storage")??;
+
+        if !latest_snapshot_keys.contains(key) {
+            continue;
+        }
+
+        let document: Document =
+            serde_json::from_str(raw_document).context("Failed to parse raw document")?;
+
+        state.insert_snapshot(document)?;
+
+        latest_snapshot_keys.remove(key);
+    }
+
+    Ok(latest_snapshots_count)
+}
+
+fn add_keys<'r>(
+    keys: &mut HashSet<DocumentKey>,
+    id: &Id,
+    revs: impl Iterator<Item = &'r &'r Revision>,
+) {
+    keys.extend(revs.map(|rev| DocumentKey::new(id.clone(), (*rev).clone())));
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use rs_utils::age::AgeKey;
+
+    use crate::{
+        baza2::{baza_storage::create_test_storage, BazaState, DocumentHead},
+        tests::new_document,
+    };
+
+    use super::update_state_from_storage;
+
+    #[test]
+    fn test_update_state_from_storage() {
+        let key = AgeKey::generate_age_x25519_key();
+
+        let doc_a = new_document(json!({})).with_rev(json!({ "a": 1 }));
+        let doc_a1 = doc_a.clone().with_rev(json!({ "b": 1 }));
+
+        let doc_b = new_document(json!({})).with_rev(json!({ "b": 1 }));
+        let doc_b1 = doc_b.clone().with_rev(json!({ "b": 2 }));
+
+        let doc_c = new_document(json!({})).with_rev(json!({ "c": 3 }));
+
+        let mut state = BazaState::new_test_state();
+        state.insert_snapshots(vec![doc_a.clone(), doc_b.clone()]);
+
+        let mut storage = create_test_storage(
+            key.clone(),
+            &vec![
+                doc_a.clone(),
+                doc_a1.clone(),
+                doc_b.clone(),
+                doc_b1.clone(),
+                doc_c.clone(),
+            ],
+        );
+
+        let changes = update_state_from_storage(&mut state, &mut storage).unwrap();
+        assert_eq!(changes, 3);
+
+        assert_eq!(
+            *state.get_document(&doc_a.id).unwrap(),
+            DocumentHead::new_conflict([doc_a.clone(), doc_a1.clone(),].into_iter()).unwrap(),
+        );
+
+        assert_eq!(
+            *state.get_document(&doc_b.id).unwrap(),
+            DocumentHead::new(doc_b1),
+        );
+
+        assert_eq!(
+            *state.get_document(&doc_c.id).unwrap(),
+            DocumentHead::new(doc_c),
+        );
     }
 }

@@ -2,7 +2,10 @@ use std::{collections::HashSet, fmt::Display, fs};
 
 use anyhow::{anyhow, ensure, Context, Result};
 
-use rs_utils::{create_dir_if_not_exist, dir_exists, file_exists, list_files};
+use rs_utils::{
+    create_dir_if_not_exist, dir_exists, file_exists, get_file_modification_time, list_files,
+    Timestamp,
+};
 
 use crate::entities::BLOBId;
 
@@ -125,6 +128,10 @@ impl BazaPaths {
 
     pub fn state_file_exists(&self) -> Result<bool> {
         file_exists(&self.state_file)
+    }
+
+    pub fn read_state_file_modification_time(&self) -> Result<Timestamp> {
+        get_file_modification_time(&self.state_file)
     }
 }
 

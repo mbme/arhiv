@@ -20,7 +20,7 @@ impl Arhiv {
         match document_type {
             TRACK_TYPE => self.import_track(file_path, remove_original),
             ASSET_TYPE => {
-                let mut baza = self.baza.open()?;
+                let mut baza = self.baza.open_mut()?;
                 let asset = create_asset(&mut baza, file_path, None)?;
                 baza.save_changes()?;
 
@@ -35,7 +35,7 @@ impl Arhiv {
     }
 
     fn import_track(&self, file_path: &str, remove_original: bool) -> Result<Document> {
-        let mut baza = self.baza.open()?;
+        let mut baza = self.baza.open_mut()?;
 
         let asset = create_asset(&mut baza, file_path, None)?;
 

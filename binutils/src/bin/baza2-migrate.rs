@@ -52,7 +52,7 @@ fn main() -> Result<()> {
     let instance_id = get_instance_id(&db_file_path)?;
     println!("Existing instance_id: {instance_id}");
     if !args.dry_run {
-        arhiv.baza.create_state(instance_id)?;
+        arhiv.baza.dangerously_create_state(instance_id)?;
     }
 
     // Insert document snapshots into storage

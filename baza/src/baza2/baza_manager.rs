@@ -1,19 +1,17 @@
 use std::{
-    collections::{HashMap, HashSet},
-    fs::remove_file,
-    io::Read,
-    sync::RwLock,
+    ops::{Deref, DerefMut},
+    sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 
 use anyhow::{anyhow, ensure, Context, Result};
 
 use rs_utils::{
     age::{encrypt_and_write_file, read_and_decrypt_file, AgeKey},
-    file_exists, get_file_modification_time, log, FsTransaction, LockFile, SecretString, Timestamp,
+    file_exists, log, FsTransaction, LockFile, SecretString, Timestamp,
 };
 
 use crate::{
-    entities::{BLOBId, Document, DocumentKey, Id, InstanceId, Revision},
+    entities::{BLOBId, Document, InstanceId},
     schema::DataSchema,
     DocumentExpert,
 };
@@ -25,13 +23,74 @@ use super::{
         create_container_patch, create_empty_storage_file, merge_storages_to_file, BazaFileStorage,
         STORAGE_VERSION,
     },
-    Baza, BazaInfo, BazaState, BazaStorage,
+    Baza, BazaInfo, BazaStorage,
 };
+
+#[derive(Default)]
+struct BazaManagerState {
+    key: Option<AgeKey>,
+    baza: Option<Baza>,
+}
+
+impl BazaManagerState {
+    fn must_get_baza(&self) -> &Baza {
+        self.baza.as_ref().expect("Baza must be initialized")
+    }
+
+    fn must_get_mut_baza(&mut self) -> &mut Baza {
+        self.baza.as_mut().expect("Baza must be initialized")
+    }
+
+    fn get_key(&self) -> Result<&AgeKey> {
+        self.key.as_ref().context("Key is missing")
+    }
+
+    fn lock(&mut self) {
+        self.key.take();
+        self.baza.take();
+    }
+
+    fn unlock(&mut self, key: AgeKey) {
+        self.key.replace(key);
+        self.baza.take();
+    }
+}
+
+pub struct BazaReadGuard<'g> {
+    state: RwLockReadGuard<'g, BazaManagerState>,
+}
+
+impl Deref for BazaReadGuard<'_> {
+    type Target = Baza;
+
+    fn deref(&self) -> &Self::Target {
+        self.state.must_get_baza()
+    }
+}
+
+pub struct BazaWriteGuard<'g> {
+    state: RwLockWriteGuard<'g, BazaManagerState>,
+    _lock: LockFile,
+}
+
+impl Deref for BazaWriteGuard<'_> {
+    type Target = Baza;
+
+    fn deref(&self) -> &Self::Target {
+        self.state.must_get_baza()
+    }
+}
+
+impl DerefMut for BazaWriteGuard<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.state.must_get_mut_baza()
+    }
+}
 
 pub struct BazaManager {
     schema: DataSchema,
     pub(crate) paths: BazaPaths,
-    key: RwLock<Option<AgeKey>>,
+    state: RwLock<BazaManagerState>,
 }
 
 impl BazaManager {
@@ -43,58 +102,86 @@ impl BazaManager {
         BazaManager {
             schema,
             paths,
-            key: RwLock::new(None),
+            state: Default::default(),
         }
     }
 
-    pub fn open(&self) -> Result<Baza> {
+    fn maybe_read_state(&self) -> Result<()> {
         log::info!("Opening baza {}", self.paths);
 
         ensure!(self.storage_exists()?, "Storage doesn't exist");
 
-        let key = self
-            .key
-            .read()
-            .map_err(|err| anyhow!("Failed to acquire read lock for the key: {err}"))?;
-        let key = key.as_ref().context("Key is missing")?;
-
-        let lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
-
-        let mut state = if self.paths.state_file_exists()? {
-            let state =
-                BazaState::read_file(&self.paths.state_file, key.clone(), self.schema.clone())?;
-
-            ensure!(
-                state.get_info().data_version == self.schema.get_latest_data_version(),
-                "State data version mismatch"
-            );
-            ensure!(
-                state.get_info().storage_version == STORAGE_VERSION,
-                "Storage version mismatch"
-            );
-
-            state
-        } else {
-            log::info!("Creating new state file {}", self.paths.state_file);
-
-            self.create_state(InstanceId::generate())?
-        };
-
-        self.merge_storages()?;
-
-        if !state.has_staged_documents() {
-            self.update_state_from_storage(&mut state)?;
-            self.remove_unused_storage_blobs(&state)?;
+        if let Some(baza) = self.acquire_state_read_lock()?.baza.as_ref() {
+            if baza.is_up_to_date_with_file()? {
+                log::debug!("Baza state is up to date with file");
+                return Ok(());
+            } else {
+                log::info!("Baza state is out of date with file, re-reading");
+            }
         }
 
-        let baza = Baza {
-            _lock: lock,
-            state,
-            key: key.clone(),
-            paths: self.paths.clone(),
+        let mut manager_state = self.acquire_state_write_lock()?;
+
+        let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+
+        let key = manager_state.get_key()?;
+
+        self.merge_storages(key)?;
+
+        let baza = if self.paths.state_file_exists()? {
+            let mut baza = Baza::read(key.clone(), self.paths.clone(), self.schema.clone())?;
+
+            if !baza.has_staged_documents() {
+                baza.update_state_from_storage()?;
+                baza.remove_unused_storage_blobs()?;
+            }
+
+            baza
+        } else {
+            Baza::create(
+                InstanceId::generate(),
+                key.clone(),
+                self.paths.clone(),
+                self.schema.clone(),
+            )?
         };
 
-        Ok(baza)
+        manager_state.baza = Some(baza);
+
+        Ok(())
+    }
+
+    fn acquire_state_read_lock(&self) -> Result<RwLockReadGuard<'_, BazaManagerState>> {
+        log::trace!("Acquiring state read lock");
+
+        self.state
+            .read()
+            .map_err(|err| anyhow!("Failed to acquire read lock for the state: {err}"))
+    }
+
+    fn acquire_state_write_lock(&self) -> Result<RwLockWriteGuard<'_, BazaManagerState>> {
+        log::trace!("Acquiring state write lock");
+
+        self.state
+            .write()
+            .map_err(|err| anyhow!("Failed to acquire write lock for the state: {err}"))
+    }
+
+    pub fn open(&self) -> Result<BazaReadGuard<'_>> {
+        self.maybe_read_state()?;
+
+        let state = self.acquire_state_read_lock()?;
+
+        Ok(BazaReadGuard { state })
+    }
+
+    pub fn open_mut(&self) -> Result<BazaWriteGuard<'_>> {
+        self.maybe_read_state()?;
+
+        let lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+        let state = self.acquire_state_write_lock()?;
+
+        Ok(BazaWriteGuard { _lock: lock, state })
     }
 
     pub fn storage_exists(&self) -> Result<bool> {
@@ -110,16 +197,12 @@ impl BazaManager {
     }
 
     pub(crate) fn open_storage<'s>(&self, file_path: &str) -> Result<BazaFileStorage<'s>> {
-        let key = self
-            .key
-            .read()
-            .map_err(|err| anyhow!("Failed to acquire read lock for the key: {err}"))?;
-        let key = key.as_ref().context("Key is missing")?;
+        let key = self.acquire_state_read_lock()?.get_key()?.clone();
 
-        BazaStorage::read_file(file_path, key.clone())
+        BazaStorage::read_file(file_path, key)
     }
 
-    fn merge_storages(&self) -> Result<()> {
+    fn merge_storages(&self, key: &AgeKey) -> Result<()> {
         let db_files = self.paths.list_storage_db_files()?;
 
         if db_files.is_empty() {
@@ -146,7 +229,7 @@ impl BazaManager {
             .map(|db_file| {
                 let new_db_file = fs_tx.move_to_backup(db_file)?;
 
-                self.open_storage(&new_db_file)
+                BazaStorage::read_file(&new_db_file, key.clone())
                     .context(anyhow!("Failed to open storage for db {db_file}"))
             })
             .collect::<Result<Vec<_>>>()?;
@@ -158,56 +241,8 @@ impl BazaManager {
         Ok(())
     }
 
-    fn remove_unused_storage_blobs(&self, state: &BazaState) -> Result<()> {
-        let blob_refs = state.get_all_blob_refs();
-        let storage_blobs = self.paths.list_storage_blobs()?;
-
-        // warn about missing storage BLOBs if any
-        let missing_blobs = blob_refs.difference(&storage_blobs).collect::<Vec<_>>();
-        if !missing_blobs.is_empty() {
-            log::warn!("There are {} missing BLOBs", missing_blobs.len());
-            log::trace!("Missing BLOBs: {missing_blobs:?}");
-        }
-
-        // remove unused storage BLOBs if any
-        let unused_storage_blobs = storage_blobs.difference(&blob_refs).collect::<Vec<_>>();
-        if !unused_storage_blobs.is_empty() {
-            log::info!(
-                "Removing {} unused storage BLOBs",
-                unused_storage_blobs.len()
-            );
-
-            for blob_id in unused_storage_blobs {
-                let file_path = self.paths.get_storage_blob_path(blob_id);
-                remove_file(file_path).context("Failed to remove unused storage BLOB")?;
-            }
-        }
-
-        Ok(())
-    }
-
-    fn update_state_from_storage(&self, state: &mut BazaState) -> Result<()> {
-        let key = self
-            .key
-            .read()
-            .map_err(|err| anyhow!("Failed to acquire read lock for the key: {err}"))?;
-        let key = key.as_ref().context("Key is missing")?;
-
-        let mut storage = BazaStorage::read_file(&self.paths.storage_main_db_file, key.clone())?;
-
-        let latest_snapshots_count = update_state_from_storage(state, &mut storage)?;
-
-        if latest_snapshots_count > 0 {
-            log::info!("Got {latest_snapshots_count} latest snapshots from the storage");
-
-            state.write_to_file(&self.paths.state_file, key.clone())?;
-        }
-
-        Ok(())
-    }
-
     pub fn get_state_file_modification_time(&self) -> Result<Timestamp> {
-        get_file_modification_time(&self.paths.state_file)
+        self.paths.read_state_file_modification_time()
     }
 
     pub fn create(&self, password: SecretString) -> Result<()> {
@@ -226,6 +261,7 @@ impl BazaManager {
         );
 
         let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+        let mut state = self.acquire_state_write_lock()?;
 
         let key_file_key = AgeKey::from_password(password)?;
         let key = self.generate_key_file(key_file_key)?;
@@ -236,11 +272,7 @@ impl BazaManager {
         };
         create_empty_storage_file(&self.paths.storage_main_db_file, key.clone(), &info)?;
 
-        let mut key_guard = self
-            .key
-            .write()
-            .map_err(|err| anyhow!("Failed to acquire write lock for the key: {err}"))?;
-        key_guard.replace(key);
+        state.unlock(key);
 
         log::info!(
             "Created new main storage file {}",
@@ -265,7 +297,10 @@ impl BazaManager {
     }
 
     pub fn unlock(&self, password: SecretString) -> Result<()> {
-        log::debug!("Reading key file {}", self.paths.key_file);
+        log::info!("Unlocking baza using key file {}", self.paths.key_file);
+
+        let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+        let mut state = self.acquire_state_write_lock()?;
 
         let key_file_key = AgeKey::from_password(password)?;
 
@@ -273,23 +308,30 @@ impl BazaManager {
 
         let key = AgeKey::from_age_x25519_key(key.try_into()?)?;
 
-        let mut key_guard = self
-            .key
-            .write()
-            .map_err(|err| anyhow!("Failed to acquire write lock for the key: {err}"))?;
-        key_guard.replace(key);
+        state.unlock(key);
 
         Ok(())
     }
 
     pub fn lock(&self) -> Result<()> {
-        let mut key_guard = self
-            .key
-            .write()
-            .map_err(|err| anyhow!("Failed to acquire write lock for the key: {err}"))?;
-        key_guard.take();
+        log::info!("Locking baza");
+
+        let mut state = self.acquire_state_write_lock()?;
+        state.lock();
 
         Ok(())
+    }
+
+    pub fn is_locked(&self) -> bool {
+        !self.is_unlocked()
+    }
+
+    pub fn is_unlocked(&self) -> bool {
+        let state = self
+            .acquire_state_read_lock()
+            .expect("Must acquire state read lock");
+
+        state.key.is_some()
     }
 
     pub fn change_key_file_password(
@@ -309,51 +351,18 @@ impl BazaManager {
         encrypt_and_write_file(&self.paths.key_file, new_key_file_key, data)?;
         fs_tx.commit()?;
 
+        self.lock()?;
+
         Ok(())
     }
 
-    pub fn create_state(&self, instance_id: InstanceId) -> Result<BazaState> {
-        log::info!(
-            "Creating new state file {} for instance {instance_id}",
-            self.paths.state_file
-        );
+    pub fn dangerously_create_state(&self, instance_id: InstanceId) -> Result<()> {
+        let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+        let key = self.acquire_state_read_lock()?.get_key()?.clone();
 
-        ensure!(
-            !self.paths.state_file_exists()?,
-            "State file already exists"
-        );
+        Baza::create(instance_id, key, self.paths.clone(), self.schema.clone())?;
 
-        let db_files = self.paths.list_storage_db_files()?;
-        ensure!(!db_files.is_empty(), "No existing db files found");
-
-        // Use main db file if exists, otherwise use the first in the list
-        let mut db_file = &self.paths.storage_main_db_file;
-        if !db_files.contains(db_file) {
-            db_file = &db_files[0];
-        }
-        log::info!("Using {db_file} db file to create new state file");
-
-        let key = self
-            .key
-            .read()
-            .map_err(|err| anyhow!("Failed to acquire read lock for the key: {err}"))?;
-        let key = key.as_ref().context("Key is missing")?;
-
-        let mut storage = BazaStorage::read_file(db_file, key.clone())?;
-
-        let info = storage.get_info()?;
-
-        let mut state = BazaState::new(
-            instance_id,
-            info.clone(),
-            self.schema.clone(),
-            HashMap::new(),
-        )?;
-        state.write_to_file(&self.paths.state_file, key.clone())?;
-
-        log::info!("Created new state file {}", self.paths.state_file);
-
-        Ok(state)
+        Ok(())
     }
 
     pub fn dangerously_insert_snapshots_into_storage(
@@ -367,12 +376,13 @@ impl BazaManager {
         );
 
         let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+        let state = self.acquire_state_read_lock()?;
 
         let mut fs_tx = FsTransaction::new();
 
         let old_db_file = fs_tx.move_to_backup(self.paths.storage_main_db_file.clone())?;
 
-        let storage = self.open_storage(&old_db_file)?;
+        let storage = BazaStorage::read_file(&old_db_file, state.get_key()?.clone())?;
 
         let patch = create_container_patch(new_snapshots.iter())?;
         storage.patch_and_save_to_file(&self.paths.storage_main_db_file, patch)?;
@@ -386,6 +396,7 @@ impl BazaManager {
         log::warn!("Adding file {file_path} to storage");
 
         let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+        let state = self.acquire_state_read_lock()?;
 
         ensure!(
             file_exists(file_path)?,
@@ -396,13 +407,7 @@ impl BazaManager {
         let blob_path = self.paths.get_storage_blob_path(&blob_id);
         ensure!(!file_exists(&blob_path)?, "storage BLOB already exists");
 
-        let key = self
-            .key
-            .read()
-            .map_err(|err| anyhow!("Failed to acquire read lock for the key: {err}"))?;
-        let key = key.as_ref().context("Key is missing")?;
-
-        write_and_encrypt_blob(file_path, &blob_path, key.clone())?;
+        write_and_encrypt_blob(file_path, &blob_path, state.get_key()?.clone())?;
 
         Ok(())
     }
@@ -435,162 +440,18 @@ impl BazaManager {
     pub fn get_state_dir(&self) -> &str {
         &self.paths.state_dir
     }
-
-    pub fn is_locked(&self) -> bool {
-        !self.is_unlocked()
-    }
-
-    pub fn is_unlocked(&self) -> bool {
-        let key = self
-            .key
-            .read()
-            .expect("Failed to acquire read lock for the key");
-
-        key.is_some()
-    }
-}
-
-fn add_keys<'r>(
-    keys: &mut HashSet<DocumentKey>,
-    id: &Id,
-    revs: impl Iterator<Item = &'r &'r Revision>,
-) {
-    keys.extend(revs.map(|rev| DocumentKey::new(id.clone(), (*rev).clone())));
-}
-
-fn update_state_from_storage<R: Read>(
-    state: &mut BazaState,
-    storage: &mut BazaStorage<R>,
-) -> Result<usize> {
-    if state.has_staged_documents() {
-        return Ok(0);
-    }
-
-    let storage_info = storage.get_info()?;
-    ensure!(
-        storage_info == state.get_info(),
-        "state info and storage info must match"
-    );
-
-    let mut latest_snapshot_keys: HashSet<DocumentKey> = HashSet::new();
-
-    // compare storage index with state
-    for (id, index_revs) in storage.index.as_index_map() {
-        let index_rev = index_revs
-            .iter()
-            .next()
-            .context("index revs must not be empty")?;
-
-        let document_head = if let Some(document_head) = state.get_document(id) {
-            document_head
-        } else {
-            add_keys(&mut latest_snapshot_keys, id, index_revs.iter());
-            continue;
-        };
-
-        ensure!(
-            document_head.is_committed(),
-            "Document {id} must be committed"
-        );
-
-        let state_rev = document_head.get_revision();
-
-        if state_rev > index_rev {
-            continue;
-        }
-
-        if state_rev < index_rev {
-            add_keys(&mut latest_snapshot_keys, id, index_revs.iter());
-            continue;
-        }
-
-        let all_state_revs = document_head.get_original_revisions().collect();
-        // conflicting revs
-        add_keys(
-            &mut latest_snapshot_keys,
-            id,
-            index_revs.difference(&all_state_revs),
-        );
-    }
-
-    let latest_snapshots_count = latest_snapshot_keys.len();
-
-    // read documents from storage & update state if needed
-    while !latest_snapshot_keys.is_empty() {
-        let (ref key, ref raw_document) = storage.next().context("No records in the storage")??;
-
-        if !latest_snapshot_keys.contains(key) {
-            continue;
-        }
-
-        let document: Document =
-            serde_json::from_str(raw_document).context("Failed to parse raw document")?;
-
-        state.insert_snapshot(document)?;
-
-        latest_snapshot_keys.remove(key);
-    }
-
-    Ok(latest_snapshots_count)
 }
 
 #[cfg(test)]
 mod tests {
     use serde_json::json;
 
-    use rs_utils::{age::AgeKey, dir_exists, file_exists, TempFile};
+    use rs_utils::{dir_exists, file_exists, TempFile};
 
     use crate::{
-        baza2::{baza_manager::BazaManager, baza_storage::create_test_storage, DocumentHead},
+        baza2::baza_manager::BazaManager,
         tests::{new_document, new_empty_document},
     };
-
-    use super::{update_state_from_storage, BazaState};
-
-    #[test]
-    fn test_update_state_from_storage() {
-        let key = AgeKey::generate_age_x25519_key();
-
-        let doc_a = new_document(json!({})).with_rev(json!({ "a": 1 }));
-        let doc_a1 = doc_a.clone().with_rev(json!({ "b": 1 }));
-
-        let doc_b = new_document(json!({})).with_rev(json!({ "b": 1 }));
-        let doc_b1 = doc_b.clone().with_rev(json!({ "b": 2 }));
-
-        let doc_c = new_document(json!({})).with_rev(json!({ "c": 3 }));
-
-        let mut state = BazaState::new_test_state();
-        state.insert_snapshots(vec![doc_a.clone(), doc_b.clone()]);
-
-        let mut storage = create_test_storage(
-            key.clone(),
-            &vec![
-                doc_a.clone(),
-                doc_a1.clone(),
-                doc_b.clone(),
-                doc_b1.clone(),
-                doc_c.clone(),
-            ],
-        );
-
-        let changes = update_state_from_storage(&mut state, &mut storage).unwrap();
-        assert_eq!(changes, 3);
-
-        assert_eq!(
-            *state.get_document(&doc_a.id).unwrap(),
-            DocumentHead::new_conflict([doc_a.clone(), doc_a1.clone(),].into_iter()).unwrap(),
-        );
-
-        assert_eq!(
-            *state.get_document(&doc_b.id).unwrap(),
-            DocumentHead::new(doc_b1),
-        );
-
-        assert_eq!(
-            *state.get_document(&doc_c.id).unwrap(),
-            DocumentHead::new(doc_c),
-        );
-    }
 
     #[test]
     fn test_commit() {
@@ -598,7 +459,7 @@ mod tests {
         temp_dir.mkdir().unwrap();
 
         let manager = BazaManager::new_for_tests(&temp_dir.path);
-        let mut baza = manager.open().unwrap();
+        let mut baza = manager.open_mut().unwrap();
 
         assert!(dir_exists(&manager.paths.storage_dir).unwrap());
         assert!(dir_exists(&manager.paths.state_dir).unwrap());
@@ -660,7 +521,7 @@ mod tests {
         temp_dir.mkdir().unwrap();
 
         let manager = BazaManager::new_for_tests(&temp_dir.path);
-        let mut baza = manager.open().unwrap();
+        let mut baza = manager.open_mut().unwrap();
 
         // Create and stage a new document with a BLOB
         let blob_file = temp_dir.new_child("blob");
@@ -673,15 +534,17 @@ mod tests {
         drop(baza);
 
         // Ensure the document and BLOB are in storage
-        let mut baza = manager.open().unwrap();
+        let baza = manager.open().unwrap();
         let doc_a1_key = baza.get_document(&doc_a1.id).unwrap().create_key();
         let storage = manager
             .open_storage(&manager.paths.storage_main_db_file)
             .unwrap();
         assert!(storage.contains(&doc_a1_key));
         assert!(manager.paths.storage_blob_exists(&blob_id).unwrap());
+        drop(baza);
 
         // Erase the document and commit
+        let mut baza = manager.open_mut().unwrap();
         baza.erase_document(&doc_a1.id).unwrap();
         baza.commit().unwrap();
         drop(baza);
@@ -703,7 +566,7 @@ mod tests {
         temp_dir.mkdir().unwrap();
 
         let manager = BazaManager::new_for_tests(&temp_dir.path);
-        let mut baza = manager.open().unwrap();
+        let mut baza = manager.open_mut().unwrap();
 
         let db_file_1 = manager.paths.get_storage_file("db1");
         let db_file_2 = manager.paths.get_storage_file("db2");
@@ -745,7 +608,7 @@ mod tests {
         let manager = BazaManager::new_for_tests(&temp_dir.path);
 
         {
-            let mut baza = manager.open().unwrap();
+            let mut baza = manager.open_mut().unwrap();
             let document = new_empty_document();
             baza.stage_document(document.clone(), &None).unwrap();
             baza.lock_document(&document.id, "test").unwrap();
@@ -771,7 +634,7 @@ mod tests {
         let schema = manager.schema.clone();
 
         {
-            let mut baza = manager.open().unwrap();
+            let mut baza = manager.open_mut().unwrap();
             let document = new_empty_document();
             baza.stage_document(document.clone(), &None).unwrap();
             baza.lock_document(&document.id, "test").unwrap();

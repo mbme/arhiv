@@ -101,7 +101,7 @@ mod tests {
         temp_dir.mkdir().unwrap();
 
         let manager = BazaManager::new_for_tests(&temp_dir.path);
-        let mut baza = manager.open().unwrap();
+        let mut baza = manager.open_mut().unwrap();
 
         let data = generate_alpanumeric_string(100);
         let blob1_file = temp_dir.new_child("blob1");

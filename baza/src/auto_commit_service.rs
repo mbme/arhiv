@@ -96,7 +96,7 @@ impl AutoCommitService {
                 time_since_last_update.as_secs()
             );
 
-            let mut baza = self.baza_manager.open()?;
+            let mut baza = self.baza_manager.open_mut()?;
             baza.commit()?;
         }
 
@@ -120,7 +120,7 @@ mod tests {
         temp_dir.mkdir().unwrap();
 
         let manager = Arc::new(BazaManager::new_for_tests(&temp_dir.path));
-        let mut baza = manager.open().unwrap();
+        let mut baza = manager.open_mut().unwrap();
 
         baza.stage_document(new_empty_document(), &None)?;
         baza.save_changes()?;
@@ -159,7 +159,7 @@ mod tests {
         let service = AutoCommitService::new(manager.clone(), auto_commit_timeout).with_fake_time();
 
         {
-            let mut baza = manager.open().unwrap();
+            let mut baza = manager.open_mut().unwrap();
             baza.stage_document(new_empty_document(), &None)?;
             assert!(baza.has_staged_documents());
         }
@@ -193,7 +193,7 @@ mod tests {
         sleep(Duration::from_secs(1)).await;
 
         {
-            let mut baza = manager.open().unwrap();
+            let mut baza = manager.open_mut().unwrap();
             baza.stage_document(new_empty_document(), &None)?;
             baza.save_changes().unwrap();
         }
@@ -202,7 +202,7 @@ mod tests {
         sleep(Duration::from_secs(1)).await;
 
         {
-            let mut baza = manager.open().unwrap();
+            let mut baza = manager.open_mut().unwrap();
 
             assert!(baza.has_staged_documents());
 

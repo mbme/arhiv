@@ -93,7 +93,7 @@ pub fn create_asset(baza: &mut Baza, file_path: &str, filename: Option<String>) 
     document.convert()
 }
 
-pub async fn download_asset(url: &str, baza: &mut Baza) -> Result<Document> {
+pub async fn download_asset(url: &str, baza: &mut Baza) -> Result<Asset> {
     let download_result = Download::new(url)?.start().await?;
 
     let asset = create_asset(
@@ -102,7 +102,7 @@ pub async fn download_asset(url: &str, baza: &mut Baza) -> Result<Document> {
         Some(download_result.original_file_name.clone()),
     )?;
 
-    asset.into_document()
+    Ok(asset)
 }
 
 pub fn get_asset_by_blob_id(baza: &Baza, blob_id: &BLOBId) -> Option<Asset> {

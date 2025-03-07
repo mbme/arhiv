@@ -31,11 +31,15 @@ pub async fn image_handler(
 ) -> Result<impl IntoResponse, ServerError> {
     let blob_id = BLOBId::from_string(blob_id)?;
 
-    let baza = arhiv.baza.open()?;
-    let blob_reader = baza.get_blob(&blob_id)?;
-    let buf_reader = BufReader::new(blob_reader);
-    let asset = get_asset_by_blob_id(&baza, &blob_id).context("Failed to find asset by blob id")?;
-    drop(baza); // release baza lock ASAP
+    let (asset, buf_reader) = {
+        let baza = arhiv.baza.open()?;
+        let blob_reader = baza.get_blob(&blob_id)?;
+        let buf_reader = BufReader::new(blob_reader);
+        let asset =
+            get_asset_by_blob_id(&baza, &blob_id).context("Failed to find asset by blob id")?;
+
+        (asset, buf_reader)
+    };
 
     let original_size = asset.data.size;
 

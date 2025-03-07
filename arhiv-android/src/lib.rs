@@ -69,7 +69,7 @@ fn stop_server() -> Result<()> {
     Ok(())
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer(
     mut env: JNIEnv,
     _class: JClass,
@@ -99,7 +99,7 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer(
     output.into_raw()
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_stopServer() {
     stop_server().expect("must stop server");
     log::info!("Stopped server");

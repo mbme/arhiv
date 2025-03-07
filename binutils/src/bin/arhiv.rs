@@ -196,7 +196,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let arhiv = Arhiv::new_desktop();
             unlock_arhiv(&arhiv);
 
-            let mut baza = arhiv.baza.open()?;
+            let mut baza = arhiv.baza.open_mut()?;
             baza.lock_document(&id, reason)?;
             baza.save_changes()?;
 
@@ -206,7 +206,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let arhiv = Arhiv::new_desktop();
             unlock_arhiv(&arhiv);
 
-            let mut baza = arhiv.baza.open()?;
+            let mut baza = arhiv.baza.open_mut()?;
             if let Some(key) = key {
                 baza.unlock_document(&id, &DocumentLockKey::from_string(key))?;
             } else {
@@ -221,7 +221,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let arhiv = Arhiv::new_desktop();
             unlock_arhiv(&arhiv);
 
-            let mut baza = arhiv.baza.open()?;
+            let mut baza = arhiv.baza.open_mut()?;
             let success = baza.commit()?;
 
             if success {
@@ -254,7 +254,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let arhiv = Arhiv::new_desktop();
             unlock_arhiv(&arhiv);
 
-            let mut baza = arhiv.baza.open()?;
+            let mut baza = arhiv.baza.open_mut()?;
             let document = baza.stage_document(document, &None)?.clone();
 
             baza.save_changes()?;

@@ -146,7 +146,7 @@ async fn create_blob_handler(
 
     stream_to_file(temp_file.open_tokio_file(0).await?, stream).await?;
 
-    let mut baza = arhiv.baza.open()?;
+    let mut baza = arhiv.baza.open_mut()?;
 
     let asset = create_asset(&mut baza, &temp_file.path, Some(file_name))?;
 
@@ -244,17 +244,21 @@ async fn respond_with_blob(
     blob_id: &BLOBId,
     range: &Option<headers::Range>,
 ) -> Result<Response, ServerError> {
-    let baza = baza_manager.open()?;
+    let (asset, mut blob) = {
+        let baza = baza_manager.open()?;
 
-    if !baza.blob_exists(blob_id)? {
-        return Ok(StatusCode::NOT_FOUND.into_response());
-    }
+        if !baza.blob_exists(blob_id)? {
+            return Ok(StatusCode::NOT_FOUND.into_response());
+        }
 
-    let asset = get_asset_by_blob_id(&baza, blob_id).context("Can't find asset by blob id")?;
+        let asset = get_asset_by_blob_id(&baza, blob_id).context("Can't find asset by blob id")?;
+
+        let blob = baza.get_blob(blob_id)?;
+
+        (asset, blob)
+    };
+
     let size = asset.data.size;
-
-    let mut blob = baza.get_blob(blob_id)?;
-    drop(baza); // release baza lock ASAP
 
     let mut headers = HeaderMap::new();
     add_max_cache_header(&mut headers);

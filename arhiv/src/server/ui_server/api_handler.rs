@@ -156,16 +156,11 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             data,
             collections,
         } => {
-            let mut baza = arhiv.baza.open()?;
+            let mut baza = arhiv.baza.open_mut()?;
 
             let mut document = baza.must_get_document(&id)?.clone();
 
             document.data = data;
-
-            let document_expert = arhiv.baza.get_document_expert();
-            document_expert
-                .prepare_assets(&mut document, &mut baza)
-                .await?;
 
             if let Err(err) = baza.stage_document(document, &Some(lock_key)) {
                 match err {
@@ -187,15 +182,10 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             collections,
         } => {
             let document_type = DocumentType::new(document_type);
-            let mut document = Document::new_with_data(document_type, data);
+            let document = Document::new_with_data(document_type, data);
             let id = document.id.clone();
 
-            let mut baza = arhiv.baza.open()?;
-
-            let document_expert = arhiv.baza.get_document_expert();
-            document_expert
-                .prepare_assets(&mut document, &mut baza)
-                .await?;
+            let mut baza = arhiv.baza.open_mut()?;
 
             if let Err(err) = baza.stage_document(document, &None) {
                 match err {
@@ -217,7 +207,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             }
         }
         APIRequest::EraseDocument { ref id } => {
-            let mut baza = arhiv.baza.open()?;
+            let mut baza = arhiv.baza.open_mut()?;
             baza.erase_document(id)?;
             baza.save_changes()?;
 
@@ -245,7 +235,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             ref file_path,
             remove_file,
         } => {
-            let mut baza = arhiv.baza.open()?;
+            let mut baza = arhiv.baza.open_mut()?;
             let asset = create_asset(&mut baza, file_path, None)?;
             baza.save_changes()?;
 
@@ -257,14 +247,14 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             APIResponse::CreateAsset { id: asset.id }
         }
         APIRequest::Commit {} => {
-            let mut baza = arhiv.baza.open()?;
+            let mut baza = arhiv.baza.open_mut()?;
 
             baza.commit()?;
 
             APIResponse::Commit {}
         }
         APIRequest::LockDocument { id } => {
-            let mut baza = arhiv.baza.open()?;
+            let mut baza = arhiv.baza.open_mut()?;
 
             let lock = baza.lock_document(&id, "UI editor lock".to_string())?;
             let lock_key = lock.get_key().clone();
@@ -277,7 +267,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             lock_key,
             force_unlock,
         } => {
-            let mut baza = arhiv.baza.open()?;
+            let mut baza = arhiv.baza.open_mut()?;
 
             if force_unlock.unwrap_or_default() {
                 baza.unlock_document_without_key(&id)?;
@@ -295,7 +285,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             id,
             new_pos,
         } => {
-            let mut baza = arhiv.baza.open()?;
+            let mut baza = arhiv.baza.open_mut()?;
             if baza.is_document_locked(&collection_id) {
                 bail!("Collection {collection_id} is locked")
             }

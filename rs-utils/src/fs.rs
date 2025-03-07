@@ -437,7 +437,7 @@ pub fn create_file_reader(file_path: &str) -> Result<BufReader<File>> {
     Ok(data_reader)
 }
 
-pub fn create_file_writer(file_path: &str, overwrite: bool) -> Result<impl Write> {
+pub fn create_file_writer(file_path: &str, overwrite: bool) -> Result<impl Write + use<>> {
     if !overwrite && file_exists(file_path)? {
         bail!("File {file_path} already exists");
     }

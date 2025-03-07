@@ -93,7 +93,7 @@ impl DataSchema {
     pub fn iter_fields(
         &self,
         document_type: &DocumentType,
-    ) -> Result<impl Iterator<Item = &Field>> {
+    ) -> Result<impl Iterator<Item = &Field> + use<'_>> {
         let data_description = self.get_data_description(document_type)?;
 
         Ok(data_description.fields.iter())

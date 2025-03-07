@@ -78,7 +78,7 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
         }
 
         match &mut self.inner {
-            ReaderOrLinesIter::LinesIter(ref mut iter) => iter,
+            ReaderOrLinesIter::LinesIter(iter) => iter,
             _ => unreachable!("must be LinesIter"),
         }
     }
@@ -273,7 +273,7 @@ pub fn create_empty_storage_file(file: &str, key: AgeKey, info: &BazaInfo) -> Re
 pub fn create_test_storage<'k>(
     key: AgeKey,
     new_documents: &[Document],
-) -> BazaStorage<'k, impl Read> {
+) -> BazaStorage<'k, impl Read + use<>> {
     use std::io::Cursor;
 
     let info = BazaInfo::new_test_info();

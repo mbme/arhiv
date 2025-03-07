@@ -39,7 +39,7 @@ impl Baza {
         self.get_blob_path(blob_id).map(|path| path.is_some())
     }
 
-    pub fn get_blob(&self, blob_id: &BLOBId) -> Result<impl Read + Seek> {
+    pub fn get_blob(&self, blob_id: &BLOBId) -> Result<impl Read + Seek + use<>> {
         let file_path = self.get_blob_path(blob_id)?.context("BLOB doesn't exist")?;
 
         let file_reader = create_file_reader(&file_path)?;

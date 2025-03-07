@@ -3,7 +3,7 @@ use std::{io::Seek, ops::Bound, str::FromStr, sync::Arc};
 use anyhow::Context;
 use axum::{
     extract::{DefaultBodyLimit, Path, Query, Request, State},
-    http::HeaderMap,
+    http::{HeaderMap, StatusCode},
     middleware::{self, Next},
     response::{Html, IntoResponse, Response},
     routing::{get, post},
@@ -14,7 +14,6 @@ use axum_extra::{
     headers::{self, HeaderMapExt},
     TypedHeader,
 };
-use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 

@@ -1,9 +1,13 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use axum::{http::HeaderMap, response::IntoResponse, routing::get, Router};
+use axum::{
+    http::{HeaderMap, StatusCode},
+    response::IntoResponse,
+    routing::get,
+    Router,
+};
 use certificate::generate_ui_crypto_key;
-use reqwest::StatusCode;
 
 use rs_utils::{
     create_dir_if_not_exist,

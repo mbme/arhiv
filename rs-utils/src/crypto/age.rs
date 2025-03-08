@@ -12,7 +12,7 @@ use age::{
 };
 use anyhow::{anyhow, ensure, Context, Result};
 
-use crate::{create_file_reader, create_file_writer};
+use crate::{create_file_reader, create_file_writer, read_all};
 
 use super::SecretBytes;
 
@@ -174,10 +174,9 @@ impl<W: Write> Write for AgeWriter<W> {
 
 pub fn read_and_decrypt_file(file_path: &str, key: AgeKey) -> Result<SecretBytes> {
     let reader = create_file_reader(file_path)?;
-    let mut age_reader = AgeReader::new_buffered(reader, key)?;
+    let age_reader = AgeReader::new_buffered(reader, key)?;
 
-    let mut data = Vec::new();
-    age_reader.read_to_end(&mut data)?;
+    let data = read_all(age_reader)?;
 
     let data = SecretBytes::new(data);
 
@@ -258,10 +257,7 @@ mod tests {
             let mut reader = AgeReader::new(Cursor::new(encrypted), key).unwrap();
             reader.seek(SeekFrom::Start(50)).unwrap();
 
-            let mut decrypted = Vec::new();
-            reader.read_to_end(&mut decrypted).unwrap();
-
-            decrypted
+            read_all(reader).unwrap()
         };
 
         assert_eq!(&decrypted, &data.as_bytes()[50..]);

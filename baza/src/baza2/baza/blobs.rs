@@ -93,6 +93,8 @@ impl Baza {
 
         age_writer.finish()?;
 
+        log::info!("Created cache file {file_name}");
+
         Ok(())
     }
 

@@ -58,6 +58,14 @@ pub fn read_all_as_string(mut reader: impl Read) -> io::Result<String> {
     Ok(result)
 }
 
+pub fn read_all(mut reader: impl Read) -> io::Result<Vec<u8>> {
+    let mut data = Vec::new();
+
+    reader.read_to_end(&mut data)?;
+
+    Ok(data)
+}
+
 pub struct ReaderWithTrailer<const SIZE: usize, R: Read> {
     inner: R,
     buffer: Vec<u8>,
@@ -207,11 +215,10 @@ mod tests {
     fn test_reader_with_trailer() -> Result<()> {
         {
             let data = generate_bytes(100);
-            let mut reader = ReaderWithTrailer::<200, _>::new(data.as_slice());
+            let reader = ReaderWithTrailer::<200, _>::new(data.as_slice());
 
-            let mut result = Vec::new();
             // not enough data for a trailer
-            assert!(reader.read_to_end(&mut result).is_err());
+            assert!(read_all(reader).is_err());
         }
 
         {
@@ -241,9 +248,8 @@ mod tests {
 
             reader.seek(SeekFrom::Current(250))?;
 
-            let mut result = Vec::new();
             // not enough data for a trailer
-            assert!(reader.read_to_end(&mut result).is_err());
+            assert!(read_all(reader).is_err());
         }
 
         {
@@ -252,8 +258,7 @@ mod tests {
 
             reader.seek(SeekFrom::Current(200))?;
 
-            let mut result = Vec::new();
-            reader.read_to_end(&mut result)?;
+            let result = read_all(&mut reader)?;
 
             assert_eq!(result.len(), 0);
             assert_eq!(reader.get_trailer().unwrap(), &data[200..]);
@@ -281,10 +286,9 @@ mod tests {
 
         {
             let data = generate_bytes(300);
-            let (mut reader, header) = ReaderWithHeader::<200, _>::new(data.as_slice())?;
+            let (reader, header) = ReaderWithHeader::<200, _>::new(data.as_slice())?;
 
-            let mut result = Vec::new();
-            reader.read_to_end(&mut result)?;
+            let result = read_all(reader)?;
 
             assert_eq!(header, &data[0..200]);
             assert_eq!(result, &data[200..]);
@@ -296,8 +300,7 @@ mod tests {
 
             reader.seek(SeekFrom::Current(50))?;
 
-            let mut result = Vec::new();
-            reader.read_to_end(&mut result)?;
+            let result = read_all(reader)?;
 
             assert_eq!(result, &data[150..]);
         }

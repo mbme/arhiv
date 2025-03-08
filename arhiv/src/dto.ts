@@ -156,7 +156,6 @@ export type APIResponse =
 export type DocumentId = NominalType<string, 'DocumentId'>;
 export type DocumentType = NominalType<string, 'DocumentType'>;
 export type DocumentLockKey = NominalType<string, 'DocumentLockKey'>;
-export type BLOBId = NominalType<string, 'BLOBId'>;
 
 export type DocumentDTO = Omit<Extract<APIResponse, { typeName: 'GetDocument' }>, 'typeName'>;
 
@@ -186,7 +185,7 @@ export type ListDocumentsResult<D = DocumentData> = {
   title: string;
   updatedAt: string;
   data: D;
-  cover?: BLOBId;
+  cover?: DocumentId;
 };
 
 export type DocumentData = JSONObj;

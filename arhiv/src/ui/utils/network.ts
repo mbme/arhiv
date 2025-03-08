@@ -1,4 +1,4 @@
-import { APIRequest, APIResponse, BLOBId, DocumentId } from 'dto';
+import { APIRequest, APIResponse, DocumentId } from 'dto';
 import { formatBytes, Obj } from './index';
 
 export type RPCResponse<Request extends APIRequest> = Extract<
@@ -88,7 +88,7 @@ export async function uploadFile(file: File, signal?: AbortSignal): Promise<Docu
   signal?.addEventListener('abort', onAbort);
 
   try {
-    const response = await fetch(`${window.BASE_PATH}/blobs`, {
+    const response = await fetch(`${window.BASE_PATH}/assets`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/octet-stream',
@@ -118,14 +118,18 @@ export async function uploadFile(file: File, signal?: AbortSignal): Promise<Docu
   }
 }
 
-export function getDocumentUrl(documentId: string): string {
+export function getDocumentUrl(documentId: DocumentId): string {
   return `${window.location.origin}${window.BASE_PATH}?id=${documentId}`;
 }
 
-export function getBlobUrl(blobId: BLOBId): string {
-  return `${window.BASE_PATH}/blobs/${blobId}`;
+export function getAssetUrl(assetId: DocumentId): string {
+  return `${window.BASE_PATH}/assets/${assetId}`;
 }
 
-export function getScaledImageUrl(blobId: BLOBId, maxWidth: number, maxHeight: number): string {
-  return `${window.BASE_PATH}/blobs/images/${blobId}?max_w=${maxWidth}&max_h=${maxHeight}`;
+export function getScaledImageUrl(
+  assetId: DocumentId,
+  maxWidth: number,
+  maxHeight: number,
+): string {
+  return `${window.BASE_PATH}/assets/images/${assetId}?max_w=${maxWidth}&max_h=${maxHeight}`;
 }

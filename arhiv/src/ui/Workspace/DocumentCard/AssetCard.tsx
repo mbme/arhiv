@@ -105,7 +105,7 @@ export function AssetCard({ document, isUpdating, options }: Props) {
 
       {canPreview(document.documentType, document.data) && (
         <div className="mb-8 empty:hidden">
-          <AssetPreview data={document.data} />
+          <AssetPreview assetId={document.id} data={document.data} />
         </div>
       )}
 

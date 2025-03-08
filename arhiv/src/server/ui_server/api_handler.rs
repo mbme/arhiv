@@ -6,7 +6,7 @@ use baza::{
     baza2::{Filter, StagingError, ValidationError},
     entities::{Document, DocumentType},
     markup::MarkupStr,
-    schema::{create_asset, Asset, DataSchema},
+    schema::{create_asset, DataSchema},
     DocumentExpert,
 };
 use rs_utils::{
@@ -47,17 +47,9 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .map(|item| {
                     let asset_id = document_expert.get_cover_asset_id(item)?;
 
-                    let cover = if let Some(ref asset_id) = asset_id {
-                        let asset: Asset = baza.must_get_document(asset_id)?.clone().convert()?;
-
-                        Some(asset.data.blob)
-                    } else {
-                        None
-                    };
-
                     Ok(ListDocumentsResult {
                         title: document_expert.get_title(&item.document_type, &item.data)?,
-                        cover,
+                        cover: asset_id,
                         id: item.id.clone(),
                         document_type: item.document_type.clone().into(),
                         updated_at: item.updated_at,

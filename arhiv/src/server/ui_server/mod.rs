@@ -19,13 +19,13 @@ use serde_json::Value;
 
 use baza::{
     baza2::BazaManager,
-    entities::BLOBId,
-    schema::{create_asset, get_asset_by_blob_id},
+    entities::Id,
+    schema::{create_asset, Asset},
 };
 use rs_utils::{
     create_body_from_reader,
     crypto_key::CryptoKey,
-    http_server::{add_max_cache_header, add_no_cache_headers, ServerError},
+    http_server::{add_no_cache_headers, ServerError},
     log, stream_to_file, AuthToken, TempFile,
 };
 
@@ -45,9 +45,9 @@ pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<Arhiv>> {
     Router::new()
         .route("/", get(index_page))
         .route("/api", post(api_handler))
-        .route("/blobs", post(create_blob_handler))
-        .route("/blobs/{blob_id}", get(blob_handler))
-        .route("/blobs/images/{blob_id}", get(image_handler))
+        .route("/assets", post(create_asset_handler))
+        .route("/assets/{asset_id}", get(asset_handler))
+        .route("/assets/images/{asset_id}", get(image_handler))
         .route("/{*fileName}", get(public_assets_handler))
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(client_authenticator))
@@ -129,7 +129,7 @@ async fn api_handler(
 }
 
 #[tracing::instrument(skip(arhiv, request), level = "debug")]
-async fn create_blob_handler(
+async fn create_asset_handler(
     arhiv: State<Arc<Arhiv>>,
     request: Request,
 ) -> Result<impl IntoResponse, ServerError> {
@@ -141,7 +141,7 @@ async fn create_blob_handler(
         .context("Failed to read X-File-Name header as a string")?
         .to_string();
 
-    let temp_file = TempFile::new_in_downloads_dir("arhiv-blob")?;
+    let temp_file = TempFile::new_in_downloads_dir("arhiv-asset")?;
     let stream = request.into_body().into_data_stream();
 
     stream_to_file(temp_file.open_tokio_file(0).await?, stream).await?;
@@ -155,14 +155,14 @@ async fn create_blob_handler(
     Ok(asset.id.to_string())
 }
 
-async fn blob_handler(
+async fn asset_handler(
     arhiv: State<Arc<Arhiv>>,
-    Path(blob_id): Path<String>,
+    Path(asset_id): Path<String>,
     range: Option<TypedHeader<headers::Range>>,
 ) -> impl IntoResponse {
-    let blob_id = BLOBId::from_string(blob_id)?;
+    let asset_id: Id = asset_id.into();
 
-    respond_with_blob(&arhiv.baza, &blob_id, &range.map(|val| val.0)).await
+    respond_with_blob(&arhiv.baza, &asset_id, &range.map(|val| val.0)).await
 }
 
 #[derive(Deserialize)]
@@ -241,19 +241,22 @@ async fn client_authenticator(
 
 async fn respond_with_blob(
     baza_manager: &BazaManager,
-    blob_id: &BLOBId,
+    asset_id: &Id,
     range: &Option<headers::Range>,
 ) -> Result<Response, ServerError> {
     let (asset, mut blob) = {
         let baza = baza_manager.open()?;
 
-        if !baza.blob_exists(blob_id)? {
+        let asset: Asset = if let Some(head) = baza.get_document(asset_id) {
+            head.get_single_document()
+                .clone()
+                .convert()
+                .context("Document is not an asset")?
+        } else {
             return Ok(StatusCode::NOT_FOUND.into_response());
-        }
+        };
 
-        let asset = get_asset_by_blob_id(&baza, blob_id).context("Can't find asset by blob id")?;
-
-        let blob = baza.get_blob(blob_id)?;
+        let blob = baza.get_blob(&asset.data.blob)?;
 
         (asset, blob)
     };
@@ -261,7 +264,6 @@ async fn respond_with_blob(
     let size = asset.data.size;
 
     let mut headers = HeaderMap::new();
-    add_max_cache_header(&mut headers);
     headers.typed_insert(headers::ContentLength(size));
     headers.typed_insert(headers::AcceptRanges::bytes());
     headers.typed_insert(headers::ContentType::from_str(&asset.data.media_type)?);
@@ -287,11 +289,7 @@ async fn respond_with_blob(
 
         if start_pos >= size || end_pos >= size {
             log::warn!(
-                "blob {}: range {}-{} out of {} not satisfiable",
-                blob_id,
-                start_pos,
-                end_pos,
-                size
+                "Asset {asset_id}: range {start_pos}-{end_pos} out of {size} not satisfiable"
             );
 
             return Ok(StatusCode::RANGE_NOT_SATISFIABLE.into_response());

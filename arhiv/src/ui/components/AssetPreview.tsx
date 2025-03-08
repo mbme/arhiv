@@ -1,8 +1,8 @@
 import { useContext, useState } from 'react';
-import { DocumentData, DocumentId, DocumentType, BLOBId } from 'dto';
+import { DocumentData, DocumentId, DocumentType } from 'dto';
 import { isAsset } from 'utils/schema';
 import { isAudio, isImage } from 'utils';
-import { getBlobUrl, getScaledImageUrl } from 'utils/network';
+import { getAssetUrl, getScaledImageUrl } from 'utils/network';
 import { Button } from 'components/Button';
 import { AudioPlayer } from 'components/AudioPlayer/AudioPlayer';
 import { SuspenseImage } from 'components/SuspenseImage';
@@ -35,22 +35,22 @@ export function AssetPreviewBlock({ documentId, data, description }: AssetPrevie
         </Button>
       </span>
 
-      <AssetPreview data={data} />
+      <AssetPreview assetId={documentId} data={data} />
     </span>
   );
 }
 
 type AssetPreviewProps = {
+  assetId: DocumentId;
   data: DocumentData;
 };
-export function AssetPreview({ data }: AssetPreviewProps) {
+export function AssetPreview({ assetId, data }: AssetPreviewProps) {
   const [showImageModal, setShowImageModal] = useState(false);
 
-  const blobId = data['blob'] as BLOBId;
   const size = data['size'] as number;
   const mediaType = data['media_type'] as string;
 
-  const blobUrl = getBlobUrl(blobId);
+  const assetUrl = getAssetUrl(assetId);
 
   if (isImage(mediaType)) {
     if (showImageModal) {
@@ -62,16 +62,16 @@ export function AssetPreview({ data }: AssetPreviewProps) {
             setShowImageModal(false);
           }}
         >
-          <img className="max-w-full mx-auto" src={blobUrl} />
+          <img className="max-w-full mx-auto" src={assetUrl} />
         </Dialog>
       );
     }
 
-    const compressedImage = getScaledImageUrl(blobId, 600, 500);
+    const compressedImage = getScaledImageUrl(assetId, 600, 500);
 
     return (
       <SuspenseImage
-        src={size < 1_000_000 ? blobUrl : compressedImage}
+        src={size < 1_000_000 ? assetUrl : compressedImage}
         alt=""
         className="max-h-96 mx-auto"
         onClick={() => {
@@ -82,7 +82,7 @@ export function AssetPreview({ data }: AssetPreviewProps) {
   }
 
   if (isAudio(mediaType)) {
-    return <AudioPlayer url={blobUrl} title="" artist="" />;
+    return <AudioPlayer url={assetUrl} title="" artist="" />;
   }
 
   return null;

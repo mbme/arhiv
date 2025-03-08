@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use baza::entities::{BLOBId, DocumentData, DocumentLockKey, Id};
+use baza::entities::{DocumentData, DocumentLockKey, Id};
 use rs_utils::{SecretString, Timestamp};
 
 #[derive(Deserialize, Debug)]
@@ -139,7 +139,7 @@ pub struct ListDocumentsResult {
     pub title: String,
     pub updated_at: Timestamp,
     pub data: DocumentData,
-    pub cover: Option<BLOBId>,
+    pub cover: Option<Id>,
 }
 
 #[derive(Serialize)]

@@ -6,6 +6,7 @@ use std::{
     collections::{HashMap, HashSet},
     fs::remove_file,
     io::Read,
+    time::Instant,
 };
 
 use anyhow::{anyhow, ensure, Context, Result};
@@ -262,7 +263,14 @@ impl Baza {
     }
 
     pub fn list_documents(&self, filter: &Filter) -> Result<ListPage> {
-        self.state.list_documents(filter)
+        let start_time = Instant::now();
+
+        let result = self.state.list_documents(filter);
+
+        let duration = start_time.elapsed();
+        log::info!("Listed documents in {:?}", duration);
+
+        result
     }
 
     pub fn find_document_backrefs(&self, id: &Id) -> HashSet<Id> {

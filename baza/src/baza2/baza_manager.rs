@@ -107,8 +107,6 @@ impl BazaManager {
     }
 
     fn maybe_read_state(&self) -> Result<()> {
-        log::info!("Opening baza {}", self.paths);
-
         ensure!(self.storage_exists()?, "Storage doesn't exist");
 
         if let Some(baza) = self.acquire_state_read_lock()?.baza.as_ref() {
@@ -119,6 +117,8 @@ impl BazaManager {
                 log::info!("Baza state is out of date with file, re-reading");
             }
         }
+
+        log::info!("Opening baza {}", self.paths);
 
         let mut manager_state = self.acquire_state_write_lock()?;
 

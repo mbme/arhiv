@@ -1,5 +1,6 @@
 mod blobs;
 mod stats;
+mod validator;
 
 use std::{
     collections::{HashMap, HashSet},
@@ -22,11 +23,11 @@ use crate::{
         BLOBId, Document, DocumentKey, DocumentLock, DocumentLockKey, Id, InstanceId, Revision,
     },
     schema::DataSchema,
-    validator::{ValidationError, Validator},
 };
 
 pub use blobs::write_and_encrypt_blob;
 pub use stats::{BLOBSCount, DocumentsCount};
+pub use validator::ValidationError;
 
 #[derive(Error, Debug)]
 #[error(transparent)]
@@ -234,7 +235,7 @@ impl Baza {
     ) -> std::result::Result<&Document, StagingError> {
         log::debug!("Staging document {}", &document.id);
 
-        Validator::new(self as &Baza).validate_staged(&document)?;
+        self.validate_staged(&document)?;
 
         let document = self.state.stage_document(document, lock_key)?;
 

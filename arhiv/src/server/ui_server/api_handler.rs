@@ -3,11 +3,10 @@ use std::{cmp::Ordering, fs, path::Path};
 use anyhow::{bail, Context, Result};
 
 use baza::{
-    baza2::{Filter, StagingError},
+    baza2::{Filter, StagingError, ValidationError},
     entities::{Document, DocumentType},
     markup::MarkupStr,
     schema::{create_asset, Asset, DataSchema},
-    validator::ValidationError,
     DocumentExpert,
 };
 use rs_utils::{

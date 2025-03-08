@@ -1,5 +1,5 @@
 pub use baza_info::BazaInfo;
-pub use baza::{BLOBSCount, DocumentsCount, Baza, StagingError};
+pub use baza::{BLOBSCount, DocumentsCount, Baza, StagingError, ValidationError};
 pub use baza_manager::BazaManager;
 pub use baza_state::{BazaState, DocumentHead, Filter, ListPage, Locks};
 pub use baza_storage::BazaStorage;

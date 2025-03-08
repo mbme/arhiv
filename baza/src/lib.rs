@@ -6,7 +6,6 @@ pub mod entities;
 pub mod markup;
 pub mod schema;
 mod search;
-pub mod validator;
 
 #[cfg(test)]
 mod tests;

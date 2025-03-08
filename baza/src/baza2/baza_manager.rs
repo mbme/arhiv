@@ -416,6 +416,11 @@ impl BazaManager {
     pub fn new_for_tests(test_dir: &str) -> Self {
         let schema = DataSchema::new_test_schema();
 
+        BazaManager::new_for_tests_with_schema(test_dir, schema)
+    }
+
+    #[cfg(test)]
+    pub fn new_for_tests_with_schema(test_dir: &str, schema: DataSchema) -> Self {
         let manager = BazaManager::new(
             format!("{test_dir}/storage"),
             format!("{test_dir}/state"),

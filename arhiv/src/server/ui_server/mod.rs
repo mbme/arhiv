@@ -3,7 +3,7 @@ use std::{io::Seek, ops::Bound, str::FromStr, sync::Arc};
 use anyhow::Context;
 use axum::{
     extract::{DefaultBodyLimit, Path, Query, Request, State},
-    http::{HeaderMap, StatusCode},
+    http::{self, HeaderMap, HeaderValue, StatusCode},
     middleware::{self, Next},
     response::{Html, IntoResponse, Response},
     routing::{get, post},
@@ -259,6 +259,13 @@ async fn respond_with_blob(
     let size = asset.data.size;
 
     let mut headers = HeaderMap::new();
+    headers.insert(
+        http::header::CONTENT_DISPOSITION,
+        HeaderValue::from_str(&format!(
+            r#"attachment; filename="{}""#,
+            asset.data.filename
+        ))?,
+    );
     headers.typed_insert(headers::ContentLength(size));
     headers.typed_insert(headers::AcceptRanges::bytes());
     headers.typed_insert(headers::ContentType::from_str(&asset.data.media_type)?);

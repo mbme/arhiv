@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { DocumentDTO } from 'dto';
 import { useUnsavedChangesWarning } from 'utils/hooks';
-import { RPC } from 'utils/network';
+import { getAssetUrl, RPC } from 'utils/network';
 import { Button } from 'components/Button';
 import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';
 import { useIsFormDirty } from 'components/Form/Form';
 import { AssetPreview, canPreview } from 'components/AssetPreview';
 import { ProgressLocker } from 'components/ProgressLocker';
+import { Icon } from 'components/Icon';
 import { useCardLock } from '../controller';
 import { EraseDocumentConfirmationDialog } from '../DocumentEditor/EraseDocumentConfirmationDialog';
 import { DocumentViewerHead } from '../DocumentEditor/DocumentViewerHead';
@@ -38,6 +39,8 @@ export function AssetCard({ document, isUpdating, options }: Props) {
       form.reset();
     }
   }, [form, lockError]);
+
+  const filename = document.data['filename'] as string;
 
   return (
     <CardContainer
@@ -108,6 +111,18 @@ export function AssetCard({ document, isUpdating, options }: Props) {
           <AssetPreview assetId={document.id} data={document.data} />
         </div>
       )}
+
+      <a
+        href={getAssetUrl(document.id)}
+        title={filename}
+        download={filename}
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center gap-2 var-active-color hover:var-active-color-hover"
+      >
+        <Icon variant="download" />
+        Download file
+      </a>
 
       <DocumentEditor
         key={document.updatedAt} // force form fields to use fresh values from the document after save

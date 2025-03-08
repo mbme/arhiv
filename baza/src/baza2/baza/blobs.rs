@@ -1,5 +1,6 @@
 use std::{
     collections::HashSet,
+    fs::remove_file,
     io::{copy, Read, Seek},
 };
 
@@ -70,6 +71,15 @@ impl Baza {
         log::info!("Created BLOB {blob_id} from {file_path}");
 
         Ok(blob_id)
+    }
+
+    pub(crate) fn remove_storage_blob(&mut self, blob_id: &BLOBId) -> Result<()> {
+        log::warn!("Removing storage BLOB {blob_id}");
+        let file_path = self.paths.get_storage_blob_path(blob_id);
+
+        remove_file(file_path)?;
+
+        Ok(())
     }
 
     pub fn cache_file_exists(&self, file_name: &str) -> Result<bool> {

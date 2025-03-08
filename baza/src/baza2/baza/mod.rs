@@ -110,7 +110,7 @@ impl Baza {
         })
     }
 
-    pub(crate) fn remove_unused_storage_blobs(&self) -> Result<()> {
+    pub(crate) fn remove_unused_storage_blobs(&mut self) -> Result<()> {
         let blob_refs = self.state.get_all_blob_refs();
         let storage_blobs = self.paths.list_storage_blobs()?;
 
@@ -130,8 +130,8 @@ impl Baza {
             );
 
             for blob_id in unused_storage_blobs {
-                let file_path = self.paths.get_storage_blob_path(blob_id);
-                remove_file(file_path).context("Failed to remove unused storage BLOB")?;
+                self.remove_storage_blob(blob_id)
+                    .context("Failed to remove unused storage BLOB")?;
             }
         }
 

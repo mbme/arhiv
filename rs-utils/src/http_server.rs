@@ -54,7 +54,7 @@ where
 pub fn add_no_cache_headers(headers: &mut HeaderMap) {
     headers.insert(
         header::CACHE_CONTROL,
-        HeaderValue::from_static("no-cache, no-store, must-revalidate"),
+        HeaderValue::from_static("no-cache, no-store, must-revalidate, max-age=0"),
     );
     headers.typed_insert(headers::Expires::from(UNIX_EPOCH));
 }

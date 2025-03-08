@@ -84,7 +84,6 @@ impl ArhivServer {
     }
 }
 
-#[allow(clippy::unused_async)]
 async fn health_handler() -> impl IntoResponse {
     let mut headers = HeaderMap::new();
     add_no_cache_headers(&mut headers);

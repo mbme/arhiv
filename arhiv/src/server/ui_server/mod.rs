@@ -51,6 +51,7 @@ pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<Arhiv>> {
         .route("/{*fileName}", get(public_assets_handler))
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(client_authenticator))
+        .layer(middleware::from_fn(no_cache_middleware))
         .layer(Extension(Arc::new(ui_key)))
 }
 
@@ -102,10 +103,7 @@ async fn index_page(arhiv: State<Arc<Arhiv>>) -> Result<impl IntoResponse, Serve
             </html>"#
     );
 
-    let mut headers = HeaderMap::new();
-    add_no_cache_headers(&mut headers);
-
-    Ok((headers, Html(content)))
+    Ok(Html(content))
 }
 
 #[tracing::instrument(skip(arhiv, request_value), level = "debug")]
@@ -122,10 +120,7 @@ async fn api_handler(
         serde_json::from_value(request_value).context("failed to parse APIRequest")?;
     let response = handle_api_request(&arhiv, request).await?;
 
-    let mut headers = HeaderMap::new();
-    add_no_cache_headers(&mut headers);
-
-    Ok((headers, Json(response)))
+    Ok(Json(response))
 }
 
 #[tracing::instrument(skip(arhiv, request), level = "debug")]
@@ -310,4 +305,12 @@ async fn respond_with_blob(
 
         Ok((StatusCode::OK, headers, body).into_response())
     }
+}
+
+async fn no_cache_middleware(req: Request, next: Next) -> Response {
+    let mut response = next.run(req).await;
+
+    add_no_cache_headers(response.headers_mut());
+
+    response
 }

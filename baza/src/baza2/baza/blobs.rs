@@ -35,20 +35,20 @@ impl Baza {
         Ok(None)
     }
 
-    pub(crate) fn blob_exists(&self, blob_id: &BLOBId) -> Result<bool> {
+    pub fn blob_exists(&self, blob_id: &BLOBId) -> Result<bool> {
         self.get_blob_path(blob_id).map(|path| path.is_some())
     }
 
-    pub(crate) fn get_blob(&self, blob_id: &BLOBId) -> Result<impl Read + Seek + use<>> {
+    pub fn get_blob(&self, blob_id: &BLOBId, blob_key: AgeKey) -> Result<impl Read + Seek + use<>> {
         let file_path = self.get_blob_path(blob_id)?.context("BLOB doesn't exist")?;
 
         let file_reader = create_file_reader(&file_path)?;
-        let age_reader = AgeReader::new(file_reader, self.key.clone())?;
+        let age_reader = AgeReader::new(file_reader, blob_key)?;
 
         Ok(age_reader)
     }
 
-    pub(crate) fn add_blob(&mut self, file_path: &str) -> Result<BLOBId> {
+    pub fn add_blob(&mut self, file_path: &str, blob_key: AgeKey) -> Result<BLOBId> {
         let blob_id = BLOBId::from_file(file_path)?;
         if self.blob_exists(&blob_id)? {
             log::warn!("BLOB {blob_id} already exists");
@@ -57,12 +57,12 @@ impl Baza {
         }
 
         let blob_path = self.get_local_blob_path(&blob_id);
-        write_and_encrypt_blob(file_path, &blob_path, self.key.clone())?;
+        write_and_encrypt_blob(file_path, &blob_path, blob_key)?;
 
         Ok(blob_id)
     }
 
-    pub(crate) fn remove_storage_blob(&mut self, blob_id: &BLOBId) -> Result<()> {
+    fn remove_storage_blob(&mut self, blob_id: &BLOBId) -> Result<()> {
         log::warn!("Removing storage BLOB {blob_id}");
         let file_path = self.paths.get_storage_blob_path(blob_id);
 
@@ -99,7 +99,7 @@ impl Baza {
         Ok(())
     }
 
-    pub(crate) fn collect_new_blobs(&self, new_snapshots: &[&Document]) -> Result<HashSet<BLOBId>> {
+    pub(super) fn collect_new_blobs(&self, new_snapshots: &[&Document]) -> Result<HashSet<BLOBId>> {
         let mut new_blobs = HashSet::new();
 
         for document in new_snapshots {
@@ -193,19 +193,21 @@ mod tests {
 
         let manager = BazaManager::new_for_tests(&temp_dir.path);
         let mut baza = manager.open_mut().unwrap();
+        let key = baza.key.clone();
 
         let data = generate_alpanumeric_string(100);
         let blob1_file = temp_dir.new_child("blob1");
         blob1_file.write_str(&data).unwrap();
 
-        let blob1 = baza.add_blob(&blob1_file.path).unwrap();
+        let blob1 = baza.add_blob(&blob1_file.path, key.clone()).unwrap();
 
         let blob1_state_path = baza.get_blob_path(&blob1).unwrap().unwrap();
         let encrypted_data = fs::read(&blob1_state_path).unwrap();
 
         assert_ne!(data.as_bytes(), encrypted_data);
 
-        let decrypted_data = read_all_as_string(baza.get_blob(&blob1).unwrap()).unwrap();
+        let decrypted_data =
+            read_all_as_string(baza.get_blob(&blob1, key.clone()).unwrap()).unwrap();
 
         assert_eq!(data, decrypted_data);
     }

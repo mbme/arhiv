@@ -2,7 +2,10 @@ use std::{fs, path::Path};
 
 use anyhow::{ensure, Result};
 
-use rs_utils::{ensure_dir_exists, file_exists, format_time, get_file_name, list_files, log, now};
+use rs_utils::{
+    create_dir_if_not_exist, ensure_dir_exists, file_exists, format_time, get_file_name,
+    list_files, log, now,
+};
 
 use crate::baza2::BazaManager;
 
@@ -19,20 +22,14 @@ impl BazaManager {
 
         let baza = self.open()?;
 
-        // if there are existing storage file backups, try decrypting them with current key
-        let backup_storage_files =
-            list_backup_storage_db_files(backup_dir, &self.paths.storage_main_db_file_name)?;
-        if let Some(backup_storage_file) = backup_storage_files.first() {
-            self.open_storage(backup_storage_file)?;
-            log::debug!("Backup: can decrypt backup storage files with current key");
-        }
-
         // warn if there are uncommitted changes
         if baza.has_staged_documents() {
             log::warn!("Backup: there are uncommitted changes, they won't be backed up");
         }
 
         let data_dir = format!("{backup_dir}/data");
+        create_dir_if_not_exist(&data_dir)?;
+
         let now = format_time(now(), "%Y-%m-%d_%H-%M-%S");
 
         // copy key file as [timestamp].key.age
@@ -48,9 +45,12 @@ impl BazaManager {
         fs::copy(&self.paths.storage_main_db_file, &backup_storage_file)?;
         log::info!("Backup: copied main storage file into {backup_storage_file}");
 
+        let blobs = list_files(&self.paths.storage_data_dir)?;
+        log::info!("Backup: found {} BLOBs", blobs.len());
+
         // copy blobs if needed
         let mut blob_count = 0;
-        for blob_file_path in list_files(&self.paths.storage_data_dir)? {
+        for blob_file_path in blobs {
             let blob_file_name = get_file_name(&blob_file_path);
 
             let backup_blob_path = format!("{data_dir}/{blob_file_name}");
@@ -73,16 +73,4 @@ impl BazaManager {
 
         Ok(())
     }
-}
-
-fn list_backup_storage_db_files(
-    backup_dir: &str,
-    main_storage_file_name: &str,
-) -> Result<Vec<String>> {
-    let result = list_files(backup_dir)?
-        .into_iter()
-        .filter(|file| file.ends_with(main_storage_file_name))
-        .collect();
-
-    Ok(result)
 }

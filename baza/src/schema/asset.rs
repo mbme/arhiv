@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 
-use rs_utils::Download;
+use rs_utils::{Download, ExposeSecret, SecretString};
 
 use crate::{
     baza2::Baza,
@@ -42,8 +42,21 @@ pub fn get_asset_definition() -> DataDescription {
                 mandatory: true,
                 readonly: true,
             },
+            Field {
+                name: "age_x25519_key",
+                field_type: FieldType::String {},
+                mandatory: true,
+                readonly: true,
+            },
         ],
     }
+}
+
+fn expose_secret_string<S>(secret: &SecretString, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serializer.serialize_str(secret.expose_secret())
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -53,6 +66,8 @@ pub struct AssetData {
     pub media_type: String,
     pub blob: BLOBId,
     pub size: u64,
+    #[serde(serialize_with = "expose_secret_string")]
+    pub age_x25519_key: SecretString,
 }
 
 impl AssetData {

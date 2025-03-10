@@ -1,17 +1,24 @@
-use std::fs::{remove_dir, remove_file};
+use std::{
+    collections::HashMap,
+    fs::{remove_dir, remove_file},
+};
 
-use anyhow::{ensure, Context, Result};
-use arhiv::Arhiv;
+use anyhow::{anyhow, Context, Result};
 use clap::Parser;
 use dialoguer::{theme::ColorfulTheme, Password};
 use rusqlite::Row;
 use serde_json::Value;
 
+use arhiv::Arhiv;
 use baza::{
     baza2::BazaManager,
-    entities::{BLOBId, Document, DocumentType, InstanceId, Revision},
+    entities::{Document, DocumentType, InstanceId, Revision},
+    schema::ASSET_TYPE,
 };
-use rs_utils::{get_file_name, list_files, log::setup_logger, FsTransaction, SecretString};
+use rs_utils::{
+    age::AgeKey, get_file_name, list_files, log::setup_logger, ExposeSecret, FsTransaction,
+    SecretString,
+};
 
 #[derive(Parser)]
 struct Cli {
@@ -56,8 +63,25 @@ fn main() -> Result<()> {
     }
 
     // Insert document snapshots into storage
-    let documents = get_all_snapshots(&db_file_path)?;
+    let mut documents = get_all_snapshots(&db_file_path)?;
     println!("Selected {} document snapshots", documents.len());
+    let assets = documents
+        .iter_mut()
+        .filter(|doc| doc.document_type == ASSET_TYPE);
+
+    let mut asset_keys = HashMap::new();
+    for asset in assets {
+        let blob_key = AgeKey::generate_age_x25519_key();
+
+        // add age_x25519_key to all assets
+        let key_string = blob_key.serialize().expose_secret().to_string();
+        asset.data.set("age_x25519_key".to_string(), key_string);
+
+        // keep blob_id -> blob_key mapping to encrypt BLOBs
+        let blob_id = asset.data.get_mandatory_str("blob").to_string();
+        asset_keys.insert(blob_id, blob_key);
+    }
+
     if !args.dry_run {
         arhiv
             .baza
@@ -71,16 +95,13 @@ fn main() -> Result<()> {
         let mut fs_tx = FsTransaction::new();
         for file_path in data_files {
             let file_name = get_file_name(&file_path);
-            let blob_id = BLOBId::from_file(&file_path)?;
-
-            ensure!(
-                file_name == blob_id.as_ref(),
-                "File name must be a valid blob id"
-            );
+            let blob_key = asset_keys
+                .remove(file_name)
+                .context(anyhow!("Can't find key for BLOB {file_name}"))?;
 
             arhiv
                 .baza
-                .dangerously_insert_blob_into_storage(&file_path)?;
+                .dangerously_insert_blob_into_storage(&file_path, blob_key)?;
 
             fs_tx.remove_file(&file_path)?;
         }

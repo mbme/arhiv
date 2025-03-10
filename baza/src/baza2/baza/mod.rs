@@ -283,7 +283,9 @@ impl Baza {
     pub fn get_asset_data(&self, asset_id: &Id) -> Result<impl Read + Seek + use<>> {
         let asset = self.get_asset(asset_id)?.context("Asset not found")?;
 
-        self.get_blob(&asset.data.blob)
+        let blob_key = AgeKey::from_age_x25519_key(asset.data.age_x25519_key)?;
+
+        self.get_blob(&asset.data.blob, blob_key)
     }
 
     pub fn create_asset(&mut self, file_path: &str) -> Result<Asset> {
@@ -298,7 +300,11 @@ impl Baza {
         let media_type = get_media_type(file_path)?;
         let size = get_file_size(file_path)?;
 
-        let blob_id = self.add_blob(file_path)?;
+        let blob_key = AgeKey::generate_age_x25519_key();
+
+        let age_x25519_key = blob_key.serialize();
+
+        let blob_id = self.add_blob(file_path, blob_key)?;
 
         let asset = Document::new_with_data(
             DocumentType::new(ASSET_TYPE),
@@ -307,6 +313,7 @@ impl Baza {
                 media_type,
                 size,
                 blob: blob_id,
+                age_x25519_key,
             },
         );
 

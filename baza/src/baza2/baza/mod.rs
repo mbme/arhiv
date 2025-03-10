@@ -9,7 +9,7 @@ use std::{
     time::Instant,
 };
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{ensure, Context, Result};
 use thiserror::Error;
 
 use rs_utils::{age::AgeKey, log, FsTransaction, Timestamp};
@@ -20,9 +20,7 @@ use crate::{
         baza_storage::{create_container_patch, STORAGE_VERSION},
         BazaInfo, BazaState, BazaStorage, DocumentHead, Filter, ListPage, Locks,
     },
-    entities::{
-        BLOBId, Document, DocumentKey, DocumentLock, DocumentLockKey, Id, InstanceId, Revision,
-    },
+    entities::{Document, DocumentKey, DocumentLock, DocumentLockKey, Id, InstanceId, Revision},
     schema::DataSchema,
 };
 
@@ -108,34 +106,6 @@ impl Baza {
             paths,
             key,
         })
-    }
-
-    pub(crate) fn remove_unused_storage_blobs(&mut self) -> Result<()> {
-        let blob_refs = self.state.get_all_blob_refs();
-        let storage_blobs = self.paths.list_storage_blobs()?;
-
-        // warn about missing storage BLOBs if any
-        let missing_blobs = blob_refs.difference(&storage_blobs).collect::<Vec<_>>();
-        if !missing_blobs.is_empty() {
-            log::warn!("There are {} missing BLOBs", missing_blobs.len());
-            log::trace!("Missing BLOBs: {missing_blobs:?}");
-        }
-
-        // remove unused storage BLOBs if any
-        let unused_storage_blobs = storage_blobs.difference(&blob_refs).collect::<Vec<_>>();
-        if !unused_storage_blobs.is_empty() {
-            log::info!(
-                "Removing {} unused storage BLOBs",
-                unused_storage_blobs.len()
-            );
-
-            for blob_id in unused_storage_blobs {
-                self.remove_storage_blob(blob_id)
-                    .context("Failed to remove unused storage BLOB")?;
-            }
-        }
-
-        Ok(())
     }
 
     pub(crate) fn update_state_from_storage(&mut self) -> Result<()> {
@@ -388,32 +358,6 @@ impl Baza {
         }
 
         Ok(true)
-    }
-
-    fn collect_new_blobs(&self, new_snapshots: &[&Document]) -> Result<HashSet<BLOBId>> {
-        let mut new_blobs = HashSet::new();
-
-        for document in new_snapshots {
-            let key = document.create_key();
-            let refs = self
-                .state
-                .get_document_snapshot_refs(&key)
-                .context(anyhow!("Can't find document refs for {key:?}"))?;
-
-            for blob_id in &refs.blobs {
-                if new_blobs.contains(blob_id) {
-                    continue;
-                }
-
-                if self.paths.storage_blob_exists(blob_id)? {
-                    continue;
-                }
-
-                new_blobs.insert(blob_id.clone());
-            }
-        }
-
-        Ok(new_blobs)
     }
 
     /// collect keys of storage documents that are known to be erased in the state

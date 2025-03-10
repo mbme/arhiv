@@ -5,14 +5,17 @@ mod validator;
 use std::{
     collections::{HashMap, HashSet},
     fs::remove_file,
-    io::Read,
+    io::{Read, Seek},
     time::Instant,
 };
 
 use anyhow::{ensure, Context, Result};
 use thiserror::Error;
 
-use rs_utils::{age::AgeKey, log, FsTransaction, Timestamp};
+use rs_utils::{
+    age::AgeKey, file_exists, get_file_name, get_file_size, get_media_type, log, FsTransaction,
+    Timestamp,
+};
 
 use crate::{
     baza2::{
@@ -20,8 +23,11 @@ use crate::{
         baza_storage::{create_container_patch, STORAGE_VERSION},
         BazaInfo, BazaState, BazaStorage, DocumentHead, Filter, ListPage, Locks,
     },
-    entities::{Document, DocumentKey, DocumentLock, DocumentLockKey, Id, InstanceId, Revision},
-    schema::DataSchema,
+    entities::{
+        Document, DocumentKey, DocumentLock, DocumentLockKey, DocumentType, Id, InstanceId,
+        Revision,
+    },
+    schema::{Asset, AssetData, DataSchema, ASSET_TYPE},
 };
 
 pub use blobs::write_and_encrypt_blob;
@@ -262,11 +268,61 @@ impl Baza {
             .update_document_collections(document_id, collections)
     }
 
+    pub fn get_asset(&self, asset_id: &Id) -> Result<Option<Asset>> {
+        let head = if let Some(head) = self.get_document(asset_id) {
+            head
+        } else {
+            return Ok(None);
+        };
+
+        let asset: Asset = head.get_single_document().clone().convert()?;
+
+        Ok(Some(asset))
+    }
+
+    pub fn get_asset_data(&self, asset_id: &Id) -> Result<impl Read + Seek + use<>> {
+        let asset = self.get_asset(asset_id)?.context("Asset not found")?;
+
+        self.get_blob(&asset.data.blob)
+    }
+
+    pub fn create_asset(&mut self, file_path: &str) -> Result<Asset> {
+        log::info!("Creating Asset from {file_path}");
+
+        ensure!(
+            file_exists(file_path)?,
+            "Asset source must exist and must be a file"
+        );
+
+        let filename = get_file_name(file_path).to_string();
+        let media_type = get_media_type(file_path)?;
+        let size = get_file_size(file_path)?;
+
+        let blob_id = self.add_blob(file_path)?;
+
+        let asset = Document::new_with_data(
+            DocumentType::new(ASSET_TYPE),
+            AssetData {
+                filename,
+                media_type,
+                size,
+                blob: blob_id,
+            },
+        );
+
+        let document = asset.into_document()?;
+        let document = self.stage_document(document, &None)?.clone();
+
+        log::info!("Created asset {} from {file_path}", document.id);
+
+        document.convert()
+    }
+
     pub fn has_unsaved_changes(&self) -> bool {
         self.state.is_modified()
     }
 
-    pub fn is_up_to_date_with_file(&self) -> Result<bool> {
+    pub(crate) fn is_up_to_date_with_file(&self) -> Result<bool> {
         let is_up_to_date =
             self.state_file_modification_time == self.paths.read_state_file_modification_time()?;
 

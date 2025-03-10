@@ -2,7 +2,7 @@ use anyhow::{bail, ensure, Context, Result};
 
 use baza::{
     entities::{Document, DocumentData, DocumentType},
-    schema::{create_asset, ASSET_TYPE},
+    schema::ASSET_TYPE,
 };
 use rs_utils::{ensure_file_exists, remove_file_extension, remove_file_if_exists};
 
@@ -21,7 +21,7 @@ impl Arhiv {
             TRACK_TYPE => self.import_track(file_path, remove_original),
             ASSET_TYPE => {
                 let mut baza = self.baza.open_mut()?;
-                let asset = create_asset(&mut baza, file_path, None)?;
+                let asset = baza.create_asset(file_path)?;
                 baza.save_changes()?;
 
                 if remove_original {
@@ -37,7 +37,7 @@ impl Arhiv {
     fn import_track(&self, file_path: &str, remove_original: bool) -> Result<Document> {
         let mut baza = self.baza.open_mut()?;
 
-        let asset = create_asset(&mut baza, file_path, None)?;
+        let asset = baza.create_asset(file_path)?;
 
         ensure!(
             asset.data.is_audio(),

@@ -14,7 +14,7 @@ use axum::{
 use axum_extra::headers::{self, HeaderMapExt};
 use serde::Deserialize;
 
-use baza::{entities::Id, schema::Asset};
+use baza::entities::Id;
 use rs_utils::{
     get_string_hash_sha256, http_server::ServerError, image::scale_image_async, log, read_all,
 };
@@ -70,11 +70,8 @@ pub async fn image_handler(
             return Ok((StatusCode::OK, headers, data).into_response());
         }
 
-        let asset: Asset = if let Some(head) = baza.get_document(&asset_id) {
-            head.get_single_document()
-                .clone()
-                .convert()
-                .context("Document is not an asset")?
+        let asset = if let Some(asset) = baza.get_asset(&asset_id)? {
+            asset
         } else {
             return Ok(StatusCode::NOT_FOUND.into_response());
         };
@@ -83,7 +80,7 @@ pub async fn image_handler(
             return Ok((StatusCode::BAD_REQUEST, "Asset is not an image").into_response());
         }
 
-        let blob = baza.get_blob(&asset.data.blob)?;
+        let blob = baza.get_asset_data(&asset_id)?;
 
         (asset, blob)
     };

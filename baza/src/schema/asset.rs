@@ -1,11 +1,11 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
-use rs_utils::{get_file_name, get_file_size, get_media_type, Download};
+use rs_utils::Download;
 
 use crate::{
     baza2::Baza,
-    entities::{BLOBId, Document, DocumentType},
+    entities::{BLOBId, Document},
     schema::{Field, FieldType},
 };
 
@@ -69,40 +69,18 @@ impl AssetData {
 
 pub type Asset = Document<AssetData>;
 
-pub fn create_asset(baza: &mut Baza, file_path: &str, filename: Option<String>) -> Result<Asset> {
-    let filename = filename.unwrap_or_else(|| get_file_name(file_path).to_string());
-
-    let media_type = get_media_type(file_path)?;
-    let size = get_file_size(file_path)?;
-
-    let blob_id = baza.add_blob(file_path)?;
-
-    let asset = Document::new_with_data(
-        DocumentType::new(ASSET_TYPE),
-        AssetData {
-            filename,
-            media_type,
-            size,
-            blob: blob_id,
-        },
-    );
-
-    let document = asset.into_document()?;
-    let document = baza.stage_document(document, &None)?.clone();
-
-    document.convert()
-}
-
 pub async fn download_asset(url: &str, baza: &mut Baza) -> Result<Asset> {
     let download_result = Download::new(url)?.start().await?;
 
-    let asset = create_asset(
-        baza,
-        &download_result.file_path,
-        Some(download_result.original_file_name.clone()),
-    )?;
+    let mut asset = baza.create_asset(&download_result.file_path)?;
+    asset.data.filename = download_result.original_file_name.clone();
 
-    Ok(asset)
+    let document = asset.into_document()?;
+    let document = baza
+        .stage_document(document, &None)
+        .context("Failed to update asset filename")?;
+
+    document.clone().convert()
 }
 
 pub fn get_asset_by_blob_id(baza: &Baza, blob_id: &BLOBId) -> Option<Asset> {

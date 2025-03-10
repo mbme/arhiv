@@ -17,11 +17,7 @@ use axum_extra::{
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use baza::{
-    baza2::BazaManager,
-    entities::Id,
-    schema::{create_asset, Asset},
-};
+use baza::{baza2::BazaManager, entities::Id};
 use rs_utils::{
     create_body_from_reader,
     crypto_key::CryptoKey,
@@ -143,11 +139,19 @@ async fn create_asset_handler(
 
     let mut baza = arhiv.baza.open_mut()?;
 
-    let asset = create_asset(&mut baza, &temp_file.path, Some(file_name))?;
+    let mut asset = baza.create_asset(&temp_file.path)?;
+    asset.data.filename = file_name;
+
+    let document = asset.into_document()?;
+    let document = baza
+        .stage_document(document, &None)
+        .context("Failed to update asset filename")?;
+
+    let asset_id = document.id.to_string();
 
     baza.save_changes()?;
 
-    Ok(asset.id.to_string())
+    Ok(asset_id)
 }
 
 async fn asset_handler(
@@ -242,16 +246,14 @@ async fn respond_with_blob(
     let (asset, mut blob) = {
         let baza = baza_manager.open()?;
 
-        let asset: Asset = if let Some(head) = baza.get_document(asset_id) {
-            head.get_single_document()
-                .clone()
-                .convert()
-                .context("Document is not an asset")?
+        let asset = baza.get_asset(asset_id)?;
+        let asset = if let Some(asset) = asset {
+            asset
         } else {
             return Ok(StatusCode::NOT_FOUND.into_response());
         };
 
-        let blob = baza.get_blob(&asset.data.blob)?;
+        let blob = baza.get_asset_data(asset_id)?;
 
         (asset, blob)
     };

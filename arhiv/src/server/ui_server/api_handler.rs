@@ -6,7 +6,7 @@ use baza::{
     baza2::{Filter, StagingError, ValidationError},
     entities::{Document, DocumentType},
     markup::MarkupStr,
-    schema::{create_asset, DataSchema},
+    schema::DataSchema,
     DocumentExpert,
 };
 use rs_utils::{
@@ -227,7 +227,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             remove_file,
         } => {
             let mut baza = arhiv.baza.open_mut()?;
-            let asset = create_asset(&mut baza, file_path, None)?;
+            let asset = baza.create_asset(file_path)?;
             baza.save_changes()?;
 
             if remove_file {

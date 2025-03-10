@@ -35,11 +35,11 @@ impl Baza {
         Ok(None)
     }
 
-    pub fn blob_exists(&self, blob_id: &BLOBId) -> Result<bool> {
+    pub(crate) fn blob_exists(&self, blob_id: &BLOBId) -> Result<bool> {
         self.get_blob_path(blob_id).map(|path| path.is_some())
     }
 
-    pub fn get_blob(&self, blob_id: &BLOBId) -> Result<impl Read + Seek + use<>> {
+    pub(crate) fn get_blob(&self, blob_id: &BLOBId) -> Result<impl Read + Seek + use<>> {
         let file_path = self.get_blob_path(blob_id)?.context("BLOB doesn't exist")?;
 
         let file_reader = create_file_reader(&file_path)?;
@@ -48,16 +48,7 @@ impl Baza {
         Ok(age_reader)
     }
 
-    pub fn list_blobs(&self) -> Result<HashSet<BLOBId>> {
-        self.paths.list_blobs()
-    }
-
-    pub fn add_blob(&mut self, file_path: &str) -> Result<BLOBId> {
-        ensure!(
-            file_exists(file_path)?,
-            "BLOB source must exist and must be a file"
-        );
-
+    pub(crate) fn add_blob(&mut self, file_path: &str) -> Result<BLOBId> {
         let blob_id = BLOBId::from_file(file_path)?;
         if self.blob_exists(&blob_id)? {
             log::warn!("BLOB {blob_id} already exists");
@@ -67,8 +58,6 @@ impl Baza {
 
         let blob_path = self.get_local_blob_path(&blob_id);
         write_and_encrypt_blob(file_path, &blob_path, self.key.clone())?;
-
-        log::info!("Created BLOB {blob_id} from {file_path}");
 
         Ok(blob_id)
     }

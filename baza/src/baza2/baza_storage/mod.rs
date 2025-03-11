@@ -165,7 +165,7 @@ impl BazaFileStorage<'_> {
         let storage = BazaStorage::read(storage_reader, key)?;
 
         let duration = start_time.elapsed();
-        log::info!("Read storage from file in {:?}", duration);
+        log::debug!("Opened storage from file in {:?}", duration);
 
         Ok(storage)
     }

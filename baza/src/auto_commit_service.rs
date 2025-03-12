@@ -112,7 +112,7 @@ mod tests {
     use rs_utils::TempFile;
     use tokio::time::{advance, sleep};
 
-    use crate::{baza2::BazaManager, tests::new_empty_document, AutoCommitService};
+    use crate::{baza2::BazaManager, entities::new_empty_document, AutoCommitService};
 
     #[tokio::test(flavor = "current_thread", start_paused = true)]
     async fn test_auto_commit_on_start() -> Result<()> {

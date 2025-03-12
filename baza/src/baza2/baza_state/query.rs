@@ -85,12 +85,11 @@ impl BazaState {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::{
-        entities::{DocumentType, Id},
-        tests::{new_document, new_empty_document},
-    };
     use serde_json::json;
+
+    use crate::entities::{new_document, new_empty_document, DocumentType, Id};
+
+    use super::*;
 
     #[test]
     fn test_list_documents() {

@@ -7,9 +7,6 @@ pub mod markup;
 pub mod schema;
 mod search;
 
-#[cfg(test)]
-mod tests;
-
 pub use auto_commit_service::{AutoCommitService, AutoCommitTask};
 pub use document_expert::DocumentExpert;
 

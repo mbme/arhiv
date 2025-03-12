@@ -390,10 +390,7 @@ mod tests {
     use rs_utils::age::AgeKey;
     use serde_json::json;
 
-    use crate::{
-        entities::{DocumentLockKey, Id, Revision},
-        tests::{new_document, new_empty_document},
-    };
+    use crate::entities::{new_document, new_empty_document, DocumentLockKey, Id, Revision};
 
     use super::BazaState;
 

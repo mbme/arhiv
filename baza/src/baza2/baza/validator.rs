@@ -241,8 +241,8 @@ mod tests {
 
     use crate::{
         baza2::BazaManager,
+        entities::new_document,
         schema::{DataDescription, DataSchema, Field, FieldType},
-        tests::new_document,
     };
 
     #[test]

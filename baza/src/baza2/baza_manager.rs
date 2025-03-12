@@ -470,7 +470,7 @@ mod tests {
 
     use crate::{
         baza2::{baza_manager::BazaManager, baza_storage::BazaFileStorage, BazaStorage},
-        tests::{new_document, new_empty_document},
+        entities::{new_document, new_empty_document},
     };
 
     fn open_storage<'s>(manager: &BazaManager) -> BazaFileStorage<'s> {

@@ -137,3 +137,13 @@ impl fmt::Display for Document {
         )
     }
 }
+
+#[cfg(test)]
+pub fn new_document(value: serde_json::Value) -> Document {
+    Document::new_with_data(DocumentType::new("test_type"), value.try_into().unwrap())
+}
+
+#[cfg(test)]
+pub fn new_empty_document() -> Document {
+    new_document(serde_json::json!({}))
+}

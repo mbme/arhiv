@@ -107,7 +107,7 @@ impl BazaState {
 mod tests {
     use serde_json::json;
 
-    use crate::{baza2::BazaState, tests::new_empty_document};
+    use crate::{baza2::BazaState, entities::new_empty_document};
 
     #[test]
     fn test_extracts_refs_on_insert() {

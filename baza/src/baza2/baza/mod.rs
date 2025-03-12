@@ -537,7 +537,7 @@ mod tests {
 
     use crate::{
         baza2::{baza_storage::create_test_storage, BazaState, DocumentHead},
-        tests::new_document,
+        entities::new_document,
     };
 
     use super::update_state_from_storage;

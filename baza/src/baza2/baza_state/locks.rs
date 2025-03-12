@@ -95,7 +95,7 @@ impl BazaState {
 
 #[cfg(test)]
 mod tests {
-    use crate::{entities::DocumentLockKey, tests::new_empty_document};
+    use crate::entities::{new_empty_document, DocumentLockKey};
 
     use super::BazaState;
 

@@ -241,7 +241,7 @@ impl fmt::Display for DocumentHead {
 mod tests {
     use serde_json::json;
 
-    use crate::{entities::Revision, tests::new_document};
+    use crate::entities::{new_document, Revision};
 
     use super::DocumentHead;
 

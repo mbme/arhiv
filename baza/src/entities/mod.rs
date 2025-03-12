@@ -17,3 +17,6 @@ pub use id::Id;
 pub use instance_id::InstanceId;
 pub use refs::Refs;
 pub use revision::{LatestRevComputer, Revision, VectorClockOrder};
+
+#[cfg(test)]
+pub use document::{new_document, new_empty_document};

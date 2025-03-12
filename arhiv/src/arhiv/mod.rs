@@ -5,9 +5,13 @@ use anyhow::Result;
 use baza::{baza2::BazaManager, AutoCommitService, AutoCommitTask, DEV_MODE};
 use rs_utils::{get_data_home, get_home_dir, into_absolute_path, log};
 
-use crate::{
-    definitions::get_standard_schema, scaled_images_cache::ScaledImagesCache, ServerInfo, Status,
-};
+use crate::{definitions::get_standard_schema, ServerInfo, Status};
+
+pub use scaled_images_cache::ImageParams;
+use scaled_images_cache::ScaledImagesCache;
+
+mod import;
+mod scaled_images_cache;
 
 #[derive(Clone)]
 pub struct ArhivOptions {

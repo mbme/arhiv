@@ -10,7 +10,7 @@ use axum_extra::headers::{self, HeaderMapExt};
 use baza::entities::Id;
 use rs_utils::http_server::ServerError;
 
-use crate::{scaled_images_cache::ImageParams, Arhiv};
+use crate::{arhiv::ImageParams, Arhiv};
 
 #[tracing::instrument(skip(arhiv), level = "debug")]
 pub async fn scaled_image_handler(

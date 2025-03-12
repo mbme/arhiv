@@ -1,10 +1,10 @@
-use std::{collections::HashSet, fmt::Display, fs};
+use std::{collections::HashSet, fmt::Display};
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::Result;
 
 use rs_utils::{
-    create_dir_if_not_exist, dir_exists, file_exists, get_file_modification_time, list_files,
-    Timestamp,
+    create_dir_if_not_exist, dir_exists, file_exists, get_file_modification_time, get_file_name,
+    list_files, Timestamp,
 };
 
 use crate::entities::BLOBId;
@@ -96,11 +96,11 @@ impl BazaPaths {
     }
 
     pub fn list_storage_blobs(&self) -> Result<HashSet<BLOBId>> {
-        get_local_blob_ids(&self.storage_data_dir, BLOB_EXT)
+        list_blobs_in_dir(&self.storage_data_dir, BLOB_EXT)
     }
 
     pub fn list_state_blobs(&self) -> Result<HashSet<BLOBId>> {
-        get_local_blob_ids(&self.state_data_dir, BLOB_EXT)
+        list_blobs_in_dir(&self.state_data_dir, BLOB_EXT)
     }
 
     pub fn list_blobs(&self) -> Result<HashSet<BLOBId>> {
@@ -145,31 +145,17 @@ impl Display for BazaPaths {
     }
 }
 
-pub fn get_local_blob_ids(dir: &str, trim_ext: &str) -> Result<HashSet<BLOBId>> {
-    let items = fs::read_dir(dir)?
-        .map(|item| {
-            let entry = item.context("Failed to read data entry")?;
+fn list_blobs_in_dir(dir: &str, trim_ext: &str) -> Result<HashSet<BLOBId>> {
+    let files = list_files(dir)?;
 
-            let entry_path = entry.path();
+    let ids = files
+        .into_iter()
+        .filter_map(|file_path| {
+            let file_name = get_file_name(file_path.trim_end_matches(trim_ext));
 
-            ensure!(
-                entry_path.is_file(),
-                "{} isn't a file",
-                entry_path.to_string_lossy()
-            );
-
-            entry_path
-                .file_name()
-                .ok_or_else(|| anyhow!("Failed to read file name"))
-                .map(|value| {
-                    value
-                        .to_string_lossy()
-                        .trim_end_matches(trim_ext)
-                        .to_string()
-                })
-                .and_then(BLOBId::from_string)
+            BLOBId::from_string(file_name).ok()
         })
-        .collect::<Result<HashSet<_>>>()?;
+        .collect();
 
-    Ok(items)
+    Ok(ids)
 }

@@ -4,7 +4,7 @@ use std::{
     io::{copy, Read, Seek},
 };
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{anyhow, Context, Result};
 
 use rs_utils::{
     age::{AgeKey, AgeReader, AgeWriter},
@@ -124,45 +124,6 @@ impl Baza {
 
         Ok(new_blobs)
     }
-
-    pub fn cache_file_exists(&self, file_name: &str) -> Result<bool> {
-        let file_path = self.paths.get_cache_file_path(file_name);
-
-        file_exists(&file_path)
-    }
-
-    pub fn add_cache_file(&mut self, file_name: &str, mut reader: impl Read) -> Result<()> {
-        let file_path = self.paths.get_cache_file_path(file_name);
-
-        ensure!(
-            !file_exists(&file_path)?,
-            "Cache file {file_name} already exists",
-        );
-
-        let file_writer = create_file_writer(&file_path, false)?;
-        let mut age_writer = AgeWriter::new(file_writer, self.key.clone())?;
-
-        copy(&mut reader, &mut age_writer).context("Failed to copy & encrypt cache file data")?;
-
-        age_writer.finish()?;
-
-        log::info!("Created cache file {file_name}");
-
-        Ok(())
-    }
-
-    pub fn get_cache_file(&self, file_name: &str) -> Result<impl Read + Seek + use<>> {
-        let file_path = self.paths.get_cache_file_path(file_name);
-        ensure!(
-            file_exists(&file_path)?,
-            "Cache file {file_name} doesn't exist",
-        );
-
-        let file_reader = create_file_reader(&file_path)?;
-        let age_reader = AgeReader::new(file_reader, self.key.clone())?;
-
-        Ok(age_reader)
-    }
 }
 
 pub fn write_and_encrypt_blob(file_path: &str, blob_path: &str, key: AgeKey) -> Result<()> {
@@ -208,31 +169,6 @@ mod tests {
 
         let decrypted_data =
             read_all_as_string(baza.get_blob(&blob1, key.clone()).unwrap()).unwrap();
-
-        assert_eq!(data, decrypted_data);
-    }
-
-    #[test]
-    fn test_cache_files() {
-        let temp_dir = TempFile::new_with_details("test_cache", "");
-        temp_dir.mkdir().unwrap();
-
-        let manager = BazaManager::new_for_tests(&temp_dir.path);
-        let mut baza = manager.open_mut().unwrap();
-
-        let data = generate_alpanumeric_string(100);
-        let cache_file_name = "cache_file";
-
-        baza.add_cache_file(cache_file_name, data.as_bytes())
-            .unwrap();
-
-        let cache_file_path = baza.paths.get_cache_file_path(cache_file_name);
-        let encrypted_data = fs::read(&cache_file_path).unwrap();
-
-        assert_ne!(data.as_bytes(), encrypted_data);
-
-        let decrypted_data =
-            read_all_as_string(baza.get_cache_file(cache_file_name).unwrap()).unwrap();
 
         assert_eq!(data, decrypted_data);
     }

@@ -1,12 +1,14 @@
 use std::{
+    io::{Read, Write},
     ops::{Deref, DerefMut},
     sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
+    time::Instant,
 };
 
 use anyhow::{anyhow, ensure, Context, Result};
 
 use rs_utils::{
-    age::{encrypt_and_write_file, read_and_decrypt_file, AgeKey},
+    age::{encrypt_and_write_file, read_and_decrypt_file, AgeKey, AgeReader, AgeWriter},
     file_exists, log, FsTransaction, LockFile, SecretString, Timestamp,
 };
 
@@ -110,7 +112,7 @@ impl BazaManager {
 
         if let Some(baza) = self.acquire_state_read_lock()?.baza.as_ref() {
             if baza.is_up_to_date_with_file()? {
-                log::debug!("Baza state is up to date with file");
+                log::trace!("Baza state is up to date with file");
                 return Ok(());
             } else {
                 log::info!("Baza state is out of date with file, re-reading");
@@ -349,6 +351,18 @@ impl BazaManager {
         Ok(())
     }
 
+    pub fn encrypt<W: Write>(&self, writer: W) -> Result<AgeWriter<W>> {
+        let key = self.acquire_state_read_lock()?.get_key()?.clone();
+
+        AgeWriter::new(writer, key)
+    }
+
+    pub fn decrypt<R: Read>(&self, reader: R) -> Result<AgeReader<R>> {
+        let key = self.acquire_state_read_lock()?.get_key()?.clone();
+
+        AgeReader::new(reader, key)
+    }
+
     pub fn dangerously_create_state(&self, instance_id: InstanceId) -> Result<()> {
         let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
         let key = self.acquire_state_read_lock()?.get_key()?.clone();
@@ -362,7 +376,7 @@ impl BazaManager {
         &self,
         new_snapshots: &[Document],
     ) -> Result<()> {
-        log::warn!(
+        log::info!(
             "Inserting {} documents into storage db {}",
             new_snapshots.len(),
             self.paths.storage_main_db_file
@@ -390,7 +404,7 @@ impl BazaManager {
         file_path: &str,
         blob_key: AgeKey,
     ) -> Result<()> {
-        log::warn!("Adding file {file_path} to storage");
+        log::info!("Adding file {file_path} to storage");
 
         let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
 
@@ -399,11 +413,16 @@ impl BazaManager {
             "BLOB source must exist and must be a file"
         );
 
+        let start_time = Instant::now();
+
         let blob_id = BLOBId::from_file(file_path)?;
         let blob_path = self.paths.get_storage_blob_path(&blob_id);
         ensure!(!file_exists(&blob_path)?, "storage BLOB already exists");
 
         write_and_encrypt_blob(file_path, &blob_path, blob_key)?;
+
+        let duration = start_time.elapsed();
+        log::info!("Encrypted file {file_path} in {:?}", duration);
 
         Ok(())
     }

@@ -28,12 +28,12 @@ use rs_utils::{
 use crate::{definitions::get_standard_schema, dto::APIRequest, Arhiv};
 
 use self::api_handler::handle_api_request;
-use self::image_handler::image_handler;
 use self::public_assets_handler::public_assets_handler;
+use self::scaled_image_handler::scaled_image_handler;
 
 mod api_handler;
-mod image_handler;
 mod public_assets_handler;
+mod scaled_image_handler;
 
 pub const UI_BASE_PATH: &str = "/ui";
 
@@ -43,7 +43,7 @@ pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<Arhiv>> {
         .route("/api", post(api_handler))
         .route("/assets", post(create_asset_handler))
         .route("/assets/{asset_id}", get(asset_handler))
-        .route("/assets/images/{asset_id}", get(image_handler))
+        .route("/assets/images/{asset_id}", get(scaled_image_handler))
         .route("/{*fileName}", get(public_assets_handler))
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(client_authenticator))

@@ -5,7 +5,9 @@ use anyhow::Result;
 use baza::{baza2::BazaManager, AutoCommitService, AutoCommitTask, DEV_MODE};
 use rs_utils::{get_data_home, get_home_dir, into_absolute_path, log};
 
-use crate::{definitions::get_standard_schema, ServerInfo, Status};
+use crate::{
+    definitions::get_standard_schema, scaled_images_cache::ScaledImagesCache, ServerInfo, Status,
+};
 
 #[derive(Clone)]
 pub struct ArhivOptions {
@@ -64,6 +66,8 @@ impl ArhivOptions {
 
 pub struct Arhiv {
     pub baza: Arc<BazaManager>,
+    pub img_cache: ScaledImagesCache,
+
     auto_commit_task: Option<AutoCommitTask>,
     file_browser_root_dir: String,
 }
@@ -72,10 +76,17 @@ impl Arhiv {
     pub fn new(options: ArhivOptions) -> Self {
         let schema = get_standard_schema();
 
+        let img_cache_dir = format!("{}/img-cache", options.state_dir);
+
         let baza_manager = BazaManager::new(options.storage_dir, options.state_dir, schema);
+        let baza_manager = Arc::new(baza_manager);
+
+        let img_cache = ScaledImagesCache::new(img_cache_dir, baza_manager.clone());
 
         Arhiv {
-            baza: Arc::new(baza_manager),
+            baza: baza_manager,
+            img_cache,
+
             auto_commit_task: None,
             file_browser_root_dir: options.file_browser_root_dir,
         }

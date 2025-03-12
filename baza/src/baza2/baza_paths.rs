@@ -28,7 +28,6 @@ pub struct BazaPaths {
     pub state_dir: String,
     pub state_file: String,
     pub state_data_dir: String,
-    pub state_cache_dir: String,
 
     pub lock_file: String,
 }
@@ -44,7 +43,6 @@ impl BazaPaths {
 
         let state_file = format!("{state_dir}/state{STATE_EXT}");
         let state_data_dir = format!("{state_dir}/data");
-        let state_cache_dir = format!("{state_dir}/cache");
 
         let lock_file = format!("{state_dir}/baza.lock");
 
@@ -60,7 +58,6 @@ impl BazaPaths {
             state_dir,
             state_file,
             state_data_dir,
-            state_cache_dir,
 
             lock_file,
         }
@@ -72,7 +69,6 @@ impl BazaPaths {
 
         create_dir_if_not_exist(&self.state_dir)?;
         create_dir_if_not_exist(&self.state_data_dir)?;
-        create_dir_if_not_exist(&self.state_cache_dir)?;
 
         Ok(())
     }
@@ -136,10 +132,6 @@ impl BazaPaths {
 
     pub fn read_state_file_modification_time(&self) -> Result<Timestamp> {
         get_file_modification_time(&self.state_file)
-    }
-
-    pub fn get_cache_file_path(&self, file_name: &str) -> String {
-        format!("{}/{file_name}", self.state_cache_dir)
     }
 }
 

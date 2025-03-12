@@ -51,6 +51,10 @@ impl ArhivServer {
         let mut arhiv = Arhiv::new(options);
         arhiv.init_auto_commit_service();
 
+        if arhiv.baza.is_unlocked() {
+            arhiv.img_cache.init().await?;
+        }
+
         let arhiv = Arc::new(arhiv);
 
         let certificate = read_or_generate_certificate(&state_dir)?;

@@ -3,7 +3,7 @@ use std::{collections::HashMap, fmt};
 use anyhow::{anyhow, bail, ensure, Result};
 
 use crate::{
-    entities::{BLOBId, Document, Id},
+    entities::{Document, Id},
     schema::Field,
 };
 
@@ -115,17 +115,6 @@ impl Baza {
                 continue;
             }
 
-            // check blob ids
-            if let Some(value) = value {
-                let blob_ids = field.extract_blob_ids(value);
-
-                for blob_id in blob_ids {
-                    let validation_result = self.validate_blob_id(&blob_id);
-
-                    track_err(&mut errors, field, validation_result);
-                }
-            }
-
             let refs = {
                 if let Some(value) = value {
                     field.extract_refs(value)
@@ -169,14 +158,6 @@ impl Baza {
                 );
             }
         }
-
-        Ok(())
-    }
-
-    fn validate_blob_id(&self, blob_id: &BLOBId) -> Result<()> {
-        let blob_exists = self.blob_exists(blob_id)?;
-
-        ensure!(blob_exists, "BLOB {blob_id} doesn't exist");
 
         Ok(())
     }

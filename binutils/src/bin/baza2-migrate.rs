@@ -1,9 +1,6 @@
-use std::{
-    collections::HashMap,
-    fs::{remove_dir, remove_file},
-};
+use std::fs::{remove_dir, remove_file};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use clap::Parser;
 use dialoguer::{theme::ColorfulTheme, Password};
 use rusqlite::Row;
@@ -15,19 +12,12 @@ use baza::{
     entities::{Document, DocumentType, InstanceId, Revision},
     schema::ASSET_TYPE,
 };
-use rs_utils::{
-    age::AgeKey, get_file_name, list_files, log::setup_logger, ExposeSecret, FsTransaction,
-    SecretString,
-};
+use rs_utils::{age::AgeKey, list_files, log::setup_logger, ExposeSecret, SecretString};
 
 #[derive(Parser)]
 struct Cli {
     /// The directory of the arhiv
     arhiv_dir: String,
-
-    /// Run without making any changes
-    #[arg(short)]
-    dry_run: bool,
 }
 
 fn main() -> Result<()> {
@@ -38,10 +28,6 @@ fn main() -> Result<()> {
     let arhiv_dir = args.arhiv_dir;
     println!("Arhiv directory: {}", arhiv_dir);
 
-    if args.dry_run {
-        println!("Dry run");
-    }
-
     let db_file_path = format!("{arhiv_dir}/arhiv.sqlite");
     let data_dir_path = format!("{arhiv_dir}/data");
     let downloads_dir_path = format!("{arhiv_dir}/downloads");
@@ -51,16 +37,12 @@ fn main() -> Result<()> {
     // Ask for password and create new Arhiv instance
     println!("Enter new password for baza2:");
     let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH)?;
-    if !args.dry_run {
-        arhiv.baza.create(password)?;
-    }
+    arhiv.baza.create(password)?;
 
     // Create state using current instance id
     let instance_id = get_instance_id(&db_file_path)?;
     println!("Existing instance_id: {instance_id}");
-    if !args.dry_run {
-        arhiv.baza.dangerously_create_state(instance_id)?;
-    }
+    arhiv.baza.dangerously_create_state(instance_id)?;
 
     // Insert document snapshots into storage
     let mut documents = get_all_snapshots(&db_file_path)?;
@@ -69,7 +51,8 @@ fn main() -> Result<()> {
         .iter_mut()
         .filter(|doc| doc.document_type == ASSET_TYPE);
 
-    let mut asset_keys = HashMap::new();
+    let existing_data_files = list_files(&data_dir_path)?;
+
     for asset in assets {
         let blob_key = AgeKey::generate_age_x25519_key();
 
@@ -77,47 +60,32 @@ fn main() -> Result<()> {
         let key_string = blob_key.serialize().expose_secret().to_string();
         asset.data.set("age_x25519_key".to_string(), key_string);
 
-        // keep blob_id -> blob_key mapping to encrypt BLOBs
         let blob_id = asset.data.get_mandatory_str("blob").to_string();
-        asset_keys.insert(blob_id, blob_key);
-    }
 
-    if !args.dry_run {
+        // remove the legacy field
+        asset.data.remove("blob");
+
+        let file_path = format!("{data_dir_path}/{blob_id}");
         arhiv
             .baza
-            .dangerously_insert_snapshots_into_storage(&documents)?;
+            .dangerously_insert_blob_into_storage(&file_path, &asset.id, blob_key)?;
     }
 
-    // Encrypt all data files
-    let data_files = list_files(&data_dir_path)?;
-    println!("Encrypting {} data files", data_files.len());
-    if !args.dry_run {
-        let mut fs_tx = FsTransaction::new();
-        for file_path in data_files {
-            let file_name = get_file_name(&file_path);
-            let blob_key = asset_keys
-                .remove(file_name)
-                .context(anyhow!("Can't find key for BLOB {file_name}"))?;
-
-            arhiv
-                .baza
-                .dangerously_insert_blob_into_storage(&file_path, blob_key)?;
-
-            fs_tx.remove_file(&file_path)?;
-        }
-        fs_tx.commit()?;
-    }
+    arhiv
+        .baza
+        .dangerously_insert_snapshots_into_storage(&documents)?;
 
     // Cleanup
 
-    if !args.dry_run {
-        remove_file(&db_file_path)?;
+    // remove leftover data files
+    for file_path in existing_data_files {
+        remove_file(&file_path)?;
     }
+
+    remove_file(&db_file_path)?;
     println!("Removed db file {db_file_path}");
 
-    if !args.dry_run {
-        remove_dir(&downloads_dir_path)?;
-    }
+    remove_dir(&downloads_dir_path)?;
     println!("Removed downloads dir {downloads_dir_path}");
 
     Ok(())

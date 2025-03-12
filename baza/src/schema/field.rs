@@ -1,11 +1,11 @@
 use std::collections::HashSet;
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{anyhow, bail, Result};
 use serde::Serialize;
 use serde_json::Value;
 
 use crate::{
-    entities::{BLOBId, DocumentType, Id},
+    entities::{DocumentType, Id},
     markup::MarkupStr,
     schema::ASSET_TYPE,
 };
@@ -20,7 +20,6 @@ pub enum FieldType {
     Ref(&'static [&'static str]), // string
     // DocumentType[], empty array means any document type
     RefList(&'static [&'static str]), // string[]
-    BLOBId {},                        // string
     // string[], possible enum values
     Enum(&'static [&'static str]), // string
     Date {},                       // string
@@ -89,20 +88,6 @@ impl Field {
             let value: Vec<Id> = serde_json::from_value(value.clone()).expect("field must parse");
 
             result.extend(value);
-        }
-
-        result
-    }
-
-    /// Extract ids of the BLOBs that are referenced by current document
-    #[must_use]
-    pub fn extract_blob_ids(&self, value: &Value) -> HashSet<BLOBId> {
-        let mut result = HashSet::new();
-
-        if matches!(self.field_type, FieldType::BLOBId {}) {
-            let value: BLOBId = serde_json::from_value(value.clone()).expect("field must parse");
-
-            result.insert(value);
         }
 
         result
@@ -217,27 +202,6 @@ impl Field {
                         options.join(", ")
                     );
                 }
-            }
-
-            FieldType::BLOBId {} => {
-                if is_empty_string {
-                    return Ok(());
-                }
-
-                if !value.is_string() {
-                    bail!(
-                        "field '{}' expected to be a string, got: {}",
-                        self.name,
-                        value
-                    );
-                }
-
-                let blob_id = value.as_str().unwrap_or_default();
-
-                BLOBId::is_valid_blob_id(blob_id).context(anyhow!(
-                    "field '{}' expected to be a valid BLOB id",
-                    self.name
-                ))?;
             }
         }
 

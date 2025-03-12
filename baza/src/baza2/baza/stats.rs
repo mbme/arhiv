@@ -1,7 +1,7 @@
 use anyhow::Result;
 use serde::Serialize;
 
-use crate::baza2::BazaStorage;
+use crate::{baza2::BazaStorage, schema::ASSET_TYPE};
 
 use super::Baza;
 
@@ -49,7 +49,11 @@ impl Baza {
         let blobs_staged = self.paths.list_state_blobs()?.len();
         let blobs_in_storage = self.paths.list_storage_blobs()?.len();
 
-        let total_referenced_blobs = self.state.get_all_blob_refs().len();
+        let total_referenced_blobs = self
+            .state
+            .iter_documents()
+            .filter(|head| head.get_single_document().document_type == ASSET_TYPE)
+            .count();
 
         Ok(BLOBSCount {
             blobs_in_storage,

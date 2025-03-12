@@ -7,7 +7,7 @@ use rs_utils::{
     list_files, Timestamp,
 };
 
-use crate::entities::BLOBId;
+use crate::entities::Id;
 
 const BLOB_EXT: &str = ".age";
 
@@ -87,23 +87,23 @@ impl BazaPaths {
         format!("{}/{storage_name}{STORAGE_EXT}", self.storage_dir)
     }
 
-    pub fn get_storage_blob_path(&self, id: &BLOBId) -> String {
-        format!("{}/{id}{BLOB_EXT}", self.storage_data_dir)
+    pub fn get_storage_blob_path(&self, asset_id: &Id) -> String {
+        format!("{}/{asset_id}{BLOB_EXT}", self.storage_data_dir)
     }
 
-    pub fn get_state_blob_path(&self, id: &BLOBId) -> String {
-        format!("{}/{id}{BLOB_EXT}", self.state_data_dir)
+    pub fn get_state_blob_path(&self, asset_id: &Id) -> String {
+        format!("{}/{asset_id}{BLOB_EXT}", self.state_data_dir)
     }
 
-    pub fn list_storage_blobs(&self) -> Result<HashSet<BLOBId>> {
+    pub fn list_storage_blobs(&self) -> Result<HashSet<Id>> {
         list_blobs_in_dir(&self.storage_data_dir, BLOB_EXT)
     }
 
-    pub fn list_state_blobs(&self) -> Result<HashSet<BLOBId>> {
+    pub fn list_state_blobs(&self) -> Result<HashSet<Id>> {
         list_blobs_in_dir(&self.state_data_dir, BLOB_EXT)
     }
 
-    pub fn list_blobs(&self) -> Result<HashSet<BLOBId>> {
+    pub fn list_blobs(&self) -> Result<HashSet<Id>> {
         let mut ids = self.list_storage_blobs()?;
         let local_ids = self.list_state_blobs()?;
 
@@ -116,8 +116,8 @@ impl BazaPaths {
         dir_exists(&self.storage_dir)
     }
 
-    pub fn storage_blob_exists(&self, id: &BLOBId) -> Result<bool> {
-        let file = self.get_storage_blob_path(id);
+    pub fn storage_blob_exists(&self, asset_id: &Id) -> Result<bool> {
+        let file = self.get_storage_blob_path(asset_id);
 
         file_exists(&file)
     }
@@ -145,15 +145,19 @@ impl Display for BazaPaths {
     }
 }
 
-fn list_blobs_in_dir(dir: &str, trim_ext: &str) -> Result<HashSet<BLOBId>> {
+fn list_blobs_in_dir(dir: &str, trim_ext: &str) -> Result<HashSet<Id>> {
     let files = list_files(dir)?;
 
     let ids = files
         .into_iter()
         .filter_map(|file_path| {
-            let file_name = get_file_name(file_path.trim_end_matches(trim_ext));
+            if !file_path.ends_with(trim_ext) {
+                return None;
+            }
 
-            BLOBId::from_string(file_name).ok()
+            let id: Id = get_file_name(file_path.trim_end_matches(trim_ext)).into();
+
+            Some(id)
         })
         .collect();
 

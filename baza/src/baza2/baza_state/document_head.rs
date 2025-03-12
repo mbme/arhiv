@@ -3,7 +3,7 @@ use std::{collections::HashSet, fmt};
 use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::entities::{Document, DocumentKey, Id, Revision, VectorClockOrder};
+use crate::entities::{Document, DocumentKey, DocumentType, Id, Revision, VectorClockOrder};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct DocumentHead {
@@ -58,6 +58,19 @@ impl DocumentHead {
             .next()
             .expect("original must not be empty")
             .id
+    }
+
+    pub fn get_type(&self) -> &DocumentType {
+        if let Some(staged) = &self.staged {
+            return &staged.document_type;
+        }
+
+        &self
+            .original
+            .iter()
+            .next()
+            .expect("original must not be empty")
+            .document_type
     }
 
     pub fn get_revision(&self) -> &Revision {

@@ -4,30 +4,29 @@ use std::{
     io::{copy, Read, Seek},
 };
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{ensure, Context, Result};
 
 use rs_utils::{
     age::{AgeKey, AgeReader, AgeWriter},
     create_file_reader, create_file_writer, file_exists, log,
 };
 
-use crate::entities::{BLOBId, Document};
+use crate::{
+    entities::{Document, Id},
+    schema::ASSET_TYPE,
+};
 
 use super::Baza;
 
 impl Baza {
-    fn get_local_blob_path(&self, id: &BLOBId) -> String {
-        self.paths.get_state_blob_path(id)
-    }
-
-    fn get_blob_path(&self, id: &BLOBId) -> Result<Option<String>> {
-        let blob_path = self.get_local_blob_path(id);
+    fn get_blob_path(&self, asset_id: &Id) -> Result<Option<String>> {
+        let blob_path = self.paths.get_state_blob_path(asset_id);
 
         if file_exists(&blob_path)? {
             return Ok(Some(blob_path));
         }
 
-        let blob_path = self.paths.get_storage_blob_path(id);
+        let blob_path = self.paths.get_storage_blob_path(asset_id);
         if file_exists(&blob_path)? {
             return Ok(Some(blob_path));
         }
@@ -35,12 +34,14 @@ impl Baza {
         Ok(None)
     }
 
-    pub fn blob_exists(&self, blob_id: &BLOBId) -> Result<bool> {
-        self.get_blob_path(blob_id).map(|path| path.is_some())
+    pub fn blob_exists(&self, asset_id: &Id) -> Result<bool> {
+        self.get_blob_path(asset_id).map(|path| path.is_some())
     }
 
-    pub fn get_blob(&self, blob_id: &BLOBId, blob_key: AgeKey) -> Result<impl Read + Seek + use<>> {
-        let file_path = self.get_blob_path(blob_id)?.context("BLOB doesn't exist")?;
+    pub fn get_blob(&self, asset_id: &Id, blob_key: AgeKey) -> Result<impl Read + Seek + use<>> {
+        let file_path = self
+            .get_blob_path(asset_id)?
+            .context("BLOB doesn't exist")?;
 
         let file_reader = create_file_reader(&file_path)?;
         let age_reader = AgeReader::new(file_reader, blob_key)?;
@@ -48,23 +49,21 @@ impl Baza {
         Ok(age_reader)
     }
 
-    pub fn add_blob(&mut self, file_path: &str, blob_key: AgeKey) -> Result<BLOBId> {
-        let blob_id = BLOBId::from_file(file_path)?;
-        if self.blob_exists(&blob_id)? {
-            log::warn!("BLOB {blob_id} already exists");
+    pub fn add_blob(&mut self, asset_id: &Id, file_path: &str, blob_key: AgeKey) -> Result<()> {
+        ensure!(
+            !self.blob_exists(asset_id)?,
+            "BLOB {asset_id} already exists"
+        );
 
-            return Ok(blob_id);
-        }
-
-        let blob_path = self.get_local_blob_path(&blob_id);
+        let blob_path = self.paths.get_state_blob_path(asset_id);
         write_and_encrypt_blob(file_path, &blob_path, blob_key)?;
 
-        Ok(blob_id)
+        Ok(())
     }
 
-    fn remove_storage_blob(&mut self, blob_id: &BLOBId) -> Result<()> {
-        log::warn!("Removing storage BLOB {blob_id}");
-        let file_path = self.paths.get_storage_blob_path(blob_id);
+    fn remove_storage_blob(&mut self, asset_id: &Id) -> Result<()> {
+        log::warn!("Removing storage BLOB {asset_id}");
+        let file_path = self.paths.get_storage_blob_path(asset_id);
 
         remove_file(file_path)?;
 
@@ -72,18 +71,31 @@ impl Baza {
     }
 
     pub(crate) fn remove_unused_storage_blobs(&mut self) -> Result<()> {
-        let blob_refs = self.state.get_all_blob_refs();
+        let committed_assets = self
+            .iter_documents()
+            .filter_map(|head| {
+                if *head.get_type() == ASSET_TYPE {
+                    return Some(head.get_id().clone());
+                }
+
+                None
+            })
+            .collect::<HashSet<_>>();
         let storage_blobs = self.paths.list_storage_blobs()?;
 
         // warn about missing storage BLOBs if any
-        let missing_blobs = blob_refs.difference(&storage_blobs).collect::<Vec<_>>();
+        let missing_blobs = committed_assets
+            .difference(&storage_blobs)
+            .collect::<Vec<_>>();
         if !missing_blobs.is_empty() {
             log::warn!("There are {} missing BLOBs", missing_blobs.len());
             log::trace!("Missing BLOBs: {missing_blobs:?}");
         }
 
         // remove unused storage BLOBs if any
-        let unused_storage_blobs = storage_blobs.difference(&blob_refs).collect::<Vec<_>>();
+        let unused_storage_blobs = storage_blobs
+            .difference(&committed_assets)
+            .collect::<Vec<_>>();
         if !unused_storage_blobs.is_empty() {
             log::info!(
                 "Removing {} unused storage BLOBs",
@@ -99,26 +111,19 @@ impl Baza {
         Ok(())
     }
 
-    pub(super) fn collect_new_blobs(&self, new_snapshots: &[&Document]) -> Result<HashSet<BLOBId>> {
+    pub(super) fn collect_new_blobs(&self, new_snapshots: &[&Document]) -> Result<HashSet<Id>> {
+        let ids = new_snapshots.iter().filter_map(|doc| {
+            if doc.document_type == ASSET_TYPE {
+                Some(&doc.id)
+            } else {
+                None
+            }
+        });
+
         let mut new_blobs = HashSet::new();
-
-        for document in new_snapshots {
-            let key = document.create_key();
-            let refs = self
-                .state
-                .get_document_snapshot_refs(&key)
-                .context(anyhow!("Can't find document refs for {key:?}"))?;
-
-            for blob_id in &refs.blobs {
-                if new_blobs.contains(blob_id) {
-                    continue;
-                }
-
-                if self.paths.storage_blob_exists(blob_id)? {
-                    continue;
-                }
-
-                new_blobs.insert(blob_id.clone());
+        for id in ids {
+            if !self.paths.storage_blob_exists(id)? {
+                new_blobs.insert(id.clone());
             }
         }
 
@@ -145,7 +150,7 @@ mod tests {
 
     use rs_utils::{generate_alpanumeric_string, read_all_as_string, TempFile};
 
-    use crate::baza2::baza_manager::BazaManager;
+    use crate::{baza2::baza_manager::BazaManager, entities::Id};
 
     #[test]
     fn test_blobs() {
@@ -160,15 +165,15 @@ mod tests {
         let blob1_file = temp_dir.new_child("blob1");
         blob1_file.write_str(&data).unwrap();
 
-        let blob1 = baza.add_blob(&blob1_file.path, key.clone()).unwrap();
+        let id = Id::new();
+        baza.add_blob(&id, &blob1_file.path, key.clone()).unwrap();
 
-        let blob1_state_path = baza.get_blob_path(&blob1).unwrap().unwrap();
+        let blob1_state_path = baza.get_blob_path(&id).unwrap().unwrap();
         let encrypted_data = fs::read(&blob1_state_path).unwrap();
 
         assert_ne!(data.as_bytes(), encrypted_data);
 
-        let decrypted_data =
-            read_all_as_string(baza.get_blob(&blob1, key.clone()).unwrap()).unwrap();
+        let decrypted_data = read_all_as_string(baza.get_blob(&id, key.clone()).unwrap()).unwrap();
 
         assert_eq!(data, decrypted_data);
     }

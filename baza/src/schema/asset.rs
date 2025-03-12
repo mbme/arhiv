@@ -5,7 +5,7 @@ use rs_utils::{Download, ExposeSecret, SecretString};
 
 use crate::{
     baza2::Baza,
-    entities::{BLOBId, Document},
+    entities::Document,
     schema::{Field, FieldType},
 };
 
@@ -29,12 +29,6 @@ pub fn get_asset_definition() -> DataDescription {
                 field_type: FieldType::String {},
                 mandatory: true,
                 readonly: false,
-            },
-            Field {
-                name: "blob",
-                field_type: FieldType::BLOBId {},
-                mandatory: true,
-                readonly: true,
             },
             Field {
                 name: "size", // in bytes
@@ -64,7 +58,6 @@ where
 pub struct AssetData {
     pub filename: String,
     pub media_type: String,
-    pub blob: BLOBId,
     pub size: u64,
     #[serde(serialize_with = "expose_secret_string")]
     pub age_x25519_key: SecretString,

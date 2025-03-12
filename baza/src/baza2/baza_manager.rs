@@ -13,7 +13,7 @@ use rs_utils::{
 };
 
 use crate::{
-    entities::{BLOBId, Document, InstanceId},
+    entities::{Document, Id, InstanceId},
     schema::DataSchema,
     DocumentExpert,
 };
@@ -402,6 +402,7 @@ impl BazaManager {
     pub fn dangerously_insert_blob_into_storage(
         &self,
         file_path: &str,
+        asset_id: &Id,
         blob_key: AgeKey,
     ) -> Result<()> {
         log::info!("Adding file {file_path} to storage");
@@ -415,8 +416,7 @@ impl BazaManager {
 
         let start_time = Instant::now();
 
-        let blob_id = BLOBId::from_file(file_path)?;
-        let blob_path = self.paths.get_storage_blob_path(&blob_id);
+        let blob_path = self.paths.get_storage_blob_path(asset_id);
         ensure!(!file_exists(&blob_path)?, "storage BLOB already exists");
 
         write_and_encrypt_blob(file_path, &blob_path, blob_key)?;
@@ -491,7 +491,6 @@ mod tests {
 
         let manager = BazaManager::new_for_tests(&temp_dir.path);
         let mut baza = manager.open_mut().unwrap();
-        let key = baza.key.clone();
 
         assert!(dir_exists(&manager.paths.storage_dir).unwrap());
         assert!(dir_exists(&manager.paths.state_dir).unwrap());
@@ -505,22 +504,16 @@ mod tests {
         let blob2_file = temp_dir.new_child("blob2");
         blob2_file.write_str("blob2").unwrap();
 
-        let blob1 = baza.add_blob(&blob1_file.path, key.clone()).unwrap();
-        let blob2 = baza.add_blob(&blob2_file.path, key.clone()).unwrap();
-
-        assert!(
-            baza.stage_document(new_document(json!({ "blob": "unknown" })), &None)
-                .is_err(),
-            "Can't stage document that references unknown BLOB"
-        );
         assert!(
             baza.stage_document(new_document(json!({ "ref": "unknown" })), &None)
                 .is_err(),
             "Can't stage document that references unknown document"
         );
 
-        baza.stage_document(new_document(json!({ "blob": blob1 })), &None)
-            .unwrap();
+        let asset1 = baza.create_asset(&blob1_file.path).unwrap();
+
+        let asset2 = baza.create_asset(&blob2_file.path).unwrap();
+        baza.erase_document(&asset2.id).unwrap();
 
         assert!(baza.has_staged_documents());
 
@@ -533,16 +526,16 @@ mod tests {
         let baza = manager.open().unwrap();
 
         // ensure new BLOB is committed
-        assert!(manager.paths.storage_blob_exists(&blob1).unwrap());
+        assert!(manager.paths.storage_blob_exists(&asset1.id).unwrap());
 
         // ensure unused state BLOB is removed
-        assert!(!manager.paths.storage_blob_exists(&blob2).unwrap());
+        assert!(!manager.paths.storage_blob_exists(&asset2.id).unwrap());
         assert!(manager.paths.list_state_blobs().unwrap().is_empty());
 
         assert!(!baza.has_staged_documents());
 
         let storage = open_storage(&manager);
-        assert_eq!(storage.index.len(), 2);
+        assert_eq!(storage.index.len(), 3);
     }
 
     #[test]
@@ -552,39 +545,35 @@ mod tests {
 
         let manager = BazaManager::new_for_tests(&temp_dir.path);
         let mut baza = manager.open_mut().unwrap();
-        let key = baza.key.clone();
 
         // Create and stage a new document with a BLOB
         let blob_file = temp_dir.new_child("blob");
         blob_file.write_str("blob_content").unwrap();
-        let blob_id = baza.add_blob(&blob_file.path, key.clone()).unwrap();
-
-        let doc_a1 = new_document(json!({ "blob": blob_id }));
-        baza.stage_document(doc_a1.clone(), &None).unwrap();
+        let asset_a1 = baza.create_asset(&blob_file.path).unwrap();
         baza.commit().unwrap();
         drop(baza);
 
         // Ensure the document and BLOB are in storage
         let baza = manager.open().unwrap();
-        let doc_a1_key = baza.get_document(&doc_a1.id).unwrap().create_key();
+        let doc_a1_key = baza.get_document(&asset_a1.id).unwrap().create_key();
         let storage = open_storage(&manager);
         assert!(storage.contains(&doc_a1_key));
-        assert!(manager.paths.storage_blob_exists(&blob_id).unwrap());
+        assert!(manager.paths.storage_blob_exists(&asset_a1.id).unwrap());
         drop(baza);
 
         // Erase the document and commit
         let mut baza = manager.open_mut().unwrap();
-        baza.erase_document(&doc_a1.id).unwrap();
+        baza.erase_document(&asset_a1.id).unwrap();
         baza.commit().unwrap();
         drop(baza);
 
         // Reopen storage and check the snapshot and BLOB are removed
         let baza = manager.open().unwrap();
-        let doc_a2_key = baza.get_document(&doc_a1.id).unwrap().create_key();
+        let doc_a2_key = baza.get_document(&asset_a1.id).unwrap().create_key();
         let storage = open_storage(&manager);
         assert!(!storage.contains(&doc_a1_key));
         assert!(storage.contains(&doc_a2_key));
-        assert!(!manager.paths.storage_blob_exists(&blob_id).unwrap());
+        assert!(!manager.paths.storage_blob_exists(&asset_a1.id).unwrap());
     }
 
     #[test]

@@ -26,7 +26,6 @@ impl<'s> DocumentExpert<'s> {
             if let Some(value) = data.get(field.name) {
                 refs.documents.extend(field.extract_refs(value));
                 refs.collection.extend(field.extract_collection_refs(value));
-                refs.blobs.extend(field.extract_blob_ids(value));
             }
         }
 

@@ -29,7 +29,6 @@ export type FieldType =
   | { NaturalNumber: EmptyObj }
   | { Ref: DocumentType[] }
   | { RefList: DocumentType[] }
-  | { BLOBId: EmptyObj }
   | { Enum: string[] }
   | { Date: EmptyObj }
   | { Duration: EmptyObj }

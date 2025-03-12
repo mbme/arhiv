@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt};
 
 use serde::{Deserialize, Serialize};
 
-use super::{BLOBId, Id};
+use super::Id;
 
 #[derive(Serialize, Deserialize, Default, Debug, Clone, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -11,8 +11,6 @@ pub struct Refs {
     pub documents: HashSet<Id>,
     /// List of documents collected by the document (collection)
     pub collection: HashSet<Id>,
-    /// List of BLOBs referenced by the document
-    pub blobs: HashSet<BLOBId>,
 }
 
 impl Refs {
@@ -23,7 +21,7 @@ impl Refs {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.documents.is_empty() && self.collection.is_empty() && self.blobs.is_empty()
+        self.documents.is_empty() && self.collection.is_empty()
     }
 }
 

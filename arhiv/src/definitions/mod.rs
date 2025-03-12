@@ -1,4 +1,4 @@
-use baza::schema::{get_asset_definition, DataSchema};
+use baza::schema::DataSchema;
 
 pub use book::{BOOK_COLLECTION_TYPE, BOOK_TYPE};
 pub use contact::{CONTACT_COLLECTION_TYPE, CONTACT_TYPE};
@@ -23,7 +23,6 @@ pub fn get_standard_schema() -> DataSchema {
     DataSchema::new(
         "arhiv",
         [
-            vec![get_asset_definition()],
             note::get_note_definitions(),
             task::get_task_definitions(),
             book::get_book_definitions(),

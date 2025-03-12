@@ -28,6 +28,7 @@ impl DataSchema {
     #[must_use]
     pub fn new(name: impl Into<String>, mut modules: Vec<DataDescription>) -> Self {
         modules.push(ERASED_DOCUMENT_DATA_DESCRIPTION.clone());
+        modules.push(get_asset_definition());
 
         DataSchema {
             name: name.into(),
@@ -40,33 +41,24 @@ impl DataSchema {
     pub fn new_test_schema() -> Self {
         Self::new(
             "test",
-            vec![
-                DataDescription {
-                    document_type: "test_type",
-                    title_format: "{test}",
-                    fields: vec![
-                        Field {
-                            name: "test",
-                            field_type: FieldType::String {},
-                            mandatory: false,
-                            readonly: false,
-                        },
-                        Field {
-                            name: "blob",
-                            field_type: FieldType::BLOBId {},
-                            mandatory: false,
-                            readonly: false,
-                        },
-                        Field {
-                            name: "ref",
-                            field_type: FieldType::Ref(&["test_type"]),
-                            mandatory: false,
-                            readonly: false,
-                        },
-                    ],
-                },
-                get_asset_definition(),
-            ],
+            vec![DataDescription {
+                document_type: "test_type",
+                title_format: "{test}",
+                fields: vec![
+                    Field {
+                        name: "test",
+                        field_type: FieldType::String {},
+                        mandatory: false,
+                        readonly: false,
+                    },
+                    Field {
+                        name: "ref",
+                        field_type: FieldType::Ref(&["test_type"]),
+                        mandatory: false,
+                        readonly: false,
+                    },
+                ],
+            }],
         )
     }
 

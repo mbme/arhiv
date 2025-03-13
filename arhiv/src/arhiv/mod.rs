@@ -7,6 +7,8 @@ use rs_utils::{get_data_home, get_home_dir, into_absolute_path, log};
 
 use crate::{definitions::get_standard_schema, ServerInfo, Status};
 
+use keyring::SystemKeyring;
+pub use keyring::{Keyring, NoopKeyring};
 pub use scaled_images_cache::ImageParams;
 use scaled_images_cache::ScaledImagesCache;
 
@@ -14,11 +16,11 @@ mod import;
 mod keyring;
 mod scaled_images_cache;
 
-#[derive(Clone)]
 pub struct ArhivOptions {
     pub storage_dir: String,
     pub state_dir: String,
     pub file_browser_root_dir: String,
+    pub keyring: Arc<dyn Keyring>,
 }
 
 impl ArhivOptions {
@@ -27,6 +29,12 @@ impl ArhivOptions {
         let data_dir = get_data_home();
 
         let file_browser_root_dir = home_dir.clone().unwrap_or("/".to_string());
+
+        let keyring: Arc<dyn Keyring> = if cfg!(test) {
+            Arc::new(NoopKeyring)
+        } else {
+            Arc::new(SystemKeyring)
+        };
 
         if DEV_MODE {
             let dev_root =
@@ -39,6 +47,7 @@ impl ArhivOptions {
                 storage_dir: format!("{dev_root}/storage"),
                 state_dir: format!("{dev_root}/state"),
                 file_browser_root_dir,
+                keyring,
             };
         }
 
@@ -55,16 +64,7 @@ impl ArhivOptions {
             storage_dir,
             state_dir,
             file_browser_root_dir,
-        }
-    }
-
-    pub fn new_android(app_files_dir: String, external_storage_dir: String) -> Self {
-        let storage_dir = format!("{external_storage_dir}/Arhiv");
-
-        ArhivOptions {
-            storage_dir,
-            state_dir: app_files_dir,
-            file_browser_root_dir: external_storage_dir,
+            keyring,
         }
     }
 }
@@ -72,6 +72,7 @@ impl ArhivOptions {
 pub struct Arhiv {
     pub baza: Arc<BazaManager>,
     pub img_cache: ScaledImagesCache,
+    pub keyring: Arc<dyn Keyring>,
 
     auto_commit_task: Option<AutoCommitTask>,
     file_browser_root_dir: String,
@@ -91,6 +92,7 @@ impl Arhiv {
         Arhiv {
             baza: baza_manager,
             img_cache,
+            keyring: options.keyring,
 
             auto_commit_task: None,
             file_browser_root_dir: options.file_browser_root_dir,
@@ -115,6 +117,17 @@ impl Arhiv {
 
     pub fn collect_server_info(&self) -> Result<Option<ServerInfo>> {
         ServerInfo::collect(self.baza.get_state_dir())
+    }
+
+    pub fn unlock_using_keyring(&self) -> Result<bool> {
+        let password = self.keyring.get_password()?;
+
+        if let Some(password) = password {
+            self.baza.unlock(password)?;
+            Ok(true)
+        } else {
+            Ok(false)
+        }
     }
 
     pub fn get_status(&self) -> Result<String> {

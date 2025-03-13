@@ -51,10 +51,12 @@ impl ArhivServer {
         let mut arhiv = Arhiv::new(options);
         arhiv.init_auto_commit_service();
 
-        match arhiv.unlock_using_keyring() {
-            Ok(_) => {}
-            Err(err) => {
-                log::error!("Failed to use keyring: {err}");
+        if arhiv.baza.storage_exists()? {
+            match arhiv.unlock_using_keyring() {
+                Ok(_) => {}
+                Err(err) => {
+                    log::error!("Failed to use keyring: {err}");
+                }
             }
         }
 

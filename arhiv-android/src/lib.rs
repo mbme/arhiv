@@ -1,5 +1,5 @@
 use std::{
-    sync::{LazyLock, Mutex},
+    sync::{Arc, LazyLock, Mutex},
     time::Duration,
 };
 
@@ -11,7 +11,7 @@ use jni::{
 };
 use tokio::runtime::Runtime;
 
-use arhiv::{ArhivOptions, ArhivServer};
+use arhiv::{ArhivOptions, ArhivServer, NoopKeyring};
 use rs_utils::log;
 
 static RUNTIME: LazyLock<Mutex<Option<Runtime>>> = LazyLock::new(|| Mutex::new(None));
@@ -47,7 +47,7 @@ fn start_server(options: ArhivOptions) -> Result<String> {
     *server_lock = Some(server);
     *runtime_lock = Some(runtime);
 
-    Ok(server_info.ui_url)
+    Ok(server_info.ui_url) // FIXME with auth token?
 }
 
 fn stop_server() -> Result<()> {
@@ -90,7 +90,13 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer(
         .into();
     log::debug!("Storage dir: {external_storage_dir}");
 
-    let options = ArhivOptions::new_android(app_files_dir, external_storage_dir);
+    let options = ArhivOptions {
+        storage_dir: format!("{external_storage_dir}/Arhiv"),
+        state_dir: app_files_dir,
+        file_browser_root_dir: external_storage_dir,
+        keyring: Arc::new(NoopKeyring),
+    };
+
     let url = start_server(options).expect("must start server");
     log::info!("Started server: {url}");
 
@@ -108,9 +114,9 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_stopServer() {
 #[cfg(test)]
 mod tests {
     use core::time;
-    use std::thread;
+    use std::{sync::Arc, thread};
 
-    use arhiv::ArhivOptions;
+    use arhiv::{ArhivOptions, NoopKeyring};
     use rs_utils::TempFile;
 
     use crate::{start_server, stop_server};
@@ -124,6 +130,7 @@ mod tests {
             storage_dir: format!("{temp_dir}/storage"),
             state_dir: format!("{temp_dir}/state"),
             file_browser_root_dir: temp_dir.to_string(),
+            keyring: Arc::new(NoopKeyring),
         };
         start_server(options).expect("must start server");
 

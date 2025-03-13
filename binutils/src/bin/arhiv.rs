@@ -141,7 +141,9 @@ fn unlock_arhiv(arhiv: &Arhiv) {
 
     match arhiv.unlock_using_keyring() {
         Ok(true) => return,
-        Ok(false) => {}
+        Ok(false) => {
+            log::debug!("Didn't find password in keyring");
+        }
         Err(err) => {
             log::error!("Failed to use keyring: {err}");
         }
@@ -181,12 +183,16 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             // validate password
             arhiv.baza.unlock(password.clone())?;
 
-            Arhiv::save_password_to_keyring(password)?;
+            arhiv.keyring.set_password(Some(password))?;
 
             println!("Saved password to keyring");
         }
         CLICommand::Logout => {
-            Arhiv::erase_password_from_keyring().expect("Failed to erase password from keyring");
+            let arhiv = Arhiv::new_desktop();
+            arhiv
+                .keyring
+                .set_password(None)
+                .expect("Failed to erase password from keyring");
 
             println!("Erased password from keyring");
         }
@@ -206,8 +212,8 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 .baza
                 .change_key_file_password(old_password, new_password.clone())?;
 
-            if arhiv.is_password_in_keyring()? {
-                Arhiv::save_password_to_keyring(new_password)?;
+            if arhiv.keyring.get_password()?.is_some() {
+                arhiv.keyring.set_password(Some(new_password))?;
             }
 
             println!("Password changed");

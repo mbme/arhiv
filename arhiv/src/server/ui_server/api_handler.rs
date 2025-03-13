@@ -299,9 +299,10 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 bail!("Arhiv already exists");
             }
 
-            log::info!("Creating new arhiv");
+            log::info!("Creating new Arhiv");
 
-            arhiv.baza.create(password)?;
+            arhiv.baza.create(password.clone())?;
+            Arhiv::save_password_to_keyring(password)?;
             arhiv.img_cache.init().await?;
 
             APIResponse::CreateArhiv {}
@@ -310,6 +311,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             log::info!("Locking Arhiv");
 
             arhiv.baza.lock()?;
+            Arhiv::erase_password_from_keyring()?;
             arhiv.img_cache.clear().await;
 
             APIResponse::LockArhiv {}
@@ -317,7 +319,8 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
         APIRequest::UnlockArhiv { password } => {
             log::info!("Unlocking Arhiv");
 
-            arhiv.baza.unlock(password)?;
+            arhiv.baza.unlock(password.clone())?;
+            Arhiv::save_password_to_keyring(password)?;
             arhiv.img_cache.init().await?;
 
             APIResponse::UnlockArhiv {}

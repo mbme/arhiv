@@ -11,6 +11,7 @@ pub use scaled_images_cache::ImageParams;
 use scaled_images_cache::ScaledImagesCache;
 
 mod import;
+mod keyring;
 mod scaled_images_cache;
 
 #[derive(Clone)]

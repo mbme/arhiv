@@ -34,5 +34,8 @@ reqwest.workspace = true
 
 rust-embed= { version = "8", features = ["interpolate-folder-path"]}
 
+# read password from platform-specific secure stores
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
+
 [build-dependencies]
 rs-utils = { path = "../rs-utils" }

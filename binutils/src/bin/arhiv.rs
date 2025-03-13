@@ -32,6 +32,10 @@ struct CLIArgs {
 enum CLICommand {
     /// Initialize Arhiv instance on local machine
     Init,
+    /// Save Arhiv password into system keyring
+    Login,
+    /// Erase Arhiv password from system keyring
+    Logout,
     /// Change Arhiv password
     #[clap(name = "change-password")]
     ChangePassword,
@@ -135,6 +139,14 @@ fn unlock_arhiv(arhiv: &Arhiv) {
         panic!("Arhiv not initialized");
     }
 
+    match arhiv.unlock_using_keyring() {
+        Ok(true) => return,
+        Ok(false) => {}
+        Err(err) => {
+            log::error!("Failed to use keyring: {err}");
+        }
+    }
+
     println!("Please enter password");
     let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)
         .expect("failed to prompt arhiv password");
@@ -157,18 +169,46 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             println!("Done")
         }
+        CLICommand::Login => {
+            let arhiv = Arhiv::new_desktop();
+
+            if !arhiv.baza.storage_exists()? {
+                bail!("Can't login: arhiv not initialized");
+            }
+
+            let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)?;
+
+            // validate password
+            arhiv.baza.unlock(password.clone())?;
+
+            Arhiv::save_password_to_keyring(password)?;
+
+            println!("Saved password to keyring");
+        }
+        CLICommand::Logout => {
+            Arhiv::erase_password_from_keyring().expect("Failed to erase password from keyring");
+
+            println!("Erased password from keyring");
+        }
         CLICommand::ChangePassword => {
             let arhiv = Arhiv::new_desktop();
 
             println!("Enter password");
             let old_password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)?;
 
+            // validate old password
+            arhiv.baza.unlock(old_password.clone())?;
+
             println!("Enter new password");
             let new_password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, true)?;
 
             arhiv
                 .baza
-                .change_key_file_password(old_password, new_password)?;
+                .change_key_file_password(old_password, new_password.clone())?;
+
+            if arhiv.is_password_in_keyring()? {
+                Arhiv::save_password_to_keyring(new_password)?;
+            }
 
             println!("Password changed");
         }

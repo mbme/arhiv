@@ -47,7 +47,7 @@ impl Arhiv {
             Err(err) => {
                 log::warn!("Failed to retrieve password from keyring: {err}");
 
-                return Err(err.into());
+                Err(err.into())
             }
         }
     }

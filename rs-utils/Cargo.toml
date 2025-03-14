@@ -62,8 +62,7 @@ fslock = "0.2"
 flate2 = "1" # for compressed container
 async-stream = "0.3" # macro for creating async streams
 
-[target.'cfg(android)'.dependencies]
-tracing-android = "0.2"
+tracing-android = "0.2" # tracing compatibility layer for android
 
 [dev-dependencies]
 criterion = "0.5"

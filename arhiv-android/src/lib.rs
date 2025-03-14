@@ -47,7 +47,7 @@ fn start_server(options: ArhivOptions) -> Result<String> {
     *server_lock = Some(server);
     *runtime_lock = Some(runtime);
 
-    Ok(server_info.ui_url) // FIXME with auth token?
+    Ok(server_info.ui_url_with_auth_token)
 }
 
 fn stop_server() -> Result<()> {
@@ -98,7 +98,6 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer(
     };
 
     let url = start_server(options).expect("must start server");
-    log::info!("Started server: {url}");
 
     let output = env.new_string(url).expect("Couldn't create java string!");
 

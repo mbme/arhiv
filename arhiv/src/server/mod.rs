@@ -81,6 +81,8 @@ impl ArhivServer {
         let actual_server_port = server.get_address().port();
         lock.write_server_port(actual_server_port)?;
 
+        log::info!("Started server on port: {actual_server_port}");
+
         Ok(ArhivServer {
             arhiv,
             server,

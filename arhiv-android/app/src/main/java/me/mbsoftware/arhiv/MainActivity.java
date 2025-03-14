@@ -4,9 +4,11 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.net.Uri;
+import android.net.http.SslError;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -17,7 +19,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 class ArhivServer {
-  public static native String startServer(String filesDir, String storageDir);
+  public static native String startServer(String appFilesDir, String externalStorageDir);
 
   public static native void stopServer();
 
@@ -34,6 +36,12 @@ public class MainActivity extends AppCompatActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
+
+//    try {
+//      Keyring.generateKey();
+//    } catch (Exception e) {
+//      Log.e(TAG, "Failed to generate KeyStore key:", e);
+//    }
 
     if (Environment.isExternalStorageManager()) {
       initApp();
@@ -60,8 +68,8 @@ public class MainActivity extends AppCompatActivity {
 
   @SuppressLint("SetJavaScriptEnabled")
   private void initApp() {
+    Log.i(TAG, "Starting Arhiv server");
     String arhivUrl = ArhivServer.startServer(this.getFilesDir().getAbsolutePath(), Environment.getExternalStorageDirectory().getAbsolutePath());
-    Log.i(TAG, "Started Arhiv server");
 
     WebView webView = findViewById(R.id.web);
     webView.getSettings().setJavaScriptEnabled(true);
@@ -71,6 +79,11 @@ public class MainActivity extends AppCompatActivity {
     swipeRefreshLayout.setOnRefreshListener(webView::reload);
 
     webView.setWebViewClient(new WebViewClient() {
+      @Override
+      public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+        handler.proceed();
+      }
+
       @Override
       public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);

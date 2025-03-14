@@ -66,8 +66,22 @@ clean-all:
   cargo clean --release
   rm -rf .log
 
-build-android-libs:
-  cd arhiv-android; rm -rf ./app/src/main/jniLibs; ANDROID_NDK_HOME=~/Android/Sdk/ndk/ cargo ndk -t x86_64 -t arm64-v8a -o ./app/src/main/jniLibs build # --release
+build-android-libs *RELEASE_FLAG:
+  #!/usr/bin/env bash
+  set -euxo pipefail
+
+  cd arhiv-android
+
+  rm -rf ./app/src/main/jniLibs
+  mkdir ./app/src/main/jniLibs
+
+  export RUSTFLAGS="" # this is necessary for running x86_64 in android VM, otherwise I get an error: Fatal signal 4 (SIGILL), code 2 (ILL_ILLOPN)
+
+  # WARN: the --platform MUST match minSdk from build.gradle
+  cargo ndk -t x86_64 -t arm64-v8a --platform 30 -o ./app/src/main/jniLibs build {{RELEASE_FLAG}}
+
+prod-build-android-libs:
+  just build-android-libs --release
 
 bench *PARAMS:
   cd rs-utils; cargo bench -- {{PARAMS}}

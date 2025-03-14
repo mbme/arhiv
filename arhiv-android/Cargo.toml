@@ -21,6 +21,3 @@ jni = "0.21"
 
 arhiv = { path = "../arhiv" }
 rs-utils = { path = "../rs-utils" }
-
-[build-dependencies]
-rs-utils = { path = "../rs-utils" }

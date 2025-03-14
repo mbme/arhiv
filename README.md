@@ -38,13 +38,14 @@
 # Android app
 
 ## Prerequisites
-* `cargo-ndk` to build android JNI libraries
+* Android Studio; use it to install Android SDK & NDK
+* `cargo-ndk` to build Android JNI library
+* Add rust targets for Android cross-compilation:
+```
+rustup target add aarch64-linux-android x86_64-linux-android
+```
 * JDK - `jdk-openjdk`
 * Android SDK & NDK
-* Add rust targets for Android:
-```
-rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android
-```
 
 # Scraper
 Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbme/scraper) userscript or bookmarklet.

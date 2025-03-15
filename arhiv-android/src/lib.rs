@@ -5,19 +5,18 @@ use std::{
 
 use anyhow::{anyhow, ensure, Context, Result};
 use jni::{
-    objects::{JClass, JString},
-    sys::jstring,
+    objects::{JClass, JObject, JString, JValue},
     JNIEnv,
 };
 use tokio::runtime::Runtime;
 
-use arhiv::{ArhivOptions, ArhivServer, NoopKeyring};
+use arhiv::{ArhivOptions, ArhivServer, NoopKeyring, ServerInfo};
 use rs_utils::log;
 
 static RUNTIME: LazyLock<Mutex<Option<Runtime>>> = LazyLock::new(|| Mutex::new(None));
 static ARHIV_SERVER: LazyLock<Mutex<Option<ArhivServer>>> = LazyLock::new(|| Mutex::new(None));
 
-fn start_server(options: ArhivOptions) -> Result<String> {
+fn start_server(options: ArhivOptions) -> Result<ServerInfo> {
     let mut runtime_lock = RUNTIME
         .lock()
         .map_err(|err| anyhow!("Failed to lock RUNTIME: {err}"))?;
@@ -47,7 +46,7 @@ fn start_server(options: ArhivOptions) -> Result<String> {
     *server_lock = Some(server);
     *runtime_lock = Some(runtime);
 
-    Ok(server_info.ui_url_with_auth_token)
+    Ok(server_info)
 }
 
 fn stop_server() -> Result<()> {
@@ -75,7 +74,8 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer(
     _class: JClass,
     app_files_dir: JString,
     external_storage_dir: JString,
-) -> jstring {
+    server_info_object: JObject,
+) {
     log::setup_android_logger("me.mbsoftware.arhiv");
 
     let app_files_dir: String = env
@@ -97,11 +97,51 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer(
         keyring: Arc::new(NoopKeyring),
     };
 
-    let url = start_server(options).expect("must start server");
+    let server_info = start_server(options).expect("must start server");
 
-    let output = env.new_string(url).expect("Couldn't create java string!");
+    let server_info_class = env.get_object_class(&server_info_object).unwrap();
 
-    output.into_raw()
+    // Set ServerInfo.uiUrl field on the Java object
+    let ui_url_field = env
+        .get_field_id(&server_info_class, "uiUrl", "Ljava/lang/String;")
+        .expect("Couldn't find object field String uiUrl");
+    let ui_url = env
+        .new_string(server_info.ui_url)
+        .expect("Couldn't create java String!");
+    env.set_field_unchecked(&server_info_object, ui_url_field, JValue::from(&ui_url))
+        .expect("Couldn't set field String uiUrl");
+
+    // Set ServerInfo.uiUrlWithAuthToken field on the Java object
+    let ui_url_with_auth_token_field = env
+        .get_field_id(
+            &server_info_class,
+            "uiUrlWithAuthToken",
+            "Ljava/lang/String;",
+        )
+        .expect("Couldn't find object field String uiUrlWithAuthToken");
+    let ui_url_with_auth_token = env
+        .new_string(server_info.ui_url_with_auth_token)
+        .expect("Couldn't create java String!");
+    env.set_field_unchecked(
+        &server_info_object,
+        ui_url_with_auth_token_field,
+        JValue::from(&ui_url_with_auth_token),
+    )
+    .expect("Couldn't set field String uiUrlWithAuthToken");
+
+    // Set ServerInfo.certificate field on the Java object
+    let certificate_field = env
+        .get_field_id(&server_info_class, "certificate", "[B") // byte[] in Java
+        .expect("Couldn't find object field byte[] certificate");
+    let certificate = env
+        .byte_array_from_slice(&server_info.certificate)
+        .expect("Couldn't create java byte[]!");
+    env.set_field_unchecked(
+        &server_info_object,
+        certificate_field,
+        JValue::from(&certificate),
+    )
+    .expect("Couldn't set field byte[] certificate");
 }
 
 #[unsafe(no_mangle)]

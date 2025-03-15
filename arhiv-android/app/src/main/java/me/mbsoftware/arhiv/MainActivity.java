@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.net.Uri;
+import android.net.http.SslCertificate;
 import android.net.http.SslError;
 import android.os.Bundle;
 import android.os.Environment;
@@ -18,8 +19,17 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+
+class ServerInfo {
+  public String uiUrl;
+  public String uiUrlWithAuthToken;
+  public byte[] certificate;
+}
+
 class ArhivServer {
-  public static native String startServer(String appFilesDir, String externalStorageDir);
+  public static native void startServer(String appFilesDir, String externalStorageDir, ServerInfo info);
 
   public static native void stopServer();
 
@@ -69,7 +79,8 @@ public class MainActivity extends AppCompatActivity {
   @SuppressLint("SetJavaScriptEnabled")
   private void initApp() {
     Log.i(TAG, "Starting Arhiv server");
-    String arhivUrl = ArhivServer.startServer(this.getFilesDir().getAbsolutePath(), Environment.getExternalStorageDirectory().getAbsolutePath());
+    ServerInfo serverInfo = new ServerInfo();
+    ArhivServer.startServer(this.getFilesDir().getAbsolutePath(), Environment.getExternalStorageDirectory().getAbsolutePath(), serverInfo);
 
     WebView webView = findViewById(R.id.web);
     webView.getSettings().setJavaScriptEnabled(true);
@@ -79,9 +90,28 @@ public class MainActivity extends AppCompatActivity {
     swipeRefreshLayout.setOnRefreshListener(webView::reload);
 
     webView.setWebViewClient(new WebViewClient() {
+      @SuppressLint("WebViewClientOnReceivedSslError")
       @Override
       public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-        handler.proceed();
+        if (isTrustedCertificate(error.getCertificate())) {
+          Log.i(TAG, "Got valid server SSL certificate");
+          handler.proceed(); // Proceed only if it matches self-signed certificate
+        } else {
+          Log.e(TAG, "Got invalid server SSL certificate");
+          handler.cancel(); // Reject all other SSL errors
+        }
+      }
+
+      private boolean isTrustedCertificate(SslCertificate certificate) {
+        X509Certificate cert = certificate.getX509Certificate();
+        if (cert == null) return false;
+
+        try {
+          return Arrays.equals(cert.getEncoded(), serverInfo.certificate);
+        } catch (Exception e) {
+          Log.e(TAG, "Failed to validate SSL certificate:", e);
+          return false;
+        }
       }
 
       @Override
@@ -94,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
       public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
         Uri requestUrl = request.getUrl();
 
-        if (requestUrl.toString().startsWith(arhivUrl)) {
+        if (requestUrl.toString().startsWith(serverInfo.uiUrl)) {
           return false;
         }
 
@@ -109,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
     });
 
     // loading url in the WebView.
-    webView.loadUrl(arhivUrl);
+    webView.loadUrl(serverInfo.uiUrlWithAuthToken);
 
     // enable WebView debugging if app is debuggable
     if ((getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {

@@ -75,8 +75,6 @@ build-android-libs *RELEASE_FLAG:
   rm -rf ./app/src/main/jniLibs
   mkdir ./app/src/main/jniLibs
 
-  export RUSTFLAGS="" # this is necessary for running x86_64 in android VM, otherwise I get an error: Fatal signal 4 (SIGILL), code 2 (ILL_ILLOPN)
-
   # WARN: the --platform MUST match minSdk from build.gradle
   cargo ndk -t x86_64 -t arm64-v8a --platform 30 -o ./app/src/main/jniLibs build {{RELEASE_FLAG}}
 

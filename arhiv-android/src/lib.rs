@@ -111,23 +111,19 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer(
     env.set_field_unchecked(&server_info_object, ui_url_field, JValue::from(&ui_url))
         .expect("Couldn't set field String uiUrl");
 
-    // Set ServerInfo.uiUrlWithAuthToken field on the Java object
-    let ui_url_with_auth_token_field = env
-        .get_field_id(
-            &server_info_class,
-            "uiUrlWithAuthToken",
-            "Ljava/lang/String;",
-        )
-        .expect("Couldn't find object field String uiUrlWithAuthToken");
-    let ui_url_with_auth_token = env
-        .new_string(server_info.ui_url_with_auth_token)
+    // Set ServerInfo.authToken field on the Java object
+    let auth_token_field = env
+        .get_field_id(&server_info_class, "authToken", "Ljava/lang/String;")
+        .expect("Couldn't find object field String authToken");
+    let auth_token = env
+        .new_string(server_info.auth_token)
         .expect("Couldn't create java String!");
     env.set_field_unchecked(
         &server_info_object,
-        ui_url_with_auth_token_field,
-        JValue::from(&ui_url_with_auth_token),
+        auth_token_field,
+        JValue::from(&auth_token),
     )
-    .expect("Couldn't set field String uiUrlWithAuthToken");
+    .expect("Couldn't set field String authToken");
 
     // Set ServerInfo.certificate field on the Java object
     let certificate_field = env

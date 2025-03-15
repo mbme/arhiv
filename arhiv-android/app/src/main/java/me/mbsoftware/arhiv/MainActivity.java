@@ -9,6 +9,7 @@ import android.net.http.SslError;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.webkit.CookieManager;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -24,7 +25,7 @@ import java.util.Arrays;
 
 class ServerInfo {
   public String uiUrl;
-  public String uiUrlWithAuthToken;
+  public String authToken;
   public byte[] certificate;
 }
 
@@ -89,6 +90,10 @@ public class MainActivity extends AppCompatActivity {
     SwipeRefreshLayout swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
     swipeRefreshLayout.setOnRefreshListener(webView::reload);
 
+    CookieManager cookieManager = CookieManager.getInstance();
+    cookieManager.setAcceptCookie(true);
+    cookieManager.setCookie(serverInfo.uiUrl, "AuthToken=" + serverInfo.authToken + "; Secure; HttpOnly");
+
     webView.setWebViewClient(new WebViewClient() {
       @SuppressLint("WebViewClientOnReceivedSslError")
       @Override
@@ -139,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
     });
 
     // loading url in the WebView.
-    webView.loadUrl(serverInfo.uiUrlWithAuthToken);
+    webView.loadUrl(serverInfo.uiUrl);
 
     // enable WebView debugging if app is debuggable
     if ((getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {

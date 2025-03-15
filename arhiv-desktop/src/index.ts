@@ -66,7 +66,7 @@ async function handleAction(action: Action, serverInfo: ExtendedServerInfo) {
       sameSite: 'strict',
     });
 
-    await win.loadURL(`${serverInfo.uiUrl}?AuthToken=${serverInfo.authToken}`).catch(() => {
+    await win.loadURL(serverInfo.uiUrl).catch(() => {
       console.error('failed to open Arhiv');
     });
   }

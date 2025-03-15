@@ -199,15 +199,12 @@ dependencies = [
  "axum",
  "axum-extra",
  "baza",
- "futures",
  "include_dir",
  "keyring",
- "reqwest",
  "rs-utils",
  "serde",
  "serde_json",
  "tokio",
- "tracing",
 ]
 
 [[package]]
@@ -427,7 +424,6 @@ version = "0.0.0"
 dependencies = [
  "aho-corasick",
  "anyhow",
- "futures",
  "insta",
  "ordermap",
  "pulldown-cmark",
@@ -457,7 +453,6 @@ dependencies = [
  "dialoguer",
  "rs-utils",
  "rusqlite",
- "serde",
  "serde_json",
  "tokio",
 ]
@@ -3015,10 +3010,8 @@ dependencies = [
  "futures",
  "hkdf",
  "hmac",
- "hyper",
  "image",
  "infer",
- "log",
  "mime_guess",
  "nanoid",
  "ordermap",

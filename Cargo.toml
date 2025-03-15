@@ -40,13 +40,8 @@ tokio = { version = "1", features = ["fs", "macros", "signal", "process", "rt-mu
 tokio-util = { version = "0.7", features = ["compat", "codec"] }
 
 rustls = { version = "*", features = ["dangerous_configuration"]}
-reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls-webpki-roots"] }
-hyper = "1"
 axum = { version = "0.8", features = ["tracing", "tokio", "http1"] }
 axum-extra = { version = "0.10", features = ["typed-header", "cookie"]}
-axum-server = { version= "0.7", features = ["tls-rustls-no-provider"]}
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "chrono"] }
 chrono = { version = "0.4", features = ["serde"] }
 ordermap = { version = "0.5", features = ["serde"] } # hashmap & hashset that preserve insertion order
 rand = "0.9"

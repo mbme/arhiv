@@ -22,7 +22,8 @@ use rs_utils::{
     create_body_from_reader,
     crypto_key::CryptoKey,
     http_server::{add_no_cache_headers, ServerError},
-    log, stream_to_file, AuthToken, TempFile,
+    log::{self, tracing},
+    stream_to_file, AuthToken, TempFile,
 };
 
 use crate::{definitions::get_standard_schema, dto::APIRequest, Arhiv};

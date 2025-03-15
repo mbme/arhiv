@@ -8,7 +8,7 @@ use axum::{
 use axum_extra::headers::{self, HeaderMapExt};
 
 use baza::entities::Id;
-use rs_utils::http_server::ServerError;
+use rs_utils::{http_server::ServerError, log::tracing};
 
 use crate::{arhiv::ImageParams, Arhiv};
 

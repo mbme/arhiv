@@ -20,7 +20,6 @@ dialoguer = { version = "0.11", default-features = false, features = ["password"
 
 rusqlite = { version = "0.34", features = ["chrono", "serde_json", "collation"] } # for baza2 migration tool
 
-serde.workspace = true
 serde_json.workspace = true
 
 tokio.workspace = true

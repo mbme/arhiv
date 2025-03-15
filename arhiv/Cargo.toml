@@ -20,18 +20,14 @@ baza = { path = "../baza" }
 rs-utils = { path = "../rs-utils" }
 
 anyhow.workspace = true
-tracing.workspace = true
 
 serde.workspace = true
 serde_json.workspace = true
 
-futures.workspace = true
 tokio.workspace = true
 
 axum.workspace = true
 axum-extra.workspace = true
-
-reqwest.workspace = true
 
 include_dir = "0.7" # embed files into binary
 

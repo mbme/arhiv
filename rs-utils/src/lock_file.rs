@@ -2,6 +2,8 @@ use std::fs;
 
 use anyhow::{bail, Result};
 
+use crate::log;
+
 pub struct LockFile {
     lock: fslock::LockFile,
     file_path: String,

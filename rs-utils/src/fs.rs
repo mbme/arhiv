@@ -8,7 +8,7 @@ use std::{
 
 use anyhow::{bail, ensure, Context, Result};
 
-use crate::{bytes_to_hex_string, get_file_hash_sha256, get_string_hash_sha256, Timestamp};
+use crate::{bytes_to_hex_string, get_file_hash_sha256, get_string_hash_sha256, log, Timestamp};
 
 pub fn path_exists(path: impl AsRef<str>) -> bool {
     fs::metadata(path.as_ref()).is_ok()

@@ -14,9 +14,10 @@
 * `lld` - a fast linker from the LLVM project
 * `just` command runner https://github.com/casey/just
 
-# Dev dependencies
+# Dev tools
 * `cargo-outdated` to find out which packages to upgrade
 * `cargo-upgrades` to find out which packages to upgrade
+* `cargo-machete` to find unused deps
 * `cargo-insta` to manage snapshot tests
 * `cargo-flamegraph` for performance profiling
 * `tmux` for running dev servers in parallel

@@ -9,7 +9,7 @@ use anyhow::{Context, Result};
 use axum::{
     body::{to_bytes, Body},
     extract::Request,
-    http::{header, HeaderMap, HeaderValue, StatusCode},
+    http::{header, HeaderMap, HeaderValue, StatusCode, Uri},
     middleware::{self, Next},
     response::{IntoResponse, Response},
     Router,
@@ -19,11 +19,10 @@ use axum_server::{
     tls_rustls::{RustlsAcceptor, RustlsConfig},
     Handle, Server,
 };
-use hyper::Uri;
 use secrecy::ExposeSecret;
 use tokio::task::JoinHandle;
 
-use crate::SelfSignedCertificate;
+use crate::{log, SelfSignedCertificate};
 
 pub struct ServerError(anyhow::Error);
 

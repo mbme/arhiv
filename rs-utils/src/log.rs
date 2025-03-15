@@ -1,10 +1,11 @@
-use log::LevelFilter;
+use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{
     fmt::{self, format::FmtSpan, time::ChronoLocal},
     layer::SubscriberExt,
     util::SubscriberInitExt,
 };
 
+pub use tracing;
 pub use tracing::{debug, error, info, trace, warn, Level};
 
 const DEFAULT_LOG_LEVELS: &str =
@@ -42,21 +43,21 @@ fn setup_logger_with_level(log_level: LevelFilter) {
 }
 
 pub fn setup_error_logger() {
-    setup_logger_with_level(LevelFilter::Error);
+    setup_logger_with_level(LevelFilter::ERROR);
 }
 
 pub fn setup_warn_logger() {
-    setup_logger_with_level(LevelFilter::Warn);
+    setup_logger_with_level(LevelFilter::WARN);
 }
 
 pub fn setup_logger() {
-    setup_logger_with_level(LevelFilter::Info);
+    setup_logger_with_level(LevelFilter::INFO);
 }
 
 pub fn setup_debug_logger() {
-    setup_logger_with_level(LevelFilter::Debug);
+    setup_logger_with_level(LevelFilter::DEBUG);
 }
 
 pub fn setup_trace_logger() {
-    setup_logger_with_level(LevelFilter::Trace);
+    setup_logger_with_level(LevelFilter::TRACE);
 }

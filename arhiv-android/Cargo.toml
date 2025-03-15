@@ -19,5 +19,5 @@ anyhow.workspace = true
 tokio.workspace = true
 jni = "0.21"
 
-arhiv = { path = "../arhiv" }
+arhiv = { path = "../arhiv", features = ["embed-public"] }
 rs-utils = { path = "../rs-utils" }

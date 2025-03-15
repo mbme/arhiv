@@ -79,7 +79,7 @@ build-android-libs *RELEASE_FLAG:
   cargo ndk -t x86_64 -t arm64-v8a --platform 30 -o ./app/src/main/jniLibs build {{RELEASE_FLAG}}
 
 prod-build-android-libs:
-  just build-android-libs --release
+  just build-android-libs --release --features production-mode
 
 bench *PARAMS:
   cd rs-utils; cargo bench -- {{PARAMS}}

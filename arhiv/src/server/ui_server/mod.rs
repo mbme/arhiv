@@ -109,7 +109,9 @@ async fn api_handler(
 ) -> Result<impl IntoResponse, ServerError> {
     log::info!(
         "API request: {}",
-        request_value.get("typeName").unwrap_or(&Value::Null)
+        request_value
+            .get("typeName")
+            .unwrap_or(&serde_json::Value::Null)
     );
 
     let request: APIRequest =

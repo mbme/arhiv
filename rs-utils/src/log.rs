@@ -5,7 +5,7 @@ use tracing_subscriber::{
     util::SubscriberInitExt,
 };
 
-pub use log::{debug, error, info, trace, warn, Level};
+pub use tracing::{debug, error, info, trace, warn, Level};
 
 const DEFAULT_LOG_LEVELS: &str =
     "hyper=info,h2=info,rustls=info,axum::rejection=trace,i18n_embed=warn";

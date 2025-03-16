@@ -123,7 +123,7 @@ impl BazaManager {
 
         let mut manager_state = self.acquire_state_write_lock()?;
 
-        let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+        let _lock = self.wait_for_file_lock()?;
 
         let key = manager_state.get_key()?;
 
@@ -168,6 +168,10 @@ impl BazaManager {
             .map_err(|err| anyhow!("Failed to acquire write lock for the state: {err}"))
     }
 
+    fn wait_for_file_lock(&self) -> Result<LockFile> {
+        LockFile::wait_for_lock(&self.paths.lock_file)
+    }
+
     pub fn open(&self) -> Result<BazaReadGuard<'_>> {
         self.maybe_read_state()?;
 
@@ -179,7 +183,7 @@ impl BazaManager {
     pub fn open_mut(&self) -> Result<BazaWriteGuard<'_>> {
         self.maybe_read_state()?;
 
-        let lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+        let lock = self.wait_for_file_lock()?;
         let state = self.acquire_state_write_lock()?;
 
         Ok(BazaWriteGuard { _lock: lock, state })
@@ -255,7 +259,7 @@ impl BazaManager {
             "State file already exists"
         );
 
-        let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+        let _lock = self.wait_for_file_lock()?;
         let mut state = self.acquire_state_write_lock()?;
 
         let key_file_key = AgeKey::from_password(password)?;
@@ -294,7 +298,7 @@ impl BazaManager {
     pub fn unlock(&self, password: SecretString) -> Result<()> {
         log::info!("Unlocking baza using key file {}", self.paths.key_file);
 
-        let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+        let _lock = self.wait_for_file_lock()?;
         let mut state = self.acquire_state_write_lock()?;
 
         let key_file_key = AgeKey::from_password(password)?;
@@ -364,7 +368,7 @@ impl BazaManager {
     }
 
     pub fn dangerously_create_state(&self, instance_id: InstanceId) -> Result<()> {
-        let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+        let _lock = self.wait_for_file_lock()?;
         let key = self.acquire_state_read_lock()?.get_key()?.clone();
 
         Baza::create(instance_id, key, self.paths.clone(), self.schema.clone())?;
@@ -382,7 +386,7 @@ impl BazaManager {
             self.paths.storage_main_db_file
         );
 
-        let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+        let _lock = self.wait_for_file_lock()?;
         let state = self.acquire_state_read_lock()?;
 
         let mut fs_tx = FsTransaction::new();
@@ -407,7 +411,7 @@ impl BazaManager {
     ) -> Result<()> {
         log::info!("Adding file {file_path} to storage");
 
-        let _lock = LockFile::wait_for_lock(&self.paths.lock_file)?;
+        let _lock = self.wait_for_file_lock()?;
 
         ensure!(
             file_exists(file_path)?,

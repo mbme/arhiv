@@ -30,7 +30,7 @@ class ServerInfo {
 }
 
 class ArhivServer {
-  public static native void startServer(String appFilesDir, String externalStorageDir, ServerInfo info);
+  public static native ServerInfo startServer(String appFilesDir, String externalStorageDir);
 
   public static native void stopServer();
 
@@ -80,8 +80,8 @@ public class MainActivity extends AppCompatActivity {
   @SuppressLint("SetJavaScriptEnabled")
   private void initApp() {
     Log.i(TAG, "Starting Arhiv server");
-    ServerInfo serverInfo = new ServerInfo();
-    ArhivServer.startServer(this.getFilesDir().getAbsolutePath(), Environment.getExternalStorageDirectory().getAbsolutePath(), serverInfo);
+
+    ServerInfo serverInfo = ArhivServer.startServer(this.getFilesDir().getAbsolutePath(), Environment.getExternalStorageDirectory().getAbsolutePath());
 
     WebView webView = findViewById(R.id.web);
     webView.getSettings().setJavaScriptEnabled(true);

@@ -69,13 +69,12 @@ fn stop_server() -> Result<()> {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer(
-    mut env: JNIEnv,
+pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
+    mut env: JNIEnv<'local>,
     _class: JClass,
     app_files_dir: JString,
     external_storage_dir: JString,
-    server_info_object: JObject,
-) {
+) -> JObject<'local> {
     log::setup_android_logger("me.mbsoftware.arhiv");
 
     let app_files_dir: String = env
@@ -99,7 +98,13 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer(
 
     let server_info = start_server(options).expect("must start server");
 
-    let server_info_class = env.get_object_class(&server_info_object).unwrap();
+    // Create an instance of me.mbsoftware.arhiv.ServerInfo using JNI
+    let server_info_class = env
+        .find_class("me/mbsoftware/arhiv/ServerInfo")
+        .expect("Couldn't find ServerInfo class");
+    let server_info_object = env
+        .alloc_object(&server_info_class)
+        .expect("Couldn't allocate ServerInfo object");
 
     // Set ServerInfo.uiUrl field on the Java object
     let ui_url_field = env
@@ -138,6 +143,8 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer(
         JValue::from(&certificate),
     )
     .expect("Couldn't set field byte[] certificate");
+
+    server_info_object
 }
 
 #[unsafe(no_mangle)]

@@ -72,6 +72,8 @@ impl ScaledImagesCache {
     }
 
     pub async fn init(&self) -> Result<()> {
+        log::info!("Initializing Scaled images cache");
+
         ensure!(
             self.baza_manager.is_unlocked(),
             "Baza must be unlocked to init image cache service"

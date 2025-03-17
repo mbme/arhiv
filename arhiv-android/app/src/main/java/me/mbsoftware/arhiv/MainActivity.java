@@ -8,6 +8,7 @@ import android.net.http.SslCertificate;
 import android.net.http.SslError;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.Settings;
 import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.SslErrorHandler;
@@ -15,77 +16,107 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import androidx.annotation.NonNull;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
-class ServerInfo {
-  public String uiUrl;
-  public String authToken;
-  public byte[] certificate;
-}
-
-class ArhivServer {
-  public static native ServerInfo startServer(String appFilesDir, String externalStorageDir);
-
-  public static native void stopServer();
-
-  static {
-    System.loadLibrary("arhiv_android");
-  }
-}
-
 public class MainActivity extends AppCompatActivity {
   private static final String TAG = "MainActivity";
-  private static final int REQUEST_STORAGE_PERMISSION = 99;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-//    try {
-//      Keyring.generateKey();
-//    } catch (Exception e) {
-//      Log.e(TAG, "Failed to generate KeyStore key:", e);
-//    }
+    ensureIsExternalStorageManager();
+  }
+
+  private void ensureIsExternalStorageManager() {
+    Log.i(TAG, "Checking external storage manager permission");
 
     if (Environment.isExternalStorageManager()) {
-      initApp();
+      Log.d(TAG, "Is external storage manager");
+      authApp();
     } else {
-      ActivityCompat.requestPermissions(
-        this,
-        new String[]{
-          android.Manifest.permission.READ_EXTERNAL_STORAGE,
-          android.Manifest.permission.MANAGE_EXTERNAL_STORAGE
-        },
-        REQUEST_STORAGE_PERMISSION
-      );
+      Log.d(TAG, "Requesting external storage manager permissions");
+
+      Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+      intent.setData(Uri.parse("package:" + getPackageName()));
+
+      ActivityResultLauncher<Intent> storagePermissionLauncher = registerForActivityResult(
+        new ActivityResultContracts.StartActivityForResult(), result -> {
+          Log.i(TAG, "Got permission activity result: " + result);
+          ensureIsExternalStorageManager();
+        });
+      storagePermissionLauncher.launch(intent);
     }
   }
 
-  @SuppressLint("MissingSuperCall")
-  @Override
-  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                         @NonNull int[] grantResults) {
-    if (requestCode == REQUEST_STORAGE_PERMISSION) {
-        initApp();
+  private void authApp() {
+    Log.i(TAG, "Authenticating");
+
+    if (!Keyring.isDeviceSecure(this)) {
+      Log.w(TAG, "Device is not secure, skipping auth");
+
+      initApp(null);
+
+      return;
     }
+
+    if (!Keyring.isBiometricAvailable(this)) {
+      Log.w(TAG, "Biometric auth not available");
+    }
+
+    try {
+      Keyring.generateKey();
+    } catch (Exception e) {
+      Log.e(TAG, "Failed to generate KeyStore key:", e);
+
+      initApp(null);
+
+      return;
+    }
+
+    Keyring.loadPassword(this, new LoadPasswordCallback() {
+      @Override
+      public void onSuccess(String password) {
+        if (password == null) {
+          Log.i(TAG, "Authentication: no password");
+        } else {
+          Log.i(TAG, "Authentication: decrypted password");
+        }
+
+        initApp(password);
+      }
+
+      @Override
+      public void onError(String msg) {
+        Log.e(TAG, "Authentication failed: " + msg);
+        initApp(null);
+      }
+    });
+
   }
 
   @SuppressLint("SetJavaScriptEnabled")
-  private void initApp() {
+  private void initApp(String password) {
     Log.i(TAG, "Starting Arhiv server");
 
-    ServerInfo serverInfo = ArhivServer.startServer(this.getFilesDir().getAbsolutePath(), Environment.getExternalStorageDirectory().getAbsolutePath());
+    ServerInfo serverInfo = ArhivServer.startServer(
+      this.getFilesDir().getAbsolutePath(),
+      Environment.getExternalStorageDirectory().getAbsolutePath(),
+      password,
+      new AndroidController(this)
+    );
 
     WebView webView = findViewById(R.id.web);
     webView.getSettings().setJavaScriptEnabled(true);
     webView.getSettings().setDomStorageEnabled(true);
+    webView.getSettings().setAllowFileAccess(false);
 
     SwipeRefreshLayout swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
     swipeRefreshLayout.setOnRefreshListener(webView::reload);

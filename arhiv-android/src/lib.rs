@@ -1,17 +1,17 @@
 use std::{
-    sync::{Arc, LazyLock, Mutex},
+    sync::{Arc, LazyLock, Mutex, RwLock},
     time::Duration,
 };
 
 use anyhow::{anyhow, ensure, Context, Result};
 use jni::{
-    objects::{JClass, JObject, JString, JValue},
-    JNIEnv,
+    objects::{GlobalRef, JClass, JObject, JString, JValue},
+    JNIEnv, JavaVM,
 };
 use tokio::runtime::Runtime;
 
-use arhiv::{ArhivOptions, ArhivServer, NoopKeyring, ServerInfo};
-use rs_utils::log;
+use arhiv::{ArhivOptions, ArhivServer, Keyring, ServerInfo};
+use rs_utils::{log, ExposeSecret, SecretString};
 
 static RUNTIME: LazyLock<Mutex<Option<Runtime>>> = LazyLock::new(|| Mutex::new(None));
 static ARHIV_SERVER: LazyLock<Mutex<Option<ArhivServer>>> = LazyLock::new(|| Mutex::new(None));
@@ -68,12 +68,69 @@ fn stop_server() -> Result<()> {
     Ok(())
 }
 
+struct AndroidKeyring {
+    password: RwLock<Option<SecretString>>,
+    android_controller: GlobalRef, // instance of AndroidController
+    jvm: JavaVM,
+}
+
+impl Keyring for AndroidKeyring {
+    fn get_password(&self) -> Result<Option<SecretString>> {
+        let password_guard = self
+            .password
+            .read()
+            .map_err(|err| anyhow!("Failed to acquire read lock for the password: {err}"))?;
+
+        Ok(password_guard.clone())
+    }
+
+    fn set_password(&self, password: Option<SecretString>) -> Result<()> {
+        log::info!("Saving password to Android keyring");
+
+        let mut password_guard = self
+            .password
+            .write()
+            .map_err(|err| anyhow!("Failed to acquire write lock for the password: {err}"))?;
+
+        let _guard = self
+            .jvm
+            .attach_current_thread()
+            .context("Failed to attach current thread to JavaVM");
+
+        let mut env = self
+            .jvm
+            .get_env()
+            .expect("Current thread must be attached to JavaVM to get JNIEnv");
+
+        let password_jstring: JString = match password {
+            Some(ref p) => env
+                .new_string(p.expose_secret())
+                .expect("Couldn't create java String"),
+            None => JObject::null().into(),
+        };
+
+        env.call_method(
+            &self.android_controller,
+            "savePassword",
+            "(Ljava/lang/String;)V",
+            &[(&password_jstring).into()],
+        )
+        .context("Failed to call AndroidController.savePassword()")?;
+
+        *password_guard = password;
+
+        Ok(())
+    }
+}
+
 #[unsafe(no_mangle)]
 pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass,
     app_files_dir: JString,
     external_storage_dir: JString,
+    password: JString,
+    android_controller: JObject, // AndroidController
 ) -> JObject<'local> {
     log::setup_android_logger("me.mbsoftware.arhiv");
 
@@ -89,11 +146,30 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
         .into();
     log::debug!("Storage dir: {external_storage_dir}");
 
+    let password: Option<SecretString> = if password.as_raw().is_null() {
+        None
+    } else {
+        let password: String = env
+            .get_string(&password)
+            .expect("Must read JNI string password")
+            .into();
+
+        Some(password.into())
+    };
+    let android_controller = env
+        .new_global_ref(android_controller)
+        .expect("Must turn AndroidController instance into global ref");
+    let jvm = env.get_java_vm().expect("Can't get reference to JVM");
+    let keyring = AndroidKeyring {
+        password: RwLock::new(password),
+        android_controller,
+        jvm,
+    };
     let options = ArhivOptions {
         storage_dir: format!("{external_storage_dir}/Arhiv"),
         state_dir: app_files_dir,
         file_browser_root_dir: external_storage_dir,
-        keyring: Arc::new(NoopKeyring),
+        keyring: Arc::new(keyring),
     };
 
     let server_info = start_server(options).expect("must start server");

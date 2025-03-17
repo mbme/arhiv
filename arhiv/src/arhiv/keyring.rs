@@ -10,6 +10,7 @@ pub trait Keyring: Send + Sync {
     fn set_password(&self, password: Option<SecretString>) -> Result<()>;
 }
 
+/// Noop keyring implementation, primarily for development & tests.
 pub struct NoopKeyring;
 
 impl Keyring for NoopKeyring {
@@ -22,6 +23,8 @@ impl Keyring for NoopKeyring {
     }
 }
 
+/// Keyring implementation that relies on system keyring.
+/// Works on Windows, Linux, Mac & iOS.
 pub struct SystemKeyring;
 
 impl SystemKeyring {

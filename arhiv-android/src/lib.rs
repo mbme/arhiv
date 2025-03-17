@@ -68,6 +68,11 @@ fn stop_server() -> Result<()> {
     Ok(())
 }
 
+/// This implementation of Keyring only receives password once on init, from Android.
+/// The reason is that the biometric auth process in Android is asynchronous, so the easiest approach
+/// is to do it only once on app init, and then just update the local password copy.
+/// Similarly, the set_password() also starts an async process to encrypt & save the password,
+/// but doesn't wait for results. So the password may not actually be saved, even if the method call didn't fail.
 struct AndroidKeyring {
     password: RwLock<Option<SecretString>>,
     android_controller: GlobalRef, // instance of AndroidController

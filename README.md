@@ -40,13 +40,13 @@
 
 ## Prerequisites
 * Android Studio; use it to install Android SDK & NDK
+* Android SDK & NDK
+* JDK - `jdk-openjdk`
 * `cargo-ndk` to build Android JNI library
-* Add rust targets for Android cross-compilation:
+* Add rust targets for Android cross-compilation (the `x86_64-linux-android` for Android Studio emulator):
 ```
 rustup target add aarch64-linux-android x86_64-linux-android
 ```
-* JDK - `jdk-openjdk`
-* Android SDK & NDK
 
 # Scraper
 Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbme/scraper) userscript or bookmarklet.

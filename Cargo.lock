@@ -199,6 +199,7 @@ dependencies = [
  "axum",
  "axum-extra",
  "baza",
+ "futures",
  "include_dir",
  "keyring",
  "rs-utils",

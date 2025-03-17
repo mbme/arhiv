@@ -1,4 +1,4 @@
-use std::{io::Seek, ops::Bound, str::FromStr, sync::Arc};
+use std::{io::Seek, ops::Bound, panic::AssertUnwindSafe, str::FromStr, sync::Arc};
 
 use anyhow::Context;
 use axum::{
@@ -50,6 +50,7 @@ pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<Arhiv>> {
         .layer(middleware::from_fn(client_authenticator))
         .layer(middleware::from_fn(no_cache_middleware))
         .layer(Extension(Arc::new(ui_key)))
+        .layer(middleware::from_fn(catch_panic_middleware))
 }
 
 #[derive(Serialize)]
@@ -325,4 +326,27 @@ async fn no_cache_middleware(req: Request, next: Next) -> Response {
     add_no_cache_headers(response.headers_mut());
 
     response
+}
+
+async fn catch_panic_middleware(req: Request, next: Next) -> Response {
+    use futures::FutureExt;
+
+    let result = AssertUnwindSafe(next.run(req)).catch_unwind().await;
+
+    match result {
+        Ok(response) => response,
+        Err(err) => {
+            let err = if let Some(s) = err.downcast_ref::<String>() {
+                s.as_str()
+            } else if let Some(s) = err.downcast_ref::<&str>() {
+                s
+            } else {
+                ""
+            };
+
+            log::error!("Panic: {err}");
+
+            (StatusCode::INTERNAL_SERVER_ERROR, format!("Panic: {err}")).into_response()
+        }
+    }
 }

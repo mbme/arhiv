@@ -1,3 +1,5 @@
+use std::panic;
+
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{
     fmt::{self, format::FmtSpan, time::ChronoLocal},
@@ -60,4 +62,22 @@ pub fn setup_debug_logger() {
 
 pub fn setup_trace_logger() {
     setup_logger_with_level(LevelFilter::TRACE);
+}
+
+pub fn setup_panic_hook() {
+    panic::set_hook(Box::new(|panic_info| {
+        if let Some(location) = panic_info.location() {
+            error!(
+                "Panic occurred: {} at {}:{}",
+                panic_info
+                    .payload()
+                    .downcast_ref::<&str>()
+                    .unwrap_or(&"Unknown"),
+                location.file(),
+                location.line(),
+            );
+        } else {
+            error!("Panic occurred: {}", panic_info);
+        }
+    }));
 }

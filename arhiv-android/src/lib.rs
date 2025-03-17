@@ -133,6 +133,7 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
     android_controller: JObject, // AndroidController
 ) -> JObject<'local> {
     log::setup_android_logger("me.mbsoftware.arhiv");
+    log::setup_panic_hook();
 
     let app_files_dir: String = env
         .get_string(&app_files_dir)

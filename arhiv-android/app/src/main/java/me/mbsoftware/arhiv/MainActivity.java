@@ -3,6 +3,7 @@ package me.mbsoftware.arhiv;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.net.http.SslCertificate;
 import android.net.http.SslError;
@@ -15,11 +16,13 @@ import android.webkit.SslErrorHandler;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
@@ -28,6 +31,8 @@ import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
   private static final String TAG = "MainActivity";
+
+  private WebView webView;
 
   private ValueCallback<Uri[]> filePathCallback;
   private ActivityResultLauncher<Intent> filePickerLauncher;
@@ -142,10 +147,11 @@ public class MainActivity extends AppCompatActivity {
       new AndroidController(this)
     );
 
-    WebView webView = findViewById(R.id.web);
+    webView = findViewById(R.id.web);
     webView.getSettings().setJavaScriptEnabled(true);
     webView.getSettings().setDomStorageEnabled(true);
     webView.getSettings().setAllowFileAccess(false);
+    updateWebViewDarkMode(getResources().getConfiguration());
 
     SwipeRefreshLayout swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
     swipeRefreshLayout.setOnRefreshListener(webView::reload);
@@ -232,6 +238,26 @@ public class MainActivity extends AppCompatActivity {
       WebView.setWebContentsDebuggingEnabled(true);
     }
   }
+
+  private void updateWebViewDarkMode(@NonNull Configuration config) {
+    boolean isNight = (config.uiMode & Configuration.UI_MODE_NIGHT_MASK)
+      == Configuration.UI_MODE_NIGHT_YES;
+    Log.i(TAG, "Android is in " + (isNight ? "dark mode" : "light mode"));
+
+    webView.getSettings().setForceDark(
+      isNight ? WebSettings.FORCE_DARK_ON : WebSettings.FORCE_DARK_OFF
+    );
+  }
+
+  @Override
+  public void onConfigurationChanged(@NonNull Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+
+    Log.i(TAG, "Android configuration have changed");
+
+    updateWebViewDarkMode(newConfig);
+  }
+
 
   @Override
   protected void onDestroy() {

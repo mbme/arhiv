@@ -1,5 +1,8 @@
 use std::{
-    sync::{Arc, LazyLock, Mutex, RwLock},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, LazyLock, Mutex, RwLock,
+    },
     time::Duration,
 };
 
@@ -12,6 +15,8 @@ use tokio::runtime::Runtime;
 
 use arhiv::{ArhivOptions, ArhivServer, Keyring, ServerInfo};
 use rs_utils::{log, ExposeSecret, SecretString};
+
+static LOG_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 static RUNTIME: LazyLock<Mutex<Option<Runtime>>> = LazyLock::new(|| Mutex::new(None));
 static ARHIV_SERVER: LazyLock<Mutex<Option<ArhivServer>>> = LazyLock::new(|| Mutex::new(None));
@@ -137,8 +142,16 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
     password: JString,
     android_controller: JObject, // AndroidController
 ) -> JObject<'local> {
-    log::setup_android_logger("me.mbsoftware.arhiv");
-    log::setup_panic_hook();
+    // the function might be called multiple times, if android app was unloaded in background
+    if LOG_INITIALIZED.load(Ordering::SeqCst) {
+        log::info!("Logger already initialized");
+    } else {
+        log::setup_android_logger("me.mbsoftware.arhiv");
+        log::setup_panic_hook();
+        LOG_INITIALIZED.store(true, Ordering::SeqCst);
+
+        log::debug!("Initialized logger and panic hook");
+    }
 
     let app_files_dir: String = env
         .get_string(&app_files_dir)

@@ -20,9 +20,9 @@ if (!rootEl) {
 const root = createRoot(rootEl);
 
 function renderApp() {
-  if (window.CREATE_ARHIV) {
+  if (window.CONFIG.createArhiv) {
     root.render(<CreateArhiv />);
-  } else if (window.ARHIV_LOCKED) {
+  } else if (window.CONFIG.arhivLocked) {
     root.render(<UnlockArhiv />);
   } else if (process.env.NODE_ENV === 'development' && location.search.includes('DEMO')) {
     root.render(<ComponentsDemo />);

@@ -21,7 +21,7 @@ export function ErasedDocumentCard({ document, isUpdating }: Props) {
       />
 
       <img
-        src={`${window.BASE_PATH}/nothing-to-see-here.jpg`}
+        src={`${window.CONFIG.basePath}/nothing-to-see-here.jpg`}
         alt="funny picture for the erased document"
         className="my-16 mx-auto"
       />

@@ -10,7 +10,7 @@ use axum::{
     Extension, Json, Router,
 };
 use axum_extra::extract::{cookie::Cookie, CookieJar};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::Value;
 
 use baza::baza2::BazaManager;
@@ -21,7 +21,10 @@ use rs_utils::{
     stream_to_file, AuthToken, TempFile,
 };
 
-use crate::{definitions::get_standard_schema, dto::APIRequest, Arhiv};
+use crate::{
+    dto::{APIRequest, ArhivUIConfig},
+    Arhiv,
+};
 
 use self::api_handler::handle_api_request;
 use self::assets_handler::assets_handler;
@@ -50,23 +53,16 @@ pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<Arhiv>> {
         .layer(middleware::from_fn(catch_panic_middleware))
 }
 
-#[derive(Serialize)]
-struct Features {
-    use_local_storage: bool,
-}
-
 async fn index_page(arhiv: State<Arc<Arhiv>>) -> Result<impl IntoResponse, ServerError> {
-    let create_arhiv = !arhiv.baza.storage_exists()?;
-    let is_locked = arhiv.baza.is_locked();
-
-    let schema =
-        serde_json::to_string(&get_standard_schema()).context("failed to serialize schema")?;
-
-    let features = Features {
+    let config = serde_json::to_string_pretty(&ArhivUIConfig {
+        base_path: UI_BASE_PATH,
+        schema: arhiv.baza.get_schema(),
         use_local_storage: true,
-    };
-    let features = serde_json::to_string(&features).context("failed to serialize features")?;
-    let min_password_length = BazaManager::MIN_PASSWORD_LENGTH;
+        min_password_length: BazaManager::MIN_PASSWORD_LENGTH,
+        create_arhiv: !arhiv.baza.storage_exists()?,
+        arhiv_locked: arhiv.baza.is_locked(),
+    })
+    .context("Failed to serialize ArhivUI config")?;
 
     let content = format!(
         r#"
@@ -85,12 +81,7 @@ async fn index_page(arhiv: State<Arc<Arhiv>>) -> Result<impl IntoResponse, Serve
                     <main></main>
 
                     <script>
-                        window.BASE_PATH = "{UI_BASE_PATH}";
-                        window.SCHEMA = {schema};
-                        window.FEATURES = {features};
-                        window.MIN_PASSWORD_LENGTH = {min_password_length};
-                        window.CREATE_ARHIV = {create_arhiv};
-                        window.ARHIV_LOCKED = {is_locked};
+                        window.CONFIG = {config};
                     </script>
 
                     <script src="{UI_BASE_PATH}/index.js"></script>

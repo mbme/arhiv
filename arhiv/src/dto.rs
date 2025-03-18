@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use baza::entities::{DocumentData, DocumentLockKey, Id};
+use baza::{
+    entities::{DocumentData, DocumentLockKey, Id},
+    schema::DataSchema,
+};
 use rs_utils::{SecretString, Timestamp};
 
 #[derive(Deserialize, Debug)]
@@ -203,4 +206,15 @@ impl DirEntry {
             DirEntry::Symlink { name, .. } => name,
         }
     }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ArhivUIConfig<'a> {
+    pub base_path: &'static str,
+    pub schema: &'a DataSchema,
+    pub use_local_storage: bool,
+    pub min_password_length: usize,
+    pub create_arhiv: bool,
+    pub arhiv_locked: bool,
 }

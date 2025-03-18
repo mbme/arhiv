@@ -1,4 +1,5 @@
 import { JSONObj, NominalType, Obj } from 'utils';
+import { DataSchema } from 'utils/schema';
 
 export type APIRequest =
   | {
@@ -392,4 +393,13 @@ export type TaskStatus = 'InProgress' | 'Todo' | 'Done' | 'Cancelled';
 export type TaskData = {
   title: string;
   status: TaskStatus;
+};
+
+export type ArhivUIConfig = {
+  basePath: string;
+  schema: DataSchema;
+  useLocalStorage: boolean;
+  minPasswordLength: number;
+  createArhiv: boolean;
+  arhivLocked: boolean;
 };

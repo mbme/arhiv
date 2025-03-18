@@ -46,7 +46,7 @@ export function CreateArhiv() {
             type="password"
             name="password"
             required
-            minLength={window.MIN_PASSWORD_LENGTH}
+            minLength={window.CONFIG.minPasswordLength}
             autoComplete="off"
             autoFocus
           />
@@ -59,7 +59,7 @@ export function CreateArhiv() {
             name="passwordRepeat"
             ref={passwordRepeatInputRef}
             required
-            minLength={window.MIN_PASSWORD_LENGTH}
+            minLength={window.CONFIG.minPasswordLength}
             autoComplete="off"
             onChange={(e) => {
               e.currentTarget.setCustomValidity('');

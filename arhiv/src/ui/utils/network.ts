@@ -75,7 +75,7 @@ function createRPCProxy<Request extends SerdeEnum, Response extends SerdeEnum>(
   ) as ProxyHandlers<Request, Response>;
 }
 
-export const API_ENDPOINT = `${window.BASE_PATH}/api`;
+export const API_ENDPOINT = `${window.CONFIG.basePath}/api`;
 
 export const RPC = createRPCProxy<APIRequest, APIResponse>(API_ENDPOINT);
 
@@ -88,7 +88,7 @@ export async function uploadFile(file: File, signal?: AbortSignal): Promise<Docu
   signal?.addEventListener('abort', onAbort);
 
   try {
-    const response = await fetch(`${window.BASE_PATH}/assets`, {
+    const response = await fetch(`${window.CONFIG.basePath}/assets`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/octet-stream',
@@ -119,11 +119,11 @@ export async function uploadFile(file: File, signal?: AbortSignal): Promise<Docu
 }
 
 export function getDocumentUrl(documentId: DocumentId): string {
-  return `${window.location.origin}${window.BASE_PATH}?id=${documentId}`;
+  return `${window.location.origin}${window.CONFIG.basePath}?id=${documentId}`;
 }
 
 export function getAssetUrl(assetId: DocumentId): string {
-  return `${window.BASE_PATH}/assets/${assetId}`;
+  return `${window.CONFIG.basePath}/assets/${assetId}`;
 }
 
 export function getScaledImageUrl(
@@ -131,5 +131,5 @@ export function getScaledImageUrl(
   maxWidth: number,
   maxHeight: number,
 ): string {
-  return `${window.BASE_PATH}/assets/images/${assetId}?max_w=${maxWidth}&max_h=${maxHeight}`;
+  return `${window.CONFIG.basePath}/assets/images/${assetId}?max_w=${maxWidth}&max_h=${maxHeight}`;
 }

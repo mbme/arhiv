@@ -29,7 +29,7 @@ export function UnlockArhiv() {
             type="password"
             name="password"
             required
-            minLength={window.MIN_PASSWORD_LENGTH}
+            minLength={window.CONFIG.minPasswordLength}
             autoComplete="off"
             autoFocus
             onChange={(e) => {

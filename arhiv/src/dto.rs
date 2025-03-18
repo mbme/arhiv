@@ -211,6 +211,7 @@ impl DirEntry {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ArhivUIConfig<'a> {
+    pub storage_dir: &'a str,
     pub base_path: &'static str,
     pub schema: &'a DataSchema,
     pub use_local_storage: bool,

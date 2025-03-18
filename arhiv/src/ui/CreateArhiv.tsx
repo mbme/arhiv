@@ -36,7 +36,7 @@ export function CreateArhiv() {
   };
 
   return (
-    <LoginContainer>
+    <LoginContainer heading="Create Arhiv">
       <Form className="flex flex-col max-w-md items-center gap-4" onSubmit={onSubmit}>
         {error && <div className="text-red-500 text-xl pl-1 my-2">{error}</div>}
 
@@ -68,7 +68,7 @@ export function CreateArhiv() {
         </label>
 
         <Button variant="primary" type="submit" busy={inProgress}>
-          Create arhiv
+          Create
         </Button>
       </Form>
     </LoginContainer>

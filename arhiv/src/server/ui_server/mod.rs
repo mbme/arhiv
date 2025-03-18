@@ -55,6 +55,7 @@ pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<Arhiv>> {
 
 async fn index_page(arhiv: State<Arc<Arhiv>>) -> Result<impl IntoResponse, ServerError> {
     let config = serde_json::to_string_pretty(&ArhivUIConfig {
+        storage_dir: arhiv.baza.get_storage_dir(),
         base_path: UI_BASE_PATH,
         schema: arhiv.baza.get_schema(),
         use_local_storage: true,

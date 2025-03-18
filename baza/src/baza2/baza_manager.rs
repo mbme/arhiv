@@ -464,6 +464,10 @@ impl BazaManager {
     pub fn get_state_dir(&self) -> &str {
         &self.paths.state_dir
     }
+
+    pub fn get_storage_dir(&self) -> &str {
+        &self.paths.storage_dir
+    }
 }
 
 #[cfg(test)]

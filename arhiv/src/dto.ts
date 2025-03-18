@@ -396,6 +396,7 @@ export type TaskData = {
 };
 
 export type ArhivUIConfig = {
+  storageDir: string;
   basePath: string;
   schema: DataSchema;
   useLocalStorage: boolean;

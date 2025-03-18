@@ -19,7 +19,7 @@ export function UnlockArhiv() {
   );
 
   return (
-    <LoginContainer>
+    <LoginContainer heading="Unlock Arhiv">
       <Form className="flex flex-col max-w-md items-center gap-4" onSubmit={triggerRefresh}>
         {error && <div className="text-red-500 text-xl pl-1 my-2">{String(error)}</div>}
 

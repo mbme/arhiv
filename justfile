@@ -23,6 +23,7 @@ desktop *ARGS:
   #!/usr/bin/env bash
   set -euxo pipefail
 
+  npm run build --workspace arhiv
   npm run build --workspace arhiv-desktop
 
   export DEV_ARHIV_ROOT={{root}}
@@ -50,7 +51,7 @@ prod-build-install:
 
 # install the arhiv locally using Cargo
 cargo-install:
-  npm install
+  npm run prod:build --workspace arhiv
   cargo install --path binutils --bin arhiv --features production-mode
 
 build-timings:
@@ -76,6 +77,8 @@ clean-all:
 build-android-libs *RELEASE_FLAG:
   #!/usr/bin/env bash
   set -euxo pipefail
+
+  npm run prod:build --workspace arhiv
 
   cd arhiv-android
 

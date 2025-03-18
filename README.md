@@ -1,6 +1,7 @@
 # Installation
 
-## Using cargo
+## Using Cargo
+* `npm install`
 * `just cargo-install`
 
 ## On ArchLinux, using makepkg

@@ -36,6 +36,8 @@ build() {
 
   export TYPED_V_VERSION=$(git describe --tags)
 
+  npm run prod:build --workspace arhiv
+
   cargo build --frozen --release --features production-mode -p binutils --bin arhiv
 
   npm run prod:build --workspace arhiv-desktop

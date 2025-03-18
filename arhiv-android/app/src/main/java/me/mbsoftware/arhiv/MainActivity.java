@@ -12,6 +12,8 @@ import android.provider.Settings;
 import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.SslErrorHandler;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -27,10 +29,37 @@ import java.util.Arrays;
 public class MainActivity extends AppCompatActivity {
   private static final String TAG = "MainActivity";
 
+  private ValueCallback<Uri[]> filePathCallback;
+  private ActivityResultLauncher<Intent> filePickerLauncher;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
+
+    // Set up ActivityResultLauncher to handle file picker results
+    filePickerLauncher = registerForActivityResult(
+      new ActivityResultContracts.StartActivityForResult(),
+      result -> {
+        Log.d(TAG, "Got result from File Picker activity: " + result.getResultCode());
+
+        if (filePathCallback == null) {
+          Log.w(TAG, "filePathCallback is null, ignoring File Picker results!");
+          return;
+        }
+
+        if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+          Uri[] results = null;
+          if (result.getData().getDataString() != null) {
+            results = new Uri[]{Uri.parse(result.getData().getDataString())};
+          }
+          filePathCallback.onReceiveValue(results);
+        } else {
+          filePathCallback.onReceiveValue(null);
+        }
+
+        filePathCallback = null;
+      });
 
     ensureIsExternalStorageManager();
   }
@@ -170,6 +199,27 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(Intent.ACTION_VIEW, requestUrl);
         view.getContext().startActivity(intent);
 
+        return true;
+      }
+    });
+
+    webView.setWebChromeClient(new WebChromeClient() {
+      @Override
+      public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback,
+                                       WebChromeClient.FileChooserParams fileChooserParams) {
+        Log.d(TAG, "Starting File Picker activity");
+
+        MainActivity.this.filePathCallback = filePathCallback;
+
+        Intent intent = fileChooserParams.createIntent();
+
+        try {
+          filePickerLauncher.launch(intent);
+        } catch (Exception e) {
+          Log.e(TAG, "Failed to launch file picker:", e);
+          MainActivity.this.filePathCallback = null;
+          return false;
+        }
         return true;
       }
     });

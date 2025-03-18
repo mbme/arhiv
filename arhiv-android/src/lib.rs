@@ -174,6 +174,7 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
     let options = ArhivOptions {
         storage_dir: format!("{external_storage_dir}/Arhiv"),
         state_dir: app_files_dir,
+        downloads_dir: format!("{external_storage_dir}/Downloads"), // TODO pass from Android
         file_browser_root_dir: external_storage_dir,
         keyring: Arc::new(keyring),
     };
@@ -253,6 +254,7 @@ mod tests {
         let options = ArhivOptions {
             storage_dir: format!("{temp_dir}/storage"),
             state_dir: format!("{temp_dir}/state"),
+            downloads_dir: format!("{temp_dir}/downloads"),
             file_browser_root_dir: temp_dir.to_string(),
             keyring: Arc::new(NoopKeyring),
         };

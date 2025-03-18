@@ -232,7 +232,6 @@ impl Baza {
     }
 }
 
-// FIXME fix tests
 #[cfg(test)]
 mod tests {
     use serde_json::json;

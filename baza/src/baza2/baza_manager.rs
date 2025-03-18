@@ -97,8 +97,13 @@ pub struct BazaManager {
 impl BazaManager {
     pub const MIN_PASSWORD_LENGTH: usize = AgeKey::MIN_PASSWORD_LEN;
 
-    pub fn new(storage_dir: String, state_dir: String, schema: DataSchema) -> Self {
-        let paths = BazaPaths::new(storage_dir, state_dir);
+    pub fn new(
+        storage_dir: String,
+        state_dir: String,
+        downloads_dir: String,
+        schema: DataSchema,
+    ) -> Self {
+        let paths = BazaPaths::new(storage_dir, state_dir, downloads_dir);
 
         BazaManager {
             schema,
@@ -443,6 +448,7 @@ impl BazaManager {
         let manager = BazaManager::new(
             format!("{test_dir}/storage"),
             format!("{test_dir}/state"),
+            format!("{test_dir}/downloads"),
             schema,
         );
 
@@ -466,6 +472,10 @@ impl BazaManager {
     }
 
     pub fn get_storage_dir(&self) -> &str {
+        &self.paths.storage_dir
+    }
+
+    pub fn get_downloads_dir(&self) -> &str {
         &self.paths.storage_dir
     }
 }
@@ -653,6 +663,7 @@ mod tests {
         let manager = BazaManager::new_for_tests(&temp_dir.path);
         let storage_dir = manager.paths.storage_dir.clone();
         let state_dir = manager.paths.state_dir.clone();
+        let downloads_dir = manager.paths.downloads_dir.clone();
         let schema = manager.schema.clone();
 
         {
@@ -664,7 +675,7 @@ mod tests {
         }
 
         {
-            let manager = BazaManager::new(storage_dir, state_dir, schema);
+            let manager = BazaManager::new(storage_dir, state_dir, downloads_dir, schema);
 
             assert!(manager.open().is_err(), "Can't open without password");
             assert!(
@@ -688,6 +699,7 @@ mod tests {
         let manager = BazaManager::new_for_tests(&temp_dir.path);
         let storage_dir = manager.paths.storage_dir.clone();
         let state_dir = manager.paths.state_dir.clone();
+        let downloads_dir = manager.paths.downloads_dir.clone();
         let schema = manager.schema.clone();
 
         manager
@@ -695,7 +707,7 @@ mod tests {
             .unwrap();
 
         {
-            let manager = BazaManager::new(storage_dir, state_dir, schema);
+            let manager = BazaManager::new(storage_dir, state_dir, downloads_dir, schema);
 
             assert!(
                 manager.unlock("test password".into()).is_err(),

@@ -9,7 +9,7 @@ use url::Url;
 
 use crate::{
     download::file_name_expert::DownloadFileNameExpert,
-    ensure_dir_exists, file_exists, get_downloads_dir, get_file_size, get_string_hash_sha256,
+    ensure_dir_exists, file_exists, get_file_size, get_string_hash_sha256,
     http::{
         parse_content_disposition_header, parse_content_range_header, parse_content_type_header,
     },
@@ -34,13 +34,7 @@ pub struct Download {
 }
 
 impl Download {
-    pub fn new(url: &str) -> Result<Self> {
-        let downloads_dir = get_downloads_dir().context("failed to find Downloads dir")?;
-
-        Download::new_with_path(url, &downloads_dir)
-    }
-
-    pub fn new_with_path(url: &str, downloads_dir: &str) -> Result<Self> {
+    pub fn new_in_dir(url: &str, downloads_dir: &str) -> Result<Self> {
         ensure_dir_exists(downloads_dir).context("dir for downloads doesn't exist")?;
 
         let url_hash = get_string_hash_sha256(url);

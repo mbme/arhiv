@@ -155,33 +155,16 @@ pub fn remove_file_extension(path: &str) -> Result<String> {
 }
 
 #[must_use]
-pub fn get_home_dir() -> Option<String> {
+pub fn get_linux_home_dir() -> Option<String> {
     env::var_os("HOME").map(|path| {
         path.into_string()
             .expect("HOME env var must be a valid string")
     })
 }
 
-/// `$XDG_CONFIG_HOME` or `$HOME/.config`
-#[must_use]
-pub fn get_config_home() -> Option<String> {
-    if let Some(path) = env::var_os("XDG_CONFIG_HOME") {
-        return path
-            .into_string()
-            .expect("XDG_CONFIG_HOME env var must be a valid string")
-            .into();
-    }
-
-    if let Some(home_dir) = get_home_dir() {
-        return format!("{home_dir}/.config").into();
-    }
-
-    None
-}
-
 /// `$XDG_DATA_HOME` or `$HOME/.local/share`
 #[must_use]
-pub fn get_data_home() -> Option<String> {
+pub fn get_linux_data_home() -> Option<String> {
     if let Some(path) = env::var_os("XDG_DATA_HOME") {
         return path
             .into_string()
@@ -189,7 +172,7 @@ pub fn get_data_home() -> Option<String> {
             .into();
     }
 
-    if let Some(home_dir) = get_home_dir() {
+    if let Some(home_dir) = get_linux_home_dir() {
         return format!("{home_dir}/.local/share").into();
     }
 
@@ -198,7 +181,7 @@ pub fn get_data_home() -> Option<String> {
 
 /// `$XDG_DOWNLOAD_DIR` or `$HOME/Downloads` FIXME ensure on Android
 #[must_use]
-pub fn get_downloads_dir() -> Option<String> {
+pub fn get_linux_downloads_dir() -> Option<String> {
     if let Some(path) = env::var_os("XDG_DOWNLOAD_DIR") {
         return path
             .into_string()

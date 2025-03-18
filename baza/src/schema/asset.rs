@@ -78,7 +78,9 @@ impl AssetData {
 pub type Asset = Document<AssetData>;
 
 pub async fn download_asset(url: &str, baza: &mut Baza) -> Result<Asset> {
-    let download_result = Download::new(url)?.start().await?;
+    let download_result = Download::new_in_dir(url, &baza.paths.downloads_dir)?
+        .start()
+        .await?;
 
     let mut asset = baza.create_asset(&download_result.file_path)?;
     asset.data.filename = download_result.original_file_name.clone();

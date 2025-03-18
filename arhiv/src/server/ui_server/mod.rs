@@ -125,7 +125,7 @@ async fn create_asset_handler(
         .context("Failed to read X-File-Name header as a string")?
         .to_string();
 
-    let temp_file = TempFile::new_in_downloads_dir("arhiv-asset")?;
+    let temp_file = TempFile::new_in_dir(arhiv.baza.get_downloads_dir(), "arhiv-asset");
     let stream = request.into_body().into_data_stream();
 
     stream_to_file(temp_file.open_tokio_file(0).await?, stream).await?;

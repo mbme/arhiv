@@ -88,6 +88,14 @@ build-android-libs *RELEASE_FLAG:
 prod-build-android-libs:
   just build-android-libs --release --features production-mode
 
+build-android-app: build-android-libs
+  #!/usr/bin/env bash
+  set -euxo pipefail
+
+  cd arhiv-android
+
+  ./gradlew assembleDebug
+
 bench *PARAMS:
   cd rs-utils; cargo bench -- {{PARAMS}}
 

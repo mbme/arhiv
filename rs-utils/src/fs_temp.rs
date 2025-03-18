@@ -6,7 +6,6 @@ use anyhow::{Context, Result};
 use tokio::fs as tokio_fs;
 
 use crate::build_path;
-use crate::get_downloads_dir;
 use crate::get_file_size;
 use crate::path_to_string;
 use crate::{generate_alpanumeric_string, path_exists};
@@ -35,12 +34,6 @@ impl TempFile {
         TempFile {
             path: build_path(dir, file_name),
         }
-    }
-
-    pub fn new_in_downloads_dir(prefix: impl AsRef<str>) -> Result<Self> {
-        let downloads_dir = get_downloads_dir().context("Failed to find Downloads dir")?;
-
-        Ok(Self::new_in_dir(downloads_dir, prefix))
     }
 
     pub fn new_child(&self, subpath: impl AsRef<str>) -> Self {

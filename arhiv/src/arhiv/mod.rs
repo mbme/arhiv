@@ -3,7 +3,9 @@ use std::sync::Arc;
 use anyhow::Result;
 
 use baza::{baza2::BazaManager, AutoCommitService, AutoCommitTask, DEV_MODE};
-use rs_utils::{get_data_home, get_home_dir, into_absolute_path, log};
+use rs_utils::{
+    get_linux_data_home, get_linux_downloads_dir, get_linux_home_dir, into_absolute_path, log,
+};
 
 use crate::{definitions::get_standard_schema, ServerInfo, Status};
 
@@ -19,16 +21,18 @@ mod scaled_images_cache;
 pub struct ArhivOptions {
     pub storage_dir: String,
     pub state_dir: String,
+    pub downloads_dir: String,
     pub file_browser_root_dir: String,
     pub keyring: Arc<dyn Keyring>,
 }
 
 impl ArhivOptions {
     pub fn new_desktop() -> Self {
-        let home_dir = get_home_dir();
-        let data_dir = get_data_home();
+        let home_dir = get_linux_home_dir().unwrap_or("/".to_string());
+        let data_dir = get_linux_data_home();
+        let downloads_dir = get_linux_downloads_dir();
 
-        let file_browser_root_dir = home_dir.clone().unwrap_or("/".to_string());
+        let file_browser_root_dir = home_dir.clone();
 
         let keyring: Arc<dyn Keyring> = if cfg!(test) {
             Arc::new(NoopKeyring)
@@ -46,23 +50,20 @@ impl ArhivOptions {
             return ArhivOptions {
                 storage_dir: format!("{dev_root}/storage"),
                 state_dir: format!("{dev_root}/state"),
+                downloads_dir: format!("{dev_root}/downloads"),
                 file_browser_root_dir,
                 keyring,
             };
         }
 
-        let storage_dir = home_dir
-            .as_ref()
-            .map_or("/arhiv-storage".to_string(), |home_dir| {
-                format!("{home_dir}/arhiv")
-            });
-        let state_dir = data_dir.map_or("/arhiv-state".to_string(), |data_dir| {
-            format!("{data_dir}/arhiv-state")
-        });
+        let storage_dir = format!("{home_dir}/arhiv");
+        let state_dir = format!("{}/arhiv-state", data_dir.unwrap_or(home_dir.clone()));
+        let downloads_dir = downloads_dir.unwrap_or(format!("{home_dir}/Downloads"));
 
         ArhivOptions {
             storage_dir,
             state_dir,
+            downloads_dir,
             file_browser_root_dir,
             keyring,
         }
@@ -84,7 +85,12 @@ impl Arhiv {
 
         let img_cache_dir = format!("{}/img-cache", options.state_dir);
 
-        let baza_manager = BazaManager::new(options.storage_dir, options.state_dir, schema);
+        let baza_manager = BazaManager::new(
+            options.storage_dir,
+            options.state_dir,
+            options.downloads_dir,
+            schema,
+        );
         let baza_manager = Arc::new(baza_manager);
 
         let img_cache = ScaledImagesCache::new(img_cache_dir, baza_manager.clone());

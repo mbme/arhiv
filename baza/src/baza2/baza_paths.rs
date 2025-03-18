@@ -29,11 +29,13 @@ pub struct BazaPaths {
     pub state_file: String,
     pub state_data_dir: String,
 
+    pub downloads_dir: String,
+
     pub lock_file: String,
 }
 
 impl BazaPaths {
-    pub fn new(storage_dir: String, state_dir: String) -> Self {
+    pub fn new(storage_dir: String, state_dir: String, downloads_dir: String) -> Self {
         let key_file_name = "key.age".to_string();
         let key_file = format!("{storage_dir}/{key_file_name}");
 
@@ -58,6 +60,8 @@ impl BazaPaths {
             state_dir,
             state_file,
             state_data_dir,
+
+            downloads_dir,
 
             lock_file,
         }
@@ -139,8 +143,8 @@ impl Display for BazaPaths {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "[BazaPaths storage: {}  state: {}]",
-            self.storage_dir, self.state_dir
+            "[BazaPaths storage: {}  state: {}  downloads: {}]",
+            self.storage_dir, self.state_dir, self.downloads_dir
         )
     }
 }

@@ -45,10 +45,10 @@ pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<Arhiv>> {
         .route("/assets", post(create_asset_handler))
         .route("/assets/{asset_id}", get(assets_handler))
         .route("/assets/images/{asset_id}", get(scaled_image_handler))
+        .layer(middleware::from_fn(no_cache_middleware))
         .route("/{*fileName}", get(public_assets_handler))
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(client_authenticator))
-        .layer(middleware::from_fn(no_cache_middleware))
         .layer(Extension(Arc::new(ui_key)))
         .layer(middleware::from_fn(catch_panic_middleware))
 }

@@ -354,7 +354,6 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         }
         CLICommand::ServerInfo => {
             let arhiv = Arhiv::new_desktop();
-            unlock_arhiv(&arhiv);
 
             let server_info = arhiv.collect_server_info()?;
 

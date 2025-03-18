@@ -20,13 +20,20 @@ run:
      select-pane -t 0
 
 desktop *ARGS:
+  #!/usr/bin/env bash
+  set -euxo pipefail
+
   npm run build --workspace arhiv-desktop
 
-  DEV_ARHIV_ROOT={{root}} \
-  SERVER_PORT=8443 \
-  RUST_LOG={{debug_log_level}} \
-  ARHIV_BIN="{{justfile_directory()}}/target/debug/arhiv" \
-  ELECTRON_OZONE_PLATFORM_HINT=wayland \
+  export DEV_ARHIV_ROOT={{root}}
+  export SERVER_PORT=8443
+  export RUST_LOG={{debug_log_level}}
+
+  cargo build -p binutils
+
+  export ARHIV_BIN="{{justfile_directory()}}/target/debug/arhiv"
+  export ELECTRON_OZONE_PLATFORM_HINT=wayland
+
   npm run start --workspace arhiv-desktop -- {{ARGS}}
 
 bump-version:

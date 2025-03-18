@@ -23,20 +23,28 @@
 * `tmux` for running dev servers in parallel
 
 ## Special switches
-* `production-mode` feature flag
+* `production-mode` feature flag - to distinguish between dev Arhiv & prod Arhiv
 
 ## Release process
 * `just bump-version` - increment major version, create & push git tag
 
+# CLI app
+Cross-platform CLI app. Uses system keyring to store password.
+
 # Web UI app
-* Typescript for type checking
-* Eslint for linting
-* Prettier for code formatting
-* React for rendering
-* TailwindCSS for styling
-* Esbuild for bundling the app
+* `TypeScript` for type checking
+* `ESLint` for linting
+* `Prettier` for code formatting
+* `React.js` for rendering
+* `TailwindCSS` for styling
+* `esbuild` for bundling the app
+
+# Desktop app
+Cross-platform desktop app that uses `Electron` to display Web UI. Uses system keyring to store password.
 
 # Android app
+Java Webview app that displays Web UI. Uses biometric authentication or device authentication to safely store password.
+Needs `MANAGE_EXTERNAL_STORAGE` permission to read/write files in user directory (next to Music, Downloads etc.).
 
 ## Prerequisites
 * Android Studio; use it to install Android SDK & NDK

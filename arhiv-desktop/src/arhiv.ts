@@ -16,7 +16,7 @@ function getArhivBin(): string {
     throw new Error('ARHIV_BIN must be specified in development mode');
   }
 
-  console.log('arhiv bin:', arhivBin);
+  console.log('Arhiv bin:', arhivBin);
 
   return arhivBin;
 }
@@ -36,7 +36,7 @@ export async function getServerInfo(): Promise<ExtendedServerInfo | undefined> {
   const result = await execFileAsync(getArhivBin(), ['server-info'], { encoding: 'utf8' });
 
   if (!result.stdout) {
-    throw new Error("arhiv server-info didn't return any output");
+    throw new Error("Arhiv server-info didn't return any output");
   }
 
   const serverInfo = JSON.parse(result.stdout.toString()) as ServerInfo | null;
@@ -59,10 +59,8 @@ function getCertificateFingerprint(certificate: number[]): string {
 }
 
 export function startServer(onError: () => void): void {
-  console.log('starting arhiv server');
+  console.log('Starting Arhiv server');
   const result = spawn(getArhivBin(), ['server'], { stdio: 'inherit' });
-
-  // TODO wait for server on port
 
   result.on('close', (code) => {
     console.log(`Arhiv server: Process exited with code ${code}`);

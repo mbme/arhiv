@@ -104,19 +104,25 @@ async function start(args: string[]) {
     return;
   }
 
-  if (args.includes('--start-server')) {
+  // check if server running, and start it if not
+  let serverInfo = await getServerInfo();
+  if (serverInfo) {
+    console.log('Arhiv server already running');
+  } else {
+    console.log('Arhiv server not running, starting server');
     startServer(() => {
       app.quit();
     });
 
     await waitForServer();
+
+    serverInfo = await getServerInfo();
   }
 
-  const serverInfo = await getServerInfo();
   if (!serverInfo) {
-    throw new Error("arhiv server isn't running");
+    throw new Error("Arhiv server isn't running");
   }
-  console.log('server base url:', serverInfo.uiUrl);
+  console.log('Arhiv server base url:', serverInfo.uiUrl);
 
   app.on('second-instance', (_event, _commandLine, _workingDirectory, additionalData) => {
     const actionFromSecondInstance = additionalData as Action | undefined;

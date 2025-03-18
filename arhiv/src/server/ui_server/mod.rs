@@ -1,25 +1,20 @@
-use std::{io::Seek, ops::Bound, panic::AssertUnwindSafe, str::FromStr, sync::Arc};
+use std::{panic::AssertUnwindSafe, sync::Arc};
 
 use anyhow::Context;
 use axum::{
-    extract::{DefaultBodyLimit, Path, Query, Request, State},
-    http::{self, HeaderMap, HeaderValue, StatusCode},
+    extract::{DefaultBodyLimit, Query, Request, State},
+    http::StatusCode,
     middleware::{self, Next},
     response::{Html, IntoResponse, Response},
     routing::{get, post},
     Extension, Json, Router,
 };
-use axum_extra::{
-    extract::{cookie::Cookie, CookieJar},
-    headers::{self, HeaderMapExt},
-    TypedHeader,
-};
+use axum_extra::extract::{cookie::Cookie, CookieJar};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use baza::{baza2::BazaManager, entities::Id};
+use baza::baza2::BazaManager;
 use rs_utils::{
-    create_body_from_reader,
     crypto_key::CryptoKey,
     http_server::{add_no_cache_headers, ServerError},
     log::{self, tracing},
@@ -29,10 +24,12 @@ use rs_utils::{
 use crate::{definitions::get_standard_schema, dto::APIRequest, Arhiv};
 
 use self::api_handler::handle_api_request;
+use self::assets_handler::assets_handler;
 use self::public_assets_handler::public_assets_handler;
 use self::scaled_image_handler::scaled_image_handler;
 
 mod api_handler;
+mod assets_handler;
 mod public_assets_handler;
 mod scaled_image_handler;
 
@@ -43,7 +40,7 @@ pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<Arhiv>> {
         .route("/", get(index_page))
         .route("/api", post(api_handler))
         .route("/assets", post(create_asset_handler))
-        .route("/assets/{asset_id}", get(asset_handler))
+        .route("/assets/{asset_id}", get(assets_handler))
         .route("/assets/images/{asset_id}", get(scaled_image_handler))
         .route("/{*fileName}", get(public_assets_handler))
         .layer(DefaultBodyLimit::disable())
@@ -158,16 +155,6 @@ async fn create_asset_handler(
     Ok(asset_id)
 }
 
-async fn asset_handler(
-    arhiv: State<Arc<Arhiv>>,
-    Path(asset_id): Path<String>,
-    range: Option<TypedHeader<headers::Range>>,
-) -> impl IntoResponse {
-    let asset_id: Id = asset_id.into();
-
-    respond_with_blob(&arhiv.baza, &asset_id, &range.map(|val| val.0)).await
-}
-
 #[derive(Deserialize)]
 struct AuthTokenQuery {
     #[serde(rename = "AuthToken")]
@@ -240,84 +227,6 @@ async fn client_authenticator(
     );
 
     response
-}
-
-async fn respond_with_blob(
-    baza_manager: &BazaManager,
-    asset_id: &Id,
-    range: &Option<headers::Range>,
-) -> Result<Response, ServerError> {
-    let (asset, mut blob) = {
-        let baza = baza_manager.open()?;
-
-        let asset = baza.get_asset(asset_id)?;
-        let asset = if let Some(asset) = asset {
-            asset
-        } else {
-            return Ok(StatusCode::NOT_FOUND.into_response());
-        };
-
-        let blob = baza.get_asset_data(asset_id)?;
-
-        (asset, blob)
-    };
-
-    let size = asset.data.size;
-
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        http::header::CONTENT_DISPOSITION,
-        HeaderValue::from_str(&format!(
-            r#"attachment; filename="{}""#,
-            asset.data.filename
-        ))?,
-    );
-    headers.typed_insert(headers::ContentLength(size));
-    headers.typed_insert(headers::AcceptRanges::bytes());
-    headers.typed_insert(headers::ContentType::from_str(&asset.data.media_type)?);
-
-    let ranges = range
-        .as_ref()
-        .map(|range| range.satisfiable_ranges(size).collect::<Vec<_>>())
-        .unwrap_or_default();
-    if ranges.len() == 1 {
-        let (start_pos, end_pos) = ranges[0];
-
-        let start_pos = match start_pos {
-            Bound::Included(start_pos) => start_pos,
-            Bound::Excluded(start_pos) => start_pos + 1,
-            Bound::Unbounded => 0,
-        };
-
-        let end_pos = match end_pos {
-            Bound::Included(end_pos) => end_pos,
-            Bound::Excluded(end_pos) => end_pos - 1,
-            Bound::Unbounded => size - 1,
-        };
-
-        if start_pos >= size || end_pos >= size {
-            log::warn!(
-                "Asset {asset_id}: range {start_pos}-{end_pos} out of {size} not satisfiable"
-            );
-
-            return Ok(StatusCode::RANGE_NOT_SATISFIABLE.into_response());
-        }
-
-        blob.seek(std::io::SeekFrom::Start(start_pos))?;
-
-        let range_size = end_pos + 1 - start_pos;
-        let body = create_body_from_reader(blob, Some(range_size)).await?;
-
-        let content_range = headers::ContentRange::bytes(start_pos..end_pos, size)?;
-
-        headers.typed_insert(content_range);
-
-        Ok((StatusCode::PARTIAL_CONTENT, headers, body).into_response())
-    } else {
-        let body = create_body_from_reader(blob, None).await?;
-
-        Ok((StatusCode::OK, headers, body).into_response())
-    }
 }
 
 async fn no_cache_middleware(req: Request, next: Next) -> Response {

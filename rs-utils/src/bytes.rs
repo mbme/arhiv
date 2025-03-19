@@ -1,7 +1,7 @@
 use std::io::{self, Read, Seek, SeekFrom};
 
 use anyhow::{Context, Result};
-use data_encoding::{BASE64, BASE64URL, HEXUPPER};
+use data_encoding::{BASE64URL, HEXUPPER};
 use rand::{rngs::OsRng, RngCore, TryRngCore};
 
 pub fn generate_bytes(n: usize) -> Vec<u8> {
@@ -35,10 +35,10 @@ pub fn is_valid_base64(value: &str) -> bool {
     BASE64URL.decode(value.as_bytes()).is_ok()
 }
 
-pub fn decode_base64(data: &str) -> Result<Vec<u8>> {
-    BASE64
+pub fn decode_url_safe_base64(data: &str) -> Result<Vec<u8>> {
+    BASE64URL
         .decode(data.as_bytes())
-        .context("Failed to decode base64 string")
+        .context("Failed to decode url safe base64 string")
 }
 
 pub fn bytes_to_hex_string(bytes: &[u8]) -> String {
@@ -64,6 +64,14 @@ pub fn read_all(mut reader: impl Read) -> io::Result<Vec<u8>> {
     reader.read_to_end(&mut data)?;
 
     Ok(data)
+}
+
+pub fn concat_bytes(a: &[u8], b: &[u8]) -> Vec<u8> {
+    let mut combined = Vec::with_capacity(a.len() + b.len());
+    combined.extend_from_slice(a);
+    combined.extend_from_slice(b);
+
+    combined
 }
 
 pub struct ReaderWithTrailer<const SIZE: usize, R: Read> {

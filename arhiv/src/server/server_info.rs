@@ -24,7 +24,7 @@ impl ServerInfo {
         let health_url = Self::get_health_url(port);
 
         let ui_hmac = generate_ui_crypto_key(certificate.private_key_der.clone());
-        let auth_token = AuthToken::generate_with_length(&ui_hmac, 32).serialize();
+        let auth_token = AuthToken::generate(&ui_hmac).serialize();
 
         ServerInfo {
             ui_url_with_auth_token: format!("{ui_url}?AuthToken={auth_token}"),

@@ -38,7 +38,7 @@ pub async fn scaled_image_handler(
         }
     }
 
-    let data = arhiv.img_cache.get_image(&asset_id, &params).await?;
+    let data = arhiv.img_cache.get_image(&asset_id, params).await?;
 
     let mut headers = HeaderMap::new();
     headers.typed_insert(headers::ContentType::from_str("image/webp")?);

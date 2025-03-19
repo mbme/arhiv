@@ -35,5 +35,7 @@ include_dir = "0.7" # embed files into binary
 # read password from platform-specific secure stores
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
 
+rayon = "1.8" # thread pool for executing CPU-heavy tasks, e.g. scaling images
+
 [build-dependencies]
 rs-utils = { path = "../rs-utils" }

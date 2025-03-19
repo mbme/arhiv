@@ -33,20 +33,12 @@ fn scale_image(img: &DynamicImage, max_w: Option<u32>, max_h: Option<u32>) -> Re
     Ok(bytes)
 }
 
-pub async fn scale_image_async(
+pub fn scale_image_file(
     img_reader: impl BufRead + Seek,
     max_w: Option<u32>,
     max_h: Option<u32>,
 ) -> Result<Vec<u8>> {
-    let (send, recv) = tokio::sync::oneshot::channel();
-
     let img = open_image(img_reader)?;
 
-    rayon::spawn_fifo(move || {
-        let result = scale_image(&img, max_w, max_h);
-
-        let _ = send.send(result);
-    });
-
-    recv.await.expect("Panic in rayon::spawn")
+    scale_image(&img, max_w, max_h)
 }

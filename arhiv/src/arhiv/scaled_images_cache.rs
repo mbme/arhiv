@@ -1,4 +1,5 @@
 use std::{
+    cmp::min,
     collections::HashMap,
     fmt::{Debug, Display},
     fs,
@@ -7,17 +8,18 @@ use std::{
 };
 
 use anyhow::{ensure, Context, Result};
+use rayon::{ThreadPool, ThreadPoolBuilder};
 use serde::Deserialize;
 use tokio::{sync::RwLock, time::Instant};
 
 use baza::{baza2::BazaManager, entities::Id, schema::ASSET_TYPE};
 use rs_utils::{
     create_dir_if_not_exist, create_file_reader, create_file_writer, file_exists, format_bytes,
-    get_file_name, image::scale_image_async, list_files, log, now, read_all, Timestamp,
+    get_file_name, image::scale_image_file, list_files, log, now, num_cpus, read_all, Timestamp,
     MIN_TIMESTAMP,
 };
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct ImageParams {
     pub max_w: Option<u32>,
     pub max_h: Option<u32>,
@@ -60,14 +62,24 @@ pub struct ScaledImagesCache {
     root_dir: String,
     baza_manager: Arc<BazaManager>,
     usage_info: RwLock<HashMap<String, ImageInfo>>,
+    thread_pool: ThreadPool,
 }
 
 impl ScaledImagesCache {
     pub fn new(root_dir: String, baza_manager: Arc<BazaManager>) -> Self {
+        let num_cpus = num_cpus().ok().unwrap_or(1);
+        let num_threads = min(num_cpus, 3);
+
+        let thread_pool = ThreadPoolBuilder::new()
+            .num_threads(num_threads)
+            .build()
+            .expect("Failed to build thread pool for ScaledImagesCache");
+
         ScaledImagesCache {
             root_dir,
             baza_manager,
             usage_info: Default::default(),
+            thread_pool,
         }
     }
 
@@ -200,7 +212,7 @@ impl ScaledImagesCache {
         Ok(())
     }
 
-    async fn scale_image(&self, asset_id: &Id, params: &ImageParams) -> Result<Vec<u8>> {
+    async fn scale_image(&self, asset_id: &Id, params: ImageParams) -> Result<Vec<u8>> {
         log::info!("Scaling image {asset_id} to {params}");
 
         let buf_reader = {
@@ -210,17 +222,23 @@ impl ScaledImagesCache {
         };
 
         let start_time = Instant::now();
-        let body = scale_image_async(buf_reader, params.max_w, params.max_h)
-            .await
-            .context("Failed to scale image")?;
+
+        let (send, recv) = tokio::sync::oneshot::channel();
+        self.thread_pool.spawn_fifo(move || {
+            let result = scale_image_file(buf_reader, params.max_w, params.max_h);
+
+            send.send(result)
+                .expect("Failed to send back scaled image from the thread pool");
+        });
 
         let duration = start_time.elapsed();
         log::info!("Scaled image {asset_id} to {params} in {:?}", duration);
 
-        Ok(body)
+        recv.await
+            .context("Failed to receive result from the thread pool")?
     }
 
-    pub async fn get_image(&self, asset_id: &Id, params: &ImageParams) -> Result<Vec<u8>> {
+    pub async fn get_image(&self, asset_id: &Id, params: ImageParams) -> Result<Vec<u8>> {
         let cache_file_name = &format!("{asset_id}.{params}.webp.age");
         let cache_file_path = format!("{}/{cache_file_name}", self.root_dir);
 
@@ -232,7 +250,7 @@ impl ScaledImagesCache {
 
             read_all(decrypted_reader)?
         } else {
-            let data = self.scale_image(asset_id, params).await?;
+            let data = self.scale_image(asset_id, params.clone()).await?;
 
             let writer = create_file_writer(&cache_file_path, false)?;
             let mut encrypted_writer = self.baza_manager.encrypt(writer)?;

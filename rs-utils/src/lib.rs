@@ -167,3 +167,10 @@ pub async fn shutdown_signal() {
         },
     }
 }
+
+pub fn num_cpus() -> Result<usize> {
+    let num_cpus = std::thread::available_parallelism()
+        .context("Failed to determine the number of available CPUs")?;
+
+    Ok(num_cpus.get())
+}

@@ -21,7 +21,7 @@ static LOG_INITIALIZED: AtomicBool = AtomicBool::new(false);
 static RUNTIME: LazyLock<Mutex<Option<Runtime>>> = LazyLock::new(|| Mutex::new(None));
 static ARHIV_SERVER: LazyLock<Mutex<Option<ArhivServer>>> = LazyLock::new(|| Mutex::new(None));
 
-fn start_server(options: ArhivOptions) -> Result<ServerInfo> {
+fn start_server(options: ArhivOptions, port: u16) -> Result<ServerInfo> {
     let mut runtime_lock = RUNTIME
         .lock()
         .map_err(|err| anyhow!("Failed to lock RUNTIME: {err}"))?;
@@ -38,7 +38,7 @@ fn start_server(options: ArhivOptions) -> Result<ServerInfo> {
 
     let _guard = runtime.enter();
 
-    let server = runtime.block_on(ArhivServer::start(options, 0))?;
+    let server = runtime.block_on(ArhivServer::start(options, port))?;
 
     if cfg!(test) {
         server.arhiv.baza.create("test1234".into())?;
@@ -192,7 +192,7 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
         keyring: Arc::new(keyring),
     };
 
-    let server_info = start_server(options).expect("must start server");
+    let server_info = start_server(options, 23421).expect("must start server");
 
     // Create an instance of me.mbsoftware.arhiv.ServerInfo using JNI
     let server_info_class = env
@@ -271,7 +271,7 @@ mod tests {
             file_browser_root_dir: temp_dir.to_string(),
             keyring: Arc::new(NoopKeyring),
         };
-        start_server(options).expect("must start server");
+        start_server(options, 0).expect("must start server");
 
         thread::sleep(time::Duration::from_secs(1));
 

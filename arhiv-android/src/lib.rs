@@ -41,14 +41,11 @@ fn start_server(options: ArhivOptions, port: u16) -> Result<ServerInfo> {
     let runtime = builder.build().context("Failed to create tokio runtime")?;
 
     let server = runtime.block_on(ArhivServer::start(options, port))?;
+    let server_info = server.get_info().clone();
 
     if cfg!(test) {
         server.arhiv.baza.create("test1234".into())?;
     }
-    let server_info = server
-        .arhiv
-        .collect_server_info()?
-        .context("Failed to collect server info")?;
 
     *server_lock = Some(server);
     *runtime_lock = Some(runtime);

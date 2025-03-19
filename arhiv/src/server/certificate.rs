@@ -11,15 +11,17 @@ pub fn read_or_generate_certificate(root_dir: &str) -> Result<SelfSignedCertific
     let cert_path = format!("{root_dir}/arhiv-server.pem");
 
     if file_exists(&cert_path)? {
+        log::info!("Reading Arhiv certificate from {cert_path}");
+
         let data = fs::read_to_string(&cert_path).context("Failed to read certificate file")?;
         let data: SecretString = data.into();
 
         let certificate = SelfSignedCertificate::from_pem(&data)?;
 
-        log::info!("Read arhiv certificate from {cert_path}");
-
         Ok(certificate)
     } else {
+        log::info!("Generating Arhiv certificate into {cert_path}");
+
         let certificate = generate_certificate()?;
 
         let data = certificate.to_pem();
@@ -28,8 +30,6 @@ pub fn read_or_generate_certificate(root_dir: &str) -> Result<SelfSignedCertific
             .context(anyhow!("Failed to create certificate file {cert_path}"))?;
         file.write_all(data.expose_secret().as_bytes())?;
         file.sync_all()?;
-
-        log::info!("Wrote arhiv certificate into {cert_path}");
 
         Ok(certificate)
     }
@@ -42,9 +42,10 @@ fn generate_certificate() -> Result<SelfSignedCertificate> {
     SelfSignedCertificate::new_x509(&certificate_id)
 }
 
-pub fn generate_ui_crypto_key(certificate_private_key: SecretBytes) -> Result<CryptoKey> {
+pub fn generate_ui_crypto_key(certificate_private_key: SecretBytes) -> CryptoKey {
     CryptoKey::derive_subkey(
         certificate_private_key.expose_secret(),
-        CryptoKey::salt_from_data("arhiv-server auth token")?,
+        CryptoKey::salt_from_data("arhiv-server auth token").expect("Must generate salt from data"),
     )
+    .expect("Failed to generate ui crypto key")
 }

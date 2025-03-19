@@ -350,10 +350,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let server = ArhivServer::start(ArhivOptions::new_desktop(), port).await?;
 
             if DEV_MODE {
-                let server_info = server
-                    .arhiv
-                    .collect_server_info()?
-                    .context("Failed to collect server info")?;
+                let server_info = server.get_info();
                 log::info!("Dev server url: {}", server_info.ui_url_with_auth_token);
             }
 

@@ -35,6 +35,7 @@ pub struct ArhivServer {
     pub arhiv: Arc<Arhiv>,
     server: HttpServer,
     _lock: ArhivServerLock,
+    server_info: ServerInfo,
 }
 
 impl ArhivServer {
@@ -68,25 +69,28 @@ impl ArhivServer {
 
         let certificate = read_or_generate_certificate(&state_dir)?;
 
-        let ui_key = generate_ui_crypto_key(certificate.private_key_der.clone())?;
-        let ui_router = build_ui_router(ui_key).with_state(arhiv.clone());
+        let ui_hmac = generate_ui_crypto_key(certificate.private_key_der.clone());
+        let ui_router = build_ui_router(ui_hmac, arhiv.clone());
 
         let router = Router::new()
             .nest(UI_BASE_PATH, ui_router)
             .route(HEALTH_PATH, get(health_handler))
             .fallback(fallback_route);
 
-        let server = HttpServer::new_https(server_port, router, certificate).await?;
+        let server = HttpServer::new_https(server_port, router, certificate.clone()).await?;
 
         let actual_server_port = server.get_address().port();
         lock.write_server_port(actual_server_port)?;
 
         log::info!("Started server on port: {actual_server_port}");
 
+        let server_info = ServerInfo::new(actual_server_port, &certificate);
+
         Ok(ArhivServer {
             arhiv,
             server,
             _lock: lock,
+            server_info,
         })
     }
 
@@ -96,6 +100,10 @@ impl ArhivServer {
         self.arhiv.stop();
 
         Ok(())
+    }
+
+    pub fn get_info(&self) -> &ServerInfo {
+        &self.server_info
     }
 }
 

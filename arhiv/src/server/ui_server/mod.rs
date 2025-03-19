@@ -7,7 +7,7 @@ use axum::{
     middleware::{self, Next},
     response::{Html, IntoResponse, Response},
     routing::{get, post},
-    Extension, Json, Router,
+    Json, Router,
 };
 use axum_extra::extract::{cookie::Cookie, CookieJar};
 use serde::Deserialize;
@@ -38,7 +38,7 @@ mod scaled_image_handler;
 
 pub const UI_BASE_PATH: &str = "/ui";
 
-pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<Arhiv>> {
+pub fn build_ui_router(ui_hmac: CryptoKey, arhiv: Arc<Arhiv>) -> Router<()> {
     Router::new()
         .route("/", get(index_page))
         .route("/api", post(api_handler))
@@ -48,9 +48,12 @@ pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<Arhiv>> {
         .layer(middleware::from_fn(no_cache_middleware))
         .route("/{*fileName}", get(public_assets_handler))
         .layer(DefaultBodyLimit::disable())
-        .layer(middleware::from_fn(client_authenticator))
-        .layer(Extension(Arc::new(ui_key)))
+        .layer(middleware::from_fn_with_state(
+            Arc::new(ui_hmac),
+            client_authenticator,
+        ))
         .layer(middleware::from_fn(catch_panic_middleware))
+        .with_state(arhiv)
 }
 
 async fn index_page(arhiv: State<Arc<Arhiv>>) -> Result<impl IntoResponse, ServerError> {
@@ -157,7 +160,7 @@ struct AuthTokenQuery {
 async fn client_authenticator(
     jar: CookieJar,
     auth_token_query: Query<AuthTokenQuery>,
-    Extension(ui_key): Extension<Arc<CryptoKey>>,
+    State(ui_hmac): State<Arc<CryptoKey>>,
     request: Request,
     next: Next,
 ) -> Response {
@@ -196,7 +199,7 @@ async fn client_authenticator(
         return (StatusCode::UNAUTHORIZED, "AuthToken is missing").into_response();
     };
 
-    if let Err(err) = auth_token.assert_is_valid(&ui_key) {
+    if let Err(err) = auth_token.assert_is_valid(&ui_hmac) {
         log::warn!("Got unauthenticated client: {err}");
 
         return (StatusCode::UNAUTHORIZED, "Invalid AuthToken").into_response();

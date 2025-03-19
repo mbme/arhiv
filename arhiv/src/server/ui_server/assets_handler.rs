@@ -1,4 +1,4 @@
-use std::{io::Seek, ops::Bound, str::FromStr, sync::Arc};
+use std::{io::Seek, ops::Bound, str::FromStr};
 
 use axum::{
     extract::{Path, State},
@@ -17,18 +17,18 @@ use rs_utils::{
     log::{self, tracing},
 };
 
-use crate::Arhiv;
+use super::ServerContext;
 
-#[tracing::instrument(skip(arhiv), level = "debug")]
+#[tracing::instrument(skip(ctx), level = "debug")]
 pub async fn assets_handler(
-    arhiv: State<Arc<Arhiv>>,
+    ctx: State<ServerContext>,
     Path(asset_id): Path<String>,
     range: Option<TypedHeader<headers::Range>>,
 ) -> Result<Response, ServerError> {
     let asset_id: Id = asset_id.into();
 
     let (asset, mut blob) = {
-        let baza = arhiv.baza.open()?;
+        let baza = ctx.arhiv.baza.open()?;
 
         let asset = baza.get_asset(&asset_id)?;
         let asset = if let Some(asset) = asset {

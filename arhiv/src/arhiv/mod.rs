@@ -12,12 +12,9 @@ use crate::{definitions::get_standard_schema, ServerInfo, Status};
 
 use keyring::SystemKeyring;
 pub use keyring::{Keyring, NoopKeyring};
-pub use scaled_images_cache::ImageParams;
-use scaled_images_cache::ScaledImagesCache;
 
 mod import;
 mod keyring;
-mod scaled_images_cache;
 
 pub struct ArhivOptions {
     pub storage_dir: String,
@@ -73,7 +70,6 @@ impl ArhivOptions {
 
 pub struct Arhiv {
     pub baza: Arc<BazaManager>,
-    pub img_cache: ScaledImagesCache,
     pub keyring: Arc<dyn Keyring>,
 
     auto_commit_task: Option<AutoCommitTask>,
@@ -84,8 +80,6 @@ impl Arhiv {
     pub fn new(options: ArhivOptions) -> Self {
         let schema = get_standard_schema();
 
-        let img_cache_dir = format!("{}/img-cache", options.state_dir);
-
         let baza_manager = BazaManager::new(
             options.storage_dir,
             options.state_dir,
@@ -94,11 +88,8 @@ impl Arhiv {
         );
         let baza_manager = Arc::new(baza_manager);
 
-        let img_cache = ScaledImagesCache::new(img_cache_dir, baza_manager.clone());
-
         Arhiv {
             baza: baza_manager,
-            img_cache,
             keyring: options.keyring,
 
             auto_commit_task: None,

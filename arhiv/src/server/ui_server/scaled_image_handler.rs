@@ -1,4 +1,4 @@
-use std::{str::FromStr, sync::Arc};
+use std::str::FromStr;
 
 use axum::{
     extract::{Path, Query, State},
@@ -10,11 +10,11 @@ use axum_extra::headers::{self, HeaderMapExt};
 use baza::entities::Id;
 use rs_utils::{http_server::ServerError, log::tracing};
 
-use crate::{arhiv::ImageParams, Arhiv};
+use super::{scaled_images_cache::ImageParams, ServerContext};
 
-#[tracing::instrument(skip(arhiv), level = "debug")]
+#[tracing::instrument(skip(ctx), level = "debug")]
 pub async fn scaled_image_handler(
-    arhiv: State<Arc<Arhiv>>,
+    ctx: State<ServerContext>,
     Path(asset_id): Path<String>,
     Query(params): Query<ImageParams>,
 ) -> Result<impl IntoResponse, ServerError> {
@@ -25,7 +25,7 @@ pub async fn scaled_image_handler(
     }
 
     {
-        let baza = arhiv.baza.open()?;
+        let baza = ctx.arhiv.baza.open()?;
 
         let asset = if let Some(asset) = baza.get_asset(&asset_id)? {
             asset
@@ -38,7 +38,7 @@ pub async fn scaled_image_handler(
         }
     }
 
-    let data = arhiv.img_cache.get_image(&asset_id, params).await?;
+    let data = ctx.img_cache.get_image(&asset_id, params).await?;
 
     let mut headers = HeaderMap::new();
     headers.typed_insert(headers::ContentType::from_str("image/webp")?);

@@ -14,15 +14,16 @@ use rs_utils::{
     remove_file_if_exists,
 };
 
-use crate::{
-    dto::{
-        APIRequest, APIResponse, DirEntry, DocumentBackref, GetDocumentsResult,
-        ListDocumentsResult, SaveDocumentErrors,
-    },
-    Arhiv,
+use crate::dto::{
+    APIRequest, APIResponse, DirEntry, DocumentBackref, GetDocumentsResult, ListDocumentsResult,
+    SaveDocumentErrors,
 };
 
-pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<APIResponse> {
+use super::ServerContext;
+
+pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Result<APIResponse> {
+    let arhiv = &ctx.arhiv;
+
     let response = match request {
         APIRequest::ListDocuments {
             document_types,
@@ -241,7 +242,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             let mut baza = arhiv.baza.open_mut()?;
 
             baza.commit()?;
-            arhiv.img_cache.remove_stale_files()?;
+            ctx.img_cache.remove_stale_files()?;
 
             APIResponse::Commit {}
         }
@@ -303,7 +304,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             arhiv.baza.create(password.clone())?;
             arhiv.keyring.set_password(Some(password))?;
-            arhiv.img_cache.init().await?;
+            ctx.img_cache.init().await?;
 
             APIResponse::CreateArhiv {}
         }
@@ -312,7 +313,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             arhiv.baza.lock()?;
             arhiv.keyring.set_password(None)?;
-            arhiv.img_cache.clear().await;
+            ctx.img_cache.clear().await;
 
             APIResponse::LockArhiv {}
         }
@@ -321,7 +322,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             arhiv.baza.unlock(password.clone())?;
             arhiv.keyring.set_password(Some(password))?;
-            arhiv.img_cache.init().await?;
+            ctx.img_cache.init().await?;
 
             APIResponse::UnlockArhiv {}
         }

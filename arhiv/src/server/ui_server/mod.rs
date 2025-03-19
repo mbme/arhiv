@@ -12,6 +12,7 @@ use axum::{
 use axum_extra::extract::{cookie::Cookie, CookieJar};
 use serde::Deserialize;
 use serde_json::Value;
+use tokio::sync::OnceCell;
 
 use baza::baza2::BazaManager;
 use rs_utils::{
@@ -30,6 +31,7 @@ use self::api_handler::handle_api_request;
 use self::assets_handler::assets_handler;
 use self::public_assets_handler::public_assets_handler;
 use self::scaled_image_handler::scaled_image_handler;
+use self::scaled_images_cache::ScaledImagesCache;
 
 use super::certificate::generate_ui_crypto_key;
 
@@ -37,13 +39,30 @@ mod api_handler;
 mod assets_handler;
 mod public_assets_handler;
 mod scaled_image_handler;
+mod scaled_images_cache;
 
 pub const UI_BASE_PATH: &str = "/ui";
 
 pub const HEALTH_PATH: &str = "/health";
 
+#[derive(Clone)]
+pub struct ServerContext {
+    pub arhiv: Arc<Arhiv>,
+    pub img_cache: Arc<ScaledImagesCache>,
+    init: Arc<OnceCell<()>>,
+}
+
 pub fn build_ui_router(certificate: &SelfSignedCertificate, arhiv: Arc<Arhiv>) -> Router<()> {
     let ui_hmac = generate_ui_crypto_key(certificate.private_key_der.clone());
+
+    let img_cache_dir = format!("{}/img-cache", arhiv.baza.get_state_dir());
+    let img_cache = ScaledImagesCache::new(img_cache_dir, arhiv.baza.clone());
+
+    let ctx = ServerContext {
+        arhiv,
+        img_cache: Arc::new(img_cache),
+        init: Arc::new(OnceCell::const_new()),
+    };
 
     let ui_router = Router::new()
         .route("/", get(index_page))
@@ -55,11 +74,15 @@ pub fn build_ui_router(certificate: &SelfSignedCertificate, arhiv: Arc<Arhiv>) -
         .route("/{*fileName}", get(public_assets_handler))
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn_with_state(
+            ctx.clone(),
+            init_server_context_middleware,
+        ))
+        .layer(middleware::from_fn_with_state(
             Arc::new(ui_hmac),
             client_authenticator,
         ))
         .layer(middleware::from_fn(catch_panic_middleware))
-        .with_state(arhiv);
+        .with_state(ctx);
 
     Router::new()
         .nest(UI_BASE_PATH, ui_router)
@@ -67,7 +90,10 @@ pub fn build_ui_router(certificate: &SelfSignedCertificate, arhiv: Arc<Arhiv>) -
         .fallback(fallback_route)
 }
 
-async fn index_page(arhiv: State<Arc<Arhiv>>) -> Result<impl IntoResponse, ServerError> {
+#[tracing::instrument(skip(ctx), level = "debug")]
+async fn index_page(ctx: State<ServerContext>) -> Result<impl IntoResponse, ServerError> {
+    let arhiv = &ctx.arhiv;
+
     let config = serde_json::to_string_pretty(&ArhivUIConfig {
         storage_dir: arhiv.baza.get_storage_dir(),
         base_path: UI_BASE_PATH,
@@ -107,9 +133,9 @@ async fn index_page(arhiv: State<Arc<Arhiv>>) -> Result<impl IntoResponse, Serve
     Ok(Html(content))
 }
 
-#[tracing::instrument(skip(arhiv, request_value), level = "debug")]
+#[tracing::instrument(skip(ctx, request_value), level = "debug")]
 async fn api_handler(
-    arhiv: State<Arc<Arhiv>>,
+    ctx: State<ServerContext>,
     Json(request_value): Json<Value>,
 ) -> Result<impl IntoResponse, ServerError> {
     log::info!(
@@ -121,14 +147,14 @@ async fn api_handler(
 
     let request: APIRequest =
         serde_json::from_value(request_value).context("failed to parse APIRequest")?;
-    let response = handle_api_request(&arhiv, request).await?;
+    let response = handle_api_request(&ctx, request).await?;
 
     Ok(Json(response))
 }
 
-#[tracing::instrument(skip(arhiv, request), level = "debug")]
+#[tracing::instrument(skip(ctx, request), level = "debug")]
 async fn create_asset_handler(
-    arhiv: State<Arc<Arhiv>>,
+    ctx: State<ServerContext>,
     request: Request,
 ) -> Result<impl IntoResponse, ServerError> {
     let file_name = request
@@ -138,6 +164,8 @@ async fn create_asset_handler(
         .to_str()
         .context("Failed to read X-File-Name header as a string")?
         .to_string();
+
+    let arhiv = &ctx.arhiv;
 
     let temp_file = TempFile::new_in_dir(arhiv.baza.get_downloads_dir(), "arhiv-asset");
     let stream = request.into_body().into_data_stream();
@@ -264,6 +292,39 @@ async fn catch_panic_middleware(req: Request, next: Next) -> Response {
             (StatusCode::INTERNAL_SERVER_ERROR, format!("Panic: {err}")).into_response()
         }
     }
+}
+
+async fn init_server_context_middleware(
+    ctx: State<ServerContext>,
+    req: Request,
+    next: Next,
+) -> Response {
+    let arhiv = &ctx.arhiv;
+
+    // init server context on first request
+    ctx.init
+        .get_or_try_init(|| async {
+            log::info!("Initializing UI server context");
+
+            if arhiv.baza.storage_exists()? {
+                match arhiv.unlock_using_keyring() {
+                    Ok(_) => {}
+                    Err(err) => {
+                        log::error!("Failed to use keyring: {err}");
+                    }
+                }
+            }
+
+            if arhiv.baza.is_unlocked() {
+                ctx.img_cache.init().await?;
+            }
+
+            Ok::<(), anyhow::Error>(())
+        })
+        .await
+        .expect("Failed to initialize UI server context");
+
+    next.run(req).await
 }
 
 async fn health_handler() -> impl IntoResponse {

@@ -11,7 +11,7 @@ pub use tracing;
 pub use tracing::{debug, error, info, trace, warn, Level};
 
 const DEFAULT_LOG_LEVELS: &str =
-    "hyper=info,h2=info,rustls=info,axum::rejection=trace,i18n_embed=warn";
+    "hyper=info,h2=info,rustls=info,axum::rejection=trace,i18n_embed=warn,keyring=info";
 
 #[cfg(target_os = "android")]
 pub fn setup_android_logger(package: &str) {

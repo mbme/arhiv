@@ -2,15 +2,13 @@
 
 home := env("HOME")
 root := home + "/temp/arhiv"
-debug_log_level := "debug,h2=info,rustls=info,i18n_embed=warn,rs_utils=info,hyper=info,axum::rejection=trace"
+debug_log_level := "debug,h2=info,rustls=info,i18n_embed=warn,rs_utils=info,hyper=info,axum::rejection=trace,keyring=info"
 
 alias c := check
 
 arhiv *PARAMS:
+  npm run build --workspace arhiv
   DEV_ARHIV_ROOT="{{root}}" cargo run --bin arhiv {{PARAMS}}
-
-arhiv-server:
-  just arhiv server
 
 run:
   cd arhiv; npm run clean; tmux new-session -s arhiv \

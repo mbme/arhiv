@@ -1,10 +1,11 @@
-use std::sync::Arc;
+use std::{cmp::min, sync::Arc};
 
 use anyhow::Result;
 
 use baza::{baza2::BazaManager, AutoCommitService, AutoCommitTask, DEV_MODE};
 use rs_utils::{
     get_linux_data_home, get_linux_downloads_dir, get_linux_home_dir, into_absolute_path, log,
+    num_cpus,
 };
 
 use crate::{definitions::get_standard_schema, ServerInfo, Status};
@@ -156,5 +157,11 @@ impl Arhiv {
         std::thread::sleep(std::time::Duration::from_millis(100));
 
         log::info!("Stopped Arhiv");
+    }
+
+    pub fn optimal_number_of_worker_threads() -> usize {
+        let num_cpus = num_cpus().ok().unwrap_or(1);
+
+        min(num_cpus, 3)
     }
 }

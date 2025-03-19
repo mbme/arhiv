@@ -120,8 +120,7 @@ enum CLICommand {
     },
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     let args = CLIArgs::parse();
 
     match args.verbose {
@@ -132,7 +131,17 @@ async fn main() {
     };
     setup_panic_hook();
 
-    handle_command(args.command).await.expect("command failed");
+    let worker_threads_count = Arhiv::optimal_number_of_worker_threads();
+    log::debug!("Using {worker_threads_count} worker threads");
+
+    let mut builder = tokio::runtime::Builder::new_multi_thread();
+    builder.worker_threads(worker_threads_count);
+    builder.enable_all();
+    let runtime = builder.build().expect("Failed to create tokio runtime");
+
+    runtime
+        .block_on(handle_command(args.command))
+        .expect("Failed to handle command");
 }
 
 fn unlock_arhiv(arhiv: &Arhiv) {

@@ -13,7 +13,7 @@ use jni::{
 };
 use tokio::runtime::Runtime;
 
-use arhiv::{ArhivOptions, ArhivServer, Keyring, ServerInfo};
+use arhiv::{Arhiv, ArhivOptions, ArhivServer, Keyring, ServerInfo};
 use rs_utils::{log, ExposeSecret, SecretString};
 
 static LOG_INITIALIZED: AtomicBool = AtomicBool::new(false);
@@ -32,11 +32,13 @@ fn start_server(options: ArhivOptions, port: u16) -> Result<ServerInfo> {
         .map_err(|err| anyhow!("Failed to lock ARHIV_SERVER: {err}"))?;
     ensure!(server_lock.is_none(), "Server already started");
 
-    let mut builder = tokio::runtime::Builder::new_multi_thread();
-    builder.enable_all();
-    let runtime = builder.build().context("failed to create tokio runtime")?;
+    let worker_threads_count = Arhiv::optimal_number_of_worker_threads();
+    log::debug!("Using {worker_threads_count} worker threads");
 
-    let _guard = runtime.enter();
+    let mut builder = tokio::runtime::Builder::new_multi_thread();
+    builder.worker_threads(worker_threads_count);
+    builder.enable_all();
+    let runtime = builder.build().context("Failed to create tokio runtime")?;
 
     let server = runtime.block_on(ArhivServer::start(options, port))?;
 

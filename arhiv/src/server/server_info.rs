@@ -6,8 +6,7 @@ use rs_utils::{AuthToken, SelfSignedCertificate};
 
 use super::certificate::{generate_ui_crypto_key, read_or_generate_certificate};
 use super::server_lock::ArhivServerLock;
-use super::ui_server::UI_BASE_PATH;
-use super::HEALTH_PATH;
+use super::ui_server::{HEALTH_PATH, UI_BASE_PATH};
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]

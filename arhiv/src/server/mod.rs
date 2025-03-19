@@ -1,24 +1,12 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use axum::{
-    http::{HeaderMap, StatusCode},
-    response::IntoResponse,
-    routing::get,
-    Router,
-};
-use certificate::generate_ui_crypto_key;
 
-use rs_utils::{
-    create_dir_if_not_exist,
-    http_server::{add_no_cache_headers, fallback_route, HttpServer},
-    log,
-};
+use rs_utils::{create_dir_if_not_exist, http_server::HttpServer, log};
 
 use self::{
-    certificate::read_or_generate_certificate,
-    server_lock::ArhivServerLock,
-    ui_server::{build_ui_router, UI_BASE_PATH},
+    certificate::read_or_generate_certificate, server_lock::ArhivServerLock,
+    ui_server::build_ui_router,
 };
 use crate::{Arhiv, ArhivOptions};
 
@@ -28,8 +16,6 @@ mod certificate;
 mod server_info;
 mod server_lock;
 mod ui_server;
-
-pub const HEALTH_PATH: &str = "/health";
 
 pub struct ArhivServer {
     pub arhiv: Arc<Arhiv>,
@@ -69,13 +55,7 @@ impl ArhivServer {
 
         let certificate = read_or_generate_certificate(&state_dir)?;
 
-        let ui_hmac = generate_ui_crypto_key(certificate.private_key_der.clone());
-        let ui_router = build_ui_router(ui_hmac, arhiv.clone());
-
-        let router = Router::new()
-            .nest(UI_BASE_PATH, ui_router)
-            .route(HEALTH_PATH, get(health_handler))
-            .fallback(fallback_route);
+        let router = build_ui_router(&certificate, arhiv.clone());
 
         let server = HttpServer::new_https(server_port, router, certificate.clone()).await?;
 
@@ -105,11 +85,4 @@ impl ArhivServer {
     pub fn get_info(&self) -> &ServerInfo {
         &self.server_info
     }
-}
-
-async fn health_handler() -> impl IntoResponse {
-    let mut headers = HeaderMap::new();
-    add_no_cache_headers(&mut headers);
-
-    (StatusCode::OK, headers)
 }

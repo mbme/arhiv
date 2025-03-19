@@ -3,7 +3,7 @@ use std::{panic::AssertUnwindSafe, sync::Arc};
 use anyhow::Context;
 use axum::{
     extract::{DefaultBodyLimit, Query, Request, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     middleware::{self, Next},
     response::{Html, IntoResponse, Response},
     routing::{get, post},
@@ -16,9 +16,9 @@ use serde_json::Value;
 use baza::baza2::BazaManager;
 use rs_utils::{
     crypto_key::CryptoKey,
-    http_server::{add_no_cache_headers, ServerError},
+    http_server::{add_no_cache_headers, fallback_route, ServerError},
     log::{self, tracing},
-    stream_to_file, AuthToken, TempFile,
+    stream_to_file, AuthToken, SelfSignedCertificate, TempFile,
 };
 
 use crate::{
@@ -31,6 +31,8 @@ use self::assets_handler::assets_handler;
 use self::public_assets_handler::public_assets_handler;
 use self::scaled_image_handler::scaled_image_handler;
 
+use super::certificate::generate_ui_crypto_key;
+
 mod api_handler;
 mod assets_handler;
 mod public_assets_handler;
@@ -38,8 +40,12 @@ mod scaled_image_handler;
 
 pub const UI_BASE_PATH: &str = "/ui";
 
-pub fn build_ui_router(ui_hmac: CryptoKey, arhiv: Arc<Arhiv>) -> Router<()> {
-    Router::new()
+pub const HEALTH_PATH: &str = "/health";
+
+pub fn build_ui_router(certificate: &SelfSignedCertificate, arhiv: Arc<Arhiv>) -> Router<()> {
+    let ui_hmac = generate_ui_crypto_key(certificate.private_key_der.clone());
+
+    let ui_router = Router::new()
         .route("/", get(index_page))
         .route("/api", post(api_handler))
         .route("/assets", post(create_asset_handler))
@@ -53,7 +59,12 @@ pub fn build_ui_router(ui_hmac: CryptoKey, arhiv: Arc<Arhiv>) -> Router<()> {
             client_authenticator,
         ))
         .layer(middleware::from_fn(catch_panic_middleware))
-        .with_state(arhiv)
+        .with_state(arhiv);
+
+    Router::new()
+        .nest(UI_BASE_PATH, ui_router)
+        .route(HEALTH_PATH, get(health_handler))
+        .fallback(fallback_route)
 }
 
 async fn index_page(arhiv: State<Arc<Arhiv>>) -> Result<impl IntoResponse, ServerError> {
@@ -253,4 +264,11 @@ async fn catch_panic_middleware(req: Request, next: Next) -> Response {
             (StatusCode::INTERNAL_SERVER_ERROR, format!("Panic: {err}")).into_response()
         }
     }
+}
+
+async fn health_handler() -> impl IntoResponse {
+    let mut headers = HeaderMap::new();
+    add_no_cache_headers(&mut headers);
+
+    (StatusCode::OK, headers)
 }

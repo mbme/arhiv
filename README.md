@@ -1,3 +1,21 @@
+# Privacy and Security
+* All the data is encrypted with Age encryption.
+* An x25519 Age key for storage file & state file is stored in key.age in storage dir. It is encrypted with password-based Age key.
+* Data files have their own Age x25519 keys stored in storage & state.
+* Web UI server generates self-signed **HTTPS certificate** and saves it in the state dir **in plain text**.
+* Desktop & Android apps verify the server HTTPS certificate.
+* Web UI server generates random **token** on startup and saves it into lock file in the state dir **in plain text**.
+* Desktop & Android apps
+  * read HTTPS certificate and token
+  * construct SHA256 HMAC using HTTPS certificate as a key
+  * sign token using HMAC to get an **auth token**
+  * send the auth token in a cookie to the Web UI server
+  * Web UI server denies requests without the auth token.
+* In Desktop & CLI apps user can save password to System keyring.
+* In Android app user can save password to the System KeyStore.
+* Desktop & Android apps **unlock server** using password they got from user or keyring. **The Web UI server stays unlocked** until the app is closed or manually locked.
+* **Anyone with read access to certificate file & server lock file can create an auth token and connect to potentially unlocked Web UI server!**
+
 # Installation
 
 ## Using Cargo
@@ -44,7 +62,7 @@ Cross-platform CLI app. Uses system keyring to store password.
 Cross-platform desktop app that uses `Electron` to display Web UI. Uses system keyring to store password.
 
 # Android app
-Java Webview app that displays Web UI. Uses biometric authentication or device authentication to safely store password.
+Java Webview app that displays Web UI. Uses biometric authentication or device authentication to safely store password in KeyStore.
 Needs `MANAGE_EXTERNAL_STORAGE` permission to read/write files in user directory (next to Music, Downloads etc.).
 
 ## Prerequisites

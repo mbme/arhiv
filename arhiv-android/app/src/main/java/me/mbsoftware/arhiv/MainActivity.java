@@ -2,7 +2,6 @@ package me.mbsoftware.arhiv;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.net.http.SslCertificate;
@@ -136,7 +135,6 @@ public class MainActivity extends AppCompatActivity {
 
   }
 
-  @SuppressLint("SetJavaScriptEnabled")
   private void initApp(String password) {
     Log.i(TAG, "Starting Arhiv server");
 
@@ -147,18 +145,32 @@ public class MainActivity extends AppCompatActivity {
       new AndroidController(this)
     );
 
+    if (webView == null) {
+      Log.i(TAG, "Initializing WebView");
+
+      initWebView(serverInfo);
+      updateWebViewAuthToken(serverInfo);
+      updateWebViewDarkMode(getResources().getConfiguration());
+
+      // loading url in the WebView.
+      webView.loadUrl(serverInfo.uiUrl);
+    } else {
+      Log.i(TAG, "Reusing existing WebView");
+
+      updateWebViewAuthToken(serverInfo);
+      updateWebViewDarkMode(getResources().getConfiguration());
+    }
+  }
+
+  @SuppressLint("SetJavaScriptEnabled")
+  private void initWebView(ServerInfo serverInfo) {
     webView = findViewById(R.id.web);
     webView.getSettings().setJavaScriptEnabled(true);
     webView.getSettings().setDomStorageEnabled(true);
     webView.getSettings().setAllowFileAccess(false);
-    updateWebViewDarkMode(getResources().getConfiguration());
 
     SwipeRefreshLayout swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
     swipeRefreshLayout.setOnRefreshListener(webView::reload);
-
-    CookieManager cookieManager = CookieManager.getInstance();
-    cookieManager.setAcceptCookie(true);
-    cookieManager.setCookie(serverInfo.uiUrl, "AuthToken=" + serverInfo.authToken + "; Secure; HttpOnly");
 
     webView.setWebViewClient(new WebViewClient() {
       @SuppressLint("WebViewClientOnReceivedSslError")
@@ -212,7 +224,7 @@ public class MainActivity extends AppCompatActivity {
     webView.setWebChromeClient(new WebChromeClient() {
       @Override
       public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback,
-                                       WebChromeClient.FileChooserParams fileChooserParams) {
+                                       FileChooserParams fileChooserParams) {
         Log.d(TAG, "Starting File Picker activity");
 
         MainActivity.this.filePathCallback = filePathCallback;
@@ -229,14 +241,14 @@ public class MainActivity extends AppCompatActivity {
         return true;
       }
     });
+  }
 
-    // loading url in the WebView.
-    webView.loadUrl(serverInfo.uiUrl);
+  private void updateWebViewAuthToken(ServerInfo serverInfo) {
+    Log.i(TAG, "Updating WebView AuthToken cookie");
 
-    // enable WebView debugging if app is debuggable
-    if ((getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
-      WebView.setWebContentsDebuggingEnabled(true);
-    }
+    CookieManager cookieManager = CookieManager.getInstance();
+    cookieManager.setAcceptCookie(true);
+    cookieManager.setCookie(serverInfo.uiUrl, "AuthToken=" + serverInfo.authToken + "; Secure; HttpOnly");
   }
 
   private void updateWebViewDarkMode(@NonNull Configuration config) {

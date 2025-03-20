@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.SslErrorHandler;
 import android.webkit.ValueCallback;
@@ -39,6 +40,11 @@ public class MainActivity extends AppCompatActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    // Mark window as secure to avoid screenshots & avoid previews when pressing Overview button
+    getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
+      WindowManager.LayoutParams.FLAG_SECURE);
+
     setContentView(R.layout.activity_main);
 
     // Set up ActivityResultLauncher to handle file picker results

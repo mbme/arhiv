@@ -31,6 +31,15 @@ pub fn read_or_generate_certificate(root_dir: &str) -> Result<SelfSignedCertific
         file.write_all(data.expose_secret().as_bytes())?;
         file.sync_all()?;
 
+        if cfg!(unix) {
+            use std::os::unix::fs::PermissionsExt;
+
+            // Set permissions to 600 (only owner can read/write)
+            let mut perms = file.metadata()?.permissions();
+            perms.set_mode(0o600);
+            std::fs::set_permissions(&cert_path, perms)?;
+        }
+
         Ok(certificate)
     }
 }

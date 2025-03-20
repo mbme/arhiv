@@ -6,7 +6,7 @@ pkgver="0.0.0"
 pkgdesc='Personal computing environment'
 arch=(x86_64)
 license=(MIT)
-depends=(sqlite zstd)
+depends=(dbus)
 optdepends=(
     'electron34: to run Arhiv desktop app'
 )

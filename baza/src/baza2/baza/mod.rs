@@ -163,6 +163,10 @@ impl Baza {
         &self.paths.storage_dir
     }
 
+    pub fn get_state_dir(&self) -> &str {
+        &self.paths.state_dir
+    }
+
     pub fn find_last_modification_time(&self) -> Option<Timestamp> {
         self.state.find_last_modification_time()
     }

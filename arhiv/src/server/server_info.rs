@@ -35,21 +35,21 @@ impl ServerInfo {
         }
     }
 
-    pub fn collect(root_dir: &str) -> Result<Option<Self>> {
-        let (port, token) = if let Some((port, token)) = Self::get_server_info(root_dir)? {
+    pub fn collect(state_dir: &str) -> Result<Option<Self>> {
+        let (port, token) = if let Some((port, token)) = Self::get_server_info(state_dir)? {
             (port, token)
         } else {
             return Ok(None);
         };
 
-        let certificate = read_or_generate_certificate(root_dir)?;
+        let certificate = read_or_generate_certificate(state_dir)?;
         let info = ServerInfo::new(port, &certificate, token);
 
         Ok(Some(info))
     }
 
-    pub fn get_server_info(root_dir: &str) -> Result<Option<(u16, Token)>> {
-        let mut lock = ArhivServerLock::new(root_dir);
+    pub fn get_server_info(state_dir: &str) -> Result<Option<(u16, Token)>> {
+        let mut lock = ArhivServerLock::new(state_dir);
 
         // server isn't running
         if lock.acquire().is_ok() {

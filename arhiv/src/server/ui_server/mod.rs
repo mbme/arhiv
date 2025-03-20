@@ -16,10 +16,9 @@ use tokio::sync::OnceCell;
 
 use baza::baza2::BazaManager;
 use rs_utils::{
-    crypto_key::CryptoKey,
     http_server::{add_no_cache_headers, fallback_route, ServerError},
     log::{self, tracing},
-    stream_to_file, AuthToken, SelfSignedCertificate, TempFile,
+    stream_to_file, AuthToken, TempFile,
 };
 
 use crate::{
@@ -32,8 +31,6 @@ use self::assets_handler::assets_handler;
 use self::public_assets_handler::public_assets_handler;
 use self::scaled_image_handler::scaled_image_handler;
 use self::scaled_images_cache::ScaledImagesCache;
-
-use super::certificate::generate_ui_crypto_key;
 
 mod api_handler;
 mod assets_handler;
@@ -52,9 +49,7 @@ pub struct ServerContext {
     init: Arc<OnceCell<()>>,
 }
 
-pub fn build_ui_router(certificate: &SelfSignedCertificate, arhiv: Arc<Arhiv>) -> Router<()> {
-    let ui_hmac = generate_ui_crypto_key(certificate.private_key_der.clone());
-
+pub fn build_ui_router(auth_token: AuthToken, arhiv: Arc<Arhiv>) -> Router<()> {
     let img_cache_dir = format!("{}/img-cache", arhiv.baza.get_state_dir());
     let img_cache = ScaledImagesCache::new(img_cache_dir, arhiv.baza.clone());
 
@@ -78,7 +73,7 @@ pub fn build_ui_router(certificate: &SelfSignedCertificate, arhiv: Arc<Arhiv>) -
             init_server_context_middleware,
         ))
         .layer(middleware::from_fn_with_state(
-            Arc::new(ui_hmac),
+            Arc::new(auth_token),
             client_authenticator,
         ))
         .layer(middleware::from_fn(catch_panic_middleware))
@@ -199,7 +194,7 @@ struct AuthTokenQuery {
 async fn client_authenticator(
     jar: CookieJar,
     auth_token_query: Query<AuthTokenQuery>,
-    State(ui_hmac): State<Arc<CryptoKey>>,
+    State(server_auth_token): State<Arc<AuthToken>>,
     request: Request,
     next: Next,
 ) -> Response {
@@ -238,8 +233,8 @@ async fn client_authenticator(
         return (StatusCode::UNAUTHORIZED, "AuthToken is missing").into_response();
     };
 
-    if let Err(err) = auth_token.assert_is_valid(&ui_hmac) {
-        log::warn!("Got unauthenticated client: {err}");
+    if auth_token != *server_auth_token {
+        log::warn!("Got client with an invalid auth token");
 
         return (StatusCode::UNAUTHORIZED, "Invalid AuthToken").into_response();
     }

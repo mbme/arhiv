@@ -2,7 +2,8 @@ use std::sync::Arc;
 
 use anyhow::Result;
 
-use rs_utils::{create_dir_if_not_exist, http_server::HttpServer, log};
+use certificate::generate_ui_crypto_key;
+use rs_utils::{create_dir_if_not_exist, http_server::HttpServer, log, AuthToken};
 
 use self::{
     certificate::read_or_generate_certificate, server_lock::ArhivServerLock,
@@ -31,9 +32,11 @@ impl ArhivServer {
 
         create_dir_if_not_exist(&state_dir)?;
 
+        let token = AuthToken::new_token();
+
         let mut lock = ArhivServerLock::new(&state_dir);
         lock.acquire()?;
-        lock.write_server_port(server_port)?;
+        lock.write_server_info(server_port, &token)?;
 
         let mut arhiv = Arhiv::new(options);
         arhiv.init_auto_commit_service();
@@ -42,16 +45,18 @@ impl ArhivServer {
 
         let certificate = read_or_generate_certificate(&state_dir)?;
 
-        let router = build_ui_router(&certificate, arhiv.clone());
+        let ui_hmac = generate_ui_crypto_key(certificate.private_key_der.clone());
+        let auth_token = AuthToken::generate(&ui_hmac, token);
+        let router = build_ui_router(auth_token, arhiv.clone());
 
         let server = HttpServer::new_https(server_port, router, certificate.clone()).await?;
 
         let actual_server_port = server.get_address().port();
-        lock.write_server_port(actual_server_port)?;
+        lock.write_server_info(actual_server_port, &token)?;
 
         log::info!("Started server on port: {actual_server_port}");
 
-        let server_info = ServerInfo::new(actual_server_port, &certificate);
+        let server_info = ServerInfo::new(actual_server_port, &certificate, token);
 
         Ok(ArhivServer {
             arhiv,

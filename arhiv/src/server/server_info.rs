@@ -2,7 +2,7 @@ use anyhow::Result;
 use serde::Serialize;
 
 use baza::entities::Id;
-use rs_utils::{AuthToken, SelfSignedCertificate};
+use rs_utils::{AuthToken, SelfSignedCertificate, Token};
 
 use super::certificate::{generate_ui_crypto_key, read_or_generate_certificate};
 use super::server_lock::ArhivServerLock;
@@ -19,12 +19,12 @@ pub struct ServerInfo {
 }
 
 impl ServerInfo {
-    pub fn new(port: u16, certificate: &SelfSignedCertificate) -> Self {
+    pub fn new(port: u16, certificate: &SelfSignedCertificate, token: Token) -> Self {
         let ui_url = Self::get_ui_base_url(port);
         let health_url = Self::get_health_url(port);
 
         let ui_hmac = generate_ui_crypto_key(certificate.private_key_der.clone());
-        let auth_token = AuthToken::generate(&ui_hmac).serialize();
+        let auth_token = AuthToken::generate(&ui_hmac, token).serialize();
 
         ServerInfo {
             ui_url_with_auth_token: format!("{ui_url}?AuthToken={auth_token}"),
@@ -36,19 +36,19 @@ impl ServerInfo {
     }
 
     pub fn collect(root_dir: &str) -> Result<Option<Self>> {
-        let port = if let Some(port) = Self::get_server_port(root_dir)? {
-            port
+        let (port, token) = if let Some((port, token)) = Self::get_server_info(root_dir)? {
+            (port, token)
         } else {
             return Ok(None);
         };
 
         let certificate = read_or_generate_certificate(root_dir)?;
-        let info = ServerInfo::new(port, &certificate);
+        let info = ServerInfo::new(port, &certificate, token);
 
         Ok(Some(info))
     }
 
-    pub fn get_server_port(root_dir: &str) -> Result<Option<u16>> {
+    pub fn get_server_info(root_dir: &str) -> Result<Option<(u16, Token)>> {
         let mut lock = ArhivServerLock::new(root_dir);
 
         // server isn't running
@@ -56,13 +56,13 @@ impl ServerInfo {
             return Ok(None);
         }
 
-        let port = lock.read_server_port()?;
+        let (port, token) = lock.read_server_info()?;
 
         if port == 0 {
             return Ok(None);
         }
 
-        Ok(Some(port))
+        Ok(Some((port, token)))
     }
 
     fn get_ui_base_url(port: u16) -> String {

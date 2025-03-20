@@ -48,7 +48,7 @@ impl<'b> Status<'b> {
         let blobs_count = baza.count_blobs()?;
         let last_update_time = baza.find_last_modification_time();
         let locks = baza.list_document_locks();
-        let server_port = ServerInfo::get_server_port(&root_dir)?;
+        let server_port = ServerInfo::get_server_info(&root_dir)?.map(|(port, _token)| port);
         let auto_commit_delay_in_seconds = AutoCommitService::DEFAULT_AUTO_COMMIT_DELAY.as_secs();
 
         Ok(Status {

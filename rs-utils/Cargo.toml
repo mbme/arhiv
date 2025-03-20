@@ -60,6 +60,9 @@ fslock = "0.2"
 flate2 = "1" # for compressed container
 async-stream = "0.3" # macro for creating async streams
 
+# read password from platform-specific secure stores
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
+
 tracing-android = "0.2" # tracing compatibility layer for android
 
 [dev-dependencies]

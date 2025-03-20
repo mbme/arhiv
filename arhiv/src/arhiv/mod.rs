@@ -4,17 +4,14 @@ use anyhow::Result;
 
 use baza::{baza2::BazaManager, AutoCommitService, AutoCommitTask, DEV_MODE};
 use rs_utils::{
-    get_linux_data_home, get_linux_downloads_dir, get_linux_home_dir, into_absolute_path, log,
-    num_cpus,
+    get_linux_data_home, get_linux_downloads_dir, get_linux_home_dir, into_absolute_path,
+    keyring::{Keyring, NoopKeyring, SystemKeyring},
+    log, num_cpus,
 };
 
 use crate::{definitions::get_standard_schema, ServerInfo, Status};
 
-use keyring::SystemKeyring;
-pub use keyring::{Keyring, NoopKeyring};
-
 mod import;
-mod keyring;
 
 pub struct ArhivOptions {
     pub storage_dir: String,
@@ -35,7 +32,10 @@ impl ArhivOptions {
         let keyring: Arc<dyn Keyring> = if cfg!(test) {
             Arc::new(NoopKeyring)
         } else {
-            Arc::new(SystemKeyring)
+            Arc::new(SystemKeyring::new(
+                if DEV_MODE { "Arhiv-dev" } else { "Arhiv" },
+                "Arhiv",
+            ))
         };
 
         if DEV_MODE {

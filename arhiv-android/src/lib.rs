@@ -13,8 +13,8 @@ use jni::{
 };
 use tokio::runtime::Runtime;
 
-use arhiv::{Arhiv, ArhivOptions, ArhivServer, Keyring, ServerInfo};
-use rs_utils::{log, ExposeSecret, SecretString};
+use arhiv::{Arhiv, ArhivOptions, ArhivServer, ServerInfo};
+use rs_utils::{keyring::Keyring, log, ExposeSecret, SecretString};
 
 static LOG_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
@@ -253,8 +253,8 @@ mod tests {
     use core::time;
     use std::{sync::Arc, thread};
 
-    use arhiv::{ArhivOptions, NoopKeyring};
-    use rs_utils::TempFile;
+    use arhiv::ArhivOptions;
+    use rs_utils::{keyring::NoopKeyring, TempFile};
 
     use crate::{start_server, stop_server};
 

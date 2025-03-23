@@ -1,5 +1,6 @@
 mod import;
 mod keyring;
+mod status;
 
 use std::{cmp::min, sync::Arc};
 
@@ -12,7 +13,8 @@ use rs_utils::{
 };
 
 pub use self::keyring::ArhivKeyring;
-use crate::{definitions::get_standard_schema, server::generate_certificate, ServerInfo, Status};
+pub use self::status::Status;
+use crate::{definitions::get_standard_schema, server::generate_certificate, ServerInfo};
 
 pub struct ArhivOptions {
     pub storage_dir: String,

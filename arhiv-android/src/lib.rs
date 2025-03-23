@@ -1,20 +1,24 @@
+mod keyring;
+
 use std::{
     sync::{
         atomic::{AtomicBool, Ordering},
-        Arc, LazyLock, Mutex, RwLock,
+        LazyLock, Mutex,
     },
     time::Duration,
 };
 
 use anyhow::{anyhow, ensure, Context, Result};
 use jni::{
-    objects::{GlobalRef, JClass, JObject, JString, JValue},
-    JNIEnv, JavaVM,
+    objects::{JClass, JObject, JString, JValue},
+    JNIEnv,
 };
 use tokio::runtime::Runtime;
 
-use arhiv::{Arhiv, ArhivOptions, ArhivServer, ServerInfo};
-use rs_utils::{keyring::Keyring, log, ExposeSecret, SecretString};
+use arhiv::{generate_certificate, Arhiv, ArhivOptions, ArhivServer, ServerInfo};
+use rs_utils::{log, ExposeSecret, SecretString};
+
+use self::keyring::AndroidKeyring;
 
 static LOG_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
@@ -72,73 +76,15 @@ fn stop_server() -> Result<()> {
     Ok(())
 }
 
-/// This implementation of Keyring only receives password once on init, from Android.
-/// The reason is that the biometric auth process in Android is asynchronous, so the easiest approach
-/// is to do it only once on app init, and then just update the local password copy.
-/// Similarly, the set_password() also starts an async process to encrypt & save the password,
-/// but doesn't wait for results. So the password may not actually be saved, even if the method call didn't fail.
-struct AndroidKeyring {
-    password: RwLock<Option<SecretString>>,
-    android_controller: GlobalRef, // instance of AndroidController
-    jvm: JavaVM,
-}
-
-impl Keyring for AndroidKeyring {
-    fn get_password(&self) -> Result<Option<SecretString>> {
-        let password_guard = self
-            .password
-            .read()
-            .map_err(|err| anyhow!("Failed to acquire read lock for the password: {err}"))?;
-
-        Ok(password_guard.clone())
-    }
-
-    fn set_password(&self, password: Option<SecretString>) -> Result<()> {
-        log::info!("Saving password to Android keyring");
-
-        let mut password_guard = self
-            .password
-            .write()
-            .map_err(|err| anyhow!("Failed to acquire write lock for the password: {err}"))?;
-
-        let _guard = self
-            .jvm
-            .attach_current_thread()
-            .context("Failed to attach current thread to JavaVM");
-
-        let mut env = self
-            .jvm
-            .get_env()
-            .expect("Current thread must be attached to JavaVM to get JNIEnv");
-
-        let password_jstring: JString = match password {
-            Some(ref p) => env
-                .new_string(p.expose_secret())
-                .expect("Couldn't create java String"),
-            None => JObject::null().into(),
-        };
-
-        env.call_method(
-            &self.android_controller,
-            "savePassword",
-            "(Ljava/lang/String;)V",
-            &[(&password_jstring).into()],
-        )
-        .context("Failed to call AndroidController.savePassword()")?;
-
-        *password_guard = password;
-
-        Ok(())
-    }
-}
-
 #[unsafe(no_mangle)]
 pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass,
     app_files_dir: JString,
     external_storage_dir: JString,
+    downloads_dir: JString,
     password: JString,
+    certificate: JString,
     android_controller: JObject, // AndroidController
 ) -> JObject<'local> {
     // the function might be called multiple times, if android app was unloaded in background
@@ -164,9 +110,17 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
         .into();
     log::debug!("Storage dir: {external_storage_dir}");
 
+    let downloads_dir: String = env
+        .get_string(&downloads_dir)
+        .expect("Must read JNI string downloads_dir")
+        .into();
+    log::debug!("Donwloads dir: {downloads_dir}");
+
     let password: Option<SecretString> = if password.as_raw().is_null() {
+        log::debug!("No password");
         None
     } else {
+        log::debug!("Got password");
         let password: String = env
             .get_string(&password)
             .expect("Must read JNI string password")
@@ -174,21 +128,23 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
 
         Some(password.into())
     };
+
+    let certificate: String = env
+        .get_string(&certificate)
+        .expect("Must read JNI string certificate")
+        .into();
+    let certificate: SecretString = certificate.into();
+
     let android_controller = env
         .new_global_ref(android_controller)
         .expect("Must turn AndroidController instance into global ref");
     let jvm = env.get_java_vm().expect("Can't get reference to JVM");
-    let keyring = AndroidKeyring {
-        password: RwLock::new(password),
-        android_controller,
-        jvm,
-    };
     let options = ArhivOptions {
         storage_dir: format!("{external_storage_dir}/Arhiv"),
         state_dir: app_files_dir,
-        downloads_dir: format!("{external_storage_dir}/Downloads"), // TODO pass from Android
+        downloads_dir,
         file_browser_root_dir: external_storage_dir,
-        keyring: Arc::new(keyring),
+        keyring: AndroidKeyring::new_arhiv_keyring(password, certificate, android_controller, jvm),
     };
 
     let server_info = start_server(options, 23421).expect("must start server");
@@ -248,13 +204,22 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_stopServer() {
     log::info!("Stopped server");
 }
 
+#[unsafe(no_mangle)]
+pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_generateCertificate(env: JNIEnv) -> JString {
+    let certificate = generate_certificate().expect("Failed to generate certificate");
+    let certificate = certificate.to_pem();
+
+    env.new_string(certificate.expose_secret())
+        .expect("Failed to create Java String")
+}
+
 #[cfg(test)]
 mod tests {
     use core::time;
-    use std::{sync::Arc, thread};
+    use std::thread;
 
-    use arhiv::ArhivOptions;
-    use rs_utils::{keyring::NoopKeyring, TempFile};
+    use arhiv::{ArhivKeyring, ArhivOptions};
+    use rs_utils::TempFile;
 
     use crate::{start_server, stop_server};
 
@@ -268,7 +233,7 @@ mod tests {
             state_dir: format!("{temp_dir}/state"),
             downloads_dir: format!("{temp_dir}/downloads"),
             file_browser_root_dir: temp_dir.to_string(),
-            keyring: Arc::new(NoopKeyring),
+            keyring: ArhivKeyring::new_noop(),
         };
         start_server(options, 0).expect("must start server");
 

@@ -28,6 +28,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
   private static final String TAG = "MainActivity";
@@ -79,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
 
     if (Environment.isExternalStorageManager()) {
       Log.d(TAG, "Is external storage manager");
-      authApp();
+      ensureIsSecureDevice();
     } else {
       Log.d(TAG, "Requesting external storage manager permissions");
 
@@ -95,16 +96,29 @@ public class MainActivity extends AppCompatActivity {
     }
   }
 
+  private void ensureIsSecureDevice() {
+    Log.i(TAG, "Checking if device is secure");
+
+    if (Keyring.isDeviceSecure(this)) {
+      Log.i(TAG, "Device is secure");
+      authApp();
+
+    } else {
+      Log.w(TAG, "Device is not secure");
+
+      Intent intent = new Intent(Settings.ACTION_SECURITY_SETTINGS);
+
+      ActivityResultLauncher<Intent> deviceSecuritySettingsLauncher = registerForActivityResult(
+        new ActivityResultContracts.StartActivityForResult(), result -> {
+          Log.i(TAG, "Got device security settings activity result: " + result);
+          ensureIsSecureDevice();
+        });
+      deviceSecuritySettingsLauncher.launch(intent);
+    }
+  }
+
   private void authApp() {
     Log.i(TAG, "Authenticating");
-
-    if (!Keyring.isDeviceSecure(this)) {
-      Log.w(TAG, "Device is not secure, skipping auth");
-
-      initApp(null);
-
-      return;
-    }
 
     if (!Keyring.isBiometricAvailable(this)) {
       Log.w(TAG, "Biometric auth not available");
@@ -114,10 +128,7 @@ public class MainActivity extends AppCompatActivity {
       Keyring.generateKey();
     } catch (Exception e) {
       Log.e(TAG, "Failed to generate KeyStore key:", e);
-
-      initApp(null);
-
-      return;
+      throw new SecurityException("Failed to generate KeyStore key");
     }
 
     Keyring.loadPassword(this, new LoadPasswordCallback() {
@@ -141,13 +152,17 @@ public class MainActivity extends AppCompatActivity {
 
   }
 
-  private void initApp(String password) {
+  private void initApp(String password, @NonNull String certificate) {
     Log.i(TAG, "Starting Arhiv server");
+
+    String downloadsPath = Objects.requireNonNull(this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)).getAbsolutePath();
 
     ServerInfo serverInfo = ArhivServer.startServer(
       this.getFilesDir().getAbsolutePath(),
       Environment.getExternalStorageDirectory().getAbsolutePath(),
+      downloadsPath,
       password,
+      certificate,
       new AndroidController(this)
     );
 

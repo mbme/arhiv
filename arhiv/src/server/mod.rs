@@ -2,15 +2,14 @@ use std::sync::Arc;
 
 use anyhow::Result;
 
-use certificate::generate_ui_crypto_key;
 use rs_utils::{create_dir_if_not_exist, http_server::HttpServer, log, AuthToken};
 
 use self::{
-    certificate::read_or_generate_certificate, server_lock::ArhivServerLock,
-    ui_server::build_ui_router,
+    certificate::generate_ui_crypto_key, server_lock::ArhivServerLock, ui_server::build_ui_router,
 };
 use crate::{Arhiv, ArhivOptions};
 
+pub use self::certificate::generate_certificate;
 pub use self::server_info::ServerInfo;
 
 mod certificate;
@@ -43,7 +42,7 @@ impl ArhivServer {
 
         let arhiv = Arc::new(arhiv);
 
-        let certificate = read_or_generate_certificate(&state_dir)?;
+        let certificate = arhiv.get_or_generate_certificate()?;
 
         let ui_hmac = generate_ui_crypto_key(certificate.private_key_der.clone());
         let auth_token = AuthToken::generate(&ui_hmac, token);

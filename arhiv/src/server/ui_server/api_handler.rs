@@ -296,32 +296,19 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
             APIResponse::ReorderCollectionRefs {}
         }
         APIRequest::CreateArhiv { password } => {
-            if arhiv.baza.storage_exists()? {
-                bail!("Arhiv already exists");
-            }
-
-            log::info!("Creating new Arhiv");
-
-            arhiv.baza.create(password.clone())?;
-            arhiv.keyring.set_password(Some(password))?;
+            arhiv.create(password)?;
             ctx.img_cache.init().await?;
 
             APIResponse::CreateArhiv {}
         }
         APIRequest::LockArhiv {} => {
-            log::info!("Locking Arhiv");
-
-            arhiv.baza.lock()?;
-            arhiv.keyring.set_password(None)?;
+            arhiv.lock()?;
             ctx.img_cache.clear().await;
 
             APIResponse::LockArhiv {}
         }
         APIRequest::UnlockArhiv { password } => {
-            log::info!("Unlocking Arhiv");
-
-            arhiv.baza.unlock(password.clone())?;
-            arhiv.keyring.set_password(Some(password))?;
+            arhiv.unlock(password)?;
             ctx.img_cache.init().await?;
 
             APIResponse::UnlockArhiv {}

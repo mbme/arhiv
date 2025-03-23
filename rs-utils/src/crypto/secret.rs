@@ -60,6 +60,12 @@ impl ExposeSecret<[u8]> for SecretBytes {
     }
 }
 
+impl From<Vec<u8>> for SecretBytes {
+    fn from(value: Vec<u8>) -> Self {
+        SecretBytes::new(value)
+    }
+}
+
 impl From<SecretString> for SecretBytes {
     fn from(value: SecretString) -> Self {
         let data = value.expose_secret().as_bytes().to_vec();

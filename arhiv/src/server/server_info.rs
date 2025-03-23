@@ -4,7 +4,7 @@ use serde::Serialize;
 use baza::entities::Id;
 use rs_utils::{AuthToken, SelfSignedCertificate, Token};
 
-use super::certificate::{generate_ui_crypto_key, read_or_generate_certificate};
+use super::certificate::generate_ui_crypto_key;
 use super::server_lock::ArhivServerLock;
 use super::ui_server::{HEALTH_PATH, UI_BASE_PATH};
 
@@ -35,15 +35,14 @@ impl ServerInfo {
         }
     }
 
-    pub fn collect(state_dir: &str) -> Result<Option<Self>> {
+    pub fn collect(state_dir: &str, certificate: &SelfSignedCertificate) -> Result<Option<Self>> {
         let (port, token) = if let Some((port, token)) = Self::get_server_info(state_dir)? {
             (port, token)
         } else {
             return Ok(None);
         };
 
-        let certificate = read_or_generate_certificate(state_dir)?;
-        let info = ServerInfo::new(port, &certificate, token);
+        let info = ServerInfo::new(port, certificate, token);
 
         Ok(Some(info))
     }

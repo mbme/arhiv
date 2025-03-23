@@ -1,14 +1,20 @@
 package me.mbsoftware.arhiv;
 
+import androidx.annotation.NonNull;
+
 public class ArhivServer {
   public static native ServerInfo startServer(
-    String appFilesDir,
-    String externalStorageDir,
+    @NonNull String appFilesDir,
+    @NonNull String externalStorageDir,
+    @NonNull String downloadsDir,
     String password,
-    AndroidController controller
+    @NonNull String certificate,
+    @NonNull AndroidController controller
   );
 
   public static native void stopServer();
+
+  public static native String generateCertificate();
 
   static {
     System.loadLibrary("arhiv_android");

@@ -1,24 +1,25 @@
+mod import;
+mod keyring;
+
 use std::{cmp::min, sync::Arc};
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 
 use baza::{baza2::BazaManager, AutoCommitService, AutoCommitTask, DEV_MODE};
 use rs_utils::{
-    get_linux_data_home, get_linux_downloads_dir, get_linux_home_dir, into_absolute_path,
-    keyring::{Keyring, NoopKeyring, SystemKeyring},
-    log, num_cpus,
+    get_linux_data_home, get_linux_downloads_dir, get_linux_home_dir, into_absolute_path, log,
+    num_cpus, SecretString, SelfSignedCertificate,
 };
 
-use crate::{definitions::get_standard_schema, ServerInfo, Status};
-
-mod import;
+pub use self::keyring::ArhivKeyring;
+use crate::{definitions::get_standard_schema, server::generate_certificate, ServerInfo, Status};
 
 pub struct ArhivOptions {
     pub storage_dir: String,
     pub state_dir: String,
     pub downloads_dir: String,
     pub file_browser_root_dir: String,
-    pub keyring: Arc<dyn Keyring>,
+    pub keyring: ArhivKeyring,
 }
 
 impl ArhivOptions {
@@ -29,13 +30,10 @@ impl ArhivOptions {
 
         let file_browser_root_dir = home_dir.clone();
 
-        let keyring: Arc<dyn Keyring> = if cfg!(test) {
-            Arc::new(NoopKeyring)
+        let keyring = if cfg!(test) {
+            ArhivKeyring::new_noop()
         } else {
-            Arc::new(SystemKeyring::new(
-                if DEV_MODE { "Arhiv-dev" } else { "Arhiv" },
-                "Arhiv",
-            ))
+            ArhivKeyring::new_system_keyring()
         };
 
         if DEV_MODE {
@@ -70,8 +68,7 @@ impl ArhivOptions {
 
 pub struct Arhiv {
     pub baza: Arc<BazaManager>,
-    pub keyring: Arc<dyn Keyring>,
-
+    keyring: ArhivKeyring,
     auto_commit_task: Option<AutoCommitTask>,
     file_browser_root_dir: String,
 }
@@ -113,8 +110,35 @@ impl Arhiv {
         self.auto_commit_task = Some(task);
     }
 
-    pub fn collect_server_info(&self) -> Result<Option<ServerInfo>> {
-        ServerInfo::collect(self.baza.get_state_dir())
+    pub fn create(&self, password: SecretString) -> Result<()> {
+        log::info!("Creating new Arhiv");
+
+        if self.baza.storage_exists()? {
+            bail!("Arhiv already exists");
+        }
+
+        self.baza.create(password.clone())?;
+        self.keyring.set_password(Some(password))?;
+
+        Ok(())
+    }
+
+    pub fn lock(&self) -> Result<()> {
+        log::info!("Locking Arhiv");
+
+        self.baza.lock()?;
+        self.keyring.set_password(None)?;
+
+        Ok(())
+    }
+
+    pub fn unlock(&self, password: SecretString) -> Result<()> {
+        log::info!("Unlocking Arhiv");
+
+        self.baza.unlock(password.clone())?;
+        self.keyring.set_password(Some(password))?;
+
+        Ok(())
     }
 
     pub fn unlock_using_keyring(&self) -> Result<bool> {
@@ -126,6 +150,44 @@ impl Arhiv {
         } else {
             Ok(false)
         }
+    }
+
+    pub fn change_password(
+        &self,
+        old_password: SecretString,
+        new_password: SecretString,
+    ) -> Result<()> {
+        log::info!("Changing Arhiv password");
+
+        self.baza
+            .change_key_file_password(old_password, new_password.clone())?;
+
+        self.keyring.set_password(Some(new_password))?;
+
+        Ok(())
+    }
+
+    pub fn get_or_generate_certificate(&self) -> Result<SelfSignedCertificate> {
+        if let Some(certificate) = self.keyring.get_certificate()? {
+            log::debug!("Certificate already exists");
+
+            let certificate = SelfSignedCertificate::from_pem(&certificate)?;
+
+            return Ok(certificate);
+        }
+
+        log::info!("Generating new certificate");
+
+        let certificate = generate_certificate()?;
+        self.keyring.set_certificate(Some(certificate.to_pem()))?;
+
+        Ok(certificate)
+    }
+
+    pub fn collect_server_info(&self) -> Result<Option<ServerInfo>> {
+        let certificate = self.get_or_generate_certificate()?;
+
+        ServerInfo::collect(self.baza.get_state_dir(), &certificate)
     }
 
     pub fn get_status(&self) -> Result<String> {

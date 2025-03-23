@@ -1,16 +1,17 @@
 package me.mbsoftware.arhiv;
 
-import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import androidx.fragment.app.FragmentActivity;
+
 public class AndroidController {
   private static final String TAG = "AndroidController";
 
-  private final Context context;
+  private final FragmentActivity context;
 
-  public AndroidController(Context context) {
+  public AndroidController(FragmentActivity context) {
     this.context = context;
   }
 

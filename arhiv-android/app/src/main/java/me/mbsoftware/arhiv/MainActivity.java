@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
 
   }
 
-  private void initApp(String password, @NonNull String certificate) {
+  private void initApp(String password) {
     Log.i(TAG, "Starting Arhiv server");
 
     String downloadsPath = Objects.requireNonNull(this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)).getAbsolutePath();
@@ -162,7 +162,6 @@ public class MainActivity extends AppCompatActivity {
       Environment.getExternalStorageDirectory().getAbsolutePath(),
       downloadsPath,
       password,
-      certificate,
       new AndroidController(this)
     );
 

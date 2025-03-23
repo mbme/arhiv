@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentActivity;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
@@ -63,12 +64,12 @@ public class Keyring {
     keyGenerator.generateKey();
   }
 
-  public static void savePassword(Context context, String password) throws Exception {
+  public static void savePassword(FragmentActivity context, String password) throws Exception {
     Cipher cipher = getCipher();
     cipher.init(Cipher.ENCRYPT_MODE, getSecretKey());
 
     BiometricPrompt biometricPrompt = new BiometricPrompt(
-      (androidx.fragment.app.FragmentActivity) context,
+      context,
       ContextCompat.getMainExecutor(context),
       new BiometricPrompt.AuthenticationCallback() {
         @Override
@@ -115,7 +116,7 @@ public class Keyring {
     biometricPrompt.authenticate(promptInfo, new BiometricPrompt.CryptoObject(cipher));
   }
 
-  public static void loadPassword(Context context, LoadPasswordCallback callback) {
+  public static void loadPassword(FragmentActivity context, LoadPasswordCallback callback) {
     SharedPreferences prefs = context.getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE);
     String encryptedPassword = prefs.getString(PASSWORD_KEY, null);
     if (encryptedPassword == null) {
@@ -137,7 +138,7 @@ public class Keyring {
     }
 
     BiometricPrompt biometricPrompt = new BiometricPrompt(
-      (androidx.fragment.app.FragmentActivity) context,
+      context,
       ContextCompat.getMainExecutor(context),
       new BiometricPrompt.AuthenticationCallback() {
         @Override

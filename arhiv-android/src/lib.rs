@@ -15,8 +15,8 @@ use jni::{
 };
 use tokio::runtime::Runtime;
 
-use arhiv::{generate_certificate, Arhiv, ArhivOptions, ArhivServer, ServerInfo};
-use rs_utils::{log, ExposeSecret, SecretString};
+use arhiv::{Arhiv, ArhivOptions, ArhivServer, ServerInfo};
+use rs_utils::{log, SecretString};
 
 use self::keyring::AndroidKeyring;
 
@@ -84,7 +84,6 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
     external_storage_dir: JString,
     downloads_dir: JString,
     password: JString,
-    certificate: JString,
     android_controller: JObject, // AndroidController
 ) -> JObject<'local> {
     // the function might be called multiple times, if android app was unloaded in background
@@ -129,12 +128,6 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
         Some(password.into())
     };
 
-    let certificate: String = env
-        .get_string(&certificate)
-        .expect("Must read JNI string certificate")
-        .into();
-    let certificate: SecretString = certificate.into();
-
     let android_controller = env
         .new_global_ref(android_controller)
         .expect("Must turn AndroidController instance into global ref");
@@ -144,7 +137,7 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
         state_dir: app_files_dir,
         downloads_dir,
         file_browser_root_dir: external_storage_dir,
-        keyring: AndroidKeyring::new_arhiv_keyring(password, certificate, android_controller, jvm),
+        keyring: AndroidKeyring::new_arhiv_keyring(password, android_controller, jvm),
     };
 
     let server_info = start_server(options, 23421).expect("must start server");
@@ -202,15 +195,6 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
 pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_stopServer() {
     stop_server().expect("must stop server");
     log::info!("Stopped server");
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_generateCertificate(env: JNIEnv) -> JString {
-    let certificate = generate_certificate().expect("Failed to generate certificate");
-    let certificate = certificate.to_pem();
-
-    env.new_string(certificate.expose_secret())
-        .expect("Failed to create Java String")
 }
 
 #[cfg(test)]

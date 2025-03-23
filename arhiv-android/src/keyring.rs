@@ -6,14 +6,15 @@ use jni::{
     JavaVM,
 };
 
-use arhiv::ArhivKeyring;
+use arhiv::{generate_certificate, ArhivKeyring};
 use rs_utils::{keyring::Keyring, log, ExposeSecret, SecretString};
 
-/// This implementation of Keyring only receives password and certificate once on init, from Android.
+/// This implementation of Keyring only receives password once on init, from Android.
 /// The reason is that the biometric auth process in Android is asynchronous, so the easiest approach
 /// is to do it only once on app init, and then just update the local password copy.
 /// Similarly, the set_string() also starts an async process to encrypt & save the password,
 /// but doesn't wait for results. So the password may not actually be saved, even if the method call didn't fail.
+/// The certificate is generated once on init, since there's no value in storing it on Android.
 pub struct AndroidKeyring {
     password: RwLock<Option<SecretString>>,
     certificate: SecretString,
@@ -24,10 +25,12 @@ pub struct AndroidKeyring {
 impl AndroidKeyring {
     pub fn new_arhiv_keyring(
         password: Option<SecretString>,
-        certificate: SecretString,
         android_controller: GlobalRef,
         jvm: JavaVM,
     ) -> ArhivKeyring {
+        let certificate = generate_certificate().expect("Failed to generate certificate");
+        let certificate = certificate.to_pem();
+
         let keyring = AndroidKeyring {
             password: RwLock::new(password),
             certificate,

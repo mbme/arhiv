@@ -8,13 +8,10 @@ public class ArhivServer {
     @NonNull String externalStorageDir,
     @NonNull String downloadsDir,
     String password,
-    @NonNull String certificate,
     @NonNull AndroidController controller
   );
 
   public static native void stopServer();
-
-  public static native String generateCertificate();
 
   static {
     System.loadLibrary("arhiv_android");

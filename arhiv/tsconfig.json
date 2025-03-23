@@ -2,9 +2,6 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "baseUrl": "./src/ui",
-    "paths": {
-      "dto": ["../dto"]
-    },
     "jsx": "react-jsx"
   }
 }

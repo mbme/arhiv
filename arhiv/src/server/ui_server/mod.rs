@@ -22,7 +22,7 @@ use rs_utils::{
 };
 
 use crate::{
-    dto::{APIRequest, ArhivUIConfig},
+    ui::dto::{APIRequest, ArhivUIConfig},
     Arhiv,
 };
 

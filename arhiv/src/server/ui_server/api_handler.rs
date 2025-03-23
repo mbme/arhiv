@@ -14,7 +14,7 @@ use rs_utils::{
     remove_file_if_exists,
 };
 
-use crate::dto::{
+use crate::ui::dto::{
     APIRequest, APIResponse, DirEntry, DocumentBackref, GetDocumentsResult, ListDocumentsResult,
     SaveDocumentErrors,
 };

@@ -466,8 +466,8 @@ fn update_state_from_storage<R: Read>(
     let mut latest_snapshot_keys: HashSet<DocumentKey> = HashSet::new();
 
     // compare storage index with state
-    for (id, index_revs) in storage.index.as_index_map() {
-        let index_rev = index_revs
+    for (id, index_max_revs) in storage.index.as_index_map() {
+        let index_max_rev = index_max_revs
             .iter()
             .next()
             .context("index revs must not be empty")?;
@@ -475,7 +475,7 @@ fn update_state_from_storage<R: Read>(
         let document_head = if let Some(document_head) = state.get_document(id) {
             document_head
         } else {
-            add_keys(&mut latest_snapshot_keys, id, index_revs.iter());
+            add_keys(&mut latest_snapshot_keys, id, index_max_revs.iter());
             continue;
         };
 
@@ -486,12 +486,12 @@ fn update_state_from_storage<R: Read>(
 
         let state_rev = document_head.get_revision();
 
-        if state_rev > index_rev {
+        if state_rev > index_max_rev {
             continue;
         }
 
-        if state_rev < index_rev {
-            add_keys(&mut latest_snapshot_keys, id, index_revs.iter());
+        if state_rev < index_max_rev {
+            add_keys(&mut latest_snapshot_keys, id, index_max_revs.iter());
             continue;
         }
 
@@ -500,7 +500,7 @@ fn update_state_from_storage<R: Read>(
         add_keys(
             &mut latest_snapshot_keys,
             id,
-            index_revs.difference(&all_state_revs),
+            index_max_revs.difference(&all_state_revs),
         );
     }
 

@@ -134,15 +134,8 @@ impl BazaManager {
 
         self.merge_storages(key)?;
 
-        let baza = if self.paths.state_file_exists()? {
-            let mut baza = Baza::read(key.clone(), self.paths.clone(), self.schema.clone())?;
-
-            if !baza.has_staged_documents() {
-                baza.update_state_from_storage()?;
-                baza.remove_unused_storage_blobs()?;
-            }
-
-            baza
+        let mut baza = if self.paths.state_file_exists()? {
+            Baza::read(key.clone(), self.paths.clone(), self.schema.clone())?
         } else {
             Baza::create(
                 InstanceId::generate(),
@@ -151,6 +144,11 @@ impl BazaManager {
                 self.schema.clone(),
             )?
         };
+
+        if !baza.has_staged_documents() {
+            baza.update_state_from_storage()?;
+            baza.remove_unused_storage_blobs()?;
+        }
 
         manager_state.baza = Some(baza);
 

@@ -117,6 +117,8 @@ impl Baza {
     }
 
     pub(crate) fn update_state_from_storage(&mut self) -> Result<()> {
+        log::debug!("Updating state from storage");
+
         let mut storage =
             BazaStorage::read_file(&self.paths.storage_main_db_file, self.key.clone())?;
 

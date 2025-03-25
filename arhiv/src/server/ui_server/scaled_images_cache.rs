@@ -4,7 +4,6 @@ use std::{
     fmt::{Debug, Display},
     fs,
     io::{BufReader, Write},
-    sync::Arc,
 };
 
 use anyhow::{ensure, Context, Result};
@@ -12,7 +11,11 @@ use rayon::{ThreadPool, ThreadPoolBuilder};
 use serde::Deserialize;
 use tokio::{sync::RwLock, time::Instant};
 
-use baza::{baza2::BazaManager, entities::Id, schema::ASSET_TYPE};
+use baza::{
+    baza2::{Baza, BazaManager},
+    entities::Id,
+    schema::ASSET_TYPE,
+};
 use rs_utils::{
     create_dir_if_not_exist, create_file_reader, create_file_writer, file_exists, format_bytes,
     get_file_name, image::scale_image_file, list_files, log, now, num_cpus, read_all, Timestamp,
@@ -60,13 +63,12 @@ struct ImageInfo {
 
 pub struct ScaledImagesCache {
     root_dir: String,
-    baza_manager: Arc<BazaManager>,
     usage_info: RwLock<HashMap<String, ImageInfo>>,
     thread_pool: ThreadPool,
 }
 
 impl ScaledImagesCache {
-    pub fn new(root_dir: String, baza_manager: Arc<BazaManager>) -> Self {
+    pub fn new(root_dir: String) -> Self {
         let num_cpus = num_cpus().ok().unwrap_or(1);
         let num_threads = min(num_cpus, 3);
 
@@ -77,23 +79,26 @@ impl ScaledImagesCache {
 
         ScaledImagesCache {
             root_dir,
-            baza_manager,
             usage_info: Default::default(),
             thread_pool,
         }
     }
 
-    pub async fn init(&self) -> Result<()> {
+    pub async fn init(&self, baza_manager: &BazaManager) -> Result<()> {
         log::info!("Initializing Scaled images cache");
 
         ensure!(
-            self.baza_manager.is_unlocked(),
+            baza_manager.is_unlocked(),
             "Baza must be unlocked to init image cache service"
         );
 
         create_dir_if_not_exist(&self.root_dir)?;
 
-        self.remove_stale_files()?;
+        {
+            let baza = baza_manager.open()?;
+            self.remove_stale_files(&baza)?;
+        }
+
         self.init_usage_info().await?;
 
         Ok(())
@@ -133,10 +138,8 @@ impl ScaledImagesCache {
     }
 
     // on open & on commit
-    pub fn remove_stale_files(&self) -> Result<()> {
+    pub fn remove_stale_files(&self, baza: &Baza) -> Result<()> {
         log::debug!("Checking for stale cache files in {}", self.root_dir);
-
-        let baza = self.baza_manager.open()?;
 
         let mut files_removed = 0;
         for file_path in list_files(&self.root_dir)? {
@@ -212,11 +215,16 @@ impl ScaledImagesCache {
         Ok(())
     }
 
-    async fn scale_image(&self, asset_id: &Id, params: ImageParams) -> Result<Vec<u8>> {
+    async fn scale_image(
+        &self,
+        asset_id: &Id,
+        params: ImageParams,
+        baza_manager: &BazaManager,
+    ) -> Result<Vec<u8>> {
         log::info!("Scaling image {asset_id} to {params}");
 
         let buf_reader = {
-            let baza = self.baza_manager.open()?;
+            let baza = baza_manager.open()?;
             let blob = baza.get_asset_data(asset_id)?;
             BufReader::new(blob)
         };
@@ -238,7 +246,12 @@ impl ScaledImagesCache {
             .context("Failed to receive result from the thread pool")?
     }
 
-    pub async fn get_image(&self, asset_id: &Id, params: ImageParams) -> Result<Vec<u8>> {
+    pub async fn get_image(
+        &self,
+        asset_id: &Id,
+        params: ImageParams,
+        baza_manager: &BazaManager,
+    ) -> Result<Vec<u8>> {
         let cache_file_name = &format!("{asset_id}.{params}.webp.age");
         let cache_file_path = format!("{}/{cache_file_name}", self.root_dir);
 
@@ -246,14 +259,16 @@ impl ScaledImagesCache {
             log::debug!("Found cached image file for {asset_id} {params}");
 
             let reader = create_file_reader(&cache_file_path)?;
-            let decrypted_reader = self.baza_manager.decrypt(reader)?;
+            let decrypted_reader = baza_manager.decrypt(reader)?;
 
             read_all(decrypted_reader)?
         } else {
-            let data = self.scale_image(asset_id, params.clone()).await?;
+            let data = self
+                .scale_image(asset_id, params.clone(), baza_manager)
+                .await?;
 
             let writer = create_file_writer(&cache_file_path, false)?;
-            let mut encrypted_writer = self.baza_manager.encrypt(writer)?;
+            let mut encrypted_writer = baza_manager.encrypt(writer)?;
 
             encrypted_writer
                 .write_all(&data)

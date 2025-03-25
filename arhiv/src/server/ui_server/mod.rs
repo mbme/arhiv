@@ -51,7 +51,7 @@ pub struct ServerContext {
 
 pub fn build_ui_router(auth_token: AuthToken, arhiv: Arc<Arhiv>) -> Router<()> {
     let img_cache_dir = format!("{}/img-cache", arhiv.baza.get_state_dir());
-    let img_cache = ScaledImagesCache::new(img_cache_dir, arhiv.baza.clone());
+    let img_cache = ScaledImagesCache::new(img_cache_dir);
 
     let ctx = ServerContext {
         arhiv,
@@ -311,7 +311,7 @@ async fn init_server_context_middleware(
             }
 
             if arhiv.baza.is_unlocked() {
-                ctx.img_cache.init().await?;
+                ctx.img_cache.init(&arhiv.baza).await?;
             }
 
             Ok::<(), anyhow::Error>(())

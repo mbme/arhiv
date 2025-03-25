@@ -258,12 +258,11 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
             APIResponse::CreateAsset { id: asset.id }
         }
         APIRequest::Commit {} => {
-            {
-                let mut baza = arhiv.baza.open_mut()?;
+            let mut baza = arhiv.baza.open_mut()?;
 
-                baza.commit()?;
-            }
-            ctx.img_cache.remove_stale_files()?;
+            baza.commit()?;
+
+            ctx.img_cache.remove_stale_files(&baza)?;
 
             APIResponse::Commit {}
         }
@@ -318,7 +317,7 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
         }
         APIRequest::CreateArhiv { password } => {
             arhiv.create(password)?;
-            ctx.img_cache.init().await?;
+            ctx.img_cache.init(&arhiv.baza).await?;
 
             APIResponse::CreateArhiv {}
         }
@@ -330,7 +329,7 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
         }
         APIRequest::UnlockArhiv { password } => {
             arhiv.unlock(password)?;
-            ctx.img_cache.init().await?;
+            ctx.img_cache.init(&arhiv.baza).await?;
 
             APIResponse::UnlockArhiv {}
         }

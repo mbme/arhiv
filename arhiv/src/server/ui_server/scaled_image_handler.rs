@@ -38,7 +38,10 @@ pub async fn scaled_image_handler(
         }
     }
 
-    let data = ctx.img_cache.get_image(&asset_id, params).await?;
+    let data = ctx
+        .img_cache
+        .get_image(&asset_id, params, &ctx.arhiv.baza)
+        .await?;
 
     let mut headers = HeaderMap::new();
     headers.typed_insert(headers::ContentType::from_str("image/webp")?);

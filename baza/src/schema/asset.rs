@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize, Serializer};
 use rs_utils::{Download, ExposeSecret, SecretString};
 
 use crate::{
-    baza2::Baza,
+    baza2::BazaManager,
     entities::Document,
     schema::{Field, FieldType},
 };
@@ -77,11 +77,12 @@ impl AssetData {
 
 pub type Asset = Document<AssetData>;
 
-pub async fn download_asset(url: &str, baza: &mut Baza) -> Result<Asset> {
-    let download_result = Download::new_in_dir(url, &baza.paths.downloads_dir)?
+pub async fn download_asset(url: &str, baza_manager: &BazaManager) -> Result<Asset> {
+    let download_result = Download::new_in_dir(url, baza_manager.get_downloads_dir())?
         .start()
         .await?;
 
+    let mut baza = baza_manager.open_mut()?;
     let mut asset = baza.create_asset(&download_result.file_path)?;
     asset.data.filename = download_result.original_file_name.clone();
 

@@ -153,12 +153,22 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
             data,
             collections,
         } => {
+            let mut document = {
+                let baza = arhiv.baza.open()?;
+
+                let mut document = baza.must_get_document(&id)?.clone();
+
+                document.data = data;
+
+                document
+            };
+
+            let document_expert = arhiv.baza.get_document_expert();
+            document_expert
+                .prepare_assets(&mut document, &arhiv.baza)
+                .await?;
+
             let mut baza = arhiv.baza.open_mut()?;
-
-            let mut document = baza.must_get_document(&id)?.clone();
-
-            document.data = data;
-
             if let Err(err) = baza.stage_document(document, &Some(lock_key)) {
                 match err {
                     StagingError::Validation(validation_error) => APIResponse::SaveDocument {
@@ -179,11 +189,15 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
             collections,
         } => {
             let document_type = DocumentType::new(document_type);
-            let document = Document::new_with_data(document_type, data);
+            let mut document = Document::new_with_data(document_type, data);
             let id = document.id.clone();
 
-            let mut baza = arhiv.baza.open_mut()?;
+            let document_expert = arhiv.baza.get_document_expert();
+            document_expert
+                .prepare_assets(&mut document, &arhiv.baza)
+                .await?;
 
+            let mut baza = arhiv.baza.open_mut()?;
             if let Err(err) = baza.stage_document(document, &None) {
                 match err {
                     StagingError::Validation(validation_error) => APIResponse::CreateDocument {

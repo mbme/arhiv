@@ -4,7 +4,7 @@ use tinytemplate::{format_unescaped, TinyTemplate};
 use rs_utils::{is_http_url, is_image_path};
 
 use crate::{
-    baza2::Baza,
+    baza2::BazaManager,
     entities::{Document, DocumentData, DocumentType, Id, Refs},
     schema::{download_asset, Asset, DataSchema, Field, FieldType, ASSET_TYPE},
     search::MultiSearch,
@@ -202,7 +202,11 @@ impl<'s> DocumentExpert<'s> {
         Ok(())
     }
 
-    pub async fn prepare_assets(&self, document: &mut Document, baza: &mut Baza) -> Result<()> {
+    pub async fn prepare_assets(
+        &self,
+        document: &mut Document,
+        baza_manager: &BazaManager,
+    ) -> Result<()> {
         let fields = self
             .schema
             .iter_fields(&document.document_type)?
@@ -221,7 +225,7 @@ impl<'s> DocumentExpert<'s> {
                             bail!("Only image asset URLs are supported, got '{value}'");
                         }
 
-                        let asset = download_asset(value, baza).await?;
+                        let asset = download_asset(value, baza_manager).await?;
 
                         document.data.set(field.name, asset.id);
                     }
@@ -245,7 +249,7 @@ impl<'s> DocumentExpert<'s> {
                             bail!("Only image asset URLs are supported, got '{value}'");
                         }
 
-                        let asset = download_asset(value, baza).await?;
+                        let asset = download_asset(value, baza_manager).await?;
 
                         *value = asset.id.to_string();
                     }

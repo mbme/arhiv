@@ -39,7 +39,7 @@ futures = "0.3"
 tokio = { version = "1", features = ["fs", "macros", "signal", "process", "rt-multi-thread", "test-util"] }
 tokio-util = { version = "0.7", features = ["compat", "codec"] }
 
-rustls = { version = "*", features = ["dangerous_configuration"]}
+rustls = { version = "*" }
 axum = { version = "0.8", features = ["tracing", "tokio", "http1"] }
 axum-extra = { version = "0.10", features = ["typed-header", "cookie"]}
 chrono = { version = "0.4", features = ["serde"] }

@@ -14,6 +14,21 @@ use baza::{
 };
 use rs_utils::{age::AgeKey, list_files, log::setup_logger, ExposeSecret, SecretString};
 
+// DB schema:
+// CREATE TABLE kvs (
+//   key TEXT NOT NULL,
+//   value TEXT,
+//   PRIMARY KEY (key)
+// );
+// CREATE TABLE documents_snapshots (
+//   id          TEXT    NOT NULL,
+//   rev         TEXT    NOT NULL,
+//   document_type   TEXT    NOT NULL,
+//   updated_at      TEXT    NOT NULL,
+//   data            TEXT    NOT NULL,
+//   PRIMARY KEY (id, rev)
+// );
+
 #[derive(Parser)]
 struct Cli {
     /// The directory of the arhiv
@@ -120,7 +135,7 @@ fn get_all_snapshots(db_file_path: &str) -> Result<Vec<Document>> {
         rusqlite::Connection::open(db_file_path).context("Failed to open SQLite database")?;
 
     let mut stmt = conn
-        .prepare("SELECT * FROM documents_snapshots GROUP BY id")
+        .prepare("SELECT * FROM documents_snapshots ORDER BY id")
         .context("Failed to prepare statement")?;
 
     let documents: Vec<Document> = stmt

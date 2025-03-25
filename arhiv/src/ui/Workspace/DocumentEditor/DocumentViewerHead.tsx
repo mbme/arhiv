@@ -9,6 +9,7 @@ type DocumentViewerHeadProps = {
   documentType: DocumentType;
   updatedAt: string;
   backrefs: DocumentBackref[];
+  snapshotsCount: number;
 };
 
 export function DocumentViewerHead({
@@ -16,6 +17,7 @@ export function DocumentViewerHead({
   documentType,
   updatedAt,
   backrefs,
+  snapshotsCount,
 }: DocumentViewerHeadProps) {
   return (
     <div className="flex justify-between items-start gap-2 pl-2 mb-6">
@@ -52,6 +54,10 @@ export function DocumentViewerHead({
             <td>
               <DateTime datetime={updatedAt} className="whitespace-nowrap" />
             </td>
+          </tr>
+          <tr>
+            <td className="section-heading">snapshots:</td>
+            <td>{snapshotsCount}</td>
           </tr>
         </tbody>
       </table>

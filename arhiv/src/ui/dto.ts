@@ -105,6 +105,7 @@ export type APIResponse =
       backrefs: DocumentBackref[];
       collections: DocumentBackref[];
       refs: DocumentId[];
+      snapshotsCount: number;
     }
   | {
       typeName: 'ParseMarkup';

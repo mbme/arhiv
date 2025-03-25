@@ -18,6 +18,7 @@ export function ErasedDocumentCard({ document, isUpdating }: Props) {
         documentType={document.documentType}
         updatedAt={document.updatedAt}
         backrefs={document.backrefs}
+        snapshotsCount={document.snapshotsCount}
       />
 
       <img

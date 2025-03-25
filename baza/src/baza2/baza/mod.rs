@@ -9,7 +9,7 @@ use std::{
     time::Instant,
 };
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{ensure, Context, Result};
 use thiserror::Error;
 
 use rs_utils::{
@@ -559,10 +559,7 @@ fn update_state_from_storage<R: Read>(
 
     // update state snapshots count from storage.index
     for (id, snapshots_count) in document_snapshot_counts {
-        let head = state
-            .get_mut_document(id)
-            .context(anyhow!("Couldn't find document {id}"))?;
-        head.update_snapshots_count(snapshots_count);
+        state.update_snapshots_count(id, snapshots_count)?;
     }
 
     Ok(latest_snapshots_count)

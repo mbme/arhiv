@@ -259,6 +259,17 @@ impl BazaState {
         }
     }
 
+    pub(super) fn update_snapshots_count(&mut self, id: &Id, snapshots_count: usize) -> Result<()> {
+        let head = self.get_mut_document(id).expect("must find document");
+
+        if head.get_snapshots_count() != snapshots_count {
+            head.update_snapshots_count(snapshots_count);
+            self.modified = true;
+        }
+
+        Ok(())
+    }
+
     pub fn iter_documents(&self) -> impl Iterator<Item = &DocumentHead> {
         self.file.documents.values()
     }

@@ -101,6 +101,7 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
         documentType={document.documentType}
         updatedAt={document.updatedAt}
         backrefs={document.backrefs}
+        snapshotsCount={document.snapshotsCount}
       />
 
       {Boolean(lockError) && (

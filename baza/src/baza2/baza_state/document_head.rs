@@ -18,7 +18,7 @@ impl DocumentHead {
             Self {
                 original: HashSet::with_capacity(0),
                 staged: Some(document),
-                snapshots_count: 1,
+                snapshots_count: 0,
             }
         } else {
             Self {
@@ -101,6 +101,10 @@ impl DocumentHead {
 
     pub fn get_original_revisions(&self) -> impl Iterator<Item = &Revision> {
         self.original.iter().map(|doc| &doc.rev)
+    }
+
+    pub fn get_snapshots_count(&self) -> usize {
+        self.snapshots_count
     }
 
     pub fn create_key(&self) -> DocumentKey {
@@ -206,8 +210,8 @@ impl DocumentHead {
         }
     }
 
-    pub fn update_snapshots_count(&mut self, snapshots_count: usize) {
-        self.snapshots_count = snapshots_count + self.staged.as_ref().map_or(0, |_doc| 1);
+    pub(super) fn update_snapshots_count(&mut self, snapshots_count: usize) {
+        self.snapshots_count = snapshots_count;
     }
 
     pub fn iter_original_snapshots(&self) -> impl Iterator<Item = &Document> {
@@ -321,7 +325,7 @@ mod tests {
             assert!(!head.is_committed());
             assert!(head.is_staged());
             assert!(head.clone().insert_snapshot(doc_a3.clone()).is_err());
-            assert_eq!(head.snapshots_count, 1);
+            assert_eq!(head.snapshots_count, 0);
 
             head.modify(doc_a3.clone()).unwrap();
             assert!(head.is_new_document());
@@ -448,11 +452,11 @@ mod tests {
         {
             let doc_a1 = new_document(json!({}));
             let mut head = DocumentHead::new(doc_a1.clone());
-            assert_eq!(head.snapshots_count, 1);
+            assert_eq!(head.snapshots_count, 0);
 
             head.update_snapshots_count(3);
 
-            assert_eq!(head.snapshots_count, 4);
+            assert_eq!(head.snapshots_count, 3);
         }
     }
 }

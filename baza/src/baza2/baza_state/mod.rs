@@ -185,6 +185,10 @@ impl BazaState {
         Revision::compute_next_rev(all_revs, &self.file.instance_id)
     }
 
+    pub fn get_mut_document(&mut self, id: &Id) -> Option<&mut DocumentHead> {
+        self.file.documents.get_mut(id)
+    }
+
     pub fn get_document(&self, id: &Id) -> Option<&DocumentHead> {
         self.file.documents.get(id)
     }

@@ -9,6 +9,7 @@ use crate::entities::{Document, DocumentKey, DocumentType, Id, Revision, VectorC
 pub struct DocumentHead {
     original: HashSet<Document>,
     staged: Option<Document>,
+    snapshots_count: usize,
 }
 
 impl DocumentHead {
@@ -17,13 +18,23 @@ impl DocumentHead {
             Self {
                 original: HashSet::with_capacity(0),
                 staged: Some(document),
+                snapshots_count: 1,
             }
         } else {
             Self {
                 original: HashSet::from_iter([document]),
                 staged: None,
+                snapshots_count: 1,
             }
         }
+    }
+
+    #[cfg(test)]
+    pub fn new_with_snapshots_count(document: Document, snapshots_count: usize) -> Self {
+        let mut doc = DocumentHead::new(document);
+        doc.snapshots_count = snapshots_count;
+
+        doc
     }
 
     pub fn new_conflict(revisions: impl Iterator<Item = Document>) -> Result<Self> {
@@ -42,6 +53,8 @@ impl DocumentHead {
         );
 
         Ok(Self {
+            snapshots_count: original.len(),
+
             original,
             staged: None,
         })
@@ -193,6 +206,10 @@ impl DocumentHead {
         }
     }
 
+    pub fn update_snapshots_count(&mut self, snapshots_count: usize) {
+        self.snapshots_count = snapshots_count + self.staged.as_ref().map_or(0, |_doc| 1);
+    }
+
     pub fn iter_original_snapshots(&self) -> impl Iterator<Item = &Document> {
         self.original.iter()
     }
@@ -257,6 +274,7 @@ mod tests {
             assert!(head.is_unresolved_conflict());
             assert!(head.is_committed());
             assert!(!head.is_staged());
+            assert_eq!(head.snapshots_count, 2);
 
             let doc_c1 = doc_a1.clone().with_rev(json!({ "c": 1 }));
             assert!(head.clone().insert_snapshot(doc_c1).unwrap().is_conflict());
@@ -276,6 +294,7 @@ mod tests {
             assert!(!head.is_unresolved_conflict());
             assert!(head.is_committed());
             assert!(!head.is_staged());
+            assert_eq!(head.snapshots_count, 1);
 
             assert!(head
                 .clone()
@@ -302,6 +321,7 @@ mod tests {
             assert!(!head.is_committed());
             assert!(head.is_staged());
             assert!(head.clone().insert_snapshot(doc_a3.clone()).is_err());
+            assert_eq!(head.snapshots_count, 1);
 
             head.modify(doc_a3.clone()).unwrap();
             assert!(head.is_new_document());
@@ -315,6 +335,7 @@ mod tests {
             assert!(!head.is_committed());
             assert!(head.is_staged());
             assert!(head.clone().insert_snapshot(doc_a3.clone()).is_err());
+            assert_eq!(head.snapshots_count, 1);
 
             head.modify(doc_a3.clone()).unwrap();
             assert!(head.is_staged());
@@ -328,6 +349,7 @@ mod tests {
             assert!(!head.is_committed());
             assert!(head.is_staged());
             assert!(head.clone().insert_snapshot(doc_a3.clone()).is_err());
+            assert_eq!(head.snapshots_count, 2);
 
             head.modify(doc_a3.clone()).unwrap();
             assert!(head.is_resolved_conflict());
@@ -408,6 +430,29 @@ mod tests {
 
             head.modify(doc_a3.clone()).unwrap();
             assert_eq!(head.iter_all_snapshots().count(), 3);
+        }
+    }
+
+    #[test]
+    fn test_update_snapshots_count() {
+        {
+            let doc_a1 = new_document(json!({})).with_rev(json!({ "a": 1 }));
+            let mut head = DocumentHead::new(doc_a1.clone());
+            assert_eq!(head.snapshots_count, 1);
+
+            head.update_snapshots_count(3);
+
+            assert_eq!(head.snapshots_count, 3);
+        }
+
+        {
+            let doc_a1 = new_document(json!({}));
+            let mut head = DocumentHead::new(doc_a1.clone());
+            assert_eq!(head.snapshots_count, 1);
+
+            head.update_snapshots_count(3);
+
+            assert_eq!(head.snapshots_count, 4);
         }
     }
 }

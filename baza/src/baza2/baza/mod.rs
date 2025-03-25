@@ -9,7 +9,7 @@ use std::{
     time::Instant,
 };
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use thiserror::Error;
 
 use rs_utils::{
@@ -25,7 +25,7 @@ use crate::{
     },
     entities::{
         Document, DocumentKey, DocumentLock, DocumentLockKey, DocumentType, Id, InstanceId,
-        Revision,
+        LatestRevComputer, Revision,
     },
     schema::{Asset, AssetData, DataSchema, ASSET_TYPE},
 };
@@ -33,6 +33,8 @@ use crate::{
 pub use blobs::write_and_encrypt_blob;
 pub use stats::{BLOBSCount, DocumentsCount};
 pub use validator::ValidationError;
+
+use super::baza_storage::DocumentsIndex;
 
 #[derive(Error, Debug)]
 #[error(transparent)]
@@ -449,6 +451,32 @@ impl Drop for Baza {
     }
 }
 
+type DocumentsIndexMap<'i> = HashMap<&'i Id, HashSet<&'i Revision>>;
+
+fn create_index_map(index: &DocumentsIndex) -> DocumentsIndexMap {
+    let mut map: DocumentsIndexMap = HashMap::new();
+
+    // insert all ids & revs into the map
+    for key in index.iter() {
+        let entry = map.entry(&key.id).or_default();
+
+        entry.insert(&key.rev);
+    }
+
+    // calculate max rev per document
+    for revs in &mut map.values_mut() {
+        let mut latest_rev_computer = LatestRevComputer::new();
+
+        latest_rev_computer.update(revs.iter().copied());
+
+        let mut latest_revs = latest_rev_computer.get();
+
+        std::mem::swap(revs, &mut latest_revs);
+    }
+
+    map
+}
+
 fn update_state_from_storage<R: Read>(
     state: &mut BazaState,
     storage: &mut BazaStorage<R>,
@@ -466,7 +494,7 @@ fn update_state_from_storage<R: Read>(
     let mut latest_snapshot_keys: HashSet<DocumentKey> = HashSet::new();
 
     // compare storage index with state
-    for (id, index_max_revs) in storage.index.as_index_map() {
+    for (id, index_max_revs) in create_index_map(&storage.index) {
         let index_max_rev = index_max_revs
             .iter()
             .next()
@@ -520,6 +548,19 @@ fn update_state_from_storage<R: Read>(
         state.insert_snapshot(document)?;
 
         latest_snapshot_keys.remove(key);
+    }
+
+    let mut document_snapshot_counts: HashMap<&Id, usize> = HashMap::new();
+    for key in storage.index.iter() {
+        *document_snapshot_counts.entry(&key.id).or_insert(0) += 1;
+    }
+
+    // update state snapshots count from storage.index
+    for (id, snapshots_count) in document_snapshot_counts {
+        let head = state
+            .get_mut_document(id)
+            .context(anyhow!("Couldn't find document {id}"))?;
+        head.update_snapshots_count(snapshots_count);
     }
 
     Ok(latest_snapshots_count)
@@ -582,12 +623,12 @@ mod tests {
 
         assert_eq!(
             *state.get_document(&doc_b.id).unwrap(),
-            DocumentHead::new(doc_b1),
+            DocumentHead::new_with_snapshots_count(doc_b1, 2),
         );
 
         assert_eq!(
             *state.get_document(&doc_c.id).unwrap(),
-            DocumentHead::new(doc_c),
+            DocumentHead::new_with_snapshots_count(doc_c, 1),
         );
     }
 }

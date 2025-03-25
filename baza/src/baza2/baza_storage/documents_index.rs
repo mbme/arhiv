@@ -1,20 +1,13 @@
-use std::{
-    collections::{HashMap, HashSet},
-    fmt,
-};
+use std::fmt;
 
 use anyhow::{Context, Result};
 use ordermap::OrderSet;
 
 use rs_utils::LinesIndex;
 
-use crate::entities::{Id, LatestRevComputer, Revision};
-
 use super::DocumentKey;
 
 pub struct DocumentsIndex(OrderSet<DocumentKey>);
-
-pub type DocumentsIndexMap<'i> = HashMap<&'i Id, HashSet<&'i Revision>>;
 
 impl DocumentsIndex {
     pub fn parse(index: &LinesIndex) -> Result<Self> {
@@ -50,30 +43,6 @@ impl DocumentsIndex {
 
     pub fn append_keys(&mut self, more_keys: Vec<DocumentKey>) {
         self.0.extend(more_keys);
-    }
-
-    pub fn as_index_map(&self) -> DocumentsIndexMap {
-        let mut map: DocumentsIndexMap = HashMap::new();
-
-        // insert all ids & revs into the map
-        for key in &self.0 {
-            let entry = map.entry(&key.id).or_default();
-
-            entry.insert(&key.rev);
-        }
-
-        // calculate max rev per document
-        for revs in &mut map.values_mut() {
-            let mut latest_rev_computer = LatestRevComputer::new();
-
-            latest_rev_computer.update(revs.iter().copied());
-
-            let mut latest_rev = latest_rev_computer.get();
-
-            std::mem::swap(revs, &mut latest_rev);
-        }
-
-        map
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &DocumentKey> {

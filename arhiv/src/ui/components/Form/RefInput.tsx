@@ -1,13 +1,14 @@
 import { useRef, useState } from 'react';
 import { cx, NominalType } from 'utils';
 import { useSuspenseQuery } from 'utils/suspense';
-import { DocumentId, DocumentType } from 'dto';
+import { ASSET_DOCUMENT_TYPE, DocumentId, DocumentType } from 'dto';
 import { Ref as RefComponent } from 'components/Ref';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { Link } from 'components/Link';
 import { Button, IconButton } from 'components/Button';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
 import { AssetPreviewBlock, canPreview } from 'components/AssetPreview';
+import { AssetUrlDialog } from 'components/AssetUrlDialog';
 
 type AssetUrl = NominalType<string, 'AssetUrl'>;
 
@@ -60,6 +61,7 @@ export function RefInput({
   const [refs, setRefs] = useState(defaultValue);
 
   const [showDocumentPicker, setShowDocumentPicker] = useState(false);
+  const [showUrlPicker, setShowUrlPicker] = useState(false);
 
   const updateRefs = (newRefs: Ref[], triggerChange: boolean) => {
     if (newRefs.length > 1 && !multiple) {
@@ -87,6 +89,7 @@ export function RefInput({
   });
 
   const canAdd = refs.length === 0 || multiple;
+  const canAddUrls = documentTypes.includes(ASSET_DOCUMENT_TYPE) && canAdd;
 
   return (
     <FormField
@@ -162,6 +165,22 @@ export function RefInput({
         </Button>
       )}
 
+      {showUrlPicker && (
+        <AssetUrlDialog
+          onConfirm={(urlRaw) => {
+            const url = urlRaw as AssetUrl;
+
+            if (!refs.includes(url)) {
+              updateRefs([...refs, url], true);
+            }
+            setShowUrlPicker(false);
+          }}
+          onCancel={() => {
+            setShowUrlPicker(false);
+          }}
+        />
+      )}
+
       {refs.filter(isAssetUrl).map((assetUrl) => (
         <div key={assetUrl}>
           <div className="flex items-center gap-4">
@@ -182,6 +201,20 @@ export function RefInput({
           </div>
         </div>
       ))}
+
+      {canAddUrls && (
+        <Button
+          variant="text"
+          onClick={() => {
+            setShowUrlPicker(true);
+          }}
+          disabled={readonly || disabled}
+          busy={isUpdating}
+          leadingIcon="link"
+        >
+          Add url
+        </Button>
+      )}
     </FormField>
   );
 }

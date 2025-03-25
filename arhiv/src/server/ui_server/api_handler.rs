@@ -258,9 +258,11 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
             APIResponse::CreateAsset { id: asset.id }
         }
         APIRequest::Commit {} => {
-            let mut baza = arhiv.baza.open_mut()?;
+            {
+                let mut baza = arhiv.baza.open_mut()?;
 
-            baza.commit()?;
+                baza.commit()?;
+            }
             ctx.img_cache.remove_stale_files()?;
 
             APIResponse::Commit {}

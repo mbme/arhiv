@@ -18,7 +18,7 @@ codegen-units = 1
 panic = "unwind"
 
 [workspace]
-resolver = "2"
+resolver = "3"
 members = [
   "baza",
   "arhiv",

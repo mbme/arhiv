@@ -44,10 +44,10 @@ pub enum StagingError {
 }
 
 pub struct Baza {
-    pub(crate) state: BazaState,
-    pub(crate) state_file_modification_time: Timestamp,
-    pub(crate) paths: BazaPaths,
-    pub(crate) key: AgeKey,
+    state: BazaState,
+    state_file_modification_time: Timestamp,
+    paths: BazaPaths,
+    key: AgeKey,
 }
 
 impl Baza {

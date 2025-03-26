@@ -171,6 +171,14 @@ impl BazaManager {
             .map_err(|err| anyhow!("Failed to acquire write lock for the state: {err}"))
     }
 
+    #[cfg(test)]
+    pub fn clear_cached_baza(&self) -> Result<()> {
+        let mut state = self.acquire_state_write_lock()?;
+        state.baza.take();
+
+        Ok(())
+    }
+
     fn wait_for_file_lock(&self) -> Result<LockFile> {
         LockFile::wait_for_lock(&self.paths.lock_file)
     }
@@ -583,6 +591,8 @@ mod tests {
         baza.commit().unwrap();
         drop(baza);
 
+        manager.clear_cached_baza().unwrap();
+
         // Reopen storage and check the snapshot and BLOB are removed
         let baza = manager.open().unwrap();
         let doc_a2_key = baza.get_document(&asset_a1.id).unwrap().create_key();
@@ -618,6 +628,8 @@ mod tests {
 
         baza.commit().unwrap();
         drop(baza);
+
+        manager.clear_cached_baza().unwrap();
 
         let baza = manager.open().unwrap();
 

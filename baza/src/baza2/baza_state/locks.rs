@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use anyhow::{bail, ensure, Context, Result};
 
+use rs_utils::log;
+
 use crate::entities::{DocumentLock, DocumentLockKey, Id};
 
 use super::BazaState;
@@ -64,6 +66,7 @@ impl BazaState {
 
         self.file.locks.insert(id.clone(), lock);
         self.modified = true;
+        log::trace!("State modified: locked document");
 
         Ok(self.get_document_lock(id).expect("lock is present"))
     }
@@ -88,6 +91,7 @@ impl BazaState {
             .remove(id)
             .context("Expected locked document")?;
         self.modified = true;
+        log::trace!("State modified: unlocked document without key");
 
         Ok(())
     }

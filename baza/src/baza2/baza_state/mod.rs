@@ -107,7 +107,7 @@ impl BazaState {
         Ok(state)
     }
 
-    pub fn write(&mut self, writer: impl Write, key: AgeKey) -> Result<()> {
+    fn write(&mut self, writer: impl Write, key: AgeKey) -> Result<()> {
         let mut agegz_writer = AgeGzWriter::new(writer, key)?;
 
         serde_json::to_writer(&mut agegz_writer, &self.file)
@@ -220,6 +220,7 @@ impl BazaState {
         self.update_document_refs(&updated_head)?;
         self.file.documents.insert(id.clone(), updated_head);
         self.modified = true;
+        log::trace!("State modified: staged document");
 
         let document = self
             .get_document(&id)
@@ -245,6 +246,7 @@ impl BazaState {
         self.update_document_refs(&updated_head)?;
         self.file.documents.insert(id, updated_head);
         self.modified = true;
+        log::trace!("State modified: inserted snapshot");
 
         Ok(())
     }
@@ -263,6 +265,7 @@ impl BazaState {
         if head.get_snapshots_count() != snapshots_count {
             head.update_snapshots_count(snapshots_count);
             self.modified = true;
+            log::trace!("State modified: updated snapshots count");
         }
 
         Ok(())
@@ -314,6 +317,7 @@ impl BazaState {
         }
 
         self.modified = true;
+        log::trace!("State modified: reset document");
 
         Ok(())
     }
@@ -347,6 +351,7 @@ impl BazaState {
         }
 
         self.modified = true;
+        log::trace!("State modified: commit");
 
         Ok(())
     }

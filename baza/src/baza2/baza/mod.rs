@@ -126,9 +126,9 @@ impl Baza {
 
         if latest_snapshots_count > 0 {
             log::info!("Got {latest_snapshots_count} latest snapshots from the storage");
-
-            self.save_changes()?;
         }
+
+        self.save_changes()?;
 
         Ok(())
     }
@@ -410,8 +410,7 @@ impl Baza {
         fs_tx.move_to_backup(self.paths.state_file.clone())?;
 
         // write changes to state file
-        self.state
-            .write_to_file(&self.paths.state_file, self.key.clone())?;
+        self.save_changes()?;
 
         fs_tx.commit()?;
         log::info!("Commit: finished");

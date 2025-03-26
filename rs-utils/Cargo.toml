@@ -52,7 +52,7 @@ mime_guess = "2"
 infer = "0.19"
 url = "2.2.2"
 regex = "1.5.4"
-image = "0.25" # encode/decode/scale images, guess image types
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "webp"]} # encode/decode/scale images, guess image types
 shellexpand = "3.0.0"
 which = "7"
 nanoid = "0.4.0" # generate short unique global ids

@@ -179,7 +179,7 @@ pub fn get_linux_data_home() -> Option<String> {
     None
 }
 
-/// `$XDG_DOWNLOAD_DIR` or `$HOME/Downloads` FIXME ensure on Android
+/// `$XDG_DOWNLOAD_DIR` or `$HOME/Downloads`
 #[must_use]
 pub fn get_linux_downloads_dir() -> Option<String> {
     if let Some(path) = env::var_os("XDG_DOWNLOAD_DIR") {
@@ -245,8 +245,6 @@ pub fn move_file(src: impl AsRef<str>, dest: impl AsRef<str>) -> Result<()> {
     // if error is due to src and dest being on different file systems
     // then copy src into dest, and remove src
 
-    // FIXME check number of written bytes
-    // FIXME add sync_all() where apropriate
     fs::copy(src, dest).context("failed to copy file data")?;
 
     if let Err(err) = fs::remove_file(src) {

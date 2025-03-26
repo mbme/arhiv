@@ -74,17 +74,6 @@ impl DocumentData {
             .unwrap_or_else(|| panic!("str field '{field}' must be present"))
     }
 
-    #[must_use]
-    pub fn get_bool(&self, field: &str) -> Option<bool> {
-        // FIXME this must return a Result<Option<bool>>
-        self.get(field).and_then(serde_json::Value::as_bool)
-    }
-
-    #[must_use]
-    pub fn get_number(&self, field: &str) -> Option<u64> {
-        self.get(field).and_then(serde_json::Value::as_u64)
-    }
-
     pub fn get_ref_list(&self, field: &str) -> Result<Option<Vec<&str>>> {
         let value = if let Some(value) = self.get(field) {
             value

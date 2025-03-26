@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
 
 use rs_utils::generate_random_id;
@@ -17,8 +18,11 @@ impl TryInto<InstanceId> for String {
     type Error = anyhow::Error;
 
     fn try_into(self) -> Result<InstanceId, Self::Error> {
-        // FIXME check if valid id [a-z0-9]
-        Ok(InstanceId(self))
+        if InstanceId::is_valid_id(&self) {
+            Ok(InstanceId(self))
+        } else {
+            bail!("Invalid InstanceId: {self}")
+        }
     }
 }
 
@@ -41,9 +45,12 @@ impl InstanceId {
         InstanceId(generate_random_id())
     }
 
-    #[must_use]
-    pub fn from_string(instance_id: impl Into<String>) -> Self {
-        InstanceId(instance_id.into())
+    pub fn is_valid_id(value: &str) -> bool {
+        !value.is_empty() && value.chars().all(|c| c.is_ascii_alphanumeric())
+    }
+
+    pub fn from_string(value: impl Into<String>) -> Result<Self> {
+        value.into().try_into()
     }
 }
 

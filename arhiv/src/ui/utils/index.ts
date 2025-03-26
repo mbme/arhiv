@@ -169,7 +169,7 @@ export const throttle = <Args extends any[], F extends (...args: Args) => void>(
   return throttled as F;
 };
 
-// FIXME improve types, handle multiple fields
+// TODO improve types, handle multiple fields
 export function formDataToObject(fd: FormData): Record<string, string | undefined> {
   const result: Record<string, string> = {};
 

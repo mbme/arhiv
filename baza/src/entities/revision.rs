@@ -365,7 +365,7 @@ mod tests {
     fn test_revision_inc() -> Result<()> {
         {
             let mut rev = Revision::from_value(json!({}))?;
-            let instance_id = InstanceId::from_string("a");
+            let instance_id = InstanceId::from_string("a").unwrap();
 
             rev.inc(&instance_id);
 
@@ -374,7 +374,7 @@ mod tests {
 
         {
             let mut rev = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
-            let instance_id = InstanceId::from_string("a");
+            let instance_id = InstanceId::from_string("a").unwrap();
 
             rev.inc(&instance_id);
 
@@ -567,7 +567,7 @@ mod tests {
             let refs = [rev1.clone(), rev2.clone(), rev3.clone()];
 
             assert_eq!(
-                Revision::compute_next_rev(refs.iter(), &InstanceId::from_string("a")),
+                Revision::compute_next_rev(refs.iter(), &InstanceId::from_string("a").unwrap()),
                 Revision::from_value(json!({ "a": 3, "b": 2 }))?
             );
         }
@@ -576,7 +576,7 @@ mod tests {
             let refs = [rev1.clone(), rev2.clone(), rev3.clone()];
 
             assert_eq!(
-                Revision::compute_next_rev(refs.iter(), &InstanceId::from_string("c")),
+                Revision::compute_next_rev(refs.iter(), &InstanceId::from_string("c").unwrap()),
                 Revision::from_value(json!({ "a": 2, "b": 2, "c": 1 }))?
             );
         }
@@ -587,7 +587,7 @@ mod tests {
             let refs = [rev1.clone(), rev2.clone(), rev3.clone(), rev4.clone()];
 
             assert_eq!(
-                Revision::compute_next_rev(refs.iter(), &InstanceId::from_string("c")),
+                Revision::compute_next_rev(refs.iter(), &InstanceId::from_string("c").unwrap()),
                 Revision::from_value(json!({ "a": 2, "b": 2, "c": 3 }))?
             );
         }

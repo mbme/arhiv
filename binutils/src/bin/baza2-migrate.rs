@@ -164,7 +164,7 @@ fn get_instance_id(db_file_path: &str) -> Result<InstanceId> {
         .query_row([], |row| row.get(0))
         .context("Failed to query instance_id")?;
 
-    Ok(InstanceId::from_string(instance_id))
+    InstanceId::from_string(instance_id)
 }
 
 fn prompt_password(min_length: usize) -> Result<SecretString> {

@@ -72,7 +72,7 @@ impl BazaState {
     #[cfg(test)]
     pub fn new_test_state() -> Self {
         Self::new(
-            InstanceId::from_string("test"),
+            InstanceId::from_string("test").unwrap(),
             BazaInfo::new_test_info(),
             DataSchema::new_test_schema(),
             HashMap::new(),

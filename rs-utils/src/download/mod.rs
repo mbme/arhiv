@@ -40,7 +40,7 @@ impl Download {
         let url_hash = get_string_hash_sha256(url);
         let completed_file_path = format!("{downloads_dir}/{url_hash}");
 
-        // FIXME better check if download is complete
+        // TODO better check if download is complete
         ensure!(
             !file_exists(&completed_file_path)?,
             "Completed download file {} already exists",

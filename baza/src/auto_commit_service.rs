@@ -3,7 +3,7 @@ use std::{sync::Arc, time::Duration};
 use anyhow::Result;
 use tokio::{task::JoinHandle, time::interval};
 
-use rs_utils::{log, now, FakeTime, Timestamp, MIN_TIMESTAMP};
+use rs_utils::{log, FakeTime, Timestamp};
 
 use crate::baza2::BazaManager;
 
@@ -24,7 +24,7 @@ impl AutoCommitService {
             baza_manager,
             auto_commit_timeout,
             fake_time: None,
-            last_known_modification_time: MIN_TIMESTAMP,
+            last_known_modification_time: Timestamp::MIN,
         }
     }
 
@@ -38,7 +38,7 @@ impl AutoCommitService {
         if let Some(ref fake_time) = self.fake_time {
             fake_time.now()
         } else {
-            now()
+            Timestamp::now()
         }
     }
 
@@ -88,12 +88,12 @@ impl AutoCommitService {
 
         self.last_known_modification_time = state_modification_time;
 
-        let time_since_last_update = (self.get_time() - state_modification_time).to_std()?;
+        let time_since_last_update = self.get_time() - state_modification_time;
 
         if time_since_last_update > self.auto_commit_timeout {
             log::debug!(
                 "Auto-commit: {} seconds elapsed since last update",
-                time_since_last_update.as_secs()
+                time_since_last_update.whole_seconds()
             );
 
             let mut baza = self.baza_manager.open_mut()?;

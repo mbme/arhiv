@@ -18,8 +18,7 @@ use baza::{
 };
 use rs_utils::{
     create_dir_if_not_exist, create_file_reader, create_file_writer, file_exists, format_bytes,
-    get_file_name, image::scale_image_file, list_files, log, now, num_cpus, read_all, Timestamp,
-    MIN_TIMESTAMP,
+    get_file_name, image::scale_image_file, list_files, log, num_cpus, read_all, Timestamp,
 };
 
 #[derive(Deserialize, Clone)]
@@ -121,7 +120,7 @@ impl ScaledImagesCache {
             let access_time = metadata
                 .accessed()
                 .or_else(|_| metadata.created())
-                .map_or(MIN_TIMESTAMP, |time| time.into());
+                .map_or(Timestamp::MIN, |time| time.into());
 
             usage_info.insert(file_name, ImageInfo { access_time, size });
         }
@@ -286,7 +285,7 @@ impl ScaledImagesCache {
             usage_info.insert(
                 cache_file_name.clone(),
                 ImageInfo {
-                    access_time: now(),
+                    access_time: Timestamp::now(),
                     size: data.len(),
                 },
             );

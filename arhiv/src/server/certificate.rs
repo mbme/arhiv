@@ -1,6 +1,8 @@
 use anyhow::Result;
 
-use rs_utils::{crypto_key::CryptoKey, now, ExposeSecret, SecretBytes, SelfSignedCertificate};
+use rs_utils::{
+    crypto_key::CryptoKey, ExposeSecret, SecretBytes, SelfSignedCertificate, Timestamp,
+};
 
 pub fn generate_ui_crypto_key(certificate_private_key: SecretBytes) -> CryptoKey {
     CryptoKey::derive_subkey(
@@ -11,7 +13,7 @@ pub fn generate_ui_crypto_key(certificate_private_key: SecretBytes) -> CryptoKey
 }
 
 pub fn generate_certificate() -> Result<SelfSignedCertificate> {
-    let timestamp = now();
+    let timestamp = Timestamp::now();
     let certificate_id = format!("Arhiv {timestamp}");
 
     SelfSignedCertificate::new_x509(&certificate_id)

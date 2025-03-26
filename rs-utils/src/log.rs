@@ -1,8 +1,9 @@
 use std::panic;
 
+use time::{macros::format_description, UtcOffset};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{
-    fmt::{self, format::FmtSpan, time::ChronoLocal},
+    fmt::{self, format::FmtSpan, time::OffsetTime},
     layer::SubscriberExt,
     util::SubscriberInitExt,
 };
@@ -29,6 +30,9 @@ pub fn setup_android_logger(_package: &str) {
 }
 
 fn setup_logger_with_level(log_level: LevelFilter) {
+    let offset = UtcOffset::current_local_offset().expect("should get local offset!");
+    let timer = OffsetTime::new(offset, format_description!("[month repr:short] [day padding:zero] [year] [hour padding:zero]:[minute padding:zero]:[second padding:zero]"));
+
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -37,7 +41,7 @@ fn setup_logger_with_level(log_level: LevelFilter) {
         .with(
             fmt::Layer::new()
                 .compact()
-                .with_timer(ChronoLocal::new("[%Y-%m-%d][%H:%M:%S]".to_string()))
+                .with_timer(timer)
                 .with_span_events(FmtSpan::CLOSE)
                 .with_writer(std::io::stderr),
         )

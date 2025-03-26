@@ -3,8 +3,8 @@ use std::{fs, path::Path};
 use anyhow::{ensure, Result};
 
 use rs_utils::{
-    create_dir_if_not_exist, ensure_dir_exists, file_exists, format_time, get_file_name,
-    list_files, log, now,
+    create_dir_if_not_exist, ensure_dir_exists, file_exists, get_file_name, list_files, log,
+    Timestamp,
 };
 
 use crate::baza2::BazaManager;
@@ -30,7 +30,7 @@ impl BazaManager {
         let data_dir = format!("{backup_dir}/data");
         create_dir_if_not_exist(&data_dir)?;
 
-        let now = format_time(now(), "%Y-%m-%d_%H-%M-%S");
+        let now = Timestamp::now().format_time("[year]-[month padding:zero]-[day padding:zero]_[hour padding:zero]-[minute padding:zero]-[second padding:zero]").expect("must be valid format");
 
         // copy key file as [timestamp].key.age
         let backup_key_file = format!("{backup_dir}/{now}.{}", self.paths.key_file_name);

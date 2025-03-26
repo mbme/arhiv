@@ -12,7 +12,7 @@ use baza::{
     entities::{Document, DocumentType, InstanceId, Revision},
     schema::ASSET_TYPE,
 };
-use rs_utils::{age::AgeKey, list_files, log::setup_logger, ExposeSecret, SecretString};
+use rs_utils::{age::AgeKey, list_files, log::setup_logger, ExposeSecret, SecretString, Timestamp};
 
 // DB schema:
 // CREATE TABLE kvs (
@@ -121,7 +121,11 @@ fn extract_document(row: &Row) -> Result<Document> {
             Revision::from_value(rev).context("failed to parse document rev")?
         },
         document_type: DocumentType::new(document_type),
-        updated_at: row.get("updated_at")?,
+        updated_at: {
+            let time_str: String = row.get("updated_at")?;
+
+            Timestamp::parse_iso8601_time(&time_str)?
+        },
         data: {
             let data: Value = row.get("data")?;
 

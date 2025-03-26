@@ -1,27 +1,78 @@
-use std::{sync::Mutex, time::Duration};
+use std::{
+    fmt::Display,
+    ops::{Add, Sub},
+    sync::Mutex,
+    time::{Duration, SystemTime},
+};
 
-use chrono::{DateTime, Local, Utc};
+use anyhow::{anyhow, Context, Result};
 use futures::Future;
+use serde::{Deserialize, Serialize};
+use time::{format_description, OffsetDateTime};
 use tokio::{
     task::JoinHandle,
     time::{sleep, Instant},
 };
 
-pub const MIN_TIMESTAMP: Timestamp = DateTime::<Utc>::MIN_UTC;
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq, PartialOrd, Eq, Ord, Hash)]
+#[serde(transparent)]
+pub struct Timestamp(#[serde(with = "time::serde::rfc3339")] OffsetDateTime);
 
-pub type Timestamp = DateTime<Utc>;
+impl Timestamp {
+    pub const MIN: Timestamp = Timestamp(OffsetDateTime::UNIX_EPOCH);
 
-pub fn now() -> Timestamp {
-    Utc::now()
+    pub fn now() -> Timestamp {
+        Timestamp(OffsetDateTime::now_local().expect("Must create local timestamp"))
+    }
+
+    pub fn parse_iso8601_time(iso_str: &str) -> Result<Timestamp> {
+        let ts = OffsetDateTime::parse(iso_str, &format_description::well_known::Rfc3339)
+            .context("Failed to parse time string as ISO8601")?;
+
+        Ok(Timestamp(ts))
+    }
+
+    pub fn format_time(&self, fmt: &str) -> Result<String> {
+        let format = format_description::parse(fmt)
+            .context(anyhow!("Failed to parse format description {fmt}"))?;
+
+        self.0
+            .format(&format)
+            .context(anyhow!("Failed to format timestamp with {fmt}"))
+    }
+
+    // Mon Oct 23 11:23:39 2023 local time
+    pub fn default_date_time_format(&self) -> String {
+        self.format_time("[weekday repr:short] [month repr:short] [day padding:space] [hour]:[minute]:[second] [year]").expect("default date time format must be valid")
+    }
 }
 
-pub fn format_time(timestamp: Timestamp, fmt: &str) -> String {
-    timestamp.with_timezone(&Local).format(fmt).to_string()
+impl Add<Duration> for Timestamp {
+    type Output = Timestamp;
+
+    fn add(self, rhs: Duration) -> Self::Output {
+        Timestamp(self.0 + rhs)
+    }
 }
 
-// Mon Oct 23 11:23:39 2023 local time
-pub fn default_date_time_format(timestamp: Timestamp) -> String {
-    format_time(timestamp, "%a %b %e %T %Y")
+impl Sub<Timestamp> for Timestamp {
+    type Output = time::Duration;
+
+    fn sub(self, rhs: Timestamp) -> Self::Output {
+        self.0 - rhs.0
+    }
+}
+
+impl From<SystemTime> for Timestamp {
+    fn from(value: SystemTime) -> Self {
+        Timestamp(value.into())
+    }
+}
+
+impl Display for Timestamp {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
 // For use in tests, compatible with tokio::time::advance()
@@ -34,7 +85,7 @@ pub struct FakeTime {
 impl FakeTime {
     pub fn new() -> Self {
         FakeTime {
-            start_time: now(),
+            start_time: Timestamp::now(),
             tokio_instant: Instant::now(),
         }
     }

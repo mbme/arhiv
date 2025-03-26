@@ -8,7 +8,7 @@ use baza::{
     entities::Revision,
     AutoCommitService, DEV_MODE,
 };
-use rs_utils::{default_date_time_format, get_crate_version, log, Timestamp};
+use rs_utils::{get_crate_version, log, Timestamp};
 
 use crate::ServerInfo;
 
@@ -106,7 +106,8 @@ impl fmt::Display for Status<'_> {
             f,
             " Last update time: {}",
             self.last_update_time
-                .map_or("NEVER".to_string(), default_date_time_format)
+                .map_or("NEVER".to_string(), |timestamp| timestamp
+                    .default_date_time_format())
         )?;
 
         writeln!(f)?;

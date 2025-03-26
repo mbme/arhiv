@@ -3,7 +3,7 @@ use std::fmt;
 use anyhow::{Context, Result};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use rs_utils::{now, Timestamp};
+use rs_utils::Timestamp;
 
 use super::{DocumentData, DocumentKey, DocumentType, Id, Revision, ERASED_DOCUMENT_TYPE};
 
@@ -24,7 +24,7 @@ impl<D> Document<D> {
             id: Id::new(),
             rev: Revision::initial(),
             document_type,
-            updated_at: now(),
+            updated_at: Timestamp::now(),
             data,
         }
     }
@@ -82,7 +82,7 @@ impl Document {
     pub fn erase(&mut self) {
         self.document_type = DocumentType::erased();
         self.data = DocumentData::new();
-        self.updated_at = now();
+        self.updated_at = Timestamp::now();
     }
 
     pub(crate) fn stage(&mut self) {

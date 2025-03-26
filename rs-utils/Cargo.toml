@@ -14,7 +14,7 @@ harness = false
 
 [dependencies]
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "chrono"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "local-time"] }
 
 anyhow.workspace = true
 
@@ -31,8 +31,9 @@ axum-server = { version= "0.7", features = ["tls-rustls-no-provider"]}
 
 bytes.workspace = true
 rand.workspace = true
-chrono.workspace = true
 ordermap.workspace = true
+
+time = { version = "0.3", features = ["formatting", "serde", "local-offset"] }
 
 reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls-webpki-roots"] }
 

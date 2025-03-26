@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use rs_utils::{default_date_time_format, generate_random_id, now, Timestamp};
+use rs_utils::{generate_random_id, Timestamp};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct DocumentLockKey(String);
@@ -36,7 +36,7 @@ impl DocumentLock {
     pub fn new(reason: String) -> Self {
         DocumentLock {
             key: DocumentLockKey::new_random_key(),
-            lock_time: now(),
+            lock_time: Timestamp::now(),
             reason,
         }
     }
@@ -57,7 +57,7 @@ impl Display for DocumentLock {
         write!(
             f,
             "{} [{}]: {}",
-            default_date_time_format(self.lock_time),
+            self.lock_time.default_date_time_format(),
             self.key,
             self.reason
         )

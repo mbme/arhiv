@@ -13,11 +13,7 @@ use baza::{
     entities::{Document, DocumentData, DocumentLockKey, DocumentType, Id},
     DEV_MODE,
 };
-use rs_utils::{
-    get_crate_version, into_absolute_path,
-    log::{self, setup_panic_hook},
-    shutdown_signal, SecretString,
-};
+use rs_utils::{get_crate_version, into_absolute_path, log, shutdown_signal, SecretString};
 
 #[derive(Parser, Debug)]
 #[clap(version = get_crate_version(), about, long_about = None, arg_required_else_help = true, disable_help_subcommand = true)]
@@ -129,7 +125,6 @@ fn main() {
         2 => log::setup_debug_logger(),
         _ => log::setup_trace_logger(),
     };
-    setup_panic_hook();
 
     let worker_threads_count = Arhiv::optimal_number_of_worker_threads();
     log::debug!("Using {worker_threads_count} worker threads");

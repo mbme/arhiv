@@ -18,7 +18,7 @@ clap = { version = "4", features = ["derive", "env"] }
 clap_complete = "4.0"
 dialoguer = { version = "0.11", default-features = false, features = ["password"] }
 
-rusqlite = { version = "0.34", features = ["chrono", "serde_json", "collation"] } # for baza2 migration tool
+rusqlite = { version = "0.34", features = ["serde_json", "collation"] } # for baza2 migration tool
 
 serde_json.workspace = true
 

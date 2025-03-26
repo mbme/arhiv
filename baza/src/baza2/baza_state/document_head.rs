@@ -13,25 +13,29 @@ pub struct DocumentHead {
 }
 
 impl DocumentHead {
-    pub fn new(document: Document) -> Self {
-        if document.is_staged() {
-            Self {
-                original: HashSet::with_capacity(0),
-                staged: Some(document),
-                snapshots_count: 0,
-            }
-        } else {
-            Self {
-                original: HashSet::from_iter([document]),
-                staged: None,
-                snapshots_count: 1,
-            }
+    pub fn new_staged(mut document: Document) -> Self {
+        document.stage(); // ensure document is staged
+
+        Self {
+            original: HashSet::with_capacity(0),
+            staged: Some(document),
+            snapshots_count: 0,
         }
+    }
+
+    pub fn new_committed(document: Document) -> Result<Self> {
+        ensure!(document.is_committed(), "Document must be committed");
+
+        Ok(Self {
+            original: HashSet::from_iter([document]),
+            staged: None,
+            snapshots_count: 1,
+        })
     }
 
     #[cfg(test)]
     pub fn new_with_snapshots_count(document: Document, snapshots_count: usize) -> Self {
-        let mut doc = DocumentHead::new(document);
+        let mut doc = DocumentHead::new_committed(document).expect("support only committed docs");
         doc.snapshots_count = snapshots_count;
 
         doc
@@ -170,7 +174,7 @@ impl DocumentHead {
 
         staged_document.rev = new_rev;
 
-        Ok(DocumentHead::new(staged_document))
+        DocumentHead::new_committed(staged_document)
     }
 
     pub fn modify(&mut self, mut new_document: Document) -> Result<()> {
@@ -198,7 +202,7 @@ impl DocumentHead {
         ensure!(!self.is_staged(), "Can't insert into staged document");
 
         match self.get_revision().compare_vector_clocks(&new_document.rev) {
-            VectorClockOrder::Before => Ok(DocumentHead::new(new_document)),
+            VectorClockOrder::Before => DocumentHead::new_committed(new_document),
             VectorClockOrder::Concurrent => {
                 let inserted = self.original.insert(new_document);
                 ensure!(inserted, "Conflict already contains this document");
@@ -260,6 +264,7 @@ impl fmt::Display for DocumentHead {
 
 #[cfg(test)]
 mod tests {
+    use rs_utils::Timestamp;
     use serde_json::json;
 
     use crate::entities::{new_document, Revision};
@@ -267,7 +272,7 @@ mod tests {
     use super::DocumentHead;
 
     #[test]
-    fn test_document_head() {
+    fn test_state_transitions() {
         let doc_a1 = new_document(json!({})).with_rev(json!({ "a": 1 }));
         let doc_a2 = doc_a1.clone().with_rev(json!({ "b": 1 }));
         let doc_a3 = doc_a1.clone().with_rev(json!({ "a": 1, "b": 1, "c": 1 }));
@@ -294,7 +299,7 @@ mod tests {
         }
 
         {
-            let mut head = DocumentHead::new(doc_a1.clone());
+            let mut head = DocumentHead::new_committed(doc_a1.clone()).unwrap();
             assert!(!head.is_unresolved_conflict());
             assert!(head.is_committed());
             assert!(!head.is_staged());
@@ -320,7 +325,7 @@ mod tests {
         {
             let mut doc = doc_a1.clone();
             doc.stage();
-            let mut head = DocumentHead::new(doc);
+            let mut head = DocumentHead::new_staged(doc);
             assert!(head.is_new_document());
             assert!(!head.is_committed());
             assert!(head.is_staged());
@@ -332,7 +337,7 @@ mod tests {
         }
 
         {
-            let mut head = DocumentHead::new(doc_a1.clone());
+            let mut head = DocumentHead::new_committed(doc_a1.clone()).unwrap();
             head.modify(doc_a2.clone()).unwrap();
 
             assert!(!head.is_unresolved_conflict());
@@ -383,7 +388,7 @@ mod tests {
         }
 
         {
-            let mut head = DocumentHead::new(doc_a1.clone());
+            let mut head = DocumentHead::new_committed(doc_a1.clone()).unwrap();
             head.modify(doc_a2.clone()).unwrap();
             assert!(!head.is_committed());
 
@@ -396,12 +401,12 @@ mod tests {
             let mut doc_a1 = doc_a1.clone();
             doc_a1.erase();
 
-            let mut head = DocumentHead::new(doc_a1);
+            let mut head = DocumentHead::new_committed(doc_a1).unwrap();
             assert!(head.modify(doc_a2.clone()).is_err());
         }
 
         {
-            let mut head = DocumentHead::new(doc_a1.clone());
+            let mut head = DocumentHead::new_committed(doc_a1.clone()).unwrap();
 
             let mut doc_a2 = doc_a2.clone();
             doc_a2.erase();
@@ -420,7 +425,7 @@ mod tests {
         let doc_a3 = doc_a1.clone().with_rev(json!({ "a": 1, "b": 1, "c": 1 }));
 
         {
-            let mut head = DocumentHead::new(doc_a1.clone());
+            let mut head = DocumentHead::new_committed(doc_a1.clone()).unwrap();
             assert_eq!(head.iter_all_snapshots().count(), 1);
 
             head.modify(doc_a2.clone()).unwrap();
@@ -441,7 +446,7 @@ mod tests {
     fn test_update_snapshots_count() {
         {
             let doc_a1 = new_document(json!({})).with_rev(json!({ "a": 1 }));
-            let mut head = DocumentHead::new(doc_a1.clone());
+            let mut head = DocumentHead::new_committed(doc_a1.clone()).unwrap();
             assert_eq!(head.snapshots_count, 1);
 
             head.update_snapshots_count(3);
@@ -451,12 +456,23 @@ mod tests {
 
         {
             let doc_a1 = new_document(json!({}));
-            let mut head = DocumentHead::new(doc_a1.clone());
+            let mut head = DocumentHead::new_staged(doc_a1.clone());
             assert_eq!(head.snapshots_count, 0);
 
             head.update_snapshots_count(3);
 
             assert_eq!(head.snapshots_count, 3);
         }
+    }
+
+    #[test]
+    fn test_modify_updates_timestamp() {
+        let mut doc_a1 = new_document(json!({})).with_rev(json!({ "a": 1 }));
+        doc_a1.updated_at = Timestamp::MIN;
+        let mut head = DocumentHead::new_committed(doc_a1.clone()).unwrap();
+
+        head.modify(doc_a1.clone()).unwrap();
+
+        assert_ne!(doc_a1.updated_at, head.get_single_document().updated_at);
     }
 }

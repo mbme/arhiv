@@ -87,6 +87,7 @@ impl Document {
 
     pub(crate) fn stage(&mut self) {
         self.rev = Revision::initial();
+        self.updated_at = Timestamp::now();
     }
 
     pub fn convert<D: DeserializeOwned>(self) -> Result<Document<D>> {

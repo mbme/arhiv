@@ -201,7 +201,7 @@ impl BazaState {
 
     pub fn stage_document(
         &mut self,
-        mut document: Document,
+        document: Document,
         lock_key: &Option<DocumentLockKey>,
     ) -> Result<&Document> {
         let id = document.id.clone();
@@ -210,13 +210,11 @@ impl BazaState {
 
         let current_value = self.file.documents.remove(&id);
 
-        document.stage();
-
         let updated_head = if let Some(mut document_head) = current_value {
             document_head.modify(document)?;
             document_head
         } else {
-            DocumentHead::new(document)
+            DocumentHead::new_staged(document)
         };
 
         self.update_document_refs(&updated_head)?;
@@ -241,7 +239,7 @@ impl BazaState {
         let updated_head = if let Some(document_head) = current_value {
             document_head.insert_snapshot(document)?
         } else {
-            DocumentHead::new(document)
+            DocumentHead::new_committed(document)?
         };
 
         self.update_document_refs(&updated_head)?;

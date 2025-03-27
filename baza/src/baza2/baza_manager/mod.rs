@@ -124,11 +124,11 @@ impl BazaManager {
             "State file already exists"
         );
 
-        let _lock = self.wait_for_file_lock()?;
+        let lock = self.wait_for_file_lock()?;
         let mut state = self.acquire_state_write_lock()?;
 
         let key_file_key = AgeKey::from_password(password)?;
-        let key = self.generate_key_file(key_file_key)?;
+        let key = self.generate_key_file(key_file_key, &lock)?;
 
         let info = BazaInfo {
             data_version: self.schema.get_latest_data_version(),

@@ -137,6 +137,10 @@ impl BazaPaths {
     pub fn read_state_file_modification_time(&self) -> Result<Timestamp> {
         get_file_modification_time(&self.state_file)
     }
+
+    pub fn storage_main_db_file_exists(&self) -> Result<bool> {
+        file_exists(&self.storage_main_db_file)
+    }
 }
 
 impl Display for BazaPaths {

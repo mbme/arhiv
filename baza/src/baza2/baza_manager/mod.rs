@@ -1,95 +1,22 @@
-use std::{
-    io::{Read, Write},
-    ops::{Deref, DerefMut},
-    sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
-    time::Instant,
-};
+mod keys;
+mod manager_state;
+mod migration;
+
+use std::sync::RwLock;
 
 use anyhow::{anyhow, ensure, Context, Result};
 
-use rs_utils::{
-    age::{
-        encrypt_and_write, encrypt_and_write_file, read_and_decrypt, read_and_decrypt_file, AgeKey,
-        AgeReader, AgeWriter,
-    },
-    file_exists, log, ExposeSecret, FsTransaction, LockFile, SecretString, Timestamp,
-};
+use rs_utils::{age::AgeKey, log, FsTransaction, LockFile, SecretString, Timestamp};
 
-use crate::{
-    entities::{Document, Id, InstanceId},
-    schema::DataSchema,
-    DocumentExpert,
-};
+use crate::{schema::DataSchema, DocumentExpert};
 
 use super::{
-    baza::write_and_encrypt_blob,
     baza_paths::BazaPaths,
-    baza_storage::{
-        create_container_patch, create_empty_storage_file, merge_storages_to_file, STORAGE_VERSION,
-    },
-    Baza, BazaInfo, BazaStorage,
+    baza_storage::{create_empty_storage_file, merge_storages_to_file, STORAGE_VERSION},
+    BazaInfo, BazaStorage,
 };
 
-#[derive(Default)]
-struct BazaManagerState {
-    key: Option<AgeKey>,
-    baza: Option<Baza>,
-}
-
-impl BazaManagerState {
-    fn must_get_baza(&self) -> &Baza {
-        self.baza.as_ref().expect("Baza must be initialized")
-    }
-
-    fn must_get_mut_baza(&mut self) -> &mut Baza {
-        self.baza.as_mut().expect("Baza must be initialized")
-    }
-
-    fn get_key(&self) -> Result<&AgeKey> {
-        self.key.as_ref().context("Key is missing")
-    }
-
-    fn lock(&mut self) {
-        self.key.take();
-        self.baza.take();
-    }
-
-    fn unlock(&mut self, key: AgeKey) {
-        self.key.replace(key);
-        self.baza.take();
-    }
-}
-
-pub struct BazaReadGuard<'g> {
-    state: RwLockReadGuard<'g, BazaManagerState>,
-}
-
-impl Deref for BazaReadGuard<'_> {
-    type Target = Baza;
-
-    fn deref(&self) -> &Self::Target {
-        self.state.must_get_baza()
-    }
-}
-
-pub struct BazaWriteGuard<'g> {
-    state: RwLockWriteGuard<'g, BazaManagerState>,
-    _lock: LockFile,
-}
-
-impl Deref for BazaWriteGuard<'_> {
-    type Target = Baza;
-
-    fn deref(&self) -> &Self::Target {
-        self.state.must_get_baza()
-    }
-}
-
-impl DerefMut for BazaWriteGuard<'_> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.state.must_get_mut_baza()
-    }
-}
+use self::manager_state::BazaManagerState;
 
 pub struct BazaManager {
     schema: DataSchema,
@@ -115,92 +42,16 @@ impl BazaManager {
         }
     }
 
-    fn maybe_read_state(&self) -> Result<()> {
-        ensure!(self.storage_exists()?, "Storage doesn't exist");
-
-        if let Some(baza) = self.acquire_state_read_lock()?.baza.as_ref() {
-            if baza.is_up_to_date_with_file()? {
-                log::trace!("Baza state is up to date with file");
-                return Ok(());
-            } else {
-                log::info!("Baza state is out of date with file, re-reading");
-            }
-        }
-
-        log::info!("Opening baza {}", self.paths);
-
-        let mut manager_state = self.acquire_state_write_lock()?;
-
-        let _lock = self.wait_for_file_lock()?;
-
-        let key = manager_state.get_key()?;
-
-        self.merge_storages(key)?;
-
-        let mut baza = if self.paths.state_file_exists()? {
-            Baza::read(key.clone(), self.paths.clone(), self.schema.clone())?
-        } else {
-            Baza::create(
-                InstanceId::generate(),
-                key.clone(),
-                self.paths.clone(),
-                self.schema.clone(),
-            )?
-        };
-
-        if !baza.has_staged_documents() {
-            baza.update_state_from_storage()?;
-            baza.remove_unused_storage_blobs()?;
-        }
-
-        manager_state.baza = Some(baza);
-
-        Ok(())
-    }
-
-    fn acquire_state_read_lock(&self) -> Result<RwLockReadGuard<'_, BazaManagerState>> {
-        log::trace!("Acquiring state read lock");
-
-        self.state
-            .read()
-            .map_err(|err| anyhow!("Failed to acquire read lock for the state: {err}"))
-    }
-
-    fn acquire_state_write_lock(&self) -> Result<RwLockWriteGuard<'_, BazaManagerState>> {
-        log::trace!("Acquiring state write lock");
-
-        self.state
-            .write()
-            .map_err(|err| anyhow!("Failed to acquire write lock for the state: {err}"))
-    }
-
     #[cfg(test)]
     pub fn clear_cached_baza(&self) -> Result<()> {
         let mut state = self.acquire_state_write_lock()?;
-        state.baza.take();
+        state.clear_cached_baza();
 
         Ok(())
     }
 
     fn wait_for_file_lock(&self) -> Result<LockFile> {
         LockFile::wait_for_lock(&self.paths.lock_file)
-    }
-
-    pub fn open(&self) -> Result<BazaReadGuard<'_>> {
-        self.maybe_read_state()?;
-
-        let state = self.acquire_state_read_lock()?;
-
-        Ok(BazaReadGuard { state })
-    }
-
-    pub fn open_mut(&self) -> Result<BazaWriteGuard<'_>> {
-        self.maybe_read_state()?;
-
-        let lock = self.wait_for_file_lock()?;
-        let state = self.acquire_state_write_lock()?;
-
-        Ok(BazaWriteGuard { _lock: lock, state })
     }
 
     pub fn storage_exists(&self) -> Result<bool> {
@@ -291,214 +142,6 @@ impl BazaManager {
             "Created new main storage file {}",
             self.paths.storage_main_db_file
         );
-
-        Ok(())
-    }
-
-    fn generate_key_file(&self, key_file_key: AgeKey) -> Result<AgeKey> {
-        let key_file = AgeKey::generate_age_x25519_key();
-
-        encrypt_and_write_file(
-            &self.paths.key_file,
-            key_file_key,
-            key_file.serialize().expose_secret().as_bytes(),
-            true,
-        )?;
-
-        log::debug!("Generated new key file {}", self.paths.key_file);
-
-        Ok(key_file)
-    }
-
-    pub fn unlock(&self, password: SecretString) -> Result<()> {
-        log::info!("Unlocking baza using key file {}", self.paths.key_file);
-
-        let _lock = self.wait_for_file_lock()?;
-        let mut state = self.acquire_state_write_lock()?;
-
-        let key_file_key = AgeKey::from_password(password)?;
-
-        let key = read_and_decrypt_file(&self.paths.key_file, key_file_key, true)?;
-
-        let key = AgeKey::from_age_x25519_key(key.try_into()?)?;
-
-        state.unlock(key);
-
-        Ok(())
-    }
-
-    pub fn lock(&self) -> Result<()> {
-        log::info!("Locking baza");
-
-        let mut state = self.acquire_state_write_lock()?;
-        state.lock();
-
-        Ok(())
-    }
-
-    pub fn is_locked(&self) -> bool {
-        !self.is_unlocked()
-    }
-
-    pub fn is_unlocked(&self) -> bool {
-        let state = self
-            .acquire_state_read_lock()
-            .expect("Must acquire state read lock");
-
-        state.key.is_some()
-    }
-
-    pub fn change_key_file_password(
-        &self,
-        old_password: SecretString,
-        new_password: SecretString,
-    ) -> Result<()> {
-        log::warn!("Changing key file password {}", self.paths.key_file);
-
-        let old_key_file_key = AgeKey::from_password(old_password)?;
-        let data = read_and_decrypt_file(&self.paths.key_file, old_key_file_key, true)?;
-
-        let new_key_file_key = AgeKey::from_password(new_password)?;
-
-        let mut fs_tx = FsTransaction::new();
-        fs_tx.move_to_backup(&self.paths.key_file)?;
-        encrypt_and_write_file(
-            &self.paths.key_file,
-            new_key_file_key,
-            data.expose_secret(),
-            true,
-        )?;
-        fs_tx.commit()?;
-
-        self.lock()?;
-
-        Ok(())
-    }
-
-    pub fn encrypt<W: Write>(&self, writer: W) -> Result<AgeWriter<W>> {
-        let key = self.acquire_state_read_lock()?.get_key()?.clone();
-
-        AgeWriter::new(writer, key)
-    }
-
-    pub fn decrypt<R: Read>(&self, reader: R) -> Result<AgeReader<R>> {
-        let key = self.acquire_state_read_lock()?.get_key()?.clone();
-
-        AgeReader::new(reader, key)
-    }
-
-    pub fn export_key(
-        &self,
-        old_password: SecretString,
-        new_password: SecretString,
-    ) -> Result<Vec<u8>> {
-        log::warn!("Exporting key file {}", self.paths.key_file);
-
-        let old_key_file_key = AgeKey::from_password(old_password)?;
-        let key_data = read_and_decrypt_file(&self.paths.key_file, old_key_file_key, true)?;
-
-        let new_key_file_key = AgeKey::from_password(new_password)?;
-        let encrypted_key_data =
-            encrypt_and_write(Vec::new(), new_key_file_key, key_data.expose_secret(), true)?;
-
-        Ok(encrypted_key_data)
-    }
-
-    pub fn import_key(&self, encrypted_key_data: Vec<u8>, password: SecretString) -> Result<()> {
-        log::warn!("Importing key into file {}", self.paths.key_file);
-
-        let key_file_key = AgeKey::from_password(password)?;
-
-        let new_key_data =
-            read_and_decrypt(encrypted_key_data.as_ref(), key_file_key.clone(), true)?;
-        let new_key_data: SecretString = new_key_data.try_into()?;
-        let new_key = AgeKey::from_age_x25519_key(new_key_data.clone())?;
-
-        let _lock = self.wait_for_file_lock()?;
-
-        // try open storage with key
-        BazaStorage::read_file(&self.paths.storage_main_db_file, new_key.clone())
-            .context("Can't decrypt storage with provided key")?;
-
-        // write key file
-        let mut fs_tx = FsTransaction::new();
-        fs_tx.move_to_backup(&self.paths.key_file)?;
-        encrypt_and_write_file(
-            &self.paths.key_file,
-            key_file_key,
-            new_key_data.expose_secret().as_bytes(),
-            true,
-        )?;
-        fs_tx.commit()?;
-
-        self.lock()?;
-
-        Ok(())
-    }
-
-    // TODO remove
-    pub fn dangerously_create_state(&self, instance_id: InstanceId) -> Result<()> {
-        let _lock = self.wait_for_file_lock()?;
-        let key = self.acquire_state_read_lock()?.get_key()?.clone();
-
-        Baza::create(instance_id, key, self.paths.clone(), self.schema.clone())?;
-
-        Ok(())
-    }
-
-    // TODO remove
-    pub fn dangerously_insert_snapshots_into_storage(
-        &self,
-        new_snapshots: &[Document],
-    ) -> Result<()> {
-        log::info!(
-            "Inserting {} documents into storage db {}",
-            new_snapshots.len(),
-            self.paths.storage_main_db_file
-        );
-
-        let _lock = self.wait_for_file_lock()?;
-        let state = self.acquire_state_read_lock()?;
-
-        let mut fs_tx = FsTransaction::new();
-
-        let old_db_file = fs_tx.move_to_backup(self.paths.storage_main_db_file.clone())?;
-
-        let storage = BazaStorage::read_file(&old_db_file, state.get_key()?.clone())?;
-
-        let patch = create_container_patch(new_snapshots.iter())?;
-        storage.patch_and_save_to_file(&self.paths.storage_main_db_file, patch)?;
-
-        fs_tx.commit()?;
-
-        Ok(())
-    }
-
-    // TODO remove
-    pub fn dangerously_insert_blob_into_storage(
-        &self,
-        file_path: &str,
-        asset_id: &Id,
-        blob_key: AgeKey,
-    ) -> Result<()> {
-        log::info!("Adding file {file_path} to storage");
-
-        let _lock = self.wait_for_file_lock()?;
-
-        ensure!(
-            file_exists(file_path)?,
-            "BLOB source must exist and must be a file"
-        );
-
-        let start_time = Instant::now();
-
-        let blob_path = self.paths.get_storage_blob_path(asset_id);
-        ensure!(!file_exists(&blob_path)?, "storage BLOB already exists");
-
-        write_and_encrypt_blob(file_path, &blob_path, blob_key)?;
-
-        let duration = start_time.elapsed();
-        log::info!("Encrypted file {file_path} in {:?}", duration);
 
         Ok(())
     }
@@ -760,55 +403,5 @@ mod tests {
             assert!(baza.has_staged_documents());
             assert!(baza.has_document_locks());
         }
-    }
-
-    #[test]
-    fn test_change_password() {
-        let temp_dir = TempFile::new_with_details("baza_manager", "");
-        temp_dir.mkdir().unwrap();
-
-        let manager = BazaManager::new_for_tests(&temp_dir.path);
-        let storage_dir = manager.paths.storage_dir.clone();
-        let state_dir = manager.paths.state_dir.clone();
-        let downloads_dir = manager.paths.downloads_dir.clone();
-        let schema = manager.schema.clone();
-
-        manager
-            .change_key_file_password("test password".into(), "new password".into())
-            .unwrap();
-
-        {
-            let manager = BazaManager::new(storage_dir, state_dir, downloads_dir, schema);
-
-            assert!(
-                manager.unlock("test password".into()).is_err(),
-                "Can't open with old password"
-            );
-            manager.unlock("new password".into()).unwrap();
-        }
-    }
-
-    #[test]
-    fn test_export_import_key() {
-        let temp_dir = TempFile::new_with_details("baza_manager", "");
-        temp_dir.mkdir().unwrap();
-
-        let manager = BazaManager::new_for_tests(&temp_dir.path);
-
-        // Export the key with a new password
-        let exported_key = manager
-            .export_key("test password".into(), "export password".into())
-            .unwrap();
-
-        manager
-            .import_key(exported_key, "export password".into())
-            .unwrap();
-
-        // Ensure the new manager can unlock with the exported key
-        assert!(
-            manager.unlock("test password".into()).is_err(),
-            "Can't open with old password"
-        );
-        manager.unlock("export password".into()).unwrap();
     }
 }

@@ -200,6 +200,10 @@ impl<W: Write> Write for AgeWriter<W> {
 pub fn read_and_decrypt_file(file_path: &str, key: AgeKey, armored: bool) -> Result<SecretBytes> {
     let reader = create_file_reader(file_path)?;
 
+    read_and_decrypt(reader, key, armored)
+}
+
+pub fn read_and_decrypt(reader: impl BufRead, key: AgeKey, armored: bool) -> Result<SecretBytes> {
     let data = if armored {
         let age_reader = AgeReader::new_armored(reader, key)?;
 
@@ -218,21 +222,30 @@ pub fn read_and_decrypt_file(file_path: &str, key: AgeKey, armored: bool) -> Res
 pub fn encrypt_and_write_file(
     file_path: &str,
     key: AgeKey,
-    data: SecretBytes,
+    data: &[u8],
     armored: bool,
 ) -> Result<()> {
     let writer = create_file_writer(file_path, false)?;
 
+    encrypt_and_write(writer, key, data, armored)?;
+
+    Ok(())
+}
+
+pub fn encrypt_and_write<W: Write>(
+    writer: W,
+    key: AgeKey,
+    data: &[u8],
+    armored: bool,
+) -> Result<W> {
     let mut age_writer = if armored {
         AgeWriter::new_armored(writer, key)?
     } else {
         AgeWriter::new(writer, key)?
     };
 
-    age_writer.write_all(data.expose_secret())?;
-    age_writer.finish()?;
-
-    Ok(())
+    age_writer.write_all(data)?;
+    age_writer.finish()
 }
 
 #[cfg(test)]

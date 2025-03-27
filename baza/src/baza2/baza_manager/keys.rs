@@ -37,10 +37,16 @@ impl BazaManager {
     ) -> Result<()> {
         log::warn!("Changing key file password {}", self.paths.key_file);
 
-        let old_key_file_key = AgeKey::from_password(old_password)?;
+        let mut old_key_file_key = AgeKey::from_password(old_password)?;
+        if cfg!(test) {
+            old_key_file_key.test_mode();
+        }
         let data = read_and_decrypt_file(&self.paths.key_file, old_key_file_key, true)?;
 
-        let new_key_file_key = AgeKey::from_password(new_password)?;
+        let mut new_key_file_key = AgeKey::from_password(new_password)?;
+        if cfg!(test) {
+            new_key_file_key.test_mode();
+        }
 
         let lock = self.wait_for_file_lock()?;
         self.write_key_file(new_key_file_key, data.expose_secret(), &lock)?;
@@ -57,10 +63,16 @@ impl BazaManager {
     ) -> Result<Vec<u8>> {
         log::warn!("Exporting key file {}", self.paths.key_file);
 
-        let old_key_file_key = AgeKey::from_password(old_password)?;
+        let mut old_key_file_key = AgeKey::from_password(old_password)?;
+        if cfg!(test) {
+            old_key_file_key.test_mode();
+        }
         let key_data = read_and_decrypt_file(&self.paths.key_file, old_key_file_key, true)?;
 
-        let new_key_file_key = AgeKey::from_password(new_password)?;
+        let mut new_key_file_key = AgeKey::from_password(new_password)?;
+        if cfg!(test) {
+            new_key_file_key.test_mode();
+        }
         let encrypted_key_data =
             encrypt_and_write(Vec::new(), new_key_file_key, key_data.expose_secret(), true)?;
 
@@ -70,7 +82,10 @@ impl BazaManager {
     pub fn import_key(&self, encrypted_key_data: Vec<u8>, password: SecretString) -> Result<()> {
         log::warn!("Importing key into file {}", self.paths.key_file);
 
-        let key_file_key = AgeKey::from_password(password)?;
+        let mut key_file_key = AgeKey::from_password(password)?;
+        if cfg!(test) {
+            key_file_key.test_mode();
+        }
 
         let new_key_data =
             read_and_decrypt(encrypted_key_data.as_ref(), key_file_key.clone(), true)?;
@@ -91,7 +106,10 @@ impl BazaManager {
     pub fn verify_key(&self, encrypted_key_data: Vec<u8>, password: SecretString) -> Result<bool> {
         log::debug!("Verifying key");
 
-        let key_file_key = AgeKey::from_password(password)?;
+        let mut key_file_key = AgeKey::from_password(password)?;
+        if cfg!(test) {
+            key_file_key.test_mode();
+        }
 
         let key_data = read_and_decrypt(encrypted_key_data.as_ref(), key_file_key.clone(), true)?;
         let key_data: SecretString = key_data.try_into()?;

@@ -13,13 +13,13 @@ use age::{
 };
 use anyhow::{anyhow, ensure, Context, Result};
 
-use crate::{create_file_reader, create_file_writer, read_all};
+use crate::{create_file_reader, create_file_writer, log, read_all};
 
 use super::SecretBytes;
 
 #[derive(Clone)]
 pub enum AgeKey {
-    Password(SecretString),
+    Password(SecretString, Option<u8>),
     Key(x25519::Identity),
 }
 
@@ -33,7 +33,15 @@ impl AgeKey {
             Self::MIN_PASSWORD_LEN
         );
 
-        Ok(AgeKey::Password(password))
+        Ok(AgeKey::Password(password, None))
+    }
+
+    pub fn test_mode(&mut self) {
+        log::error!("TEST MODE ENABLED FOR PASSWORD-BASED AGE KEY");
+
+        if let AgeKey::Password(_, work_factor) = self {
+            *work_factor = Some(1);
+        }
     }
 
     pub fn from_age_x25519_key(key: SecretString) -> Result<Self> {
@@ -51,29 +59,21 @@ impl AgeKey {
 
     pub fn serialize(&self) -> SecretString {
         match self {
-            AgeKey::Password(password) => password.clone(),
+            AgeKey::Password(password, _) => password.clone(),
             AgeKey::Key(identity) => identity.to_string(),
         }
     }
 
     fn into_identity(self) -> Box<dyn Identity> {
         match self {
-            AgeKey::Password(password) => {
-                #[cfg(test)]
-                {
-                    let mut identity = scrypt::Identity::new(password);
+            AgeKey::Password(password, max_work_factor) => {
+                let mut identity = scrypt::Identity::new(password);
 
-                    identity.set_max_work_factor(1);
-
-                    Box::new(identity)
+                if let Some(max_work_factor) = max_work_factor {
+                    identity.set_max_work_factor(max_work_factor);
                 }
 
-                #[cfg(not(test))]
-                {
-                    let identity = scrypt::Identity::new(password);
-
-                    Box::new(identity)
-                }
+                Box::new(identity)
             }
             AgeKey::Key(identity) => Box::new(identity),
         }
@@ -81,21 +81,14 @@ impl AgeKey {
 
     fn into_recipient(self) -> Box<dyn Recipient> {
         match self {
-            AgeKey::Password(password) => {
-                #[cfg(test)]
-                {
-                    let mut recipient = scrypt::Recipient::new(password);
-                    recipient.set_work_factor(1);
+            AgeKey::Password(password, work_factor) => {
+                let mut recipient = scrypt::Recipient::new(password);
 
-                    Box::new(recipient)
+                if let Some(work_factor) = work_factor {
+                    recipient.set_work_factor(work_factor);
                 }
 
-                #[cfg(not(test))]
-                {
-                    let recipient = scrypt::Recipient::new(password);
-
-                    Box::new(recipient)
-                }
+                Box::new(recipient)
             }
             AgeKey::Key(identity) => Box::new(identity.to_public()),
         }
@@ -299,7 +292,8 @@ mod tests {
     #[test]
     fn test_write_read_with_password() {
         let data = generate_alpanumeric_string(100 * 1024);
-        let key = AgeKey::from_password("test1234".into()).unwrap();
+        let mut key = AgeKey::from_password("test1234".into()).unwrap();
+        key.test_mode();
 
         let encrypted = {
             let mut writer = AgeWriter::new(Vec::new(), key.clone()).unwrap();

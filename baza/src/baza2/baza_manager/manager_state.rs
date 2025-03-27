@@ -166,7 +166,10 @@ impl BazaManager {
         let _lock = self.wait_for_file_lock()?;
         let mut state = self.acquire_state_write_lock()?;
 
-        let key_file_key = AgeKey::from_password(password)?;
+        let mut key_file_key = AgeKey::from_password(password)?;
+        if cfg!(test) {
+            key_file_key.test_mode();
+        }
 
         let key = read_and_decrypt_file(&self.paths.key_file, key_file_key, true)?;
 

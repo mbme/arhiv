@@ -299,6 +299,7 @@ impl BazaManager {
             &self.paths.key_file,
             key_file_key,
             key_file.serialize().into(),
+            true,
         )?;
 
         log::debug!("Generated new key file {}", self.paths.key_file);
@@ -314,7 +315,7 @@ impl BazaManager {
 
         let key_file_key = AgeKey::from_password(password)?;
 
-        let key = read_and_decrypt_file(&self.paths.key_file, key_file_key)?;
+        let key = read_and_decrypt_file(&self.paths.key_file, key_file_key, true)?;
 
         let key = AgeKey::from_age_x25519_key(key.try_into()?)?;
 
@@ -352,13 +353,13 @@ impl BazaManager {
         log::warn!("Changing key file password {}", self.paths.key_file);
 
         let old_key_file_key = AgeKey::from_password(old_password)?;
-        let data = read_and_decrypt_file(&self.paths.key_file, old_key_file_key)?;
+        let data = read_and_decrypt_file(&self.paths.key_file, old_key_file_key, true)?;
 
         let new_key_file_key = AgeKey::from_password(new_password)?;
 
         let mut fs_tx = FsTransaction::new();
         fs_tx.move_to_backup(&self.paths.key_file)?;
-        encrypt_and_write_file(&self.paths.key_file, new_key_file_key, data)?;
+        encrypt_and_write_file(&self.paths.key_file, new_key_file_key, data, true)?;
         fs_tx.commit()?;
 
         self.lock()?;

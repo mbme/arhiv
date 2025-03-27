@@ -1,10 +1,11 @@
 use std::{
-    io::{self, BufRead, Read, Seek, SeekFrom, Write},
+    io::{self, BufRead, BufReader, Read, Seek, SeekFrom, Write},
     iter,
     str::FromStr,
 };
 
 use age::{
+    armor::{ArmoredReader, ArmoredWriter, Format},
     scrypt,
     secrecy::{ExposeSecret, SecretString},
     stream::{StreamReader, StreamWriter},
@@ -112,6 +113,12 @@ impl<R: Read> AgeReader<R> {
         Self::create(decryptor, key)
     }
 
+    pub fn new_armored(reader: R, key: AgeKey) -> Result<AgeReader<ArmoredReader<BufReader<R>>>> {
+        let decryptor = Decryptor::new(ArmoredReader::new(reader))?;
+
+        AgeReader::create(decryptor, key)
+    }
+
     fn create(decryptor: Decryptor<R>, key: AgeKey) -> Result<Self> {
         let reader = decryptor
             .decrypt(iter::once(key.into_identity().as_ref()))
@@ -142,11 +149,28 @@ impl<R: Read + Seek> Seek for AgeReader<R> {
 }
 
 pub struct AgeWriter<W: Write> {
-    inner: StreamWriter<W>,
+    inner: StreamWriter<ArmoredWriter<W>>,
 }
 
 impl<W: Write> AgeWriter<W> {
     pub fn new(writer: W, key: AgeKey) -> Result<Self> {
+        AgeWriter::create(writer, key, false)
+    }
+
+    pub fn new_armored(writer: W, key: AgeKey) -> Result<Self> {
+        AgeWriter::create(writer, key, true)
+    }
+
+    fn create(writer: W, key: AgeKey, armored: bool) -> Result<Self> {
+        let writer = ArmoredWriter::wrap_output(
+            writer,
+            if armored {
+                Format::AsciiArmor
+            } else {
+                Format::Binary
+            },
+        )?;
+
         let encryptor = Encryptor::with_recipients(iter::once(key.into_recipient().as_ref()))?;
 
         let inner = encryptor.wrap_output(writer)?;
@@ -155,10 +179,11 @@ impl<W: Write> AgeWriter<W> {
     }
 
     pub fn finish(self) -> Result<W> {
-        let mut writer = self.inner.finish()?;
-        writer.flush()?;
+        let armored_writer = self.inner.finish()?;
 
-        Ok(writer)
+        let inner_writer = armored_writer.finish()?;
+
+        Ok(inner_writer)
     }
 }
 
@@ -172,21 +197,37 @@ impl<W: Write> Write for AgeWriter<W> {
     }
 }
 
-pub fn read_and_decrypt_file(file_path: &str, key: AgeKey) -> Result<SecretBytes> {
+pub fn read_and_decrypt_file(file_path: &str, key: AgeKey, armored: bool) -> Result<SecretBytes> {
     let reader = create_file_reader(file_path)?;
-    let age_reader = AgeReader::new_buffered(reader, key)?;
 
-    let data = read_all(age_reader)?;
+    let data = if armored {
+        let age_reader = AgeReader::new_armored(reader, key)?;
+
+        read_all(age_reader)?
+    } else {
+        let age_reader = AgeReader::new_buffered(reader, key)?;
+
+        read_all(age_reader)?
+    };
 
     let data = SecretBytes::new(data);
 
     Ok(data)
 }
 
-pub fn encrypt_and_write_file(file_path: &str, key: AgeKey, data: SecretBytes) -> Result<()> {
+pub fn encrypt_and_write_file(
+    file_path: &str,
+    key: AgeKey,
+    data: SecretBytes,
+    armored: bool,
+) -> Result<()> {
     let writer = create_file_writer(file_path, false)?;
 
-    let mut age_writer = AgeWriter::new(writer, key)?;
+    let mut age_writer = if armored {
+        AgeWriter::new_armored(writer, key)?
+    } else {
+        AgeWriter::new(writer, key)?
+    };
 
     age_writer.write_all(data.expose_secret())?;
     age_writer.finish()?;
@@ -215,6 +256,26 @@ mod tests {
 
         let decrypted = {
             let reader = AgeReader::new(Cursor::new(encrypted), key).unwrap();
+
+            read_all_as_string(reader).unwrap()
+        };
+
+        assert_eq!(decrypted, data);
+    }
+
+    #[test]
+    fn test_write_read_armored() {
+        let data = generate_alpanumeric_string(100 * 1024);
+        let key = AgeKey::generate_age_x25519_key();
+
+        let encrypted = {
+            let mut writer = AgeWriter::new_armored(Vec::new(), key.clone()).unwrap();
+            writer.write_all(data.as_bytes()).unwrap();
+            writer.finish().unwrap()
+        };
+
+        let decrypted = {
+            let reader = AgeReader::new_armored(Cursor::new(encrypted), key).unwrap();
 
             read_all_as_string(reader).unwrap()
         };

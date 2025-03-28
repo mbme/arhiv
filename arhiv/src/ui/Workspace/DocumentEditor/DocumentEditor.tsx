@@ -14,6 +14,7 @@ import { useUpdateEffect } from 'utils/hooks';
 import { CollectionPicker } from 'components/CollectionPicker';
 import { Form, markFormDirty } from 'components/Form/Form';
 import { PreventImplicitSubmissionOnEnter } from 'components/Form/PreventImplicitSubmissionOnEnter';
+import { ErrorMessage } from 'components/ErrorMessage';
 import { DocumentField } from './DocumentField';
 
 type DocumentEditorFormProps = {
@@ -96,9 +97,9 @@ export function DocumentEditor({
       </label>
 
       {documentErrors.map((error, index) => (
-        <div key={index} className="text-red-500 text-xl pl-1 my-2">
+        <ErrorMessage key={index} className="pl-1 my-2">
           {error}
-        </div>
+        </ErrorMessage>
       ))}
 
       <div className="divide-y divide-dashed border-gray-200">

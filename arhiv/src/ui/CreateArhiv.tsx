@@ -4,6 +4,7 @@ import { RPC } from 'utils/network';
 import { Form } from 'components/Form/Form';
 import { Button } from 'components/Button';
 import { LoginContainer } from 'components/LoginContainer';
+import { ErrorMessage } from 'components/ErrorMessage';
 
 export function CreateArhiv() {
   const [error, setError] = useState('');
@@ -38,7 +39,7 @@ export function CreateArhiv() {
   return (
     <LoginContainer heading="Create Arhiv">
       <Form className="flex flex-col max-w-md items-center gap-4" onSubmit={onSubmit}>
-        {error && <div className="text-red-500 text-xl pl-1 my-2">{error}</div>}
+        {error && <ErrorMessage className="pl-1 my-2">{error}</ErrorMessage>}
 
         <label>
           Password:

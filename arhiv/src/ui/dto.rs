@@ -217,6 +217,7 @@ pub struct ArhivUIConfig<'a> {
     pub schema: &'a DataSchema,
     pub use_local_storage: bool,
     pub min_password_length: usize,
-    pub create_arhiv: bool,
+    pub arhiv_missing: bool,
+    pub arhiv_key_missing: bool,
     pub arhiv_locked: bool,
 }

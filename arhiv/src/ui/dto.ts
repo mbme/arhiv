@@ -402,6 +402,7 @@ export type ArhivUIConfig = {
   schema: DataSchema;
   useLocalStorage: boolean;
   minPasswordLength: number;
-  createArhiv: boolean;
+  arhivMissing: boolean;
+  arhivKeyMissing: boolean;
   arhivLocked: boolean;
 };

@@ -20,7 +20,7 @@ if (!rootEl) {
 const root = createRoot(rootEl);
 
 function renderApp() {
-  if (window.CONFIG.createArhiv) {
+  if (window.CONFIG.arhivMissing) {
     root.render(<CreateArhiv />);
   } else if (window.CONFIG.arhivLocked) {
     root.render(<UnlockArhiv />);

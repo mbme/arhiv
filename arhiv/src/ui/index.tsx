@@ -2,8 +2,8 @@ import { createRoot } from 'react-dom/client';
 import { effect } from '@preact/signals-core';
 import { App } from 'App';
 import { ComponentsDemo } from 'ComponentsDemo';
-import { CreateArhiv } from 'CreateArhiv';
-import { UnlockArhiv } from 'UnlockArhiv';
+import { CreateArhiv } from 'Login/CreateArhiv';
+import { UnlockArhiv } from 'Login/UnlockArhiv';
 import { appController } from 'controller';
 
 window.APP = appController;

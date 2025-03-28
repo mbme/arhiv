@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { RPC } from 'utils/network';
 import { useQuery } from 'utils/hooks';
-import { LoginContainer } from 'components/LoginContainer';
+import { LoginContainer } from 'login/LoginContainer';
 import { Form } from 'components/Form/Form';
 import { Button } from 'components/Button';
 import { ErrorMessage } from 'components/ErrorMessage';

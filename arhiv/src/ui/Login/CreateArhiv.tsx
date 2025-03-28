@@ -3,7 +3,7 @@ import { JSONObj } from 'utils';
 import { RPC } from 'utils/network';
 import { Form } from 'components/Form/Form';
 import { Button } from 'components/Button';
-import { LoginContainer } from 'components/LoginContainer';
+import { LoginContainer } from 'login/LoginContainer';
 import { ErrorMessage } from 'components/ErrorMessage';
 
 export function CreateArhiv() {

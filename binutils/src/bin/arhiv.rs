@@ -304,8 +304,6 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let arhiv = Arhiv::new_desktop();
             arhiv.baza.import_key(encrypted_key_data, password)?;
 
-            arhiv.lock()?;
-
             println!("Imported key (and password) from {key_file}");
         }
         CLICommand::Status => {

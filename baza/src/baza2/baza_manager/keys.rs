@@ -98,7 +98,8 @@ impl BazaManager {
 
         self.write_key_file(key_file_key, new_key_data.expose_secret().as_bytes(), &lock)?;
 
-        self.lock()?;
+        let mut state = self.acquire_state_write_lock()?;
+        state.unlock(new_key);
 
         Ok(())
     }
@@ -214,6 +215,10 @@ mod tests {
         manager
             .import_key(exported_key, "export password".into())
             .unwrap();
+
+        assert!(manager.is_unlocked());
+
+        manager.lock().unwrap();
 
         // Ensure the new manager can unlock with the exported key
         assert!(

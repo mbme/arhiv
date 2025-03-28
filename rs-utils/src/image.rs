@@ -2,6 +2,7 @@ use std::io::{BufRead, Cursor, Seek};
 
 use anyhow::{Context, Result};
 use image::{DynamicImage, GenericImageView, ImageReader};
+use qrcode::{render::svg, QrCode};
 
 fn open_image(img: impl BufRead + Seek) -> Result<DynamicImage> {
     ImageReader::new(img)
@@ -41,4 +42,17 @@ pub fn scale_image_file(
     let img = open_image(img_reader)?;
 
     scale_image(&img, max_w, max_h)
+}
+
+pub fn generate_qrcode_svg(data: &[u8]) -> Result<Vec<u8>> {
+    let qrcode = QrCode::with_error_correction_level(data, qrcode::EcLevel::Q)
+        .context("Failed to generate qrcode")?;
+
+    let result = qrcode
+        .render()
+        .dark_color(svg::Color("#000000"))
+        .light_color(svg::Color("#ffffff"))
+        .build();
+
+    Ok(result.into_bytes())
 }

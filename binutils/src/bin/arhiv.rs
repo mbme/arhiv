@@ -14,8 +14,8 @@ use baza::{
     DEV_MODE,
 };
 use rs_utils::{
-    ensure_file_exists, file_exists, get_crate_version, into_absolute_path, log, shutdown_signal,
-    SecretString,
+    ensure_file_exists, file_exists, get_crate_version, image::generate_qrcode_svg,
+    into_absolute_path, log, shutdown_signal, SecretString,
 };
 
 #[derive(Parser, Debug)]
@@ -45,6 +45,10 @@ enum CLICommand {
     ExportKey {
         /// Exported key file name.
         output_file: String,
+
+        /// Encode key file as QR Code SVG image
+        #[arg(long)]
+        qrcode_svg: bool,
     },
     /// Verify if file is a valid Arhiv key file and can open Arhiv.
     VerifyKey {
@@ -54,9 +58,10 @@ enum CLICommand {
     },
     /// Import Arhiv key file and replace existing key file.
     ImportKey {
-        /// Key file to import.
+        /// Age key file to import.
         #[arg(value_hint = ValueHint::FilePath)]
         key_file: String,
+        // TODO import from qrcode img as well
     },
     /// Backup Arhiv data
     Backup {
@@ -234,7 +239,10 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             println!("Password changed");
         }
-        CLICommand::ExportKey { output_file } => {
+        CLICommand::ExportKey {
+            output_file,
+            qrcode_svg,
+        } => {
             if file_exists(&output_file)? {
                 bail!("Can't export key: file {output_file} already exists");
             }
@@ -250,7 +258,13 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             println!("Enter new password for {output_file}");
             let new_password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, true)?;
 
-            let key_data = arhiv.baza.export_key(password, new_password)?;
+            let mut key_data = arhiv.baza.export_key(password, new_password)?;
+
+            if qrcode_svg {
+                println!("Generating QR Code SVG image");
+                key_data = generate_qrcode_svg(&key_data)?;
+            }
+
             fs::write(&output_file, key_data).context("Failed to write key into file")?;
 
             println!("Exported key into {output_file}");

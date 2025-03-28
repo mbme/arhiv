@@ -1,7 +1,7 @@
 use anyhow::{anyhow, bail, Context, Result};
 use tinytemplate::{format_unescaped, TinyTemplate};
 
-use rs_utils::{is_http_url, is_image_path};
+use rs_utils::{is_http_url, is_image_url, parse_url};
 
 use crate::{
     baza2::BazaManager,
@@ -217,11 +217,17 @@ impl<'s> DocumentExpert<'s> {
                 FieldType::Ref(_) => {
                     let value = document.data.get_str(field.name);
                     if let Some(value) = value {
-                        if !is_http_url(value) {
+                        let url = if let Ok(url) = parse_url(value) {
+                            url
+                        } else {
+                            continue;
+                        };
+
+                        if !is_http_url(&url) {
                             continue;
                         }
 
-                        if !is_image_path(value) {
+                        if !is_image_url(&url) {
                             bail!("Only image asset URLs are supported, got '{value}'");
                         }
 
@@ -241,11 +247,17 @@ impl<'s> DocumentExpert<'s> {
                         .collect::<Vec<_>>();
 
                     for value in values.iter_mut() {
-                        if !is_http_url(value) {
+                        let url = if let Ok(url) = parse_url(value) {
+                            url
+                        } else {
+                            continue;
+                        };
+
+                        if !is_http_url(&url) {
                             continue;
                         }
 
-                        if !is_image_path(value.clone()) {
+                        if !is_image_url(&url) {
                             bail!("Only image asset URLs are supported, got '{value}'");
                         }
 

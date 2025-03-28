@@ -14,7 +14,11 @@ use tokio::{
 use tokio_util::codec::{BytesCodec, FramedRead};
 use url::Url;
 
-use crate::reader_to_stream;
+use crate::{is_image_path, reader_to_stream};
+
+pub fn parse_url(url: &str) -> Result<Url> {
+    Url::parse(url).context("Failed to parse url")
+}
 
 #[must_use]
 pub fn extract_file_name_from_url(url: &Url) -> String {
@@ -31,8 +35,14 @@ pub fn extract_file_name_from_url(url: &Url) -> String {
     file_name
 }
 
-pub fn is_http_url(s: &str) -> bool {
-    Url::parse(s).is_ok_and(|value| value.scheme() == "http" || value.scheme() == "https")
+pub fn is_http_url(url: &Url) -> bool {
+    url.scheme() == "http" || url.scheme() == "https"
+}
+
+pub fn is_image_url(url: &Url) -> bool {
+    let file_name = extract_file_name_from_url(url);
+
+    is_image_path(file_name)
 }
 
 pub fn parse_content_disposition_header(header: &str) -> Result<Option<String>> {
@@ -239,6 +249,10 @@ mod tests {
         assert_eq!(
             extract_file_name_from_url(&Url::parse("http://test.com/").unwrap()),
             "unknown"
+        );
+        assert_eq!(
+            extract_file_name_from_url(&Url::parse("http://test.com/image.png?test=123").unwrap()),
+            "image.png"
         );
     }
 

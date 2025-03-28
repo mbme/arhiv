@@ -1,4 +1,4 @@
-use std::process;
+use std::{fs, process};
 
 use anyhow::{bail, Context, Result};
 use clap::{
@@ -13,7 +13,10 @@ use baza::{
     entities::{Document, DocumentData, DocumentLockKey, DocumentType, Id},
     DEV_MODE,
 };
-use rs_utils::{get_crate_version, into_absolute_path, log, shutdown_signal, SecretString};
+use rs_utils::{
+    ensure_file_exists, file_exists, get_crate_version, into_absolute_path, log, shutdown_signal,
+    SecretString,
+};
 
 #[derive(Parser, Debug)]
 #[clap(version = get_crate_version(), about, long_about = None, arg_required_else_help = true, disable_help_subcommand = true)]
@@ -37,8 +40,24 @@ enum CLICommand {
     /// Erase Arhiv password from system keyring
     Logout,
     /// Change Arhiv password
-    #[clap(name = "change-password")]
     ChangePassword,
+    /// Export Arhiv key file.
+    ExportKey {
+        /// Exported key file name.
+        output_file: String,
+    },
+    /// Verify if file is a valid Arhiv key file and can open Arhiv.
+    VerifyKey {
+        /// Key file to verify.
+        #[arg(value_hint = ValueHint::FilePath)]
+        key_file: String,
+    },
+    /// Import Arhiv key file and replace existing key file.
+    ImportKey {
+        /// Key file to import.
+        #[arg(value_hint = ValueHint::FilePath)]
+        key_file: String,
+    },
     /// Backup Arhiv data
     Backup {
         /// Directory to store backup.
@@ -202,18 +221,78 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::ChangePassword => {
             let arhiv = Arhiv::new_desktop();
 
-            println!("Enter password");
+            println!("Enter Arhiv password");
             let old_password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)?;
 
             // validate old password
             arhiv.unlock(old_password.clone())?;
 
-            println!("Enter new password");
+            println!("Enter new Arhiv password");
             let new_password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, true)?;
 
             arhiv.change_password(old_password, new_password.clone())?;
 
             println!("Password changed");
+        }
+        CLICommand::ExportKey { output_file } => {
+            if file_exists(&output_file)? {
+                bail!("Can't export key: file {output_file} already exists");
+            }
+
+            let arhiv = Arhiv::new_desktop();
+
+            println!("Enter Arhiv password");
+            let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)?;
+
+            // validate password
+            arhiv.unlock(password.clone())?;
+
+            println!("Enter new password for {output_file}");
+            let new_password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, true)?;
+
+            let key_data = arhiv.baza.export_key(password, new_password)?;
+            fs::write(&output_file, key_data).context("Failed to write key into file")?;
+
+            println!("Exported key into {output_file}");
+        }
+        CLICommand::VerifyKey { key_file } => {
+            ensure_file_exists(&key_file)?;
+
+            let encrypted_key_data = fs::read(&key_file).context("Failed to read key file")?;
+
+            println!("Enter password for {key_file}");
+            let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)?;
+
+            let arhiv = Arhiv::new_desktop();
+            match arhiv.baza.verify_key(encrypted_key_data, password) {
+                Ok(is_valid) => {
+                    if is_valid {
+                        println!("Key {key_file} can open Arhiv");
+                    } else {
+                        println!("Key {key_file} can't open Arhiv");
+                    }
+                }
+                Err(err) => {
+                    eprintln!(
+                        "File {key_file} isn't a valid key file, or password is wrong: {err:?}"
+                    );
+                }
+            }
+        }
+        CLICommand::ImportKey { key_file } => {
+            ensure_file_exists(&key_file)?;
+
+            let encrypted_key_data = fs::read(&key_file).context("Failed to read key file")?;
+
+            println!("Enter password for {key_file}");
+            let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)?;
+
+            let arhiv = Arhiv::new_desktop();
+            arhiv.baza.import_key(encrypted_key_data, password)?;
+
+            arhiv.lock()?;
+
+            println!("Imported key (and password) from {key_file}");
         }
         CLICommand::Status => {
             let arhiv = Arhiv::new_desktop();

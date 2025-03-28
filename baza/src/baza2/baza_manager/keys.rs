@@ -58,12 +58,12 @@ impl BazaManager {
 
     pub fn export_key(
         &self,
-        old_password: SecretString,
+        password: SecretString,
         new_password: SecretString,
     ) -> Result<Vec<u8>> {
         log::warn!("Exporting key file {}", self.paths.key_file);
 
-        let mut old_key_file_key = AgeKey::from_password(old_password)?;
+        let mut old_key_file_key = AgeKey::from_password(password)?;
         if cfg!(test) {
             old_key_file_key.test_mode();
         }

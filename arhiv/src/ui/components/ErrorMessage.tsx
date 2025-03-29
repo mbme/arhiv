@@ -3,7 +3,7 @@ import { cx } from 'utils';
 interface Props {
   className?: string;
   small?: boolean;
-  children: string;
+  children: string | string[];
 }
 
 export function ErrorMessage({ className, small, children }: Props) {

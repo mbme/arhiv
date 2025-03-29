@@ -1,12 +1,15 @@
 import { useState } from 'react';
-import { RPC } from 'utils/network';
 import { useQuery } from 'utils/hooks';
-import { Form } from 'components/Form/Form';
+import { RPC } from 'utils/network';
 import { Button } from 'components/Button';
 import { ErrorMessage } from 'components/ErrorMessage';
+import { Form } from 'components/Form/Form';
 import { LoginContainer } from './LoginContainer';
+import { ImportArhivKey } from './ImportArhivKey';
 
 export function UnlockArhiv() {
+  const [importMode, setImportMode] = useState(false);
+
   const [password, setPassword] = useState('');
 
   const { error, inProgress, triggerRefresh } = useQuery(
@@ -18,6 +21,16 @@ export function UnlockArhiv() {
       },
     },
   );
+
+  if (importMode) {
+    return (
+      <ImportArhivKey
+        onCancel={() => {
+          setImportMode(false);
+        }}
+      />
+    );
+  }
 
   return (
     <LoginContainer heading="Unlock Arhiv">
@@ -39,8 +52,17 @@ export function UnlockArhiv() {
           />
         </label>
 
-        <Button variant="primary" type="submit" busy={inProgress}>
+        <Button variant="primary" type="submit" busy={inProgress} className="mb-4">
           Unlock
+        </Button>
+
+        <Button
+          variant="simple"
+          onClick={() => {
+            setImportMode(true);
+          }}
+        >
+          Import key
         </Button>
       </Form>
     </LoginContainer>

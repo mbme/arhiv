@@ -3,8 +3,10 @@ import { Callback, cx, px } from 'utils';
 import { JSXChildren } from 'utils/jsx';
 import { Icon, IconVariant } from 'components/Icon';
 
+export type ButtonVariant = 'simple' | 'primary' | 'text';
+
 type ButtonProps = {
-  variant: 'simple' | 'primary' | 'text';
+  variant: ButtonVariant;
   className?: string;
   onClick?: Callback;
   onHover?: (el: HTMLButtonElement) => void;
@@ -51,10 +53,7 @@ export function Button({
     <button
       ref={ref}
       type={type}
-      className={cx(className, {
-        'btn btn-simple': variant === 'simple',
-        'btn btn-primary': variant === 'primary',
-        'btn btn-text': variant === 'text',
+      className={cx(className, getButtonVariantClasses(variant), {
         'btn-alarming': alarming,
         'is-busy': busy,
         'is-sm': size === 'sm',
@@ -116,3 +115,11 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
     </button>
   );
 });
+
+export function getButtonVariantClasses(variant: ButtonVariant): string {
+  return cx({
+    'btn btn-simple': variant === 'simple',
+    'btn btn-primary': variant === 'primary',
+    'btn btn-text': variant === 'text',
+  });
+}

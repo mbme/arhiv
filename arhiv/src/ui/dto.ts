@@ -79,6 +79,11 @@ export type APIRequest =
   | {
       typeName: 'UnlockArhiv';
       password: string;
+    }
+  | {
+      typeName: 'ImportKey';
+      encryptedKey: string;
+      password: string;
     };
 
 export type APIResponse =
@@ -153,6 +158,9 @@ export type APIResponse =
     }
   | {
       typeName: 'UnlockArhiv';
+    }
+  | {
+      typeName: 'ImportKey';
     };
 
 export type DocumentId = NominalType<string, 'DocumentId'>;

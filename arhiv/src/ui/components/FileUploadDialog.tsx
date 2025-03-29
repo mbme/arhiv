@@ -6,7 +6,8 @@ import { uploadFile } from 'utils/network';
 import { Dialog } from 'components/Dialog';
 import { Button } from 'components/Button';
 import { QueryError } from 'components/QueryError';
-import { ImageFilePreview } from './ImageFilePreview';
+import { ImageFilePreview } from 'components/ImageFilePreview';
+import { FileInput } from 'components/FileInput';
 
 type Props = {
   onAssetCreated: (id: DocumentId) => void;
@@ -52,17 +53,7 @@ export function FileUploadDialog({ onAssetCreated, onCancel }: Props) {
   return (
     <Dialog onHide={onHide} title="Upload a file" buttons={buttons}>
       <form>
-        <label className="inline-block bg-blue-500 text-white py-2 px-4 rounded-sm cursor-pointer hover:bg-blue-600">
-          Choose a file
-          <input
-            className="hidden"
-            type="file"
-            required
-            onChange={(e) => {
-              setFile(e.currentTarget.files?.[0] ?? undefined);
-            }}
-          />
-        </label>
+        <FileInput label="Choose a file" variant="primary" required onFileSelected={setFile} />
 
         {file && (
           <div className="font-mono">

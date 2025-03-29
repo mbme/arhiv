@@ -1,10 +1,11 @@
 import { createRoot } from 'react-dom/client';
 import { effect } from '@preact/signals-core';
 import { App } from 'App';
+import { appController } from 'controller';
 import { ComponentsDemo } from 'ComponentsDemo';
 import { CreateArhiv } from 'Login/CreateArhiv';
 import { UnlockArhiv } from 'Login/UnlockArhiv';
-import { appController } from 'controller';
+import { ImportArhivKey } from 'Login/ImportArhivKey';
 
 window.APP = appController;
 
@@ -22,6 +23,8 @@ const root = createRoot(rootEl);
 function renderApp() {
   if (window.CONFIG.arhivMissing) {
     root.render(<CreateArhiv />);
+  } else if (window.CONFIG.arhivKeyMissing) {
+    root.render(<ImportArhivKey />);
   } else if (window.CONFIG.arhivLocked) {
     root.render(<UnlockArhiv />);
   } else if (process.env.NODE_ENV === 'development' && location.search.includes('DEMO')) {

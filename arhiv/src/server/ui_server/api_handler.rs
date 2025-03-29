@@ -333,6 +333,23 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
 
             APIResponse::UnlockArhiv {}
         }
+        APIRequest::ImportKey {
+            encrypted_key,
+            password,
+        } => {
+            let was_locked = arhiv.baza.is_locked();
+
+            arhiv
+                .baza
+                .import_key(encrypted_key.into_bytes(), password.clone())?;
+
+            if was_locked {
+                arhiv.unlock(password)?;
+                ctx.img_cache.init(&arhiv.baza).await?;
+            }
+
+            APIResponse::ImportKey {}
+        }
     };
 
     Ok(response)

@@ -61,9 +61,19 @@ impl BazaManager {
         }
 
         let have_storage_db_files = !self.paths.list_storage_db_files()?.is_empty();
+
+        Ok(have_storage_db_files)
+    }
+
+    pub fn key_exists(&self) -> Result<bool> {
+        let storage_dir_exists = self.paths.storage_dir_exists()?;
+        if !storage_dir_exists {
+            return Ok(false);
+        }
+
         let have_key_file = self.paths.key_file_exists()?;
 
-        Ok(have_storage_db_files && have_key_file)
+        Ok(have_key_file)
     }
 
     fn merge_storages(&self, key: &AgeKey) -> Result<()> {

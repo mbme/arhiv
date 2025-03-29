@@ -96,7 +96,7 @@ async fn index_page(ctx: State<ServerContext>) -> Result<impl IntoResponse, Serv
         use_local_storage: true,
         min_password_length: BazaManager::MIN_PASSWORD_LENGTH,
         arhiv_missing: !arhiv.baza.storage_exists()?,
-        arhiv_key_missing: false, // FIXME
+        arhiv_key_missing: !arhiv.baza.key_exists()?,
         arhiv_locked: arhiv.baza.is_locked(),
     })
     .context("Failed to serialize ArhivUI config")?;

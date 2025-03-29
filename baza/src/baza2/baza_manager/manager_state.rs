@@ -163,6 +163,8 @@ impl BazaManager {
     pub fn unlock(&self, password: SecretString) -> Result<()> {
         log::info!("Unlocking baza using key file {}", self.paths.key_file);
 
+        ensure!(self.key_exists()?, "Key file is missing");
+
         let _lock = self.wait_for_file_lock()?;
         let mut state = self.acquire_state_write_lock()?;
 

@@ -172,6 +172,14 @@ fn unlock_arhiv(arhiv: &Arhiv) {
         panic!("Arhiv not initialized");
     }
 
+    if !arhiv
+        .baza
+        .key_exists()
+        .expect("Failed to check if key exists")
+    {
+        panic!("Arhiv key is missing. First need to import key.");
+    }
+
     match arhiv.unlock_using_keyring() {
         Ok(true) => return,
         Ok(false) => {
@@ -208,7 +216,11 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let arhiv = Arhiv::new_desktop();
 
             if !arhiv.baza.storage_exists()? {
-                bail!("Can't login: arhiv not initialized");
+                bail!("Can't login: Arhiv not initialized");
+            }
+
+            if !arhiv.baza.key_exists()? {
+                bail!("Can't login: Arhiv key is missing. First need to import key.");
             }
 
             let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)?;

@@ -56,11 +56,7 @@ impl BazaManager {
         Ok(())
     }
 
-    pub fn export_key(
-        &self,
-        password: SecretString,
-        new_password: SecretString,
-    ) -> Result<Vec<u8>> {
+    pub fn export_key(&self, password: SecretString, new_password: SecretString) -> Result<String> {
         log::warn!("Exporting key file {}", self.paths.key_file);
 
         let mut old_key_file_key = AgeKey::from_password(password)?;
@@ -76,10 +72,12 @@ impl BazaManager {
         let encrypted_key_data =
             encrypt_and_write(Vec::new(), new_key_file_key, key_data.expose_secret(), true)?;
 
-        Ok(encrypted_key_data)
+        let key = String::from_utf8(encrypted_key_data)?;
+
+        Ok(key)
     }
 
-    pub fn import_key(&self, encrypted_key_data: Vec<u8>, password: SecretString) -> Result<()> {
+    pub fn import_key(&self, encrypted_key_data: String, password: SecretString) -> Result<()> {
         log::warn!("Importing key into file {}", self.paths.key_file);
 
         let mut key_file_key = AgeKey::from_password(password)?;
@@ -104,7 +102,7 @@ impl BazaManager {
         Ok(())
     }
 
-    pub fn verify_key(&self, encrypted_key_data: Vec<u8>, password: SecretString) -> Result<bool> {
+    pub fn verify_key(&self, encrypted_key_data: String, password: SecretString) -> Result<bool> {
         log::debug!("Verifying key");
 
         let mut key_file_key = AgeKey::from_password(password)?;

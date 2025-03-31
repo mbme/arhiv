@@ -339,9 +339,7 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
         } => {
             let was_locked = arhiv.baza.is_locked();
 
-            arhiv
-                .baza
-                .import_key(encrypted_key.into_bytes(), password.clone())?;
+            arhiv.baza.import_key(encrypted_key, password.clone())?;
 
             if was_locked {
                 arhiv.unlock(password)?;

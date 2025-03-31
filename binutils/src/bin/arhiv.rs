@@ -1,4 +1,7 @@
-use std::{fs, process};
+use std::{
+    fs::{self, read_to_string},
+    process,
+};
 
 use anyhow::{bail, Context, Result};
 use clap::{
@@ -270,21 +273,23 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             println!("Enter new password for {output_file}");
             let new_password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, true)?;
 
-            let mut key_data = arhiv.baza.export_key(password, new_password)?;
+            let key_data = arhiv.baza.export_key(password, new_password)?;
 
             if qrcode_svg {
                 println!("Generating QR Code SVG image");
-                key_data = generate_qrcode_svg(&key_data)?;
+                let qrcode = generate_qrcode_svg(key_data.as_bytes())?;
+                fs::write(&output_file, qrcode).context("Failed to write key into file")?;
+            } else {
+                fs::write(&output_file, key_data).context("Failed to write key into file")?;
             }
-
-            fs::write(&output_file, key_data).context("Failed to write key into file")?;
 
             println!("Exported key into {output_file}");
         }
         CLICommand::VerifyKey { key_file } => {
             ensure_file_exists(&key_file)?;
 
-            let encrypted_key_data = fs::read(&key_file).context("Failed to read key file")?;
+            let encrypted_key_data =
+                read_to_string(&key_file).context("Failed to read key file")?;
 
             println!("Enter password for {key_file}");
             let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)?;
@@ -308,7 +313,8 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::ImportKey { key_file } => {
             ensure_file_exists(&key_file)?;
 
-            let encrypted_key_data = fs::read(&key_file).context("Failed to read key file")?;
+            let encrypted_key_data =
+                read_to_string(&key_file).context("Failed to read key file")?;
 
             println!("Enter password for {key_file}");
             let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)?;

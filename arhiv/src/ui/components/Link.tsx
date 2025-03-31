@@ -1,11 +1,12 @@
 import { JSXChildren } from 'utils/jsx';
+import { Icon } from 'components/Icon';
 
-type Props = {
+type LinkProps = {
   url: string;
   title?: string;
   children: JSXChildren;
 };
-export function Link({ url, title, children }: Props) {
+export function Link({ url, title, children }: LinkProps) {
   return (
     <a
       href={url}
@@ -15,6 +16,28 @@ export function Link({ url, title, children }: Props) {
       className="text-orange-600/70 hover:text-orange-700/100 transition-colors"
     >
       {children}
+    </a>
+  );
+}
+
+type DownloadLinkProps = {
+  url: string;
+  fileName: string;
+  title: string;
+};
+export function DownloadLink({ url, fileName, title }: DownloadLinkProps) {
+  return (
+    <a
+      href={url}
+      title={fileName}
+      download={fileName}
+      target="_blank"
+      rel="noreferrer"
+      className="flex items-center gap-2 var-active-color hover:var-active-color-hover"
+    >
+      <Icon variant="download" />
+
+      {title}
     </a>
   );
 }

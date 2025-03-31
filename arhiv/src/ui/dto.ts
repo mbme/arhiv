@@ -84,6 +84,11 @@ export type APIRequest =
       typeName: 'ImportKey';
       encryptedKey: string;
       password: string;
+    }
+  | {
+      typeName: 'ExportKey';
+      password: string;
+      exportPassword: string;
     };
 
 export type APIResponse =
@@ -161,6 +166,11 @@ export type APIResponse =
     }
   | {
       typeName: 'ImportKey';
+    }
+  | {
+      typeName: 'ExportKey';
+      key: string;
+      qrcodeSvgBase64: string;
     };
 
 export type DocumentId = NominalType<string, 'DocumentId'>;

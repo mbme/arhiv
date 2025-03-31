@@ -82,6 +82,11 @@ pub enum APIRequest {
         encrypted_key: String,
         password: SecretString,
     },
+    #[serde(rename_all = "camelCase")]
+    ExportKey {
+        password: SecretString,
+        export_password: SecretString,
+    },
 }
 
 #[derive(Serialize)]
@@ -139,6 +144,11 @@ pub enum APIResponse {
     LockArhiv {},
     UnlockArhiv {},
     ImportKey {},
+    #[serde(rename_all = "camelCase")]
+    ExportKey {
+        key: String,
+        qrcode_svg_base64: String,
+    },
 }
 
 #[derive(Serialize)]

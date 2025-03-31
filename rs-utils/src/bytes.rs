@@ -1,7 +1,7 @@
 use std::io::{self, Read, Seek, SeekFrom};
 
 use anyhow::{Context, Result};
-use data_encoding::{BASE64URL, HEXUPPER};
+use data_encoding::{BASE64, BASE64URL, HEXUPPER};
 use rand::{rngs::OsRng, RngCore, TryRngCore};
 
 pub fn generate_bytes(n: usize) -> Vec<u8> {
@@ -23,6 +23,11 @@ pub fn new_random_crypto_byte_array<const SIZE: usize>() -> [u8; SIZE] {
         .expect("OsRng must fill bytes slice");
 
     bytes
+}
+
+#[must_use]
+pub fn to_base64(bytes: &[u8]) -> String {
+    BASE64.encode(bytes)
 }
 
 #[must_use]

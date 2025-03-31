@@ -10,8 +10,8 @@ use baza::{
     DocumentExpert,
 };
 use rs_utils::{
-    ensure_dir_exists, get_symlink_target_path, is_readable, log, path_to_string,
-    remove_file_if_exists,
+    ensure_dir_exists, get_symlink_target_path, image::generate_qrcode_svg, is_readable, log,
+    path_to_string, remove_file_if_exists, to_base64, to_url_safe_base64,
 };
 
 use crate::ui::dto::{
@@ -347,6 +347,18 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
             }
 
             APIResponse::ImportKey {}
+        }
+        APIRequest::ExportKey {
+            password,
+            export_password,
+        } => {
+            let key = arhiv.baza.export_key(password, export_password)?;
+            let qrcode_svg_data = generate_qrcode_svg(key.as_bytes())?;
+
+            APIResponse::ExportKey {
+                key,
+                qrcode_svg_base64: to_base64(&qrcode_svg_data),
+            }
         }
     };
 

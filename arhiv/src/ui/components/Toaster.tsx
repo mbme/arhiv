@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { cx } from 'utils';
 import { IconButton } from 'components/Button';
 
@@ -90,8 +91,8 @@ export function Toaster() {
     };
   }, [toasts]);
 
-  return (
-    <div className="fixed bottom-0 left-0 flex flex-col gap-3 pl-4 pb-4" ref={containerRef}>
+  return createPortal(
+    <div className="fixed bottom-0 left-0 flex flex-col gap-3 pl-4 pb-4 z-100" ref={containerRef}>
       {toasts.map((toast) => (
         <div
           key={toast.id}
@@ -115,6 +116,7 @@ export function Toaster() {
           />
         </div>
       ))}
-    </div>
+    </div>,
+    document.body,
   );
 }

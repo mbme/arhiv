@@ -9,12 +9,14 @@ import { DropdownMenu } from 'components/DropdownMenu';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { NewDocumentDialog } from './NewDocumentDialog';
 import { CommitButton } from './CommitButton';
+import { ExportKeyDialog } from './ExportKeyDialog';
 
 export function WorkspaceHeader() {
   const app = useAppController();
 
   const [showSearchDialog, initialSearchQuery] = useSignal(app.workspace.$showSearchDialog);
   const showNewDocumentDialog = useSignal(app.workspace.$showNewDocumentDialog);
+  const showExportKeyDialog = useSignal(app.workspace.$showExportKeyDialog);
 
   useKeydown(document.body, (e) => {
     // Search with Ctrl-K
@@ -114,6 +116,14 @@ export function WorkspaceHeader() {
           />
         )}
 
+        {showExportKeyDialog && (
+          <ExportKeyDialog
+            onCancel={() => {
+              app.workspace.hideExportKeyDialog();
+            }}
+          />
+        )}
+
         <DropdownMenu
           align="bottom-right"
           options={[
@@ -152,6 +162,14 @@ export function WorkspaceHeader() {
               icon: 'x',
               onClick: () => {
                 app.workspace.closeAll();
+              },
+            },
+
+            {
+              text: 'Export key',
+              icon: 'key',
+              onClick: () => {
+                app.workspace.showExportKeyDialog();
               },
             },
 

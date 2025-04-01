@@ -171,6 +171,7 @@ export type APIResponse =
       typeName: 'ExportKey';
       key: string;
       qrcodeSvgBase64: string;
+      htmlPage: string;
     };
 
 export type DocumentId = NominalType<string, 'DocumentId'>;

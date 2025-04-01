@@ -26,7 +26,7 @@ aho-corasick = "1.1.0"
 
 pulldown-cmark = { version = "0.13", default-features = false, features = ["simd", "serde"] }
 
-tinytemplate = "1"
+tinytemplate.workspace = true
 
 ordermap.workspace = true
 

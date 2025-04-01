@@ -8,6 +8,7 @@ import { Button } from 'components/Button';
 export interface ExportedKey {
   key: string;
   qrcodeSvgBase64: string;
+  htmlPage: string;
 }
 
 interface Props {
@@ -33,12 +34,12 @@ export function ExportKeyForm({ onSuccess }: Props) {
     setInProgress(true);
 
     try {
-      const { key, qrcodeSvgBase64 } = await RPC.ExportKey({
+      const { key, qrcodeSvgBase64, htmlPage } = await RPC.ExportKey({
         password: password as string,
         exportPassword: exportPassword as string,
       });
 
-      onSuccess({ key, qrcodeSvgBase64 });
+      onSuccess({ key, qrcodeSvgBase64, htmlPage });
     } catch (err) {
       console.error('Failed to export Arhiv key:', err);
       setError(`Failed to export Arhiv key: ${String(err)}`);

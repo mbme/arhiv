@@ -9,10 +9,11 @@ interface Props {
   exportedKey: ExportedKey;
 }
 export function ExportKeyView({ exportedKey }: Props) {
-  const { key, qrcodeSvgBase64 } = exportedKey;
+  const { key, qrcodeSvgBase64, htmlPage } = exportedKey;
 
   const imgUrl = useBlobUrl(atob(qrcodeSvgBase64), 'image/svg+xml');
   const keyUrl = useBlobUrl(key, 'text/plain');
+  const htmlPageUrl = useBlobUrl(htmlPage, 'text/plain');
 
   return (
     <>
@@ -30,7 +31,7 @@ export function ExportKeyView({ exportedKey }: Props) {
         <code>{key}</code>
       </pre>
 
-      <div className="flex justify-between">
+      <div className="flex justify-between mb-8">
         <DownloadLink url={keyUrl ?? ''} fileName="arhiv-key.age" title="Download Arhiv key" />
 
         <Button
@@ -47,6 +48,14 @@ export function ExportKeyView({ exportedKey }: Props) {
         >
           Copy Arhiv key to clipboard
         </Button>
+      </div>
+
+      <div>
+        <DownloadLink
+          url={htmlPageUrl ?? ''}
+          fileName="arhiv-key.html"
+          title="Download printable HTML page"
+        />
       </div>
     </>
   );

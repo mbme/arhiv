@@ -45,5 +45,6 @@ axum-extra = { version = "0.10", features = ["typed-header", "cookie"]}
 ordermap = { version = "0.5", features = ["serde"] } # hashmap & hashset that preserve insertion order
 rand = "0.9"
 bytes = "1"
+tinytemplate = "1"
 
 insta = { version = "1", features = ["redactions", "json"] }

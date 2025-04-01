@@ -148,6 +148,7 @@ pub enum APIResponse {
     ExportKey {
         key: String,
         qrcode_svg_base64: String,
+        html_page: String,
     },
 }
 

@@ -1,6 +1,8 @@
 use std::{cmp::Ordering, fs, path::Path};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
+use serde::Serialize;
+use tinytemplate::{format_unescaped, TinyTemplate};
 
 use baza::{
     baza2::{Filter, StagingError, ValidationError},
@@ -10,8 +12,8 @@ use baza::{
     DocumentExpert,
 };
 use rs_utils::{
-    ensure_dir_exists, get_symlink_target_path, image::generate_qrcode_svg, is_readable, log,
-    path_to_string, remove_file_if_exists, to_base64, to_url_safe_base64,
+    ensure_dir_exists, get_crate_version, get_symlink_target_path, image::generate_qrcode_svg,
+    is_readable, log, path_to_string, remove_file_if_exists, to_base64, Timestamp,
 };
 
 use crate::ui::dto::{
@@ -354,10 +356,23 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
         } => {
             let key = arhiv.baza.export_key(password, export_password)?;
             let qrcode_svg_data = generate_qrcode_svg(key.as_bytes())?;
+            let qrcode_svg_base64 = to_base64(&qrcode_svg_data);
+
+            let date = Timestamp::now()
+                .format_time("[month repr:short] [day padding:space] [year]")
+                .expect("must be valid format");
+
+            let html_page = get_export_key_html_page(&PageProps {
+                arhiv_version: get_crate_version().to_string(),
+                key: &key,
+                qrcode_svg_base64: &qrcode_svg_base64,
+                date,
+            })?;
 
             APIResponse::ExportKey {
                 key,
-                qrcode_svg_base64: to_base64(&qrcode_svg_data),
+                qrcode_svg_base64,
+                html_page,
             }
         }
     };
@@ -480,4 +495,23 @@ fn documents_into_results(
             })
         })
         .collect::<Result<_>>()
+}
+
+#[derive(Serialize)]
+struct PageProps<'a> {
+    arhiv_version: String,
+    key: &'a str,
+    qrcode_svg_base64: &'a str,
+    date: String,
+}
+
+fn get_export_key_html_page(props: &PageProps) -> Result<String> {
+    let mut tt = TinyTemplate::new();
+    tt.set_default_formatter(&format_unescaped);
+
+    tt.add_template("export-key", include_str!("./export-key.html"))
+        .context("failed to compile title template for export-key.html")?;
+
+    tt.render("export-key", props)
+        .map_err(|err| anyhow!("failed to render export-key: {err}"))
 }

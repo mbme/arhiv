@@ -178,6 +178,7 @@ dependencies = [
  "rs-utils",
  "serde",
  "serde_json",
+ "tinytemplate",
  "tokio",
 ]
 

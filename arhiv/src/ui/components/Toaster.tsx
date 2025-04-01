@@ -3,14 +3,15 @@ import { createPortal } from 'react-dom';
 import { cx } from 'utils';
 import { IconButton } from 'components/Button';
 
-const TOAST_TIMEOUT_MS = 5000;
+const DEFAULT_TOAST_TIMEOUT_MS = 5000;
 
 type ToastOptions = {
   level: 'info' | 'warn';
   message: string;
+  timeoutMs?: number;
 };
 
-type Toast = ToastOptions & { id: number; createdAtMs: number };
+type Toast = ToastOptions & { id: number; createdAtMs: number; timeoutMs: number };
 let toastId = 0;
 
 class ToastEvent extends CustomEvent<ToastOptions> {
@@ -53,10 +54,12 @@ export function Toaster() {
 
   useEffect(() => {
     const onToast = (e: Event) => {
+      const toastOptions = (e as ToastEvent).detail;
       const toast = {
-        ...(e as ToastEvent).detail,
+        ...toastOptions,
         id: (toastId += 1),
         createdAtMs: Date.now(),
+        timeoutMs: toastOptions.timeoutMs ?? DEFAULT_TOAST_TIMEOUT_MS,
       };
 
       dispatch({ type: 'open', toast });
@@ -80,7 +83,7 @@ export function Toaster() {
       }
 
       for (const toast of toasts) {
-        if (Date.now() - toast.createdAtMs > TOAST_TIMEOUT_MS) {
+        if (Date.now() - toast.createdAtMs > toast.timeoutMs) {
           dispatch({ type: 'close', id: toast.id });
         }
       }

@@ -215,8 +215,6 @@ export function ComponentsDemo() {
             <div>
               <h1>Toaster</h1>
               <div className="examples">
-                <Toaster />
-
                 <Button
                   variant="primary"
                   onClick={() => {

@@ -21,12 +21,15 @@ export function ImportArhivKey({ onCancel }: Props) {
     error: importError,
     inProgress,
     triggerRefresh,
-  } = useQuery((abortSignal) => RPC.ImportKey({ encryptedKey, password }, abortSignal), {
-    refreshOnMount: false,
-    onSuccess() {
-      location.reload();
+  } = useQuery(
+    (abortSignal) => RPC.ImportKey({ encryptedKey, password, secret: true }, abortSignal),
+    {
+      refreshOnMount: false,
+      onSuccess() {
+        location.reload();
+      },
     },
-  });
+  );
 
   // clear form error on input
   useEffect(() => {

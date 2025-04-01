@@ -1,6 +1,8 @@
 import { APIRequest, APIResponse, DocumentId } from 'dto';
 import { formatBytes, Obj } from './index';
 
+const SECRET_PLACEHOLDER = '{ SECRET }';
+
 export type RPCResponse<Request extends APIRequest> = Extract<
   APIResponse,
   { typeName: Request['typeName'] }
@@ -11,14 +13,25 @@ export async function doRPC<Request extends APIRequest>(
   request: Request,
   signal?: AbortSignal,
 ): Promise<RPCResponse<Request>> {
-  console.debug('RPC: %s', request.typeName, request);
+  const containsSecret = 'secret' in request;
+
+  console.debug('RPC: %s', request.typeName, containsSecret ? SECRET_PLACEHOLDER : request);
 
   const onAbort = () => {
-    console.debug('RPC: aborted %s', request.typeName, request);
+    console.debug(
+      'RPC: aborted %s',
+      request.typeName,
+      containsSecret ? SECRET_PLACEHOLDER : request,
+    );
   };
   signal?.addEventListener('abort', onAbort);
 
   try {
+    if (containsSecret) {
+      // @ts-expect-error remove marker prop
+      delete request.secret;
+    }
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {

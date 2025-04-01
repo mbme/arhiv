@@ -37,6 +37,7 @@ export function ExportKeyForm({ onSuccess }: Props) {
       const { key, qrcodeSvgBase64, htmlPage } = await RPC.ExportKey({
         password: password as string,
         exportPassword: exportPassword as string,
+        secret: true,
       });
 
       onSuccess({ key, qrcodeSvgBase64, htmlPage });

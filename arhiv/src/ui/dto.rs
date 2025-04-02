@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -133,7 +133,10 @@ pub enum APIResponse {
     CreateAsset {
         id: Id,
     },
-    Commit {},
+    #[serde(rename_all = "camelCase")]
+    Commit {
+        committed_ids: HashSet<Id>,
+    },
     #[serde(rename_all = "camelCase")]
     LockDocument {
         lock_key: DocumentLockKey,

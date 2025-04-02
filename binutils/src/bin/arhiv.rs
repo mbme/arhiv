@@ -374,7 +374,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             unlock_arhiv(&arhiv);
 
             let mut baza = arhiv.baza.open_mut()?;
-            let success = baza.commit()?;
+            let success = !baza.commit()?.is_empty();
 
             if success {
                 println!("Committed documents");

@@ -147,6 +147,7 @@ export type APIResponse =
     }
   | {
       typeName: 'Commit';
+      committedIds: DocumentId[];
     }
   | {
       typeName: 'LockDocument';

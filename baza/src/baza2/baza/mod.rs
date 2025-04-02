@@ -354,17 +354,17 @@ impl Baza {
         Ok(())
     }
 
-    pub fn commit(&mut self) -> Result<bool> {
+    pub fn commit(&mut self) -> Result<HashSet<Id>> {
         self.save_changes()?;
 
         if !self.has_staged_documents() {
             log::debug!("Can't commit: nothing to commit");
-            return Ok(false);
+            return Ok(Default::default());
         }
 
         if self.state.has_document_locks() {
             log::debug!("Can't commit: some documents are locked");
-            return Ok(false);
+            return Ok(Default::default());
         }
 
         let mut fs_tx = FsTransaction::new();
@@ -386,6 +386,11 @@ impl Baza {
             .filter(|document| !storage.contains(&DocumentKey::for_document(document)))
             .collect::<Vec<_>>();
         log::info!("Commit: {} new document snapshots", new_snapshots.len());
+
+        let committed_ids = new_snapshots
+            .iter()
+            .map(|doc| doc.id.clone())
+            .collect::<HashSet<_>>();
 
         // collect new blobs that are used by new snapshots
         let new_blobs = self.collect_new_blobs(&new_snapshots)?;
@@ -426,7 +431,7 @@ impl Baza {
             }
         }
 
-        Ok(true)
+        Ok(committed_ids)
     }
 
     /// collect keys of storage documents that are known to be erased in the state

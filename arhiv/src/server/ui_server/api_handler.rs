@@ -262,11 +262,11 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
         APIRequest::Commit {} => {
             let mut baza = arhiv.baza.open_mut()?;
 
-            baza.commit()?;
+            let committed_ids = baza.commit()?;
 
             ctx.img_cache.remove_stale_files(&baza)?;
 
-            APIResponse::Commit {}
+            APIResponse::Commit { committed_ids }
         }
         APIRequest::LockDocument { id } => {
             let mut baza = arhiv.baza.open_mut()?;

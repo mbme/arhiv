@@ -174,7 +174,10 @@ impl DocumentHead {
 
         staged_document.rev = new_rev;
 
-        DocumentHead::new_committed(staged_document)
+        let mut result = DocumentHead::new_committed(staged_document)?;
+        result.snapshots_count = self.snapshots_count + 1;
+
+        Ok(result)
     }
 
     pub fn modify(&mut self, mut new_document: Document) -> Result<()> {
@@ -378,13 +381,16 @@ mod tests {
                 DocumentHead::new_conflict([doc_a1.clone(), doc_a2.clone()].into_iter()).unwrap();
 
             assert!(head.clone().commit(new_rev.clone()).is_err());
+            assert_eq!(head.snapshots_count, 2);
 
             head.modify(doc_a3.clone()).unwrap();
             assert!(!head.is_committed());
+            assert_eq!(head.snapshots_count, 2);
 
             head = head.commit(new_rev.clone()).unwrap();
             assert!(head.is_committed());
             assert_eq!(head.get_revision(), &new_rev);
+            assert_eq!(head.snapshots_count, 3);
         }
 
         {

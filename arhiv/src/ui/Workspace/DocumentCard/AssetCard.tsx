@@ -9,6 +9,7 @@ import { useIsFormDirty } from 'components/Form/Form';
 import { AssetPreview, canPreview } from 'components/AssetPreview';
 import { ProgressLocker } from 'components/ProgressLocker';
 import { DownloadLink } from 'components/Link';
+import { dispatchDocumentChangeEvent } from 'Workspace/documentChangeUtils';
 import { useCardLock } from '../controller';
 import { EraseDocumentConfirmationDialog } from '../DocumentEditor/EraseDocumentConfirmationDialog';
 import { DocumentViewerHead } from '../DocumentEditor/DocumentViewerHead';
@@ -137,6 +138,8 @@ export function AssetCard({ document, isUpdating, options }: Props) {
           if (submitResult.errors) {
             return submitResult.errors;
           }
+
+          dispatchDocumentChangeEvent([document.id]);
         }}
       />
 

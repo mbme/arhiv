@@ -6,6 +6,7 @@ import { TASK_DOCUMENT_TYPE } from 'dto';
 import { Card, useCardContext } from 'Workspace/controller';
 import { DropdownOptions } from 'components/DropdownMenu';
 import { showToast } from 'components/Toaster';
+import { useDocumentChangeHandler } from 'Workspace/documentChangeUtils';
 import { DocumentCard } from './DocumentCard';
 import { ErasedDocumentCard } from './ErasedDocumentCard';
 import { AssetCard } from './AssetCard';
@@ -16,9 +17,31 @@ type DocumentCard = Extract<Card, { variant: 'document' }>;
 export function DocumentCardContainer() {
   const { card, controller } = useCardContext<DocumentCard>();
 
-  const { value: document, isUpdating } = useSuspenseQuery({
+  const {
+    value: document,
+    isUpdating,
+    triggerRefresh,
+  } = useSuspenseQuery({
     typeName: 'GetDocument',
     id: card.documentId,
+  });
+
+  // refresh document if referenced document changes
+  useDocumentChangeHandler((updatedDocumentsIds) => {
+    const referencedDocumentIds = new Set([
+      document.id,
+      ...document.refs,
+      ...document.backrefs.map((item) => item.id),
+      ...document.collections.map((item) => item.id),
+    ]);
+
+    const someReferencedDocumentsUpdated = [...referencedDocumentIds].some((id) =>
+      updatedDocumentsIds.has(id),
+    );
+
+    if (someReferencedDocumentsUpdated) {
+      triggerRefresh(true);
+    }
   });
 
   const documentActions: DropdownOptions = [

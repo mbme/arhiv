@@ -1,6 +1,7 @@
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/network';
 import { Button } from 'components/Button';
+import { dispatchDocumentChangeEvent } from './documentChangeUtils';
 
 interface CommitButtonProps {
   disabled?: boolean;
@@ -10,6 +11,9 @@ export function CommitButton({ disabled }: CommitButtonProps) {
     (abortSignal) => RPC.Commit({}, abortSignal),
     {
       refreshOnMount: false,
+      onSuccess({ committedIds }) {
+        dispatchDocumentChangeEvent(committedIds);
+      },
     },
   );
 

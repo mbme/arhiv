@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';
 import { useIsFormDirty } from 'components/Form/Form';
 import { ProgressLocker } from 'components/ProgressLocker';
+import { dispatchDocumentChangeEvent } from 'Workspace/documentChangeUtils';
 import { useCardContext, useCardLock } from '../controller';
 import { EraseDocumentConfirmationDialog } from '../DocumentEditor/EraseDocumentConfirmationDialog';
 import { DocumentViewerHead } from '../DocumentEditor/DocumentViewerHead';
@@ -135,6 +136,8 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
           if (submitResult.errors) {
             return submitResult.errors;
           }
+
+          dispatchDocumentChangeEvent([document.id]);
         }}
       />
 

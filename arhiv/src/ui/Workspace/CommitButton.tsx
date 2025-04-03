@@ -1,6 +1,7 @@
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/network';
 import { Button } from 'components/Button';
+import { showToast } from 'components/Toaster';
 import { dispatchDocumentChangeEvent } from './documentChangeUtils';
 
 interface CommitButtonProps {
@@ -13,6 +14,11 @@ export function CommitButton({ disabled }: CommitButtonProps) {
       refreshOnMount: false,
       onSuccess({ committedIds }) {
         dispatchDocumentChangeEvent(committedIds);
+
+        showToast({
+          level: 'info',
+          message: `Committed ${committedIds.length} documents`,
+        });
       },
     },
   );

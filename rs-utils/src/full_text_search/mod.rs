@@ -101,9 +101,8 @@ impl<'query, 'matches> DocumentMatches<'query, 'matches> {
 
 #[derive(Default)]
 pub struct FTSEngine {
-    // FIXME rename to terms_index
     // term -> document_id -> field -> offset[]
-    term_freq_index: HashMap<String, HashMap<String, FieldMatches>>,
+    terms_index: HashMap<String, HashMap<String, FieldMatches>>,
 
     // document_id -> term count
     doc_term_count: HashMap<String, usize>,
@@ -131,7 +130,7 @@ impl FTSEngine {
             doc_term_count += tokens.len();
 
             for (term, byte_offset) in tokens {
-                let term_matches = self.term_freq_index.entry(term).or_default();
+                let term_matches = self.terms_index.entry(term).or_default();
 
                 let document_matches = term_matches.entry(document_id.clone()).or_default();
 
@@ -147,7 +146,7 @@ impl FTSEngine {
     }
 
     pub fn remove_document(&mut self, document_id: &str) {
-        self.term_freq_index.retain(|_, doc_map| {
+        self.terms_index.retain(|_, doc_map| {
             // remove entries where key == document_id
             doc_map.retain(|entry_document_id, _| entry_document_id != document_id);
 
@@ -167,7 +166,7 @@ impl FTSEngine {
 
     fn idf(&self, term: &str) -> f64 {
         let df = self
-            .term_freq_index
+            .terms_index
             .get(term)
             .map_or(0, |doc_map| doc_map.len());
 
@@ -183,7 +182,7 @@ impl FTSEngine {
     fn get_fuzzy_terms(&self, query_term: &str) -> Vec<(&str, f64)> {
         // FIXME handle 2 chars with starts_with
 
-        self.term_freq_index
+        self.terms_index
             .keys()
             .filter_map(|term| {
                 let similarity = jaro_winkler(query_term, term);
@@ -226,7 +225,7 @@ impl FTSEngine {
         for (query_term, fuzzy_terms) in all_query_terms {
             for (fuzzy_term, similarity) in fuzzy_terms {
                 let doc_map = self
-                    .term_freq_index
+                    .terms_index
                     .get(fuzzy_term)
                     .expect("fuzzy term must be indexed");
 

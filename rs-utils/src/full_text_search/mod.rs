@@ -18,15 +18,15 @@ type FieldMatches = HashMap<String, Vec<usize>>;
 #[derive(Default)]
 struct DocumentMatches<'query, 'field> {
     // query term -> field -> offset[]
-    matches: HashMap<&'query str, &'field FieldMatches>,
+    term_matches: HashMap<&'query str, &'field FieldMatches>,
 
     // query term -> score
-    scores: HashMap<&'query str, f64>,
+    term_scores: HashMap<&'query str, f64>,
 }
 
 impl<'query, 'field> DocumentMatches<'query, 'field> {
     pub fn terms_matched(&self) -> usize {
-        self.matches.len()
+        self.term_matches.len()
     }
 
     /// Update score of term, if it's bigger than current score
@@ -36,15 +36,15 @@ impl<'query, 'field> DocumentMatches<'query, 'field> {
         score: f64,
         matches: &'field FieldMatches,
     ) {
-        if let Some(current_score) = self.scores.get(term) {
+        if let Some(current_score) = self.term_scores.get(term) {
             // we need max score per query term
             if *current_score >= score {
                 return;
             }
         }
 
-        self.scores.insert(term, score);
-        self.matches.insert(term, matches);
+        self.term_scores.insert(term, score);
+        self.term_matches.insert(term, matches);
     }
 
     /// Calculate proximity bonus if all the terms matched the field.
@@ -56,7 +56,7 @@ impl<'query, 'field> DocumentMatches<'query, 'field> {
         }
 
         let fields = self
-            .matches
+            .term_matches
             .values()
             .next()
             .expect("Matches can't be empty")
@@ -66,7 +66,7 @@ impl<'query, 'field> DocumentMatches<'query, 'field> {
         let mut max_proximity_bonus = 1.0;
         for field in fields {
             let term_field_matches = self
-                .matches
+                .term_matches
                 .values()
                 .filter_map(|field_matches| field_matches.get(field))
                 .map(|positions| positions.as_slice())
@@ -94,7 +94,7 @@ impl<'query, 'field> DocumentMatches<'query, 'field> {
     pub fn score(self) -> f64 {
         let proximity_bonus = self.calculate_proximity_bonus();
 
-        self.scores.values().sum::<f64>() * proximity_bonus
+        self.term_scores.values().sum::<f64>() * proximity_bonus
     }
 }
 
@@ -115,20 +115,20 @@ impl FTSEngine {
         Default::default()
     }
 
-    pub fn upsert_document(&mut self, document_id: String, document: HashMap<String, &str>) {
+    pub fn index_document(&mut self, document_id: String, document: HashMap<String, &str>) {
         self.remove_document(&document_id);
 
         // update term frequency index
         let mut doc_term_count = 0;
         for (field, value) in document {
-            let tokens = tokenize_with_offsets(value);
-            if tokens.is_empty() {
+            let field_terms = tokenize_with_offsets(value);
+            if field_terms.is_empty() {
                 continue;
             }
 
-            doc_term_count += tokens.len();
+            doc_term_count += field_terms.len();
 
-            for (term, byte_offset) in tokens {
+            for (term, byte_offset) in field_terms {
                 let term_matches = self.terms_index.entry(term).or_default();
 
                 let document_matches = term_matches.entry(document_id.clone()).or_default();
@@ -232,14 +232,17 @@ impl FTSEngine {
 
                 let idf = self.idf(fuzzy_term);
 
-                for (document_id, matches) in doc_map {
+                for (document_id, document_matches) in doc_map {
                     let doc_len = *self
                         .doc_term_count
                         .get(document_id)
                         .expect("Document term count couldn't be empty")
                         as f64;
 
-                    let tf = matches.len() as f64;
+                    let tf: f64 = document_matches
+                        .values()
+                        .map(|positions| positions.len() as f64)
+                        .sum();
                     let numerator = tf * (K1 + 1.0);
                     let denominator = tf + K1 * (1.0 - B + B * (doc_len / self.avg_doc_len));
 
@@ -249,7 +252,7 @@ impl FTSEngine {
                     let doc_bm25_score = doc_bm25_score * similarity;
 
                     let entry = scores.entry(document_id).or_default();
-                    entry.update_term_score(query_term, doc_bm25_score, &matches);
+                    entry.update_term_score(query_term, doc_bm25_score, &document_matches);
                 }
             }
         }
@@ -302,7 +305,7 @@ mod tests {
             fields.insert("title".to_string(), doc.title.as_str());
             fields.insert("data".to_string(), doc.data.as_str());
 
-            engine.upsert_document(doc.id.clone(), fields);
+            engine.index_document(doc.id.clone(), fields);
         }
 
         engine

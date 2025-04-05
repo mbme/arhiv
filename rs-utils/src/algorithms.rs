@@ -47,16 +47,6 @@ pub fn smallest_range_covering_elements_from_k_lists(
     }
 }
 
-pub fn scale_f64_to_u128(val: f64) -> Option<u128> {
-    if !val.is_finite() || val.is_sign_negative() {
-        return None;
-    }
-
-    // Scale by a large factor to preserve precision
-    let scaled = val * (1u128 << 64) as f64;
-    Some(scaled as u128)
-}
-
 #[cfg(test)]
 mod tests {
     use super::smallest_range_covering_elements_from_k_lists;

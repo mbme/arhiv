@@ -1,17 +1,11 @@
 mod tokenizer;
 
-use std::{
-    cmp::Reverse,
-    collections::{HashMap, HashSet},
-};
+use std::collections::{HashMap, HashSet};
 
 use strsim::jaro_winkler;
 use tokenizer::tokenize_with_offsets;
 
-use crate::{
-    algorithms::{scale_f64_to_u128, smallest_range_covering_elements_from_k_lists},
-    log,
-};
+use crate::{algorithms::smallest_range_covering_elements_from_k_lists, log};
 
 // These are common bm25 parameter values
 const B: f64 = 0.75;
@@ -163,8 +157,7 @@ impl FTSEngine {
     fn get_fuzzy_terms(&self, query_term: &str) -> Vec<(&str, f64)> {
         // FIXME handle 2 chars with starts_with
 
-        let mut result: Vec<(&str, f64)> = self
-            .term_freq_index
+        self.term_freq_index
             .keys()
             .filter_map(|term| {
                 let similarity = jaro_winkler(query_term, term);
@@ -175,13 +168,7 @@ impl FTSEngine {
                     None
                 }
             })
-            .collect();
-
-        // FIXME remove?
-        // order by similarity desc
-        result.sort_by(|a, b| f64::total_cmp(&b.1, &a.1));
-
-        result
+            .collect()
     }
 
     pub fn search(&self, query: &str) -> Vec<&String> {
@@ -250,16 +237,11 @@ impl FTSEngine {
 
         let mut result = scores
             .into_iter()
-            .map(|(document_id, matches)| {
-                (
-                    document_id,
-                    // FIXME remove this, sort by f64
-                    scale_f64_to_u128(matches.score())
-                        .expect("Score must be finite & non-negative"),
-                )
-            })
+            .map(|(document_id, matches)| (document_id, matches.score()))
             .collect::<Vec<_>>();
-        result.sort_by_cached_key(|(_, score)| Reverse(*score));
+
+        // sort by score desc
+        result.sort_by(|a, b| f64::total_cmp(&b.1, &a.1));
 
         result
             .into_iter()

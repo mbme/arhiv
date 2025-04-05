@@ -91,6 +91,9 @@ pub struct FTSEngine {
 
     // document_id -> term count
     doc_term_count: HashMap<String, usize>,
+
+    // average term count per document
+    avg_doc_len: f64,
 }
 
 impl FTSEngine {
@@ -121,6 +124,8 @@ impl FTSEngine {
 
         // update term count index
         *self.doc_term_count.entry(document_id.clone()).or_default() = doc_term_count;
+
+        self.update_avg_doc_term_count();
     }
 
     pub fn remove_document(&mut self, document_id: &str) {
@@ -133,10 +138,13 @@ impl FTSEngine {
         });
 
         self.doc_term_count.remove(document_id);
+
+        self.update_avg_doc_term_count();
     }
 
-    fn get_avg_doc_term_count(&self) -> f64 {
-        self.doc_term_count.values().sum::<usize>() as f64 / self.doc_term_count.len() as f64
+    fn update_avg_doc_term_count(&mut self) {
+        self.avg_doc_len =
+            self.doc_term_count.values().sum::<usize>() as f64 / self.doc_term_count.len() as f64;
     }
 
     fn idf(&self, term: &str) -> f64 {
@@ -197,8 +205,6 @@ impl FTSEngine {
 
         let mut scores: HashMap<&String, DocumentMatches> = HashMap::new();
 
-        let avg_doc_len = self.get_avg_doc_term_count();
-
         for (query_term, fuzzy_terms) in all_query_terms {
             for (fuzzy_term, similarity) in fuzzy_terms {
                 let doc_map = self
@@ -219,7 +225,7 @@ impl FTSEngine {
 
                     let tf = matches.len() as f64;
                     let numerator = tf * (K1 + 1.0);
-                    let denominator = tf + K1 * (1.0 - B + B * (doc_len / avg_doc_len));
+                    let denominator = tf + K1 * (1.0 - B + B * (doc_len / self.avg_doc_len));
 
                     let doc_bm25_score = idf * (numerator / denominator);
 

@@ -5,12 +5,19 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
+use strsim::jaro_winkler;
 use tokenizer::tokenize_with_offsets;
 
-use crate::algorithms::{scale_f64_to_u128, smallest_range_covering_elements_from_k_lists};
+use crate::{
+    algorithms::{scale_f64_to_u128, smallest_range_covering_elements_from_k_lists},
+    log,
+};
 
+// These are common bm25 parameter values
 const B: f64 = 0.75;
 const K1: f64 = 1.2;
+
+const JARO_WINKLER_MIN_SIMILARITY: f64 = 0.8;
 
 struct TermMatch {
     field: String,
@@ -21,7 +28,9 @@ struct TermMatch {
 struct DocumentMatches<'query, 'matches> {
     // query term -> (field, offset)[]
     matches: HashMap<&'query str, &'matches Vec<TermMatch>>,
-    score: f64,
+
+    // query term -> score
+    scores: HashMap<&'query str, f64>,
 }
 
 impl<'query, 'matches> DocumentMatches<'query, 'matches> {
@@ -29,9 +38,28 @@ impl<'query, 'matches> DocumentMatches<'query, 'matches> {
         self.matches.len()
     }
 
-    pub fn apply_proximity_boost(&mut self) {
+    /// Update score of term, if it's bigger than current score
+    pub fn update_term_score(
+        &mut self,
+        term: &'query str,
+        score: f64,
+        matches: &'matches Vec<TermMatch>,
+    ) {
+        if let Some(current_score) = self.scores.get(term) {
+            // we need max score per query term
+            if *current_score >= score {
+                return;
+            }
+        }
+
+        self.scores.insert(term, score);
+        self.matches.insert(term, matches);
+    }
+
+    fn calculate_proximity_bonus(&self) -> f64 {
+        // apply proximity boost if there was more than 1 query term in the document
         if self.terms_matched() < 2 {
-            return;
+            return 1.0;
         }
 
         let arrays = self
@@ -52,7 +80,13 @@ impl<'query, 'matches> DocumentMatches<'query, 'matches> {
         // boost approaches 2x for very close matches
         let proximity_bonus = (100.0 / (min_distance as f64 + 10.0)).min(2.0);
 
-        self.score *= proximity_bonus;
+        proximity_bonus
+    }
+
+    fn score(self) -> f64 {
+        let proximity_bonus = self.calculate_proximity_bonus();
+
+        self.scores.values().sum::<f64>() * proximity_bonus
     }
 }
 
@@ -126,6 +160,30 @@ impl FTSEngine {
         ((n as f64 - df as f64 + 0.5) / (df as f64 + 0.5) + 1.0).ln()
     }
 
+    fn get_fuzzy_terms(&self, query_term: &str) -> Vec<(&str, f64)> {
+        // FIXME handle 2 chars with starts_with
+
+        let mut result: Vec<(&str, f64)> = self
+            .term_freq_index
+            .keys()
+            .filter_map(|term| {
+                let similarity = jaro_winkler(query_term, term);
+
+                if similarity > JARO_WINKLER_MIN_SIMILARITY {
+                    Some((term.as_str(), similarity))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        // FIXME remove?
+        // order by similarity desc
+        result.sort_by(|a, b| f64::total_cmp(&b.1, &a.1));
+
+        result
+    }
+
     pub fn search(&self, query: &str) -> Vec<&String> {
         let query_terms: HashSet<String> = tokenize_with_offsets(query)
             .into_iter()
@@ -137,55 +195,67 @@ impl FTSEngine {
             return self.doc_term_count.keys().collect();
         }
 
+        // pick terms that fuzzy match query terms
+        // query term -> (fuzzy term, similarity)[]
+        let mut all_query_terms = HashMap::new();
+        for query_term in &query_terms {
+            let fuzzy_terms = self.get_fuzzy_terms(query_term);
+            if fuzzy_terms.is_empty() {
+                log::debug!("Couldn't find terms for query term '{query_term}'");
+                return vec![];
+            }
+
+            all_query_terms.insert(query_term, fuzzy_terms);
+        }
+
         let mut scores: HashMap<&String, DocumentMatches> = HashMap::new();
 
         let avg_doc_len = self.get_avg_doc_term_count();
 
-        for term in &query_terms {
-            let doc_map = if let Some(doc_map) = self.term_freq_index.get(term) {
-                doc_map
-            } else {
-                // query has unknown term
-                continue;
-            };
+        for (query_term, fuzzy_terms) in all_query_terms {
+            for (fuzzy_term, similarity) in fuzzy_terms {
+                let doc_map = self
+                    .term_freq_index
+                    .get(fuzzy_term)
+                    .expect("fuzzy term must be indexed");
 
-            // calculate bm25 for query term
+                // calculate bm25 for fuzzy term
 
-            let idf = self.idf(term);
+                let idf = self.idf(fuzzy_term);
 
-            for (document_id, matches) in doc_map {
-                let doc_len = *self
-                    .doc_term_count
-                    .get(document_id)
-                    .expect("Document term count couldn't be empty")
-                    as f64;
+                for (document_id, matches) in doc_map {
+                    let doc_len = *self
+                        .doc_term_count
+                        .get(document_id)
+                        .expect("Document term count couldn't be empty")
+                        as f64;
 
-                let tf = matches.len() as f64;
-                let numerator = tf * (K1 + 1.0);
-                let denominator = tf + K1 * (1.0 - B + B * (doc_len / avg_doc_len));
+                    let tf = matches.len() as f64;
+                    let numerator = tf * (K1 + 1.0);
+                    let denominator = tf + K1 * (1.0 - B + B * (doc_len / avg_doc_len));
 
-                let doc_bm25_score = idf * (numerator / denominator);
+                    let doc_bm25_score = idf * (numerator / denominator);
 
-                let entry = scores.entry(document_id).or_default();
-                entry.score += doc_bm25_score;
-                entry.matches.insert(&term, &matches);
+                    // apply fuzzy term similarity coefficient
+                    let doc_bm25_score = doc_bm25_score * similarity;
+
+                    let entry = scores.entry(document_id).or_default();
+                    entry.update_term_score(query_term, doc_bm25_score, &matches);
+                }
             }
         }
 
-        // FIXME is this necessary?
         // keep only documents that match all query terms
         scores.retain(|_, document_matches| document_matches.terms_matched() == query_terms.len());
-
-        for document_matches in scores.values_mut() {
-            document_matches.apply_proximity_boost();
-        }
 
         let mut result = scores
             .into_iter()
             .map(|(document_id, matches)| {
                 (
                     document_id,
-                    scale_f64_to_u128(matches.score).expect("Score must be finite & non-negative"),
+                    // FIXME remove this, sort by f64
+                    scale_f64_to_u128(matches.score())
+                        .expect("Score must be finite & non-negative"),
                 )
             })
             .collect::<Vec<_>>();
@@ -239,12 +309,16 @@ mod tests {
         let fts = new_test_fts(&[
             TestDoc::new(1, "title 1", "data value a"),
             TestDoc::new(2, "title 2", "data value b"),
-            TestDoc::new(3, "title 3", "data value c"),
+            TestDoc::new(3, "title 3", "data value cde"),
         ]);
 
         assert_eq!(fts.search("title").len(), 3);
-        assert_eq!(fts.search("title c").len(), 1);
+        assert_eq!(fts.search("title cd").len(), 1);
         assert_eq!(fts.search(" ").len(), 3);
+
+        assert_eq!(fts.search("vlue").len(), 3);
+        assert_eq!(fts.search("tetl daaata").len(), 3);
+        assert_eq!(fts.search("tit").len(), 3);
     }
 
     #[test]

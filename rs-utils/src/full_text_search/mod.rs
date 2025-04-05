@@ -18,6 +18,7 @@ struct TermMatch {
     byte_offset: usize,
 }
 
+// FIXME simplify lifetime params
 #[derive(Default)]
 struct DocumentMatches<'query, 'matches> {
     // query term -> (field, offset)[]
@@ -56,6 +57,7 @@ impl<'query, 'matches> DocumentMatches<'query, 'matches> {
             return 1.0;
         }
 
+        // FIXME group by fields
         let arrays = self
             .matches
             .values()
@@ -108,6 +110,10 @@ impl FTSEngine {
         let mut doc_term_count = 0;
         for (field, value) in fields {
             let tokens = tokenize_with_offsets(value);
+            if tokens.is_empty() {
+                continue;
+            }
+
             doc_term_count += tokens.len();
 
             for (term, byte_offset) in tokens {
@@ -311,12 +317,28 @@ mod tests {
 
     #[test]
     fn test_proximity_boost() {
-        let fts = new_test_fts(&[
-            TestDoc::new(3, "title 3", "test value c asdfdsafasdf 123 data"),
-            TestDoc::new(2, "title 2", "data test ok 123"),
-            TestDoc::new(1, "title 1", "data 123 test"),
-        ]);
+        // {
+        //     let fts = new_test_fts(&[
+        //         TestDoc::new(3, "title 3", "test value c asdfdsafasdf 123 data"),
+        //         TestDoc::new(2, "title 2", "data test ok 123"),
+        //         TestDoc::new(1, "title 1", "data 123 test"),
+        //     ]);
 
-        assert_eq!(fts.search("data 123"), vec!["1", "2", "3"]);
+        //     assert_eq!(fts.search("data 123"), vec!["1", "2", "3"]);
+        // }
+
+        {
+            let fts = new_test_fts(&[
+                TestDoc::new(1, "title 123", "data test ok else switch"),
+                TestDoc::new(
+                    2,
+                    "title",
+                    "data test ok aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 123",
+                ),
+            ]);
+
+            assert_eq!(fts.search("data 123"), vec!["2", "1"]);
+        }
+        panic!("test")
     }
 }

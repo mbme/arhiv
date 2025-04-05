@@ -83,7 +83,8 @@ impl<'query, 'field> DocumentMatches<'query, 'field> {
 
             // Apply an exponential decay function: boost closer matches more
             // boost approaches 2x for very close matches
-            let proximity_bonus = (100.0 / (min_distance as f64 + 10.0)).min(2.0);
+            // min boost is 1.1 since we always want to boost fields that match all query terms
+            let proximity_bonus = (100.0 / (min_distance as f64 + 10.0)).clamp(1.1, 2.0);
 
             max_proximity_bonus = f64::max(max_proximity_bonus, proximity_bonus);
         }
@@ -252,7 +253,7 @@ impl FTSEngine {
                     let doc_bm25_score = doc_bm25_score * similarity;
 
                     let entry = scores.entry(document_id).or_default();
-                    entry.update_term_score(query_term, doc_bm25_score, &document_matches);
+                    entry.update_term_score(query_term, doc_bm25_score, document_matches);
                 }
             }
         }

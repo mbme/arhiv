@@ -2,7 +2,7 @@ use std::cmp::{max, min};
 
 /// Smallest Range Covering Elements from K Lists
 pub fn smallest_range_covering_elements_from_k_lists(
-    arrays: &[Vec<usize>],
+    arrays: &[&[usize]],
 ) -> (usize, usize, Vec<usize>) {
     let k = arrays.len();
     if k == 0 {
@@ -54,23 +54,20 @@ mod tests {
     #[test]
     fn test_smallest_range_covering_elements_from_k_lists() {
         {
-            let arrays = vec![vec![1, 4, 9], vec![5, 10], vec![11]];
+            let arrays: Vec<&[usize]> = vec![&[1, 4, 9], &[5, 10], &[11]];
             let result = smallest_range_covering_elements_from_k_lists(arrays.as_slice());
             assert_eq!(result, (9, 11, vec![9, 10, 11]));
         }
 
         {
-            let arrays = vec![
-                vec![4, 10, 15, 24, 26],
-                vec![0, 9, 12, 20],
-                vec![5, 18, 22, 30],
-            ];
+            let arrays: Vec<&[usize]> =
+                vec![&[4, 10, 15, 24, 26], &[0, 9, 12, 20], &[5, 18, 22, 30]];
             let result = smallest_range_covering_elements_from_k_lists(arrays.as_slice());
             assert_eq!(result, (20, 24, vec![24, 20, 22]));
         }
 
         {
-            let arrays = vec![vec![1, 2, 3], vec![1, 2, 3], vec![1, 2, 3]];
+            let arrays: Vec<&[usize]> = vec![&[1, 2, 3], &[1, 2, 3], &[1, 2, 3]];
             let result = smallest_range_covering_elements_from_k_lists(arrays.as_slice());
             assert_eq!(result, (1, 1, vec![1, 1, 1]));
         }

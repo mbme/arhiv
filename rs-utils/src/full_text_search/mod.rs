@@ -13,16 +13,13 @@ const K1: f64 = 1.2;
 
 const JARO_WINKLER_MIN_SIMILARITY: f64 = 0.8;
 
-struct TermMatch {
-    field: String,
-    byte_offset: usize,
-}
+type FieldMatches = HashMap<String, Vec<usize>>;
 
 // FIXME simplify lifetime params
 #[derive(Default)]
-struct DocumentMatches<'query, 'matches> {
-    // query term -> (field, offset)[]
-    matches: HashMap<&'query str, &'matches Vec<TermMatch>>,
+struct DocumentMatches<'query, 'field> {
+    // query term -> field -> offset[]
+    matches: HashMap<&'query str, &'field FieldMatches>,
 
     // query term -> score
     scores: HashMap<&'query str, f64>,
@@ -38,7 +35,7 @@ impl<'query, 'matches> DocumentMatches<'query, 'matches> {
         &mut self,
         term: &'query str,
         score: f64,
-        matches: &'matches Vec<TermMatch>,
+        matches: &'matches FieldMatches,
     ) {
         if let Some(current_score) = self.scores.get(term) {
             // we need max score per query term
@@ -51,35 +48,51 @@ impl<'query, 'matches> DocumentMatches<'query, 'matches> {
         self.matches.insert(term, matches);
     }
 
+    /// Calculate proximity bonus if all the terms matched the field.
+    /// Returns use max bonus of all the fields.
     fn calculate_proximity_bonus(&self) -> f64 {
         // apply proximity boost if there was more than 1 query term in the document
         if self.terms_matched() < 2 {
             return 1.0;
         }
 
-        // FIXME group by fields
-        let arrays = self
+        let fields = self
             .matches
             .values()
-            .map(|matches| {
-                matches
-                    .iter()
-                    .map(|term_match| term_match.byte_offset)
-                    .collect::<Vec<_>>()
-            })
+            .next()
+            .expect("Matches can't be empty")
+            .keys()
             .collect::<Vec<_>>();
 
-        let (min, max, _) = smallest_range_covering_elements_from_k_lists(arrays.as_slice());
-        let min_distance = max - min;
+        let mut max_proximity_bonus = 1.0;
+        for field in fields {
+            let term_field_matches = self
+                .matches
+                .values()
+                .filter_map(|field_matches| field_matches.get(field))
+                .map(|positions| positions.as_slice())
+                .collect::<Vec<_>>();
 
-        // Apply an exponential decay function: boost closer matches more
-        // boost approaches 2x for very close matches
-        let proximity_bonus = (100.0 / (min_distance as f64 + 10.0)).min(2.0);
+            // this field didn't match all terms
+            if term_field_matches.len() < self.terms_matched() {
+                continue;
+            }
 
-        proximity_bonus
+            let (min, max, _) =
+                smallest_range_covering_elements_from_k_lists(term_field_matches.as_slice());
+            let min_distance = max - min;
+
+            // Apply an exponential decay function: boost closer matches more
+            // boost approaches 2x for very close matches
+            let proximity_bonus = (100.0 / (min_distance as f64 + 10.0)).min(2.0);
+
+            max_proximity_bonus = f64::max(max_proximity_bonus, proximity_bonus);
+        }
+
+        max_proximity_bonus
     }
 
-    fn score(self) -> f64 {
+    pub fn score(self) -> f64 {
         let proximity_bonus = self.calculate_proximity_bonus();
 
         self.scores.values().sum::<f64>() * proximity_bonus
@@ -88,8 +101,9 @@ impl<'query, 'matches> DocumentMatches<'query, 'matches> {
 
 #[derive(Default)]
 pub struct FTSEngine {
-    // term -> document_id -> (field, offset)[]
-    term_freq_index: HashMap<String, HashMap<String, Vec<TermMatch>>>,
+    // FIXME rename to terms_index
+    // term -> document_id -> field -> offset[]
+    term_freq_index: HashMap<String, HashMap<String, FieldMatches>>,
 
     // document_id -> term count
     doc_term_count: HashMap<String, usize>,
@@ -117,14 +131,12 @@ impl FTSEngine {
             doc_term_count += tokens.len();
 
             for (term, byte_offset) in tokens {
-                let doc_map = self.term_freq_index.entry(term).or_default();
+                let term_matches = self.term_freq_index.entry(term).or_default();
 
-                let matches = doc_map.entry(document_id.clone()).or_default();
+                let document_matches = term_matches.entry(document_id.clone()).or_default();
 
-                matches.push(TermMatch {
-                    field: field.clone(),
-                    byte_offset,
-                });
+                let field_matches = document_matches.entry(field.clone()).or_default();
+                field_matches.push(byte_offset);
             }
         }
 
@@ -317,15 +329,15 @@ mod tests {
 
     #[test]
     fn test_proximity_boost() {
-        // {
-        //     let fts = new_test_fts(&[
-        //         TestDoc::new(3, "title 3", "test value c asdfdsafasdf 123 data"),
-        //         TestDoc::new(2, "title 2", "data test ok 123"),
-        //         TestDoc::new(1, "title 1", "data 123 test"),
-        //     ]);
+        {
+            let fts = new_test_fts(&[
+                TestDoc::new(3, "title 3", "test value c asdfdsafasdf 123 data"),
+                TestDoc::new(2, "title 2", "data test ok 123"),
+                TestDoc::new(1, "title 1", "data 123 test"),
+            ]);
 
-        //     assert_eq!(fts.search("data 123"), vec!["1", "2", "3"]);
-        // }
+            assert_eq!(fts.search("data 123"), vec!["1", "2", "3"]);
+        }
 
         {
             let fts = new_test_fts(&[
@@ -339,6 +351,5 @@ mod tests {
 
             assert_eq!(fts.search("data 123"), vec!["2", "1"]);
         }
-        panic!("test")
     }
 }

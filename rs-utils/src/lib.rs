@@ -23,6 +23,7 @@ pub use string::*;
 pub use time::*;
 pub use tools::*;
 
+mod algorithms;
 mod bytes;
 mod compression;
 mod container;
@@ -31,6 +32,7 @@ mod download;
 mod fs;
 mod fs_temp;
 mod fs_transaction;
+pub mod full_text_search;
 mod http;
 pub mod http_server;
 pub mod image;

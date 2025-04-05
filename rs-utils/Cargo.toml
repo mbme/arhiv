@@ -61,6 +61,9 @@ nanoid = "0.4.0" # generate short unique global ids
 fslock = "0.2"
 flate2 = "1" # for compressed container
 async-stream = "0.3" # macro for creating async streams
+strsim = "0.11" # string similarity, for search engine
+unicode-normalization = "0.1.24" # unicode string normalization, for search engine
+charabia = { version = "0.9", default-features = false } # tokenization & normalization, for search engine
 
 # read password from platform-specific secure stores
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }

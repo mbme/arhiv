@@ -207,7 +207,7 @@ impl Download {
                 expected_file_size
             );
         } else {
-            log::warn!("Coudn't deduce expected file size, file size check skipped");
+            log::warn!("Couldn't deduce expected file size, file size check skipped");
         }
 
         tokio_fs::rename(&self.download_file_path, &self.completed_file_path)

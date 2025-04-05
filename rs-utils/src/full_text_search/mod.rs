@@ -15,7 +15,6 @@ const JARO_WINKLER_MIN_SIMILARITY: f64 = 0.8;
 
 type FieldMatches = HashMap<String, Vec<usize>>;
 
-// FIXME simplify lifetime params
 #[derive(Default)]
 struct DocumentMatches<'query, 'field> {
     // query term -> field -> offset[]
@@ -25,7 +24,7 @@ struct DocumentMatches<'query, 'field> {
     scores: HashMap<&'query str, f64>,
 }
 
-impl<'query, 'matches> DocumentMatches<'query, 'matches> {
+impl<'query, 'field> DocumentMatches<'query, 'field> {
     pub fn terms_matched(&self) -> usize {
         self.matches.len()
     }
@@ -35,7 +34,7 @@ impl<'query, 'matches> DocumentMatches<'query, 'matches> {
         &mut self,
         term: &'query str,
         score: f64,
-        matches: &'matches FieldMatches,
+        matches: &'field FieldMatches,
     ) {
         if let Some(current_score) = self.scores.get(term) {
             // we need max score per query term
@@ -49,7 +48,7 @@ impl<'query, 'matches> DocumentMatches<'query, 'matches> {
     }
 
     /// Calculate proximity bonus if all the terms matched the field.
-    /// Returns use max bonus of all the fields.
+    /// Returns max bonus of all the fields.
     fn calculate_proximity_bonus(&self) -> f64 {
         // apply proximity boost if there was more than 1 query term in the document
         if self.terms_matched() < 2 {
@@ -116,12 +115,12 @@ impl FTSEngine {
         Default::default()
     }
 
-    pub fn upsert_document(&mut self, document_id: String, fields: HashMap<String, &str>) {
+    pub fn upsert_document(&mut self, document_id: String, document: HashMap<String, &str>) {
         self.remove_document(&document_id);
 
         // update term frequency index
         let mut doc_term_count = 0;
-        for (field, value) in fields {
+        for (field, value) in document {
             let tokens = tokenize_with_offsets(value);
             if tokens.is_empty() {
                 continue;

@@ -116,7 +116,7 @@ impl FTSEngine {
         Default::default()
     }
 
-    pub fn index_document(&mut self, document_id: String, document: HashMap<String, &str>) {
+    pub fn index_document(&mut self, document_id: String, document: HashMap<&str, &str>) {
         self.remove_document(&document_id);
 
         // update term frequency index
@@ -134,7 +134,7 @@ impl FTSEngine {
 
                 let document_matches = term_matches.entry(document_id.clone()).or_default();
 
-                let field_matches = document_matches.entry(field.clone()).or_default();
+                let field_matches = document_matches.entry(field.to_string()).or_default();
                 field_matches.push(byte_offset);
             }
         }
@@ -303,8 +303,8 @@ mod tests {
 
         for doc in docs {
             let mut fields = HashMap::new();
-            fields.insert("title".to_string(), doc.title.as_str());
-            fields.insert("data".to_string(), doc.data.as_str());
+            fields.insert("title", doc.title.as_str());
+            fields.insert("data", doc.data.as_str());
 
             engine.index_document(doc.id.clone(), fields);
         }

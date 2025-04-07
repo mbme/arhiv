@@ -277,3 +277,26 @@ impl<'s> DocumentExpert<'s> {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        entities::{DocumentData, DocumentType},
+        schema::DataSchema,
+    };
+
+    use super::DocumentExpert;
+
+    #[test]
+    fn test_title() {
+        let schema = DataSchema::new_test_schema();
+        let expert = DocumentExpert::new(&schema);
+
+        let mut data = DocumentData::new();
+        data.set("test", "test");
+        let title = expert
+            .get_title(&DocumentType::new("test_type"), &data)
+            .unwrap();
+        assert_eq!(title, "test");
+    }
+}

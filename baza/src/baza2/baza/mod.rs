@@ -78,7 +78,7 @@ impl Baza {
 
         let info = storage.get_info()?;
 
-        let mut state = BazaState::new(instance_id, info.clone(), schema, HashMap::new())?;
+        let mut state = BazaState::new(instance_id, info.clone(), schema);
         state.write_to_file(&paths.state_file, key.clone())?;
 
         let state_file_modification_time = paths.read_state_file_modification_time()?;

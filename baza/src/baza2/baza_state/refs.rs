@@ -35,21 +35,6 @@ impl BazaState {
         expert.extract_refs(&document.document_type, &document.data)
     }
 
-    pub(super) fn update_all_documents_refs(&mut self) -> Result<()> {
-        self.file.refs = self
-            .iter_documents()
-            .flat_map(|head| head.iter_all_snapshots())
-            .map(|document| {
-                let key = DocumentKey::for_document(document);
-                let snapshot_refs = self.extract_document_refs(document)?;
-
-                Ok((key, snapshot_refs))
-            })
-            .collect::<Result<BazaRefsState>>()?;
-
-        Ok(())
-    }
-
     pub fn get_document_snapshot_refs(&self, key: &DocumentKey) -> Option<&Refs> {
         self.file.refs.get(key)
     }

@@ -44,29 +44,18 @@ pub struct BazaState {
 }
 
 impl BazaState {
-    pub fn new(
-        instance_id: InstanceId,
-        info: BazaInfo,
-        schema: DataSchema,
-        documents: HashMap<Id, DocumentHead>,
-    ) -> Result<Self> {
-        let is_empty = documents.is_empty();
-
-        let mut baza_state = Self {
+    pub fn new(instance_id: InstanceId, info: BazaInfo, schema: DataSchema) -> Self {
+        BazaState {
             file: BazaStateFile {
                 info,
-                documents,
+                documents: HashMap::new(),
                 locks: HashMap::new(),
                 refs: HashMap::new(),
                 instance_id,
             },
             schema,
-            modified: !is_empty,
-        };
-
-        baza_state.update_all_documents_refs()?;
-
-        Ok(baza_state)
+            modified: false,
+        }
     }
 
     #[cfg(test)]
@@ -75,9 +64,7 @@ impl BazaState {
             InstanceId::from_string("test").unwrap(),
             BazaInfo::new_test_info(),
             DataSchema::new_test_schema(),
-            HashMap::new(),
         )
-        .expect("must create test state")
     }
 
     pub fn read(reader: impl BufRead, key: AgeKey, schema: DataSchema) -> Result<Self> {

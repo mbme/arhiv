@@ -503,7 +503,6 @@ dependencies = [
 name = "baza"
 version = "0.0.0"
 dependencies = [
- "aho-corasick",
  "anyhow",
  "insta",
  "ordermap",

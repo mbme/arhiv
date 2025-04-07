@@ -5,7 +5,6 @@ mod document_expert;
 pub mod entities;
 pub mod markup;
 pub mod schema;
-mod search;
 
 pub use auto_commit_service::{AutoCommitService, AutoCommitTask};
 pub use document_expert::DocumentExpert;

@@ -11,6 +11,7 @@ use rs_utils::{
     age::AgeKey, create_file_reader, create_file_writer, log, AgeGzReader, AgeGzWriter, Timestamp,
 };
 
+use self::search::SearchEngine;
 use crate::{
     baza2::BazaInfo,
     entities::{Document, DocumentLockKey, Id, InstanceId, LatestRevComputer, Revision},
@@ -22,6 +23,7 @@ mod document_head;
 mod locks;
 mod query;
 mod refs;
+mod search;
 
 pub use document_head::DocumentHead;
 pub use locks::Locks;
@@ -40,6 +42,7 @@ struct BazaStateFile {
 pub struct BazaState {
     file: BazaStateFile,
     schema: DataSchema,
+    search: SearchEngine,
     modified: bool,
 }
 
@@ -53,6 +56,7 @@ impl BazaState {
                 refs: HashMap::new(),
                 instance_id,
             },
+            search: SearchEngine::new(schema.clone()),
             schema,
             modified: false,
         }
@@ -70,12 +74,26 @@ impl BazaState {
     pub fn read(reader: impl BufRead, key: AgeKey, schema: DataSchema) -> Result<Self> {
         let agegz_reader = AgeGzReader::new(reader, key)?;
 
-        let file =
+        let file: BazaStateFile =
             serde_json::from_reader(agegz_reader).context("Failed to parse BazaStateFile")?;
+
+        let mut search = SearchEngine::new(schema.clone());
+
+        let start_time = Instant::now();
+        for head in file.documents.values() {
+            search.index_document(head.get_single_document())?;
+        }
+        let duration = start_time.elapsed();
+        log::info!(
+            "Built search index of {} documents in {:?}",
+            file.documents.len(),
+            duration
+        );
 
         Ok(Self {
             file,
             schema,
+            search,
             modified: false,
         })
     }
@@ -205,6 +223,8 @@ impl BazaState {
         };
 
         self.update_document_refs(&updated_head)?;
+        self.search
+            .index_document(updated_head.get_single_document())?;
         self.file.documents.insert(id.clone(), updated_head);
         self.modified = true;
         log::trace!("State modified: staged document");
@@ -231,6 +251,8 @@ impl BazaState {
         };
 
         self.update_document_refs(&updated_head)?;
+        self.search
+            .index_document(updated_head.get_single_document())?;
         self.file.documents.insert(id, updated_head);
         self.modified = true;
         log::trace!("State modified: inserted snapshot");
@@ -297,9 +319,12 @@ impl BazaState {
             .remove_entry(id)
             .context("Document doesn't exist")?;
         self.remove_document_refs(&id);
+        self.search.remove_document_index(&id);
 
         if let Some(updated_head) = document.reset() {
             self.update_document_refs(&updated_head)?;
+            self.search
+                .index_document(updated_head.get_single_document())?;
             self.file.documents.insert(id, updated_head);
         }
 
@@ -334,6 +359,8 @@ impl BazaState {
             let updated_head = document_head.commit(new_rev.clone())?;
 
             self.update_document_refs(&updated_head)?;
+            self.search
+                .index_document(updated_head.get_single_document())?;
             self.file.documents.insert(id, updated_head);
         }
 
@@ -448,10 +475,10 @@ mod tests {
 
         let id: Id = "test".into();
         state.insert_snapshots(vec![
-            new_document(json!({ "test": 1 }))
+            new_document(json!({ "test": "1" }))
                 .with_rev(json!({ "a": 1 }))
                 .with_id(id.clone()),
-            new_document(json!({ "test": 2 })).with_rev(json!({ "a": 2, "b": 2 })),
+            new_document(json!({ "test": "2" })).with_rev(json!({ "a": 2, "b": 2 })),
         ]);
         state.lock_document(&id, "test").unwrap();
 

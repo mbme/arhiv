@@ -1,10 +1,7 @@
 use anyhow::Result;
 use serde::Serialize;
 
-use crate::{
-    entities::{Document, DocumentType},
-    DocumentExpert,
-};
+use crate::entities::{Document, DocumentType};
 
 use super::BazaState;
 
@@ -13,6 +10,21 @@ pub struct Filter {
     pub document_types: Vec<DocumentType>,
     pub query: String,
     pub page: u8,
+}
+
+impl Filter {
+    pub fn should_show_document(&self, doc: &Document) -> bool {
+        // we should ignore erased documents unless explicitly included in document_types
+        if doc.is_erased() {
+            return self.document_types.contains(&DocumentType::erased());
+        }
+
+        if self.document_types.is_empty() {
+            return true;
+        }
+
+        self.document_types.contains(&doc.document_type)
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -25,61 +37,46 @@ const PAGE_SIZE: usize = 10;
 
 impl BazaState {
     pub fn list_documents(&self, filter: &Filter) -> Result<ListPage> {
-        let mut filtered_documents: Vec<&Document> = self
-            .iter_documents()
-            .map(|head| head.get_single_document())
-            .filter(|doc| {
-                // we should ignore erased documents unless explicitly included in document_types
-                if doc.is_erased() {
-                    return filter.document_types.contains(&DocumentType::erased());
-                }
+        let page_start = (filter.page as usize) * PAGE_SIZE;
 
-                if filter.document_types.is_empty() {
-                    return true;
-                }
-
-                filter.document_types.contains(&doc.document_type)
-            })
-            .collect();
-
-        if filter.query.is_empty() {
-            // sort by modification time
-            filtered_documents.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
-        } else {
-            let document_expert = DocumentExpert::new(&self.schema);
-
-            let mut scored_documents: Vec<(&Document, usize)> = filtered_documents
-                .iter()
-                .map(|doc| {
-                    let score = document_expert
-                        .search(&doc.document_type, &doc.data, &filter.query)
-                        .unwrap_or(0);
-                    (*doc, score)
-                })
-                .filter(|(_, score)| *score > 0)
+        if filter.query.trim().is_empty() {
+            let mut filtered_documents: Vec<&Document> = self
+                .iter_documents()
+                .map(|head| head.get_single_document())
+                .filter(|doc| filter.should_show_document(doc))
                 .collect();
 
-            // sort by score, then by modification time
-            scored_documents.sort_by(|a, b| {
-                let score_cmp = b.1.cmp(&a.1);
-                if score_cmp != std::cmp::Ordering::Equal {
-                    return score_cmp;
-                }
+            // sort by modification time
+            filtered_documents.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
 
-                b.0.updated_at.cmp(&a.0.updated_at)
-            });
+            let page_end = page_start + PAGE_SIZE;
+            let paginated_documents =
+                &filtered_documents[page_start..filtered_documents.len().min(page_end)];
 
-            filtered_documents = scored_documents.into_iter().map(|(doc, _)| doc).collect();
+            Ok(ListPage {
+                items: paginated_documents.to_vec(),
+                has_more: page_end < filtered_documents.len(),
+            })
+        } else {
+            let mut items = self
+                .search
+                .search(&filter.query)
+                .map(|id| {
+                    self.must_get_document(&id)
+                        .expect("Document returned by search engine must exist")
+                })
+                .filter(|doc| filter.should_show_document(doc))
+                .skip(page_start)
+                .take(PAGE_SIZE + 1)
+                .collect::<Vec<_>>();
+
+            let has_more = items.len() > PAGE_SIZE;
+            if has_more {
+                items.remove(PAGE_SIZE);
+            }
+
+            Ok(ListPage { items, has_more })
         }
-
-        let start = (filter.page as usize) * PAGE_SIZE;
-        let end = start + PAGE_SIZE;
-        let paginated_documents = &filtered_documents[start..filtered_documents.len().min(end)];
-
-        Ok(ListPage {
-            items: paginated_documents.to_vec(),
-            has_more: end < filtered_documents.len(),
-        })
     }
 }
 

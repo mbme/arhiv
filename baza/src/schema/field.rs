@@ -93,14 +93,17 @@ impl Field {
         result
     }
 
-    pub fn extract_search_data(&self, value: &Value) -> Result<Option<String>> {
+    pub fn extract_search_data<'v>(&self, value: &'v Value) -> Result<Option<&'v str>> {
         // TODO also search in Ref and RefList document titles
 
         match self.field_type {
-            FieldType::String {} | FieldType::MarkupString {} | FieldType::People {} => value
-                .as_str()
-                .map(|value| Some(value.to_lowercase()))
-                .ok_or_else(|| anyhow!("failed to extract field {}", self.name)),
+            FieldType::String {} | FieldType::MarkupString {} | FieldType::People {} => {
+                let data = value
+                    .as_str()
+                    .ok_or_else(|| anyhow!("failed to extract field {}", self.name))?;
+
+                Ok(Some(data))
+            }
             _ => Ok(None),
         }
     }

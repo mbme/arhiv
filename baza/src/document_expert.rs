@@ -7,7 +7,6 @@ use crate::{
     baza2::BazaManager,
     entities::{Document, DocumentData, DocumentType, Id, Refs},
     schema::{download_asset, Asset, DataSchema, Field, FieldType, ASSET_TYPE},
-    search::MultiSearch,
 };
 
 pub struct DocumentExpert<'s> {
@@ -85,40 +84,6 @@ impl<'s> DocumentExpert<'s> {
             .any(|field| !field.readonly);
 
         Ok(is_editable)
-    }
-
-    pub fn search(
-        &self,
-        document_type: &DocumentType,
-        data: &DocumentData,
-        pattern: &str,
-    ) -> Result<usize> {
-        let title = self.get_title(document_type, data)?;
-
-        let mut final_score = 0;
-        let multi_search = MultiSearch::new(pattern);
-
-        // increase score if field is a title
-        let title_score = multi_search.search(&title) * 3;
-        final_score += title_score;
-
-        for field in self.schema.iter_fields(document_type)? {
-            let value = if let Some(value) = data.get(field.name) {
-                value
-            } else {
-                continue;
-            };
-
-            let search_data = if let Some(search_data) = field.extract_search_data(value)? {
-                search_data
-            } else {
-                continue;
-            };
-
-            final_score += multi_search.search(&search_data);
-        }
-
-        Ok(final_score)
     }
 
     fn find_collection_field_for(

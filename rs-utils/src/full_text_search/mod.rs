@@ -215,19 +215,38 @@ impl FTSEngine {
                     return None;
                 }
 
-                // match prefixes
-                if term.starts_with(query_term) {
-                    return Some((term.as_str(), query_term.len() as f64 / term.len() as f64));
+                // ensure query term isn't too long to match this term
+                if query_term.len() > term.len() + 1 {
+                    return None;
                 }
 
-                let distance = damerau_levenshtein(query_term, term);
+                // match prefixes
+                if term.starts_with(query_term) {
+                    return Some((
+                        term.as_str(),
+                        (query_term.len() as f64 / term.len() as f64).min(0.5),
+                    ));
+                }
 
-                if distance <= 2 {
-                    let similarity = 1.0 - (0.25 * distance as f64);
+                if query_term.len() < term.len() {
+                    let distance = damerau_levenshtein(query_term, &term[0..query_term.len()]);
+                    if distance > 1 {
+                        return None;
+                    }
 
-                    Some((term.as_str(), similarity))
+                    let mut similarity = 1.0 - (0.3 * distance as f64);
+                    similarity *= query_term.len() as f64 / term.len() as f64;
+
+                    Some((term, similarity))
                 } else {
-                    None
+                    let distance = damerau_levenshtein(query_term, term);
+                    if distance > 2 {
+                        return None;
+                    }
+
+                    let similarity = 1.0 - (0.4 * distance as f64);
+
+                    Some((term, similarity))
                 }
             })
             .collect()

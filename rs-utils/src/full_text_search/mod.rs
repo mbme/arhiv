@@ -2,6 +2,7 @@ mod tokenizer;
 
 use std::collections::{HashMap, HashSet};
 
+use serde::{Deserialize, Serialize};
 use strsim::damerau_levenshtein;
 use tokenizer::tokenize_with_offsets;
 
@@ -11,7 +12,10 @@ use crate::{algorithms::smallest_range_covering_elements_from_k_lists, log};
 const B: f64 = 0.75;
 const K1: f64 = 1.2;
 
-type FieldMatches = HashMap<String, Vec<usize>>;
+type FieldId = usize;
+
+// (interned) field -> offset[]
+type FieldMatches = HashMap<FieldId, Vec<usize>>;
 
 #[derive(Default)]
 struct DocumentMatches<'query, 'field> {
@@ -97,8 +101,11 @@ impl<'query, 'field> DocumentMatches<'query, 'field> {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct FTSEngine {
+    // cache field names
+    fields: Vec<String>,
+
     // term -> document_id -> field -> offset[]
     terms_index: HashMap<String, HashMap<String, FieldMatches>>,
 
@@ -120,6 +127,8 @@ impl FTSEngine {
         // update term frequency index
         let mut doc_term_count = 0;
         for (field, value) in document {
+            let field = self.get_or_intern_field(field);
+
             let field_terms = tokenize_with_offsets(value);
             if field_terms.is_empty() {
                 continue;
@@ -132,7 +141,7 @@ impl FTSEngine {
 
                 let document_matches = term_matches.entry(document_id.clone()).or_default();
 
-                let field_matches = document_matches.entry(field.to_string()).or_default();
+                let field_matches = document_matches.entry(field).or_default();
                 field_matches.push(byte_offset);
             }
         }
@@ -155,6 +164,16 @@ impl FTSEngine {
         self.doc_term_count.remove(document_id);
 
         self.update_avg_doc_term_count();
+    }
+
+    fn get_or_intern_field(&mut self, field: &str) -> FieldId {
+        if let Some(position) = self.fields.iter().position(|item| item == field) {
+            return position;
+        }
+
+        self.fields.push(field.to_string());
+
+        self.fields.len() - 1
     }
 
     fn update_avg_doc_term_count(&mut self) {

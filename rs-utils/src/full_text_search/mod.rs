@@ -2,7 +2,7 @@ mod tokenizer;
 
 use std::collections::{HashMap, HashSet};
 
-use strsim::jaro_winkler;
+use strsim::damerau_levenshtein;
 use tokenizer::tokenize_with_offsets;
 
 use crate::{algorithms::smallest_range_covering_elements_from_k_lists, log};
@@ -10,8 +10,6 @@ use crate::{algorithms::smallest_range_covering_elements_from_k_lists, log};
 // These are common bm25 parameter values
 const B: f64 = 0.75;
 const K1: f64 = 1.2;
-
-const JARO_WINKLER_MIN_SIMILARITY: f64 = 0.8;
 
 type FieldMatches = HashMap<String, Vec<usize>>;
 
@@ -180,14 +178,34 @@ impl FTSEngine {
     }
 
     fn get_fuzzy_terms(&self, query_term: &str) -> Vec<(&str, f64)> {
-        // FIXME handle 2 chars with starts_with
-
         self.terms_index
             .keys()
             .filter_map(|term| {
-                let similarity = jaro_winkler(query_term, term);
+                // complete match
+                if query_term == term {
+                    return Some((term.as_str(), 1.0));
+                }
 
-                if similarity > JARO_WINKLER_MIN_SIMILARITY {
+                // if query consists of single char, we need only complete matches
+                if query_term.len() == 1 {
+                    return None;
+                }
+
+                // ensure the first letter is the same
+                if term.chars().next() != query_term.chars().next() {
+                    return None;
+                }
+
+                // match prefixes
+                if term.starts_with(query_term) {
+                    return Some((term.as_str(), query_term.len() as f64 / term.len() as f64));
+                }
+
+                let distance = damerau_levenshtein(query_term, term);
+
+                if distance <= 2 {
+                    let similarity = 1.0 - (0.25 * distance as f64);
+
                     Some((term.as_str(), similarity))
                 } else {
                     None
@@ -227,7 +245,7 @@ impl FTSEngine {
                 let doc_map = self
                     .terms_index
                     .get(fuzzy_term)
-                    .expect("fuzzy term must be indexed");
+                    .expect("fuzzy matched term must be indexed");
 
                 // calculate bm25 for fuzzy term
 

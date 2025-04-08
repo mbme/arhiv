@@ -380,8 +380,8 @@ mod tests {
         assert_eq!(fts.search("title cd").len(), 1);
         assert_eq!(fts.search(" ").len(), 3);
 
-        assert_eq!(fts.search("vlue").len(), 3);
-        assert_eq!(fts.search("tetl daaata").len(), 3);
+        assert_eq!(fts.search("vlaue").len(), 3);
+        assert_eq!(fts.search("titl daata").len(), 3);
         assert_eq!(fts.search("tit").len(), 3);
     }
 

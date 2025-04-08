@@ -2,6 +2,7 @@ mod tokenizer;
 
 use std::collections::{HashMap, HashSet};
 
+use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
 use strsim::damerau_levenshtein;
 use tokenizer::tokenize_with_offsets;
@@ -12,29 +13,52 @@ use crate::{algorithms::smallest_range_covering_elements_from_k_lists, log};
 const B: f64 = 0.75;
 const K1: f64 = 1.2;
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct FieldBoost(f64);
+
+impl FieldBoost {
+    pub fn new(value: f64) -> Result<Self> {
+        ensure!(
+            value > 0.0 && value <= 2.0,
+            "Field boost must be in range (0, 2], got {value}"
+        );
+
+        Ok(FieldBoost(value))
+    }
+
+    pub fn calculate(&self, terms_in_field: usize, total_terms_count: usize) -> f64 {
+        if self.0 <= 1.0 {
+            return 1.0;
+        }
+
+        1.0 + (self.0 - 1.0) * (terms_in_field as f64 / total_terms_count as f64)
+    }
+}
+
 type FieldId = usize;
 
 // (interned) field -> offset[]
 type FieldMatches = HashMap<FieldId, Vec<usize>>;
 
 #[derive(Default)]
-struct DocumentMatches<'query, 'field> {
+struct DocumentMatches<'term, 'field> {
     // query term -> field -> offset[]
-    term_matches: HashMap<&'query str, &'field FieldMatches>,
+    term_matches: HashMap<&'term str, &'field FieldMatches>,
 
     // query term -> score
-    term_scores: HashMap<&'query str, f64>,
+    term_scores: HashMap<&'term str, f64>,
 }
 
-impl<'query, 'field> DocumentMatches<'query, 'field> {
-    pub fn terms_matched(&self) -> usize {
+impl<'term, 'field> DocumentMatches<'term, 'field> {
+    pub fn terms_count(&self) -> usize {
         self.term_matches.len()
     }
 
     /// Update score of term, if it's bigger than current score
     pub fn update_term_score(
         &mut self,
-        term: &'query str,
+        term: &'term str,
         score: f64,
         matches: &'field FieldMatches,
     ) {
@@ -49,14 +73,35 @@ impl<'query, 'field> DocumentMatches<'query, 'field> {
         self.term_matches.insert(term, matches);
     }
 
+    fn calculate_fields_bonus(&self, field_boosts: &HashMap<FieldId, FieldBoost>) -> f64 {
+        let mut bonus = 1.0;
+
+        for (field, field_boost) in field_boosts {
+            let terms_in_field = self
+                .term_matches
+                .values()
+                .filter(|field_matches| field_matches.get(field).is_some())
+                .count();
+
+            let field_bonus = field_boost.calculate(terms_in_field, self.terms_count());
+
+            // calculate bonus for fields proportionally to number of terms in the field
+            bonus *= field_bonus;
+        }
+
+        bonus
+    }
+
     /// Calculate proximity bonus if all the terms matched the field.
     /// Returns max bonus of all the fields.
     fn calculate_proximity_bonus(&self) -> f64 {
         // apply proximity boost if there was more than 1 query term in the document
-        if self.terms_matched() < 2 {
+        if self.terms_count() < 2 {
             return 1.0;
         }
 
+        // list document fields that match ANY term
+        // we can take fields for any term (i.e. the first term)
         let fields = self
             .term_matches
             .values()
@@ -75,7 +120,7 @@ impl<'query, 'field> DocumentMatches<'query, 'field> {
                 .collect::<Vec<_>>();
 
             // this field didn't match all terms
-            if term_field_matches.len() < self.terms_matched() {
+            if term_field_matches.len() < self.terms_count() {
                 continue;
             }
 
@@ -94,10 +139,16 @@ impl<'query, 'field> DocumentMatches<'query, 'field> {
         max_proximity_bonus
     }
 
-    pub fn score(self) -> f64 {
+    pub fn score(self, field_boosts: Option<&HashMap<FieldId, FieldBoost>>) -> f64 {
         let proximity_bonus = self.calculate_proximity_bonus();
 
-        self.term_scores.values().sum::<f64>() * proximity_bonus
+        let fields_bonus = if let Some(field_boosts) = field_boosts {
+            self.calculate_fields_bonus(field_boosts)
+        } else {
+            1.0
+        };
+
+        self.term_scores.values().sum::<f64>() * proximity_bonus * fields_bonus
     }
 }
 
@@ -114,6 +165,10 @@ pub struct FTSEngine {
 
     // average term count per document
     avg_doc_len: f64,
+
+    // Boost scores for some document fields
+    // document_id -> field -> score_boost
+    doc_field_boost: HashMap<String, HashMap<FieldId, FieldBoost>>,
 }
 
 impl FTSEngine {
@@ -121,7 +176,12 @@ impl FTSEngine {
         Default::default()
     }
 
-    pub fn index_document(&mut self, document_id: String, document: HashMap<&str, &str>) {
+    pub fn index_document(
+        &mut self,
+        document_id: String,
+        document: HashMap<&str, &str>,
+        boost_scores: HashMap<&str, FieldBoost>,
+    ) {
         self.remove_document(&document_id);
 
         // update term frequency index
@@ -146,6 +206,13 @@ impl FTSEngine {
             }
         }
 
+        let document_scores = boost_scores
+            .into_iter()
+            .map(|(key, value)| (self.get_or_intern_field(key), value))
+            .collect();
+        self.doc_field_boost
+            .insert(document_id.clone(), document_scores);
+
         // update term count index
         *self.doc_term_count.entry(document_id.clone()).or_default() = doc_term_count;
 
@@ -162,6 +229,7 @@ impl FTSEngine {
         });
 
         self.doc_term_count.remove(document_id);
+        self.doc_field_boost.remove(document_id);
 
         self.update_avg_doc_term_count();
     }
@@ -315,11 +383,16 @@ impl FTSEngine {
         }
 
         // keep only documents that match all query terms
-        scores.retain(|_, document_matches| document_matches.terms_matched() == query_terms.len());
+        scores.retain(|_, document_matches| document_matches.terms_count() == query_terms.len());
 
         let mut result = scores
             .into_iter()
-            .map(|(document_id, matches)| (document_id, matches.score()))
+            .map(|(document_id, matches)| {
+                (
+                    document_id,
+                    matches.score(self.doc_field_boost.get(document_id)),
+                )
+            })
             .collect::<Vec<_>>();
 
         // sort by score desc
@@ -336,8 +409,11 @@ impl FTSEngine {
 mod tests {
     use std::collections::HashMap;
 
+    use crate::full_text_search::FieldBoost;
+
     use super::FTSEngine;
 
+    #[derive(Clone)]
     struct TestDoc {
         id: String,
         title: String,
@@ -352,17 +428,25 @@ mod tests {
                 data: data.into(),
             }
         }
+
+        pub fn insert(&self, engine: &mut FTSEngine) {
+            engine.index_document(self.id.clone(), self.get_fields(), Default::default());
+        }
+
+        pub fn get_fields(&self) -> HashMap<&str, &str> {
+            let mut fields = HashMap::new();
+            fields.insert("title", self.title.as_str());
+            fields.insert("data", self.data.as_str());
+
+            fields
+        }
     }
 
     fn new_test_fts(docs: &[TestDoc]) -> FTSEngine {
         let mut engine = FTSEngine::new();
 
         for doc in docs {
-            let mut fields = HashMap::new();
-            fields.insert("title", doc.title.as_str());
-            fields.insert("data", doc.data.as_str());
-
-            engine.index_document(doc.id.clone(), fields);
+            doc.insert(&mut engine);
         }
 
         engine
@@ -408,6 +492,30 @@ mod tests {
             ]);
 
             assert_eq!(fts.search("data 123"), vec!["2", "1"]);
+        }
+    }
+
+    #[test]
+    fn test_field_boost() {
+        let doc1 = TestDoc::new(1, "test value 1", "data 123");
+        let doc2 = TestDoc::new(2, "test value 1", "test data 123");
+
+        {
+            let fts = new_test_fts(&[doc1.clone(), doc2.clone()]);
+
+            assert_eq!(fts.search("test value"), vec!["2", "1"]);
+        }
+
+        {
+            let mut fts = FTSEngine::new();
+
+            let mut field_boost = HashMap::new();
+            field_boost.insert("title", FieldBoost::new(2.0).unwrap());
+            fts.index_document(doc1.id.clone(), doc1.get_fields(), field_boost);
+
+            doc2.insert(&mut fts);
+
+            assert_eq!(fts.search("test value"), vec!["1", "2"]);
         }
     }
 }

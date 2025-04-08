@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 
-use rs_utils::full_text_search::FTSEngine;
+use rs_utils::full_text_search::{FTSEngine, FieldBoost};
 
 use crate::{
     entities::{Document, Id},
@@ -30,6 +30,9 @@ impl SearchEngine {
         let title = document_expert.get_title(&document.document_type, &document.data)?;
         fields.insert("title", title.as_str());
 
+        let mut boost_fields = HashMap::new();
+        boost_fields.insert("title", FieldBoost::new(1.5)?);
+
         for field in self.schema.iter_fields(&document.document_type)? {
             let value = if let Some(value) = document.data.get(field.name) {
                 value
@@ -46,7 +49,8 @@ impl SearchEngine {
             fields.insert(field.name, search_data);
         }
 
-        self.fts.index_document(document.id.to_string(), fields);
+        self.fts
+            .index_document(document.id.to_string(), fields, boost_fields);
 
         Ok(())
     }

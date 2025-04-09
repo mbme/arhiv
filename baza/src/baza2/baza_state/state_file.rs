@@ -1,12 +1,9 @@
-use std::{
-    collections::HashMap,
-    io::{BufRead, Write},
-};
+use std::{collections::HashMap, io::Write};
 
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
-use rs_utils::{age::AgeKey, AgeGzReader, AgeGzWriter};
+use rs_utils::{age::AgeKey, create_file_reader, create_file_writer, AgeGzReader, AgeGzWriter};
 
 use crate::{
     baza2::BazaInfo,
@@ -27,7 +24,8 @@ pub struct BazaStateFile {
 }
 
 impl BazaStateFile {
-    pub fn read(reader: impl BufRead, key: AgeKey) -> Result<Self> {
+    pub fn read(file: &str, key: AgeKey) -> Result<Self> {
+        let reader = create_file_reader(file)?;
         let agegz_reader = AgeGzReader::new(reader, key)?;
 
         let file: BazaStateFile =
@@ -36,13 +34,16 @@ impl BazaStateFile {
         Ok(file)
     }
 
-    pub fn write(&self, writer: impl Write, key: AgeKey) -> Result<()> {
+    pub fn write(&self, file: &str, key: AgeKey) -> Result<()> {
+        let writer = create_file_writer(file, true)?;
+
         let mut agegz_writer = AgeGzWriter::new(writer, key)?;
 
         serde_json::to_writer(&mut agegz_writer, &self)
             .context("Failed to serialize BazaStateFile")?;
 
-        agegz_writer.finish()?;
+        let mut writer = agegz_writer.finish()?;
+        writer.flush()?;
 
         Ok(())
     }

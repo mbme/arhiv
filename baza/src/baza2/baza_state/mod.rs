@@ -1,12 +1,11 @@
 use std::{
     collections::{HashMap, HashSet},
-    io::Write,
     time::Instant,
 };
 
 use anyhow::{ensure, Context, Result};
 
-use rs_utils::{age::AgeKey, create_file_reader, create_file_writer, log, Timestamp};
+use rs_utils::{age::AgeKey, log, Timestamp};
 
 use self::search::SearchEngine;
 use self::state_file::BazaStateFile;
@@ -60,13 +59,12 @@ impl BazaState {
         )
     }
 
-    pub fn read_file(file: &str, key: AgeKey, schema: DataSchema) -> Result<Self> {
+    pub fn read(file: &str, key: AgeKey, schema: DataSchema) -> Result<Self> {
         log::debug!("Reading state from file {file}");
 
         let start_time = Instant::now();
 
-        let state_reader = create_file_reader(file)?;
-        let file = BazaStateFile::read(state_reader, key)?;
+        let file = BazaStateFile::read(file, key)?;
 
         let duration = start_time.elapsed();
         log::info!("Read state from file in {:?}", duration);
@@ -92,16 +90,12 @@ impl BazaState {
         })
     }
 
-    pub fn write_to_file(&mut self, file: &str, key: AgeKey) -> Result<()> {
+    pub fn write(&mut self, file: &str, key: AgeKey) -> Result<()> {
         log::debug!("Writing state to file {file}");
 
         let start_time = Instant::now();
 
-        let mut state_writer = create_file_writer(file, true)?;
-
-        self.file.write(&mut state_writer, key)?;
-        state_writer.flush()?;
-
+        self.file.write(file, key)?;
         self.modified = false;
 
         let duration = start_time.elapsed();
@@ -451,13 +445,10 @@ mod tests {
         state.lock_document(&id, "test").unwrap();
 
         assert!(state.is_modified());
-        state
-            .write_to_file(&temp_state_file.path, key.clone())
-            .unwrap();
+        state.write(&temp_state_file.path, key.clone()).unwrap();
         assert!(!state.is_modified());
 
-        let state1 =
-            BazaState::read_file(&temp_state_file.path, key.clone(), state.schema).unwrap();
+        let state1 = BazaState::read(&temp_state_file.path, key.clone(), state.schema).unwrap();
 
         assert_eq!(state.file, state1.file);
     }

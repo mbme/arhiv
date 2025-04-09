@@ -1,5 +1,5 @@
 use charabia::Tokenize;
-use unicode_normalization::UnicodeNormalization;
+use deunicode::deunicode;
 
 pub fn tokenize_with_offsets(input: &str) -> Vec<(String, usize)> {
     // TODO remove stop words
@@ -8,7 +8,7 @@ pub fn tokenize_with_offsets(input: &str) -> Vec<(String, usize)> {
         .filter_map(|token| {
             token
                 .is_word()
-                .then(|| (token.lemma().nfc().collect(), token.byte_start))
+                .then(|| (deunicode(token.lemma()).to_lowercase(), token.byte_start))
         })
         .collect()
 }
@@ -23,7 +23,7 @@ mod tests {
             tokenize_with_offsets("Hello, 世界! Rust."),
             vec![
                 ("hello".to_string(), 0),
-                ("世界".to_string(), 7),
+                ("shi jie".to_string(), 7),
                 ("rust".to_string(), 15)
             ]
         );
@@ -39,10 +39,15 @@ mod tests {
         );
 
         assert_eq!(
+            tokenize_with_offsets("Słowikowskiego"),
+            vec![("slowikowskiego".to_string(), 0),]
+        );
+
+        assert_eq!(
             tokenize_with_offsets("ТеСт ЇЖак"),
             vec![
-                ("тест".to_string(), 0), //
-                ("їжак".to_string(), 9),
+                ("test".to_string(), 0), //
+                ("izhak".to_string(), 9),
             ]
         );
     }

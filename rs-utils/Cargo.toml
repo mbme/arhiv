@@ -65,8 +65,8 @@ async-stream = "0.3" # macro for creating async streams
 
 # search engine
 strsim = "0.11" # string similarity
-unicode-normalization = "0.1.24" # unicode string normalization
 charabia = { version = "0.9", default-features = false } # tokenization & normalization
+deunicode = "1.6" # turn translate unicode strings and emojis into ASCII
 
 # read password from platform-specific secure stores
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }

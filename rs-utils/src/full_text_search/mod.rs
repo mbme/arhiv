@@ -30,8 +30,8 @@ impl FieldBoost {
         Ok(FieldBoost(value))
     }
 
+    /// calculate bonus for fields proportionally to number of matched query terms in the field
     pub fn calculate(&self, terms_in_field: usize, total_terms_count: usize) -> f64 {
-        // scale boost proportionally to the number of matched query terms
         1.0 + (self.0 - 1.0) * (terms_in_field as f64 / total_terms_count as f64)
     }
 }
@@ -39,7 +39,7 @@ impl FieldBoost {
 type FieldId = usize;
 
 // (interned) field -> offset[]
-type FieldMatches = HashMap<FieldId, Vec<usize>>;
+type DocumentTermMatches = HashMap<FieldId, Vec<usize>>;
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct FTSEngine {
@@ -47,7 +47,7 @@ pub struct FTSEngine {
     fields: Vec<String>,
 
     // term -> document_id -> field -> offset[]
-    terms_index: HashMap<String, HashMap<String, FieldMatches>>,
+    terms_index: HashMap<String, HashMap<String, DocumentTermMatches>>,
 
     // document_id -> term count
     doc_term_count: HashMap<String, usize>,
@@ -88,9 +88,9 @@ impl FTSEngine {
             for (term, byte_offset) in field_terms {
                 let term_matches = self.terms_index.entry(term).or_default();
 
-                let document_matches = term_matches.entry(document_id.clone()).or_default();
+                let doc_term_matches = term_matches.entry(document_id.clone()).or_default();
 
-                let field_matches = document_matches.entry(field).or_default();
+                let field_matches = doc_term_matches.entry(field).or_default();
                 field_matches.push(byte_offset);
             }
         }
@@ -246,14 +246,14 @@ impl FTSEngine {
 
                 let idf = self.idf(fuzzy_term);
 
-                for (document_id, document_matches) in doc_map {
+                for (document_id, document_term_matches) in doc_map {
                     let doc_len = *self
                         .doc_term_count
                         .get(document_id)
                         .expect("Document term count couldn't be empty")
                         as f64;
 
-                    let tf: f64 = document_matches
+                    let tf: f64 = document_term_matches
                         .values()
                         .map(|positions| positions.len() as f64)
                         .sum();
@@ -266,13 +266,17 @@ impl FTSEngine {
                     let doc_bm25_score = doc_bm25_score * similarity;
 
                     let document_scorer = scores.entry(document_id).or_default();
-                    document_scorer.update_term_score(query_term, doc_bm25_score, document_matches);
+                    document_scorer.update_term_score(
+                        query_term,
+                        doc_bm25_score,
+                        document_term_matches,
+                    );
                 }
             }
         }
 
         // keep only documents that match all query terms
-        scores.retain(|_, document_matches| document_matches.terms_count() == query_terms.len());
+        scores.retain(|_, document_scorer| document_scorer.terms_count() == query_terms.len());
 
         let mut result = scores
             .into_iter()

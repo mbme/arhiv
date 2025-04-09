@@ -2,18 +2,18 @@ use std::collections::HashMap;
 
 use crate::algorithms::smallest_range_covering_elements_from_k_lists;
 
-use super::{FieldBoost, FieldId, FieldMatches};
+use super::{DocumentTermMatches, FieldBoost, FieldId};
 
 #[derive(Default)]
-pub(super) struct DocumentScorer<'term, 'field> {
+pub(super) struct DocumentScorer<'term, 'doc> {
     // query term -> field -> offset[]
-    term_matches: HashMap<&'term str, &'field FieldMatches>,
+    term_matches: HashMap<&'term str, &'doc DocumentTermMatches>,
 
     // query term -> score
     term_scores: HashMap<&'term str, f64>,
 }
 
-impl<'term, 'field> DocumentScorer<'term, 'field> {
+impl<'term, 'doc> DocumentScorer<'term, 'doc> {
     pub fn terms_count(&self) -> usize {
         self.term_matches.len()
     }
@@ -23,7 +23,7 @@ impl<'term, 'field> DocumentScorer<'term, 'field> {
         &mut self,
         term: &'term str,
         score: f64,
-        matches: &'field FieldMatches,
+        matches: &'doc DocumentTermMatches,
     ) {
         if let Some(current_score) = self.term_scores.get(term) {
             // we need max score per query term
@@ -48,7 +48,6 @@ impl<'term, 'field> DocumentScorer<'term, 'field> {
 
             let field_bonus = field_boost.calculate(terms_in_field, self.terms_count());
 
-            // calculate bonus for fields proportionally to number of terms in the field
             bonus *= field_bonus;
         }
 

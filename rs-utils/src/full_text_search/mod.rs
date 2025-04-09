@@ -1,3 +1,4 @@
+mod document_scorer;
 mod tokenizer;
 
 use std::collections::{HashMap, HashSet};
@@ -7,7 +8,9 @@ use serde::{Deserialize, Serialize};
 use strsim::damerau_levenshtein;
 use tokenizer::tokenize_with_offsets;
 
-use crate::{algorithms::smallest_range_covering_elements_from_k_lists, log};
+use crate::log;
+
+use self::document_scorer::DocumentScorer;
 
 // These are common bm25 parameter values
 const B: f64 = 0.75;
@@ -20,18 +23,15 @@ pub struct FieldBoost(f64);
 impl FieldBoost {
     pub fn new(value: f64) -> Result<Self> {
         ensure!(
-            value > 0.0 && value <= 2.0,
-            "Field boost must be in range (0, 2], got {value}"
+            (1.0..=2.0).contains(&value),
+            "Field boost must be in range [1, 2], got {value}"
         );
 
         Ok(FieldBoost(value))
     }
 
     pub fn calculate(&self, terms_in_field: usize, total_terms_count: usize) -> f64 {
-        if self.0 <= 1.0 {
-            return 1.0;
-        }
-
+        // scale boost proportionally to the number of matched query terms
         1.0 + (self.0 - 1.0) * (terms_in_field as f64 / total_terms_count as f64)
     }
 }
@@ -40,117 +40,6 @@ type FieldId = usize;
 
 // (interned) field -> offset[]
 type FieldMatches = HashMap<FieldId, Vec<usize>>;
-
-#[derive(Default)]
-struct DocumentMatches<'term, 'field> {
-    // query term -> field -> offset[]
-    term_matches: HashMap<&'term str, &'field FieldMatches>,
-
-    // query term -> score
-    term_scores: HashMap<&'term str, f64>,
-}
-
-impl<'term, 'field> DocumentMatches<'term, 'field> {
-    pub fn terms_count(&self) -> usize {
-        self.term_matches.len()
-    }
-
-    /// Update score of term, if it's bigger than current score
-    pub fn update_term_score(
-        &mut self,
-        term: &'term str,
-        score: f64,
-        matches: &'field FieldMatches,
-    ) {
-        if let Some(current_score) = self.term_scores.get(term) {
-            // we need max score per query term
-            if *current_score >= score {
-                return;
-            }
-        }
-
-        self.term_scores.insert(term, score);
-        self.term_matches.insert(term, matches);
-    }
-
-    fn calculate_fields_bonus(&self, field_boosts: &HashMap<FieldId, FieldBoost>) -> f64 {
-        let mut bonus = 1.0;
-
-        for (field, field_boost) in field_boosts {
-            let terms_in_field = self
-                .term_matches
-                .values()
-                .filter(|field_matches| field_matches.get(field).is_some())
-                .count();
-
-            let field_bonus = field_boost.calculate(terms_in_field, self.terms_count());
-
-            // calculate bonus for fields proportionally to number of terms in the field
-            bonus *= field_bonus;
-        }
-
-        bonus
-    }
-
-    /// Calculate proximity bonus if all the terms matched the field.
-    /// Returns max bonus of all the fields.
-    fn calculate_proximity_bonus(&self) -> f64 {
-        // apply proximity boost if there was more than 1 query term in the document
-        if self.terms_count() < 2 {
-            return 1.0;
-        }
-
-        // list document fields that match ANY term
-        // we can take fields for any term (i.e. the first term)
-        let fields = self
-            .term_matches
-            .values()
-            .next()
-            .expect("Matches can't be empty")
-            .keys()
-            .collect::<Vec<_>>();
-
-        let mut max_proximity_bonus = 1.0;
-        for field in fields {
-            let term_field_matches = self
-                .term_matches
-                .values()
-                .filter_map(|field_matches| field_matches.get(field))
-                .map(|positions| positions.as_slice())
-                .collect::<Vec<_>>();
-
-            // this field didn't match all terms
-            if term_field_matches.len() < self.terms_count() {
-                continue;
-            }
-
-            let (min, max, _) =
-                smallest_range_covering_elements_from_k_lists(term_field_matches.as_slice());
-            let min_distance = max - min;
-
-            // Apply an exponential decay function: boost closer matches more
-            // boost approaches 2x for very close matches
-            // min boost is 1.1 since we always want to boost fields that match all query terms
-            let proximity_bonus = (100.0 / (min_distance as f64 + 10.0)).clamp(1.1, 2.0);
-
-            max_proximity_bonus = f64::max(max_proximity_bonus, proximity_bonus);
-        }
-
-        max_proximity_bonus
-    }
-
-    pub fn score(self, field_boosts: Option<&HashMap<FieldId, FieldBoost>>) -> f64 {
-        let proximity_bonus = self.calculate_proximity_bonus();
-
-        let fields_bonus = if let Some(field_boosts) = field_boosts {
-            self.calculate_fields_bonus(field_boosts)
-        } else {
-            1.0
-        };
-
-        self.term_scores.values().sum::<f64>() * proximity_bonus * fields_bonus
-    }
-}
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct FTSEngine {
@@ -344,7 +233,7 @@ impl FTSEngine {
             all_query_terms.insert(query_term, fuzzy_terms);
         }
 
-        let mut scores: HashMap<&String, DocumentMatches> = HashMap::new();
+        let mut scores: HashMap<&String, DocumentScorer> = HashMap::new();
 
         for (query_term, fuzzy_terms) in all_query_terms {
             for (fuzzy_term, similarity) in fuzzy_terms {
@@ -376,8 +265,8 @@ impl FTSEngine {
                     // apply fuzzy term similarity coefficient
                     let doc_bm25_score = doc_bm25_score * similarity;
 
-                    let entry = scores.entry(document_id).or_default();
-                    entry.update_term_score(query_term, doc_bm25_score, document_matches);
+                    let document_scorer = scores.entry(document_id).or_default();
+                    document_scorer.update_term_score(query_term, doc_bm25_score, document_matches);
                 }
             }
         }

@@ -1,14 +1,10 @@
-use std::collections::HashMap;
-
 use anyhow::{bail, ensure, Context, Result};
 
 use rs_utils::log;
 
 use crate::entities::{DocumentLock, DocumentLockKey, Id};
 
-use super::BazaState;
-
-pub type Locks = HashMap<Id, DocumentLock>;
+use super::{BazaState, Locks};
 
 impl BazaState {
     pub fn list_document_locks(&self) -> &Locks {

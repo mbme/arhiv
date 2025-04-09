@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use anyhow::Result;
 
@@ -8,8 +8,6 @@ use crate::{
 };
 
 use super::{BazaState, DocumentHead};
-
-pub type BazaRefsState = HashMap<DocumentKey, Refs>;
 
 impl BazaState {
     pub(super) fn update_document_refs(&mut self, head: &DocumentHead) -> Result<()> {

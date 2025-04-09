@@ -1,17 +1,15 @@
 use std::{
     collections::{HashMap, HashSet},
-    io::{BufRead, Write},
+    io::Write,
     time::Instant,
 };
 
 use anyhow::{ensure, Context, Result};
-use serde::{Deserialize, Serialize};
 
-use rs_utils::{
-    age::AgeKey, create_file_reader, create_file_writer, log, AgeGzReader, AgeGzWriter, Timestamp,
-};
+use rs_utils::{age::AgeKey, create_file_reader, create_file_writer, log, Timestamp};
 
 use self::search::SearchEngine;
+use self::state_file::BazaStateFile;
 use crate::{
     baza2::BazaInfo,
     entities::{Document, DocumentLockKey, Id, InstanceId, LatestRevComputer, Revision},
@@ -24,20 +22,11 @@ mod locks;
 mod query;
 mod refs;
 mod search;
+mod state_file;
 
 pub use document_head::DocumentHead;
-pub use locks::Locks;
 pub use query::{Filter, ListPage};
-use refs::BazaRefsState;
-
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-struct BazaStateFile {
-    instance_id: InstanceId,
-    info: BazaInfo,
-    documents: HashMap<Id, DocumentHead>,
-    locks: Locks,
-    refs: BazaRefsState,
-}
+pub use state_file::Locks;
 
 pub struct BazaState {
     file: BazaStateFile,
@@ -71,11 +60,16 @@ impl BazaState {
         )
     }
 
-    pub fn read(reader: impl BufRead, key: AgeKey, schema: DataSchema) -> Result<Self> {
-        let agegz_reader = AgeGzReader::new(reader, key)?;
+    pub fn read_file(file: &str, key: AgeKey, schema: DataSchema) -> Result<Self> {
+        log::debug!("Reading state from file {file}");
 
-        let file: BazaStateFile =
-            serde_json::from_reader(agegz_reader).context("Failed to parse BazaStateFile")?;
+        let start_time = Instant::now();
+
+        let state_reader = create_file_reader(file)?;
+        let file = BazaStateFile::read(state_reader, key)?;
+
+        let duration = start_time.elapsed();
+        log::info!("Read state from file in {:?}", duration);
 
         let mut search = SearchEngine::new(schema.clone());
 
@@ -98,33 +92,6 @@ impl BazaState {
         })
     }
 
-    pub fn read_file(file: &str, key: AgeKey, schema: DataSchema) -> Result<Self> {
-        log::debug!("Reading state from file {file}");
-
-        let start_time = Instant::now();
-
-        let state_reader = create_file_reader(file)?;
-        let state = BazaState::read(state_reader, key, schema)?;
-
-        let duration = start_time.elapsed();
-        log::info!("Read state from file in {:?}", duration);
-
-        Ok(state)
-    }
-
-    fn write(&mut self, writer: impl Write, key: AgeKey) -> Result<()> {
-        let mut agegz_writer = AgeGzWriter::new(writer, key)?;
-
-        serde_json::to_writer(&mut agegz_writer, &self.file)
-            .context("Failed to serialize BazaStateFile")?;
-
-        agegz_writer.finish()?;
-
-        self.modified = false;
-
-        Ok(())
-    }
-
     pub fn write_to_file(&mut self, file: &str, key: AgeKey) -> Result<()> {
         log::debug!("Writing state to file {file}");
 
@@ -132,9 +99,10 @@ impl BazaState {
 
         let mut state_writer = create_file_writer(file, true)?;
 
-        self.write(&mut state_writer, key)?;
-
+        self.file.write(&mut state_writer, key)?;
         state_writer.flush()?;
+
+        self.modified = false;
 
         let duration = start_time.elapsed();
         log::info!("Wrote state to file in {:?}", duration);
@@ -417,9 +385,7 @@ impl BazaState {
 
 #[cfg(test)]
 mod tests {
-    use std::io::Cursor;
-
-    use rs_utils::age::AgeKey;
+    use rs_utils::{age::AgeKey, TempFile};
     use serde_json::json;
 
     use crate::entities::{new_document, new_empty_document, DocumentLockKey, Id, Revision};
@@ -470,6 +436,8 @@ mod tests {
 
     #[test]
     fn test_state_read_write() {
+        let temp_state_file = TempFile::new();
+
         let key = AgeKey::generate_age_x25519_key();
         let mut state = BazaState::new_test_state();
 
@@ -482,14 +450,14 @@ mod tests {
         ]);
         state.lock_document(&id, "test").unwrap();
 
-        let mut data = Cursor::new(Vec::<u8>::new());
-
         assert!(state.is_modified());
-        state.write(&mut data, key.clone()).unwrap();
+        state
+            .write_to_file(&temp_state_file.path, key.clone())
+            .unwrap();
         assert!(!state.is_modified());
-        data.set_position(0);
 
-        let state1 = BazaState::read(&mut data, key.clone(), state.schema).unwrap();
+        let state1 =
+            BazaState::read_file(&temp_state_file.path, key.clone(), state.schema).unwrap();
 
         assert_eq!(state.file, state1.file);
     }

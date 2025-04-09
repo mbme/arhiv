@@ -18,7 +18,7 @@ use baza::{
 };
 use rs_utils::{
     ensure_file_exists, file_exists, get_crate_version, image::generate_qrcode_svg,
-    into_absolute_path, log, shutdown_signal, SecretString,
+    init_global_rayon_threadpool, into_absolute_path, log, shutdown_signal, SecretString,
 };
 
 #[derive(Parser, Debug)]
@@ -155,6 +155,9 @@ fn main() {
 
     let worker_threads_count = Arhiv::optimal_number_of_worker_threads();
     log::debug!("Using {worker_threads_count} worker threads");
+
+    init_global_rayon_threadpool(worker_threads_count)
+        .expect("Failed to init global rayon thread pool");
 
     let mut builder = tokio::runtime::Builder::new_multi_thread();
     builder.worker_threads(worker_threads_count);

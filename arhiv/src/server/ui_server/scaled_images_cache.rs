@@ -1,5 +1,4 @@
 use std::{
-    cmp::min,
     collections::HashMap,
     fmt::{Debug, Display},
     fs,
@@ -7,7 +6,6 @@ use std::{
 };
 
 use anyhow::{ensure, Context, Result};
-use rayon::{ThreadPool, ThreadPoolBuilder};
 use serde::Deserialize;
 use tokio::{sync::RwLock, time::Instant};
 
@@ -18,7 +16,7 @@ use baza::{
 };
 use rs_utils::{
     create_dir_if_not_exist, create_file_reader, create_file_writer, file_exists, format_bytes,
-    get_file_name, image::scale_image_file, list_files, log, num_cpus, read_all, Timestamp,
+    get_file_name, image::scale_image_file, list_files, log, read_all, Timestamp,
 };
 
 #[derive(Deserialize, Clone)]
@@ -63,23 +61,13 @@ struct ImageInfo {
 pub struct ScaledImagesCache {
     root_dir: String,
     usage_info: RwLock<HashMap<String, ImageInfo>>,
-    thread_pool: ThreadPool,
 }
 
 impl ScaledImagesCache {
     pub fn new(root_dir: String) -> Self {
-        let num_cpus = num_cpus().ok().unwrap_or(1);
-        let num_threads = min(num_cpus, 3);
-
-        let thread_pool = ThreadPoolBuilder::new()
-            .num_threads(num_threads)
-            .build()
-            .expect("Failed to build thread pool for ScaledImagesCache");
-
         ScaledImagesCache {
             root_dir,
             usage_info: Default::default(),
-            thread_pool,
         }
     }
 
@@ -231,7 +219,7 @@ impl ScaledImagesCache {
         let start_time = Instant::now();
 
         let (send, recv) = tokio::sync::oneshot::channel();
-        self.thread_pool.spawn_fifo(move || {
+        rayon::spawn_fifo(move || {
             let result = scale_image_file(buf_reader, params.max_w, params.max_h);
 
             send.send(result)

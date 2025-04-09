@@ -3125,6 +3125,7 @@ dependencies = [
  "pem",
  "qrcode",
  "rand 0.9.0",
+ "rayon",
  "rcgen",
  "regex",
  "reqwest",

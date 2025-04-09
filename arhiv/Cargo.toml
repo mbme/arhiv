@@ -34,7 +34,4 @@ tinytemplate.workspace = true
 
 include_dir = "0.7" # embed files into binary
 
-rayon = "1.8" # thread pool for executing CPU-heavy tasks, e.g. scaling images
-
-[build-dependencies]
-rs-utils = { path = "../rs-utils" }
+rayon.workspace = true

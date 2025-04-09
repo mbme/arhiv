@@ -16,7 +16,7 @@ use jni::{
 use tokio::runtime::Runtime;
 
 use arhiv::{Arhiv, ArhivOptions, ArhivServer, ServerInfo};
-use rs_utils::{log, SecretString};
+use rs_utils::{init_global_rayon_threadpool, log, SecretString};
 
 use self::keyring::AndroidKeyring;
 
@@ -38,6 +38,8 @@ fn start_server(options: ArhivOptions, port: u16) -> Result<ServerInfo> {
 
     let worker_threads_count = Arhiv::optimal_number_of_worker_threads();
     log::debug!("Using {worker_threads_count} worker threads");
+
+    init_global_rayon_threadpool(worker_threads_count)?;
 
     let mut builder = tokio::runtime::Builder::new_multi_thread();
     builder.worker_threads(worker_threads_count);

@@ -177,3 +177,12 @@ pub fn num_cpus() -> Result<usize> {
 
     Ok(num_cpus.get())
 }
+
+pub fn init_global_rayon_threadpool(num_threads: usize) -> Result<()> {
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(num_threads)
+        .build_global()
+        .context("Failed to init global rayon thread pool")?;
+
+    Ok(())
+}

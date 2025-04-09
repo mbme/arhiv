@@ -2,7 +2,7 @@
 
 home := env("HOME")
 root := home + "/temp/arhiv"
-debug_log_level := "debug,h2=info,rustls=info,i18n_embed=warn,rs_utils=info,hyper=info,axum::rejection=trace,keyring=info"
+debug_log_level := "debug,h2=info,rustls=info,i18n_embed=warn,rs_utils::http_server=info,hyper=info,axum::rejection=trace,keyring=info"
 
 alias c := check
 

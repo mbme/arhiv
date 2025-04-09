@@ -4,6 +4,7 @@ mod tokenizer;
 use std::collections::{HashMap, HashSet};
 
 use anyhow::{ensure, Result};
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use strsim::damerau_levenshtein;
 use tokenizer::tokenize_with_offsets;
@@ -155,8 +156,8 @@ impl FTSEngine {
 
     fn get_fuzzy_terms(&self, query_term: &str) -> Vec<(&str, f64)> {
         self.terms_index
-            .keys()
-            .filter_map(|term| {
+            .par_iter()
+            .filter_map(|(term, _)| {
                 // complete match
                 if query_term == term {
                     return Some((term.as_str(), 1.0));
@@ -233,20 +234,45 @@ impl FTSEngine {
             all_query_terms.insert(query_term, fuzzy_terms);
         }
 
-        let mut scores: HashMap<&String, DocumentScorer> = HashMap::new();
+        log::debug!(
+            "{} query terms -> {} fuzzy matched terms",
+            query_terms.len(),
+            all_query_terms
+                .values()
+                .map(|fuzzy_terms| fuzzy_terms.len())
+                .sum::<usize>()
+        );
 
-        for (query_term, fuzzy_terms) in all_query_terms {
-            for (fuzzy_term, similarity) in fuzzy_terms {
-                let doc_map = self
-                    .terms_index
-                    .get(fuzzy_term)
-                    .expect("fuzzy matched term must be indexed");
+        let mut scores = all_query_terms
+            .into_par_iter()
+            .flat_map(|(query_term, fuzzy_terms)| {
+                fuzzy_terms
+                    .into_par_iter()
+                    .flat_map(move |(fuzzy_term, similarity)| {
+                        let idf = self.idf(fuzzy_term);
 
-                // calculate bm25 for fuzzy term
+                        let doc_map = self
+                            .terms_index
+                            .get(fuzzy_term)
+                            .expect("fuzzy matched term must be indexed");
 
-                let idf = self.idf(fuzzy_term);
+                        doc_map
+                            .par_iter()
+                            .map(move |(document_id, document_term_matches)| {
+                                (
+                                    query_term,
+                                    similarity,
+                                    idf,
+                                    document_id,
+                                    document_term_matches,
+                                )
+                            })
+                    })
+            })
+            .map(
+                |(query_term, similarity, idf, document_id, document_term_matches)| {
+                    // Calculate BM25 score
 
-                for (document_id, document_term_matches) in doc_map {
                     let doc_len = *self
                         .doc_term_count
                         .get(document_id)
@@ -265,15 +291,31 @@ impl FTSEngine {
                     // apply fuzzy term similarity coefficient
                     let doc_bm25_score = doc_bm25_score * similarity;
 
-                    let document_scorer = scores.entry(document_id).or_default();
+                    (
+                        query_term,
+                        document_id,
+                        doc_bm25_score,
+                        document_term_matches,
+                    )
+                },
+            )
+            .collect::<Vec<_>>()
+            .into_iter()
+            .fold(
+                HashMap::new(),
+                |mut scores, (query_term, document_id, doc_bm25_score, document_term_matches)| {
+                    let document_scorer: &mut DocumentScorer =
+                        scores.entry(document_id).or_default();
+
                     document_scorer.update_term_score(
                         query_term,
                         doc_bm25_score,
                         document_term_matches,
                     );
-                }
-            }
-        }
+
+                    scores
+                },
+            );
 
         // keep only documents that match all query terms
         scores.retain(|_, document_scorer| document_scorer.terms_count() == query_terms.len());
@@ -289,7 +331,9 @@ impl FTSEngine {
             .collect::<Vec<_>>();
 
         // sort by score desc
-        result.sort_by(|a, b| f64::total_cmp(&b.1, &a.1));
+        result.par_sort_by(|a, b| f64::total_cmp(&b.1, &a.1));
+
+        log::debug!("{} search results", result.len());
 
         result
             .into_iter()

@@ -8,21 +8,24 @@ pub use self::search::SearchEngine;
 use self::state_file::BazaStateFile;
 use crate::{
     baza2::BazaInfo,
-    entities::{Document, DocumentLockKey, Id, InstanceId, LatestRevComputer, Revision},
+    entities::{
+        Document, DocumentLock, DocumentLockKey, Id, InstanceId, LatestRevComputer, Revision,
+    },
     schema::DataSchema,
     DocumentExpert,
 };
 
 mod document_head;
-mod locks;
+mod document_locks_file;
 mod query;
 mod refs;
 mod search;
 mod state_file;
 
 pub use document_head::DocumentHead;
+use document_locks_file::DocumentLocksFile;
+pub use document_locks_file::Locks;
 pub use query::{Filter, ListPage};
-pub use state_file::Locks;
 
 use super::baza_paths::BazaPaths;
 
@@ -30,6 +33,7 @@ pub struct BazaState {
     file: BazaStateFile,
     schema: DataSchema,
     search: SearchEngine,
+    document_locks: DocumentLocksFile,
 }
 
 impl BazaState {
@@ -38,6 +42,7 @@ impl BazaState {
             file: BazaStateFile::new(instance_id, info),
             search: SearchEngine::new(schema.clone()),
             schema,
+            document_locks: DocumentLocksFile::new(),
         }
     }
 
@@ -72,16 +77,26 @@ impl BazaState {
                         duration
                     );
 
-                    search.write(&paths.state_search_index_file, key)?;
+                    search.write(&paths.state_search_index_file, key.clone())?;
 
                     search
                 }
             };
 
+        let locks = match DocumentLocksFile::read(&paths.state_document_locks_file, key) {
+            Ok(locks) => locks,
+            Err(err) => {
+                log::error!("Failed to read document locks file: {err}");
+
+                DocumentLocksFile::new()
+            }
+        };
+
         Ok(BazaState {
             file,
             search,
             schema,
+            document_locks: locks,
         })
     }
 
@@ -92,14 +107,20 @@ impl BazaState {
         }
 
         if self.search.is_modified() {
-            self.search.write(&paths.state_search_index_file, key)?;
+            self.search
+                .write(&paths.state_search_index_file, key.clone())?;
+        }
+
+        if self.document_locks.is_modified() {
+            self.document_locks
+                .write(&paths.state_document_locks_file, key)?;
         }
 
         Ok(())
     }
 
     pub fn is_modified(&self) -> bool {
-        self.file.modified || self.search.is_modified()
+        self.file.modified || self.search.is_modified() || self.document_locks.is_modified()
     }
 
     pub fn get_info(&self) -> &BazaInfo {
@@ -167,7 +188,7 @@ impl BazaState {
     ) -> Result<&Document> {
         let id = document.id.clone();
 
-        self.check_document_lock(&id, lock_key)?;
+        self.document_locks.check_document_lock(&id, lock_key)?;
 
         let current_value = self.file.documents.remove(&id);
 
@@ -267,7 +288,7 @@ impl BazaState {
     }
 
     pub fn reset_document(&mut self, id: &Id, lock_key: &Option<DocumentLockKey>) -> Result<()> {
-        self.check_document_lock(id, lock_key)?;
+        self.document_locks.check_document_lock(id, lock_key)?;
 
         let (id, document) = self
             .file
@@ -368,6 +389,40 @@ impl BazaState {
         self.stage_document(document, &None)?;
 
         Ok(())
+    }
+
+    pub fn list_document_locks(&self) -> &Locks {
+        self.document_locks.list_document_locks()
+    }
+
+    pub fn has_document_locks(&self) -> bool {
+        !self.list_document_locks().is_empty()
+    }
+
+    pub fn is_document_locked(&self, id: &Id) -> bool {
+        self.document_locks.is_document_locked(id)
+    }
+
+    pub fn lock_document(&mut self, id: &Id, reason: impl Into<String>) -> Result<&DocumentLock> {
+        ensure!(
+            !self.document_locks.is_document_locked(id),
+            "document {id} already locked"
+        );
+
+        let document = self.get_document(id);
+        ensure!(document.is_some(), "document {id} doesn't exist");
+
+        let lock = self.document_locks.lock_document(id, reason.into())?;
+
+        Ok(lock)
+    }
+
+    pub fn unlock_document(&mut self, id: &Id, key: &DocumentLockKey) -> Result<()> {
+        self.document_locks.unlock_document(id, key)
+    }
+
+    pub fn unlock_document_without_key(&mut self, id: &Id) -> Result<()> {
+        self.document_locks.unlock_document_without_key(id)
     }
 }
 
@@ -507,5 +562,53 @@ mod tests {
         state.file.modified = false;
         state.reset_document(&doc2.id, &None).unwrap();
         assert!(state.is_modified());
+    }
+
+    #[test]
+    fn test_locks() {
+        let mut state = BazaState::new_test_state();
+
+        assert!(state.list_document_locks().is_empty());
+
+        let doc1 = new_empty_document();
+        assert!(!state.is_document_locked(&doc1.id));
+        assert!(state.lock_document(&doc1.id, "test").is_err());
+        assert!(state
+            .unlock_document(&doc1.id, &DocumentLockKey::from_string("some key"))
+            .is_err());
+        assert!(state.unlock_document_without_key(&doc1.id).is_err());
+
+        state.stage_document(doc1.clone(), &None).unwrap();
+
+        state.file.modified = false;
+        let key = state
+            .lock_document(&doc1.id, "test")
+            .unwrap()
+            .get_key()
+            .clone();
+        assert!(state.is_modified());
+        assert!(state.lock_document(&doc1.id, "test").is_err());
+
+        assert!(state.has_document_locks());
+        assert!(state.is_document_locked(&doc1.id));
+
+        assert!(state
+            .unlock_document(&doc1.id, &DocumentLockKey::from_string("wrong"))
+            .is_err());
+
+        state.file.modified = false;
+        state.unlock_document(&doc1.id, &key).unwrap();
+        assert!(state.is_modified());
+        assert!(state.unlock_document(&doc1.id, &key).is_err());
+        assert!(state.unlock_document_without_key(&doc1.id).is_err());
+
+        assert!(!state.has_document_locks());
+        assert!(!state.is_document_locked(&doc1.id));
+
+        state.lock_document(&doc1.id, "test").unwrap();
+        state.unlock_document_without_key(&doc1.id).unwrap();
+
+        assert!(!state.has_document_locks());
+        assert!(!state.is_document_locked(&doc1.id));
     }
 }

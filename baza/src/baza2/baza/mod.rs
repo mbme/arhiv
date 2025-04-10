@@ -347,7 +347,7 @@ impl Baza {
         if self.state.is_modified() {
             self.state.write(&self.paths, self.key.clone())?;
             self.state_file_modification_time = self.paths.read_state_file_modification_time()?;
-            log::info!("Saved state changes to the file");
+            log::info!("Saved state changes");
         }
 
         Ok(())

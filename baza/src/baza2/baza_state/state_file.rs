@@ -9,19 +9,16 @@ use rs_utils::{
 
 use crate::{
     baza2::BazaInfo,
-    entities::{DocumentKey, DocumentLock, Id, InstanceId, Refs},
+    entities::{DocumentKey, Id, InstanceId, Refs},
 };
 
 use super::DocumentHead;
-
-pub type Locks = HashMap<Id, DocumentLock>;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct BazaStateFile {
     pub instance_id: InstanceId,
     pub info: BazaInfo,
     pub documents: HashMap<Id, DocumentHead>,
-    pub locks: Locks,
     pub refs: HashMap<DocumentKey, Refs>,
 
     #[serde(skip)]
@@ -33,7 +30,6 @@ impl BazaStateFile {
         BazaStateFile {
             info,
             documents: HashMap::new(),
-            locks: HashMap::new(),
             refs: HashMap::new(),
             instance_id,
             modified: true,

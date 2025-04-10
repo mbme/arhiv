@@ -26,6 +26,7 @@ pub struct BazaPaths {
     pub state_dir: String,
     pub state_file: String,
     pub state_search_index_file: String,
+    pub state_document_locks_file: String,
     pub state_data_dir: String,
 
     pub downloads_dir: String,
@@ -44,6 +45,7 @@ impl BazaPaths {
 
         let state_file = format!("{state_dir}/state.gz.age");
         let state_search_index_file = format!("{state_dir}/search_index.gz.age");
+        let state_document_locks_file = format!("{state_dir}/document_locks.age");
         let state_data_dir = format!("{state_dir}/data");
 
         let lock_file = format!("{state_dir}/baza.lock");
@@ -61,6 +63,7 @@ impl BazaPaths {
             state_file,
             state_data_dir,
             state_search_index_file,
+            state_document_locks_file,
 
             downloads_dir,
 

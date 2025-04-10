@@ -6,7 +6,7 @@ use rs_utils::{
     age::{AgeKey, AgeReader, AgeWriter},
     create_file_reader, create_file_writer,
     full_text_search::{FTSEngine, FieldBoost},
-    log,
+    log, read_all,
 };
 
 use crate::{
@@ -38,8 +38,8 @@ impl SearchEngine {
         let reader = create_file_reader(file)?;
         let age_reader = AgeReader::new(reader, key)?;
 
-        let fts: FTSEngine =
-            serde_json::from_reader(age_reader).context("Failed to parse FTSEngine")?;
+        let bytes = read_all(age_reader)?;
+        let fts: FTSEngine = postcard::from_bytes(&bytes).context("Failed to parse FTSEngine")?;
 
         let duration = start_time.elapsed();
         log::info!("Read search index from file in {:?}", duration);
@@ -59,8 +59,7 @@ impl SearchEngine {
         let writer = create_file_writer(file, true)?;
         let mut age_writer = AgeWriter::new(writer, key)?;
 
-        serde_json::to_writer(&mut age_writer, &self.fts)
-            .context("Failed to serialize FTSEngine")?;
+        postcard::to_io(&self.fts, &mut age_writer).context("Failed to serialize FTSEngine")?;
 
         let mut writer = age_writer.finish()?;
         writer.flush()?;

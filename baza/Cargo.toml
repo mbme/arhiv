@@ -24,6 +24,8 @@ tokio.workspace = true
 
 pulldown-cmark = { version = "0.13", default-features = false, features = ["simd", "serde"] }
 
+postcard = { version = "1",  default-features = false, features = ["use-std"] }
+
 tinytemplate.workspace = true
 
 ordermap.workspace = true

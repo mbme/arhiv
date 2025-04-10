@@ -6,7 +6,10 @@ use std::{cmp::min, sync::Arc};
 
 use anyhow::{bail, Result};
 
-use baza::{baza2::BazaManager, AutoCommitService, AutoCommitTask, DEV_MODE};
+use baza::{
+    baza2::{BazaManager, BazaPaths},
+    AutoCommitService, AutoCommitTask, DEV_MODE,
+};
 use rs_utils::{
     get_linux_data_home, get_linux_downloads_dir, get_linux_home_dir, into_absolute_path, log,
     num_cpus, SecretString, SelfSignedCertificate,
@@ -79,12 +82,12 @@ impl Arhiv {
     pub fn new(options: ArhivOptions) -> Self {
         let schema = get_standard_schema();
 
-        let baza_manager = BazaManager::new(
+        let paths = BazaPaths::new(
             options.storage_dir,
             options.state_dir,
             options.downloads_dir,
-            schema,
         );
+        let baza_manager = BazaManager::new(paths, schema);
         let baza_manager = Arc::new(baza_manager);
 
         Arhiv {

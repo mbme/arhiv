@@ -1,13 +1,10 @@
-use std::{
-    collections::{HashMap, HashSet},
-    time::Instant,
-};
+use std::collections::HashSet;
 
 use anyhow::{ensure, Context, Result};
 
 use rs_utils::{age::AgeKey, log, Timestamp};
 
-use self::search::SearchEngine;
+pub use self::search::SearchEngine;
 use self::state_file::BazaStateFile;
 use crate::{
     baza2::BazaInfo,
@@ -27,26 +24,20 @@ pub use document_head::DocumentHead;
 pub use query::{Filter, ListPage};
 pub use state_file::Locks;
 
+use super::baza_paths::BazaPaths;
+
 pub struct BazaState {
     file: BazaStateFile,
     schema: DataSchema,
     search: SearchEngine,
-    modified: bool,
 }
 
 impl BazaState {
     pub fn new(instance_id: InstanceId, info: BazaInfo, schema: DataSchema) -> Self {
         BazaState {
-            file: BazaStateFile {
-                info,
-                documents: HashMap::new(),
-                locks: HashMap::new(),
-                refs: HashMap::new(),
-                instance_id,
-            },
+            file: BazaStateFile::new(instance_id, info),
             search: SearchEngine::new(schema.clone()),
             schema,
-            modified: false,
         }
     }
 
@@ -59,53 +50,25 @@ impl BazaState {
         )
     }
 
-    pub fn read(file: &str, key: AgeKey, schema: DataSchema) -> Result<Self> {
-        log::debug!("Reading state from file {file}");
+    pub fn read(paths: &BazaPaths, key: AgeKey, schema: DataSchema) -> Result<Self> {
+        let state_file = BazaStateFile::read(&paths.state_file, key)?;
 
-        let start_time = Instant::now();
-
-        let file = BazaStateFile::read(file, key)?;
-
-        let duration = start_time.elapsed();
-        log::info!("Read state from file in {:?}", duration);
-
-        let mut search = SearchEngine::new(schema.clone());
-
-        let start_time = Instant::now();
-        for head in file.documents.values() {
-            search.index_document(head.get_single_document())?;
-        }
-        let duration = start_time.elapsed();
-        log::info!(
-            "Built search index of {} documents in {:?}",
-            file.documents.len(),
-            duration
-        );
-
-        Ok(Self {
-            file,
+        Ok(BazaState {
+            file: state_file,
+            search: SearchEngine::new(schema.clone()),
             schema,
-            search,
-            modified: false,
         })
     }
 
-    pub fn write(&mut self, file: &str, key: AgeKey) -> Result<()> {
-        log::debug!("Writing state to file {file}");
-
-        let start_time = Instant::now();
-
-        self.file.write(file, key)?;
-        self.modified = false;
-
-        let duration = start_time.elapsed();
-        log::info!("Wrote state to file in {:?}", duration);
+    pub fn write(&mut self, paths: &BazaPaths, key: AgeKey) -> Result<()> {
+        self.file.write(&paths.state_file, key)?;
+        self.file.modified = false;
 
         Ok(())
     }
 
     pub fn is_modified(&self) -> bool {
-        self.modified
+        self.file.modified
     }
 
     pub fn get_info(&self) -> &BazaInfo {
@@ -188,7 +151,7 @@ impl BazaState {
         self.search
             .index_document(updated_head.get_single_document())?;
         self.file.documents.insert(id.clone(), updated_head);
-        self.modified = true;
+        self.file.modified = true;
         log::trace!("State modified: staged document");
 
         let document = self
@@ -216,7 +179,7 @@ impl BazaState {
         self.search
             .index_document(updated_head.get_single_document())?;
         self.file.documents.insert(id, updated_head);
-        self.modified = true;
+        self.file.modified = true;
         log::trace!("State modified: inserted snapshot");
 
         Ok(())
@@ -235,7 +198,7 @@ impl BazaState {
 
         if head.get_snapshots_count() != snapshots_count {
             head.update_snapshots_count(snapshots_count);
-            self.modified = true;
+            self.file.modified = true;
             log::trace!("State modified: updated snapshots count");
         }
 
@@ -290,7 +253,7 @@ impl BazaState {
             self.file.documents.insert(id, updated_head);
         }
 
-        self.modified = true;
+        self.file.modified = true;
         log::trace!("State modified: reset document");
 
         Ok(())
@@ -326,7 +289,7 @@ impl BazaState {
             self.file.documents.insert(id, updated_head);
         }
 
-        self.modified = true;
+        self.file.modified = true;
         log::trace!("State modified: commit");
 
         Ok(())
@@ -382,7 +345,10 @@ mod tests {
     use rs_utils::{age::AgeKey, TempFile};
     use serde_json::json;
 
-    use crate::entities::{new_document, new_empty_document, DocumentLockKey, Id, Revision};
+    use crate::{
+        baza2::BazaPaths,
+        entities::{new_document, new_empty_document, DocumentLockKey, Id, Revision},
+    };
 
     use super::BazaState;
 
@@ -430,7 +396,11 @@ mod tests {
 
     #[test]
     fn test_state_read_write() {
-        let temp_state_file = TempFile::new();
+        let temp_dir = TempFile::new_with_details("test_baza", "");
+        temp_dir.mkdir().unwrap();
+
+        let paths = BazaPaths::new_for_tests(&temp_dir.path);
+        paths.ensure_dirs_exist().unwrap();
 
         let key = AgeKey::generate_age_x25519_key();
         let mut state = BazaState::new_test_state();
@@ -445,10 +415,10 @@ mod tests {
         state.lock_document(&id, "test").unwrap();
 
         assert!(state.is_modified());
-        state.write(&temp_state_file.path, key.clone()).unwrap();
+        state.write(&paths, key.clone()).unwrap();
         assert!(!state.is_modified());
 
-        let state1 = BazaState::read(&temp_state_file.path, key.clone(), state.schema).unwrap();
+        let state1 = BazaState::read(&paths, key.clone(), state.schema).unwrap();
 
         assert_eq!(state.file, state1.file);
     }
@@ -496,7 +466,7 @@ mod tests {
         let doc1 = new_empty_document();
 
         state.stage_document(doc1.clone(), &None).unwrap();
-        state.modified = false;
+        state.file.modified = false;
 
         state.reset_document(&doc1.id, &None).unwrap();
         assert!(state.is_modified());
@@ -505,7 +475,7 @@ mod tests {
         state.insert_snapshot(doc2.clone()).unwrap();
         state.stage_document(doc2.clone(), &None).unwrap();
 
-        state.modified = false;
+        state.file.modified = false;
         state.reset_document(&doc2.id, &None).unwrap();
         assert!(state.is_modified());
     }

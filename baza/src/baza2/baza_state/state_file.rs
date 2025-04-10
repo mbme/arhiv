@@ -1,9 +1,11 @@
-use std::{collections::HashMap, io::Write};
+use std::{collections::HashMap, io::Write, time::Instant};
 
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
-use rs_utils::{age::AgeKey, create_file_reader, create_file_writer, AgeGzReader, AgeGzWriter};
+use rs_utils::{
+    age::AgeKey, create_file_reader, create_file_writer, log, AgeGzReader, AgeGzWriter,
+};
 
 use crate::{
     baza2::BazaInfo,
@@ -21,20 +23,45 @@ pub struct BazaStateFile {
     pub documents: HashMap<Id, DocumentHead>,
     pub locks: Locks,
     pub refs: HashMap<DocumentKey, Refs>,
+
+    #[serde(skip)]
+    pub modified: bool,
 }
 
 impl BazaStateFile {
+    pub fn new(instance_id: InstanceId, info: BazaInfo) -> Self {
+        BazaStateFile {
+            info,
+            documents: HashMap::new(),
+            locks: HashMap::new(),
+            refs: HashMap::new(),
+            instance_id,
+            modified: false,
+        }
+    }
+
     pub fn read(file: &str, key: AgeKey) -> Result<Self> {
+        log::debug!("Reading state from file {file}");
+
+        let start_time = Instant::now();
+
         let reader = create_file_reader(file)?;
         let agegz_reader = AgeGzReader::new(reader, key)?;
 
         let file: BazaStateFile =
             serde_json::from_reader(agegz_reader).context("Failed to parse BazaStateFile")?;
 
+        let duration = start_time.elapsed();
+        log::info!("Read state from file in {:?}", duration);
+
         Ok(file)
     }
 
     pub fn write(&self, file: &str, key: AgeKey) -> Result<()> {
+        log::debug!("Writing state to file {file}");
+
+        let start_time = Instant::now();
+
         let writer = create_file_writer(file, true)?;
 
         let mut agegz_writer = AgeGzWriter::new(writer, key)?;
@@ -44,6 +71,9 @@ impl BazaStateFile {
 
         let mut writer = agegz_writer.finish()?;
         writer.flush()?;
+
+        let duration = start_time.elapsed();
+        log::info!("Wrote state to file in {:?}", duration);
 
         Ok(())
     }

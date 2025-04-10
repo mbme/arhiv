@@ -79,7 +79,7 @@ impl Baza {
         let info = storage.get_info()?;
 
         let mut state = BazaState::new(instance_id, info.clone(), schema);
-        state.write(&paths.state_file, key.clone())?;
+        state.write(&paths, key.clone())?;
 
         let state_file_modification_time = paths.read_state_file_modification_time()?;
 
@@ -96,7 +96,7 @@ impl Baza {
     pub fn read(key: AgeKey, paths: BazaPaths, schema: DataSchema) -> Result<Self> {
         let latest_data_version = schema.get_latest_data_version();
 
-        let state = BazaState::read(&paths.state_file, key.clone(), schema)?;
+        let state = BazaState::read(&paths, key.clone(), schema)?;
         let state_file_modification_time = paths.read_state_file_modification_time()?;
 
         ensure!(
@@ -345,7 +345,7 @@ impl Baza {
 
     pub fn save_changes(&mut self) -> Result<()> {
         if self.state.is_modified() {
-            self.state.write(&self.paths.state_file, self.key.clone())?;
+            self.state.write(&self.paths, self.key.clone())?;
             self.state_file_modification_time = self.paths.read_state_file_modification_time()?;
             log::info!("Saved state changes to the file");
         }

@@ -67,6 +67,15 @@ impl BazaPaths {
         }
     }
 
+    #[cfg(test)]
+    pub fn new_for_tests(temp_dir: &str) -> Self {
+        BazaPaths::new(
+            format!("{temp_dir}/storage"),
+            format!("{temp_dir}/state"),
+            format!("{temp_dir}/downloads"),
+        )
+    }
+
     pub fn ensure_dirs_exist(&self) -> Result<()> {
         create_dir_if_not_exist(&self.storage_dir)?;
         create_dir_if_not_exist(&self.storage_data_dir)?;

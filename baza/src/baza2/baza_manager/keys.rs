@@ -170,7 +170,7 @@ impl BazaManager {
 mod tests {
     use rs_utils::TempFile;
 
-    use crate::baza2::baza_manager::BazaManager;
+    use crate::baza2::{baza_manager::BazaManager, baza_paths::BazaPaths};
 
     #[test]
     fn test_change_password() {
@@ -188,7 +188,8 @@ mod tests {
             .unwrap();
 
         {
-            let manager = BazaManager::new(storage_dir, state_dir, downloads_dir, schema);
+            let paths = BazaPaths::new(storage_dir, state_dir, downloads_dir);
+            let manager = BazaManager::new(paths, schema);
 
             assert!(
                 manager.unlock("test password".into()).is_err(),

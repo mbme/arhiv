@@ -27,14 +27,7 @@ pub struct BazaManager {
 impl BazaManager {
     pub const MIN_PASSWORD_LENGTH: usize = AgeKey::MIN_PASSWORD_LEN;
 
-    pub fn new(
-        storage_dir: String,
-        state_dir: String,
-        downloads_dir: String,
-        schema: DataSchema,
-    ) -> Self {
-        let paths = BazaPaths::new(storage_dir, state_dir, downloads_dir);
-
+    pub fn new(paths: BazaPaths, schema: DataSchema) -> Self {
         BazaManager {
             schema,
             paths,
@@ -169,12 +162,8 @@ impl BazaManager {
 
     #[cfg(test)]
     pub fn new_for_tests_with_schema(test_dir: &str, schema: DataSchema) -> Self {
-        let manager = BazaManager::new(
-            format!("{test_dir}/storage"),
-            format!("{test_dir}/state"),
-            format!("{test_dir}/downloads"),
-            schema,
-        );
+        let paths = BazaPaths::new_for_tests(test_dir);
+        let manager = BazaManager::new(paths, schema);
 
         manager
             .create("test password".into())
@@ -211,7 +200,10 @@ mod tests {
     use rs_utils::{dir_exists, file_exists, TempFile};
 
     use crate::{
-        baza2::{baza_manager::BazaManager, baza_storage::BazaFileStorage, BazaStorage},
+        baza2::{
+            baza_manager::BazaManager, baza_paths::BazaPaths, baza_storage::BazaFileStorage,
+            BazaStorage,
+        },
         entities::{new_document, new_empty_document},
     };
 
@@ -403,7 +395,8 @@ mod tests {
         }
 
         {
-            let manager = BazaManager::new(storage_dir, state_dir, downloads_dir, schema);
+            let paths = BazaPaths::new(storage_dir, state_dir, downloads_dir);
+            let manager = BazaManager::new(paths, schema);
 
             assert!(manager.open().is_err(), "Can't open without password");
             assert!(

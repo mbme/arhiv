@@ -61,7 +61,7 @@ impl BazaState {
         let lock = DocumentLock::new(reason.clone());
 
         self.file.locks.insert(id.clone(), lock);
-        self.modified = true;
+        self.file.modified = true;
         log::trace!("State modified: locked document");
 
         Ok(self.get_document_lock(id).expect("lock is present"))
@@ -86,7 +86,7 @@ impl BazaState {
             .locks
             .remove(id)
             .context("Expected locked document")?;
-        self.modified = true;
+        self.file.modified = true;
         log::trace!("State modified: unlocked document without key");
 
         Ok(())
@@ -115,7 +115,7 @@ mod tests {
 
         state.stage_document(doc1.clone(), &None).unwrap();
 
-        state.modified = false;
+        state.file.modified = false;
         let key = state
             .lock_document(&doc1.id, "test")
             .unwrap()
@@ -131,7 +131,7 @@ mod tests {
             .unlock_document(&doc1.id, &DocumentLockKey::from_string("wrong"))
             .is_err());
 
-        state.modified = false;
+        state.file.modified = false;
         state.unlock_document(&doc1.id, &key).unwrap();
         assert!(state.is_modified());
         assert!(state.unlock_document(&doc1.id, &key).is_err());

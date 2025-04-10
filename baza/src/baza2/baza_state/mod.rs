@@ -99,7 +99,7 @@ impl BazaState {
     }
 
     pub fn is_modified(&self) -> bool {
-        self.file.modified
+        self.file.modified || self.search.is_modified()
     }
 
     pub fn get_info(&self) -> &BazaInfo {

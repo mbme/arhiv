@@ -62,6 +62,8 @@ impl Baza {
             paths.state_file
         );
 
+        paths.ensure_dirs_exist()?;
+
         ensure!(!paths.state_file_exists()?, "State file already exists");
 
         let db_files = paths.list_storage_db_files()?;
@@ -94,6 +96,8 @@ impl Baza {
     }
 
     pub fn read(key: AgeKey, paths: BazaPaths, schema: DataSchema) -> Result<Self> {
+        paths.ensure_dirs_exist()?;
+
         let latest_data_version = schema.get_latest_data_version();
 
         let state = BazaState::read(&paths, key.clone(), schema)?;

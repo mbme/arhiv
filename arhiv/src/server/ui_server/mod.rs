@@ -14,7 +14,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use tokio::sync::OnceCell;
 
-use baza::baza2::BazaManager;
+use baza::{baza2::BazaManager, DEV_MODE};
 use rs_utils::{
     http_server::{add_no_cache_headers, fallback_route, ServerError},
     log::{self, tracing},
@@ -98,6 +98,7 @@ async fn index_page(ctx: State<ServerContext>) -> Result<impl IntoResponse, Serv
         arhiv_missing: !arhiv.baza.storage_exists()?,
         arhiv_key_missing: !arhiv.baza.key_exists()?,
         arhiv_locked: arhiv.baza.is_locked(),
+        dev_mode: DEV_MODE,
     })
     .context("Failed to serialize ArhivUI config")?;
 
@@ -106,7 +107,7 @@ async fn index_page(ctx: State<ServerContext>) -> Result<impl IntoResponse, Serv
             <!DOCTYPE html>
             <html lang="en" dir="ltr">
                 <head>
-                    <title>Arhiv</title>
+                    <title>{}</title>
 
                     <meta charset="UTF-8" />
                     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -123,7 +124,8 @@ async fn index_page(ctx: State<ServerContext>) -> Result<impl IntoResponse, Serv
 
                     <script src="{UI_BASE_PATH}/index.js"></script>
                 </body>
-            </html>"#
+            </html>"#,
+        if DEV_MODE { "Arhiv DEV" } else { "Arhiv" }
     );
 
     Ok(Html(content))

@@ -14,7 +14,9 @@ export function LoginContainer({ heading, children }: Props) {
           className="block size-24 rounded-md shadow-lg mb-8"
         />
 
-        <h1 className="heading-1 mb-4">{heading}</h1>
+        <h1 className="heading-1 mb-4">
+          {heading} {window.CONFIG.devMode && 'DEV MODE'}
+        </h1>
 
         <div className="section-heading mb-8">{window.CONFIG.storageDir}</div>
 

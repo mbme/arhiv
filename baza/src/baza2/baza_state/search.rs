@@ -3,10 +3,10 @@ use std::{collections::HashMap, io::Write, time::Instant};
 use anyhow::{Context, Result};
 
 use rs_utils::{
-    age::{AgeKey, AgeReader, AgeWriter},
+    age::AgeKey,
     create_file_reader, create_file_writer,
     full_text_search::{FTSEngine, FieldBoost},
-    log, read_all,
+    log, read_all, AgeGzReader, AgeGzWriter,
 };
 
 use crate::{
@@ -36,9 +36,9 @@ impl SearchEngine {
         let start_time = Instant::now();
 
         let reader = create_file_reader(file)?;
-        let age_reader = AgeReader::new(reader, key)?;
+        let agegz_reader = AgeGzReader::new(reader, key)?;
 
-        let bytes = read_all(age_reader)?;
+        let bytes = read_all(agegz_reader)?;
         let fts: FTSEngine = postcard::from_bytes(&bytes).context("Failed to parse FTSEngine")?;
 
         let duration = start_time.elapsed();
@@ -57,11 +57,11 @@ impl SearchEngine {
         let start_time = Instant::now();
 
         let writer = create_file_writer(file, true)?;
-        let mut age_writer = AgeWriter::new(writer, key)?;
+        let mut agegz_writer = AgeGzWriter::new(writer, key)?;
 
-        postcard::to_io(&self.fts, &mut age_writer).context("Failed to serialize FTSEngine")?;
+        postcard::to_io(&self.fts, &mut agegz_writer).context("Failed to serialize FTSEngine")?;
 
-        let mut writer = age_writer.finish()?;
+        let mut writer = agegz_writer.finish()?;
         writer.flush()?;
 
         self.modified = false;

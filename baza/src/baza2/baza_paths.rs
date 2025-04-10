@@ -13,8 +13,6 @@ const BLOB_EXT: &str = ".age";
 
 const STORAGE_EXT: &str = ".gz.age";
 
-const STATE_EXT: &str = ".gz.age";
-
 #[derive(Clone)]
 pub struct BazaPaths {
     pub key_file_name: String,
@@ -44,9 +42,9 @@ impl BazaPaths {
         let storage_main_db_file = format!("{storage_dir}/{storage_main_db_file_name}");
         let storage_data_dir = format!("{storage_dir}/data");
 
-        let state_file = format!("{state_dir}/state{STATE_EXT}");
+        let state_file = format!("{state_dir}/state.gz.age");
+        let state_search_index_file = format!("{state_dir}/search_index.gz.age");
         let state_data_dir = format!("{state_dir}/data");
-        let state_search_index_file = format!("{state_dir}/search_index.age");
 
         let lock_file = format!("{state_dir}/baza.lock");
 

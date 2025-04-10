@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, time::Instant};
 
 use anyhow::{ensure, Context, Result};
 
@@ -51,18 +51,49 @@ impl BazaState {
     }
 
     pub fn read(paths: &BazaPaths, key: AgeKey, schema: DataSchema) -> Result<Self> {
-        let state_file = BazaStateFile::read(&paths.state_file, key)?;
+        let file = BazaStateFile::read(&paths.state_file, key.clone())?;
+
+        let search =
+            match SearchEngine::read(&paths.state_search_index_file, key.clone(), schema.clone()) {
+                Ok(search) => search,
+                Err(err) => {
+                    log::error!("Failed to read search index: {err}");
+
+                    let mut search = SearchEngine::new(schema.clone());
+
+                    let start_time = Instant::now();
+                    for head in file.documents.values() {
+                        search.index_document(head.get_single_document())?;
+                    }
+                    let duration = start_time.elapsed();
+                    log::info!(
+                        "Built search index of {} documents in {:?}",
+                        file.documents.len(),
+                        duration
+                    );
+
+                    search.write(&paths.state_search_index_file, key)?;
+
+                    search
+                }
+            };
 
         Ok(BazaState {
-            file: state_file,
-            search: SearchEngine::new(schema.clone()),
+            file,
+            search,
             schema,
         })
     }
 
     pub fn write(&mut self, paths: &BazaPaths, key: AgeKey) -> Result<()> {
-        self.file.write(&paths.state_file, key)?;
-        self.file.modified = false;
+        if self.file.modified {
+            self.file.write(&paths.state_file, key.clone())?;
+            self.file.modified = false;
+        }
+
+        if self.search.is_modified() {
+            self.search.write(&paths.state_search_index_file, key)?;
+        }
 
         Ok(())
     }
@@ -357,7 +388,6 @@ mod tests {
         let mut state = BazaState::new_test_state();
 
         assert_eq!(state.get_single_latest_revision(), Revision::INITIAL);
-        assert!(!state.is_modified());
 
         let doc_a1 = new_document(json!({})).with_rev(json!({ "a": 1 }));
         let doc_a2 = doc_a1.clone().with_rev(json!({ "test": 1 }));
@@ -365,7 +395,6 @@ mod tests {
         doc_a3.stage();
 
         state.insert_snapshots(vec![doc_a1, doc_a2]);
-        assert!(state.is_modified());
         assert!(!state.has_staged_documents());
         assert!(state.has_unresolved_conflicts());
         assert_eq!(state.get_latest_revision().len(), 2);

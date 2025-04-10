@@ -36,7 +36,7 @@ impl BazaStateFile {
             locks: HashMap::new(),
             refs: HashMap::new(),
             instance_id,
-            modified: false,
+            modified: true,
         }
     }
 

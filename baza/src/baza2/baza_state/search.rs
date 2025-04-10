@@ -1,8 +1,13 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, io::Write, time::Instant};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 
-use rs_utils::full_text_search::{FTSEngine, FieldBoost};
+use rs_utils::{
+    age::{AgeKey, AgeReader, AgeWriter},
+    create_file_reader, create_file_writer,
+    full_text_search::{FTSEngine, FieldBoost},
+    log,
+};
 
 use crate::{
     entities::{Document, Id},
@@ -13,6 +18,7 @@ use crate::{
 pub struct SearchEngine {
     fts: FTSEngine,
     schema: DataSchema,
+    modified: bool,
 }
 
 impl SearchEngine {
@@ -20,7 +26,51 @@ impl SearchEngine {
         SearchEngine {
             fts: FTSEngine::new(),
             schema,
+            modified: false,
         }
+    }
+
+    pub fn read(file: &str, key: AgeKey, schema: DataSchema) -> Result<Self> {
+        log::debug!("Reading search index from file {file}");
+
+        let start_time = Instant::now();
+
+        let reader = create_file_reader(file)?;
+        let age_reader = AgeReader::new(reader, key)?;
+
+        let fts: FTSEngine =
+            serde_json::from_reader(age_reader).context("Failed to parse FTSEngine")?;
+
+        let duration = start_time.elapsed();
+        log::info!("Read search index from file in {:?}", duration);
+
+        Ok(SearchEngine {
+            fts,
+            schema,
+            modified: false,
+        })
+    }
+
+    pub fn write(&mut self, file: &str, key: AgeKey) -> Result<()> {
+        log::debug!("Writing search index to file {file}");
+
+        let start_time = Instant::now();
+
+        let writer = create_file_writer(file, true)?;
+        let mut age_writer = AgeWriter::new(writer, key)?;
+
+        serde_json::to_writer(&mut age_writer, &self.fts)
+            .context("Failed to serialize FTSEngine")?;
+
+        let mut writer = age_writer.finish()?;
+        writer.flush()?;
+
+        self.modified = false;
+
+        let duration = start_time.elapsed();
+        log::info!("Wrote search index to file in {:?}", duration);
+
+        Ok(())
     }
 
     pub fn index_document(&mut self, document: &Document) -> Result<()> {
@@ -52,16 +102,24 @@ impl SearchEngine {
         self.fts
             .index_document(document.id.to_string(), fields, boost_fields);
 
+        self.modified = true;
+
         Ok(())
     }
 
     pub fn remove_document_index(&mut self, id: &Id) {
         self.fts.remove_document(id);
+
+        self.modified = true;
     }
 
     pub fn search(&self, query: &str) -> impl Iterator<Item = Id> {
         let ids = self.fts.search(query);
 
         ids.into_iter().map(|id| id.into())
+    }
+
+    pub fn is_modified(&self) -> bool {
+        self.modified
     }
 }

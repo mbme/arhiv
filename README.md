@@ -70,7 +70,7 @@ Needs `MANAGE_EXTERNAL_STORAGE` permission to read/write files in user directory
 * Android SDK & NDK
 * JDK - `jdk-openjdk`
 * `cargo-ndk` to build Android JNI library
-* Add rust targets for Android cross-compilation (the `x86_64-linux-android` for Android Studio emulator):
+* Add rust targets for Android cross-compilation (the `x86_64-linux-android` i.e. for Android Studio emulator):
 ```
 rustup target add aarch64-linux-android x86_64-linux-android
 ```

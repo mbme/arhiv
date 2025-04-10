@@ -24,7 +24,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -189,9 +188,6 @@ public class MainActivity extends AppCompatActivity {
     webView.getSettings().setDomStorageEnabled(true);
     webView.getSettings().setAllowFileAccess(false);
 
-    SwipeRefreshLayout swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
-    swipeRefreshLayout.setOnRefreshListener(webView::reload);
-
     webView.setWebViewClient(new WebViewClient() {
       @SuppressLint("WebViewClientOnReceivedSslError")
       @Override
@@ -215,12 +211,6 @@ public class MainActivity extends AppCompatActivity {
           Log.e(TAG, "Failed to validate SSL certificate:", e);
           return false;
         }
-      }
-
-      @Override
-      public void onPageFinished(WebView view, String url) {
-        super.onPageFinished(view, url);
-        swipeRefreshLayout.setRefreshing(false);
       }
 
       @Override

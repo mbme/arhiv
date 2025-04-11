@@ -12,12 +12,13 @@ use baza::{
 };
 use rs_utils::{
     get_linux_data_home, get_linux_downloads_dir, get_linux_home_dir, into_absolute_path, log,
-    num_cpus, SecretString, SelfSignedCertificate,
+    num_cpus, SecretString,
 };
+
+use crate::{definitions::get_standard_schema, ServerInfo};
 
 pub use self::keyring::ArhivKeyring;
 pub use self::status::Status;
-use crate::{definitions::get_standard_schema, server::generate_certificate, ServerInfo};
 
 pub struct ArhivOptions {
     pub storage_dir: String,
@@ -172,27 +173,8 @@ impl Arhiv {
         Ok(())
     }
 
-    pub fn get_or_generate_certificate(&self) -> Result<SelfSignedCertificate> {
-        if let Some(certificate) = self.keyring.get_certificate()? {
-            log::debug!("Certificate already exists");
-
-            let certificate = SelfSignedCertificate::from_pem(&certificate)?;
-
-            return Ok(certificate);
-        }
-
-        log::info!("Generating new certificate");
-
-        let certificate = generate_certificate()?;
-        self.keyring.set_certificate(Some(certificate.to_pem()))?;
-
-        Ok(certificate)
-    }
-
     pub fn collect_server_info(&self) -> Result<Option<ServerInfo>> {
-        let certificate = self.get_or_generate_certificate()?;
-
-        ServerInfo::collect(self.baza.get_state_dir(), &certificate)
+        ServerInfo::collect(self.baza.get_state_dir())
     }
 
     pub fn get_status(&self) -> Result<String> {

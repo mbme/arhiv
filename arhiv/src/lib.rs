@@ -4,4 +4,4 @@ mod server;
 mod ui;
 
 pub use arhiv::{Arhiv, ArhivKeyring, ArhivOptions, Status};
-pub use server::{generate_certificate, ArhivServer, ServerInfo};
+pub use server::{ArhivServer, ServerInfo};

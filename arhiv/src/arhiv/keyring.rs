@@ -14,7 +14,6 @@ pub struct ArhivKeyring {
 
 impl ArhivKeyring {
     pub const PASSWORD: &str = "password";
-    pub const CERTIFICATE: &str = "certificate";
 
     pub fn new(keyring: Arc<dyn Keyring + Send + Sync>) -> ArhivKeyring {
         ArhivKeyring { keyring }
@@ -38,14 +37,5 @@ impl ArhivKeyring {
 
     pub fn set_password(&self, password: Option<SecretString>) -> Result<()> {
         self.keyring.set_string(ArhivKeyring::PASSWORD, password)
-    }
-
-    pub fn get_certificate(&self) -> Result<Option<SecretString>> {
-        self.keyring.get_string(ArhivKeyring::CERTIFICATE)
-    }
-
-    pub fn set_certificate(&self, certificate: Option<SecretString>) -> Result<()> {
-        self.keyring
-            .set_string(ArhivKeyring::CERTIFICATE, certificate)
     }
 }

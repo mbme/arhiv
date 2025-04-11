@@ -6,7 +6,7 @@ use jni::{
     JavaVM,
 };
 
-use arhiv::{generate_certificate, ArhivKeyring};
+use arhiv::ArhivKeyring;
 use rs_utils::{keyring::Keyring, log, ExposeSecret, SecretString};
 
 /// This implementation of Keyring only receives password once on init, from Android.
@@ -14,10 +14,8 @@ use rs_utils::{keyring::Keyring, log, ExposeSecret, SecretString};
 /// is to do it only once on app init, and then just update the local password copy.
 /// Similarly, the set_string() also starts an async process to encrypt & save the password,
 /// but doesn't wait for results. So the password may not actually be saved, even if the method call didn't fail.
-/// The certificate is generated once on init, since there's no value in storing it on Android.
 pub struct AndroidKeyring {
     password: RwLock<Option<SecretString>>,
-    certificate: SecretString,
     android_controller: GlobalRef, // instance of AndroidController
     jvm: JavaVM,
 }
@@ -28,12 +26,8 @@ impl AndroidKeyring {
         android_controller: GlobalRef,
         jvm: JavaVM,
     ) -> ArhivKeyring {
-        let certificate = generate_certificate().expect("Failed to generate certificate");
-        let certificate = certificate.to_pem();
-
         let keyring = AndroidKeyring {
             password: RwLock::new(password),
-            certificate,
             android_controller,
             jvm,
         };
@@ -43,10 +37,9 @@ impl AndroidKeyring {
 }
 
 impl Keyring for AndroidKeyring {
-    /// NOTE: Only password and certificate are supported
+    /// NOTE: Only password is supported
     fn get_string(&self, name: &str) -> Result<Option<SecretString>> {
         match name {
-            ArhivKeyring::CERTIFICATE => Ok(Some(self.certificate.clone())),
             ArhivKeyring::PASSWORD => {
                 let password_guard = self.password.read().map_err(|err| {
                     anyhow!("Failed to acquire read lock for the password: {err}")

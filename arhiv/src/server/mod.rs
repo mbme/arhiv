@@ -9,7 +9,7 @@ use self::{
 };
 use crate::{Arhiv, ArhivOptions};
 
-pub use self::certificate::generate_certificate;
+use self::certificate::read_or_generate_certificate;
 pub use self::server_info::ServerInfo;
 
 mod certificate;
@@ -42,7 +42,7 @@ impl ArhivServer {
 
         let arhiv = Arc::new(arhiv);
 
-        let certificate = arhiv.get_or_generate_certificate()?;
+        let certificate = read_or_generate_certificate(arhiv.baza.get_state_dir())?;
 
         let ui_hmac = generate_ui_crypto_key(certificate.private_key_der.clone());
         let auth_token = AuthToken::generate(&ui_hmac, token);

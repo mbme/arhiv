@@ -1,9 +1,13 @@
 mod document_scorer;
 mod tokenizer;
 
-use std::collections::{HashMap, HashSet};
+use std::{
+    cmp::Reverse,
+    collections::{HashMap, HashSet},
+};
 
 use anyhow::{ensure, Result};
+use ordermap::OrderMap;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use strsim::damerau_levenshtein;
@@ -340,6 +344,49 @@ impl FTSEngine {
             .map(|(document_id, _)| document_id)
             .collect()
     }
+
+    pub fn get_stats(&self) -> FTSStats {
+        let terms_count = self.terms_index.len();
+        let docs_count = self.doc_term_count.len();
+
+        let mut terms_usage = self
+            .terms_index
+            .iter()
+            .map(|(term, document_scores)| {
+                let term_count = document_scores
+                    .values()
+                    .flat_map(|term_matches| term_matches.values().map(|offsets| offsets.len()))
+                    .sum::<usize>();
+
+                (term.as_str(), term_count)
+            })
+            .collect::<Vec<_>>();
+        terms_usage.sort_by_key(|(_, term_count)| Reverse(*term_count));
+        let top_10_terms = terms_usage.into_iter().take(10).collect();
+
+        let mut doc_len = self.doc_term_count.iter().collect::<Vec<_>>();
+        doc_len.sort_by_key(|(_, len)| Reverse(*len));
+        let top_10_longest_docs = doc_len
+            .into_iter()
+            .map(|(document_id, &len)| (document_id.as_str(), len))
+            .take(10)
+            .collect();
+
+        FTSStats {
+            top_10_terms,
+            top_10_longest_docs,
+            terms_count,
+            docs_count,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct FTSStats<'fts> {
+    pub top_10_terms: OrderMap<&'fts str, usize>, // term -> term_count
+    pub top_10_longest_docs: OrderMap<&'fts str, usize>, // document_id -> term_count
+    pub terms_count: usize,
+    pub docs_count: usize,
 }
 
 #[cfg(test)]

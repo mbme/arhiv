@@ -238,32 +238,6 @@ impl Revision {
     }
 
     #[must_use]
-    pub fn get_latest_rev<'r>(revs: &[&'r Revision]) -> HashSet<&'r Revision> {
-        revs.iter().fold(HashSet::new(), |mut acc, rev| {
-            if acc.is_empty() {
-                acc.insert(rev);
-
-                return acc;
-            }
-
-            let max_rev = acc.iter().next().expect("acc isn't empty");
-
-            if rev > max_rev {
-                acc.clear();
-                acc.insert(rev);
-
-                return acc;
-            }
-
-            if rev.is_concurrent_or_equal(max_rev) {
-                acc.insert(rev);
-            }
-
-            acc
-        })
-    }
-
-    #[must_use]
     pub fn compute_next_rev<'r>(
         revs: impl Iterator<Item = &'r Revision>,
         for_instance: &InstanceId,
@@ -555,33 +529,6 @@ mod tests {
             rev1.merge(&rev2);
 
             assert_eq!(rev1, Revision::from_value(json!({ "a": 2, "b": 2 }))?);
-        }
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_revision_get_latest_rev() -> Result<()> {
-        let rev1 = Revision::from_value(json!({ "a": 1, "b": 1 }))?;
-        let rev2 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
-        let rev3 = Revision::from_value(json!({ "a": 2, "b": 1 }))?;
-
-        {
-            let refs = vec![&rev1, &rev2, &rev3];
-
-            assert_eq!(
-                Revision::get_latest_rev(refs.as_slice()),
-                vec![&rev2, &rev3].into_iter().collect(),
-            );
-        }
-
-        {
-            let refs = vec![&rev1, &rev3];
-
-            assert_eq!(
-                Revision::get_latest_rev(refs.as_slice()),
-                vec![&rev3].into_iter().collect()
-            );
         }
 
         Ok(())

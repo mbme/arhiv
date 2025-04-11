@@ -334,17 +334,27 @@ impl Default for LatestRevComputer<'_> {
 impl<'r> LatestRevComputer<'r> {
     pub fn update(&mut self, new_revs: impl IntoIterator<Item = &'r Revision>) {
         for new_rev in new_revs.into_iter() {
-            let latest_rev = self.0.iter().next().expect("latest revs must not be empty");
+            let mut latest_revs = HashSet::with_capacity(self.0.len() + 1);
 
-            if latest_rev > &new_rev {
-                continue;
+            for &rev in self.0.iter() {
+                match rev.compare_vector_clocks(new_rev) {
+                    VectorClockOrder::Before => {
+                        latest_revs.insert(new_rev);
+                    }
+                    VectorClockOrder::After => {
+                        latest_revs.insert(rev);
+                    }
+                    VectorClockOrder::Equal => {
+                        latest_revs.insert(rev);
+                    }
+                    VectorClockOrder::Concurrent => {
+                        latest_revs.insert(rev);
+                        latest_revs.insert(new_rev);
+                    }
+                }
             }
 
-            if latest_rev < &new_rev {
-                self.0.clear();
-            }
-
-            self.0.insert(new_rev);
+            self.0 = latest_revs;
         }
     }
 
@@ -622,6 +632,21 @@ mod tests {
             assert_eq!(
                 latest_rev_computer.get(),
                 HashSet::from_iter([&rev1, &rev2])
+            );
+        }
+
+        // keep only latest revision of each conflicting branch
+        {
+            let rev1 = Revision::from_value(json!({ "a": 1 })).unwrap();
+            let rev2 = Revision::from_value(json!({ "b": 1 })).unwrap();
+            let rev3 = Revision::from_value(json!({ "b": 2 })).unwrap();
+
+            let mut latest_rev_computer = LatestRevComputer::new();
+            latest_rev_computer.update([&rev1, &rev2, &rev3]);
+
+            assert_eq!(
+                latest_rev_computer.get(),
+                HashSet::from_iter([&rev1, &rev3])
             );
         }
 

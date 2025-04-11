@@ -289,7 +289,11 @@ mod tests {
 
         // Ensure the document and BLOB are in storage
         let baza = manager.open().unwrap();
-        let doc_a1_key = baza.get_document(&asset_a1.id).unwrap().create_key();
+        let doc_a1_key = baza
+            .get_document(&asset_a1.id)
+            .unwrap()
+            .get_single_document()
+            .create_key();
         let storage = open_storage(&manager);
         assert!(storage.contains(&doc_a1_key));
         assert!(manager.paths.storage_blob_exists(&asset_a1.id).unwrap());
@@ -305,7 +309,11 @@ mod tests {
 
         // Reopen storage and check the snapshot and BLOB are removed
         let baza = manager.open().unwrap();
-        let doc_a2_key = baza.get_document(&asset_a1.id).unwrap().create_key();
+        let doc_a2_key = baza
+            .get_document(&asset_a1.id)
+            .unwrap()
+            .get_single_document()
+            .create_key();
         let storage = open_storage(&manager);
         assert!(!storage.contains(&doc_a1_key));
         assert!(storage.contains(&doc_a2_key));

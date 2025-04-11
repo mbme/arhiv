@@ -3,7 +3,7 @@ use std::{collections::HashSet, fmt};
 use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::entities::{Document, DocumentKey, DocumentType, Id, Revision, VectorClockOrder};
+use crate::entities::{Document, DocumentType, Id, Revision, VectorClockOrder};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct DocumentHead {
@@ -34,19 +34,15 @@ impl DocumentHead {
     }
 
     #[cfg(test)]
-    pub fn new_with_snapshots_count(document: Document, snapshots_count: usize) -> Self {
-        let mut doc = DocumentHead::new_committed(document).expect("support only committed docs");
-        doc.snapshots_count = snapshots_count;
+    pub fn with_snapshots_count(mut self, snapshots_count: usize) -> Self {
+        self.snapshots_count = snapshots_count;
 
-        doc
+        self
     }
 
-    pub fn new_conflict(revisions: impl Iterator<Item = Document>) -> Result<Self> {
-        let original = HashSet::from_iter(revisions);
-        ensure!(
-            original.len() > 1,
-            "Conflict must contain at least two revisions"
-        );
+    pub fn new(snapshots: impl Iterator<Item = Document>) -> Result<Self> {
+        let original = HashSet::from_iter(snapshots);
+        ensure!(!original.is_empty(), "There must be at least one snapshot");
 
         let id = &original.iter().next().expect("original can't be empty").id;
 
@@ -90,29 +86,12 @@ impl DocumentHead {
             .document_type
     }
 
-    pub fn get_revision(&self) -> &Revision {
-        if let Some(staged) = &self.staged {
-            return &staged.rev;
-        }
-
-        &self
-            .original
-            .iter()
-            .next()
-            .expect("original must not be empty")
-            .rev
-    }
-
-    pub fn get_original_revisions(&self) -> impl Iterator<Item = &Revision> {
-        self.original.iter().map(|doc| &doc.rev)
+    pub fn get_original_revs(&self) -> HashSet<&Revision> {
+        self.iter_original_revs().collect()
     }
 
     pub fn get_snapshots_count(&self) -> usize {
         self.snapshots_count
-    }
-
-    pub fn create_key(&self) -> DocumentKey {
-        DocumentKey::new(self.get_id().clone(), self.get_revision().clone())
     }
 
     pub fn is_committed(&self) -> bool {
@@ -164,10 +143,13 @@ impl DocumentHead {
     }
 
     pub fn commit(self, new_rev: Revision) -> Result<Self> {
-        let rev = self.get_revision();
+        let is_valid_new_rev = self
+            .iter_original_revs()
+            .all(|orig_rev| orig_rev.is_older_than(&new_rev));
+
         ensure!(
-            new_rev > *rev,
-            "New revision must be newer than current revision"
+            is_valid_new_rev,
+            "New revision must be newer than original revision"
         );
 
         let mut staged_document = self.staged.context("Expected staged document")?;
@@ -197,24 +179,36 @@ impl DocumentHead {
         Ok(())
     }
 
-    pub fn insert_snapshot(mut self, new_document: Document) -> Result<Self> {
+    /// use snapshot if concurrent or newer than current original snapshots
+    pub fn insert_snapshot(self, new_document: Document) -> Result<Self> {
         ensure!(
             self.get_id() == &new_document.id,
             "Document id must not change"
         );
         ensure!(!self.is_staged(), "Can't insert into staged document");
 
-        match self.get_revision().compare_vector_clocks(&new_document.rev) {
-            VectorClockOrder::Before => DocumentHead::new_committed(new_document),
-            VectorClockOrder::Concurrent => {
-                let inserted = self.original.insert(new_document);
-                ensure!(inserted, "Conflict already contains this document");
+        let mut snapshots = HashSet::new();
 
-                Ok(self)
+        for document in self.original.into_iter() {
+            match new_document.rev.compare_vector_clocks(&document.rev) {
+                VectorClockOrder::Before => {
+                    bail!("Can't insert document with older rev");
+                }
+                VectorClockOrder::Equal => {
+                    bail!("Can't insert document with the same rev");
+                }
+                VectorClockOrder::After => {
+                    // new document is newer than existing document
+                }
+                VectorClockOrder::Concurrent => {
+                    snapshots.insert(document);
+                }
             }
-            VectorClockOrder::After => bail!("Can't insert document with older rev"),
-            VectorClockOrder::Equal => bail!("Can't insert document with the same rev"),
         }
+
+        snapshots.insert(new_document);
+
+        DocumentHead::new(snapshots.into_iter())
     }
 
     pub(super) fn update_snapshots_count(&mut self, snapshots_count: usize) {
@@ -229,6 +223,24 @@ impl DocumentHead {
         self.staged.iter().chain(self.original.iter())
     }
 
+    pub fn iter_original_revs(&self) -> impl Iterator<Item = &Revision> {
+        self.iter_original_snapshots().map(|doc| &doc.rev)
+    }
+
+    pub fn iter_all_revs(&self) -> impl Iterator<Item = &Revision> {
+        self.iter_all_snapshots().map(|doc| &doc.rev)
+    }
+
+    #[cfg(test)]
+    pub fn get_single_revision(&self) -> Option<&Revision> {
+        if let Some(staged) = &self.staged {
+            return Some(&staged.rev);
+        }
+
+        self.original.iter().map(|doc| &doc.rev).next()
+    }
+
+    // FIXME this also wrong
     pub fn get_single_document(&self) -> &Document {
         self.iter_all_snapshots()
             .next()
@@ -281,8 +293,7 @@ mod tests {
         let doc_a3 = doc_a1.clone().with_rev(json!({ "a": 1, "b": 1, "c": 1 }));
 
         {
-            let mut head =
-                DocumentHead::new_conflict([doc_a1.clone(), doc_a2.clone()].into_iter()).unwrap();
+            let mut head = DocumentHead::new([doc_a1.clone(), doc_a2.clone()].into_iter()).unwrap();
             assert!(head.is_unresolved_conflict());
             assert!(head.is_committed());
             assert!(!head.is_staged());
@@ -354,8 +365,7 @@ mod tests {
         }
 
         {
-            let mut head =
-                DocumentHead::new_conflict([doc_a1.clone(), doc_a2.clone()].into_iter()).unwrap();
+            let mut head = DocumentHead::new([doc_a1.clone(), doc_a2.clone()].into_iter()).unwrap();
             head.modify(doc_a3.clone()).unwrap();
             assert!(head.is_resolved_conflict());
             assert!(!head.is_committed());
@@ -377,8 +387,7 @@ mod tests {
         let new_rev = Revision::from_value(json!({ "a": 2, "b": 1, "c": 1 })).unwrap();
 
         {
-            let mut head =
-                DocumentHead::new_conflict([doc_a1.clone(), doc_a2.clone()].into_iter()).unwrap();
+            let mut head = DocumentHead::new([doc_a1.clone(), doc_a2.clone()].into_iter()).unwrap();
 
             assert!(head.clone().commit(new_rev.clone()).is_err());
             assert_eq!(head.snapshots_count, 2);
@@ -389,7 +398,7 @@ mod tests {
 
             head = head.commit(new_rev.clone()).unwrap();
             assert!(head.is_committed());
-            assert_eq!(head.get_revision(), &new_rev);
+            assert_eq!(head.get_single_revision().unwrap(), &new_rev);
             assert_eq!(head.snapshots_count, 3);
         }
 
@@ -400,7 +409,7 @@ mod tests {
 
             head = head.commit(new_rev.clone()).unwrap();
             assert!(head.is_committed());
-            assert_eq!(head.get_revision(), &new_rev);
+            assert_eq!(head.get_single_revision().unwrap(), &new_rev);
         }
 
         {
@@ -439,8 +448,7 @@ mod tests {
         }
 
         {
-            let mut head =
-                DocumentHead::new_conflict([doc_a1.clone(), doc_a2.clone()].into_iter()).unwrap();
+            let mut head = DocumentHead::new([doc_a1.clone(), doc_a2.clone()].into_iter()).unwrap();
             assert_eq!(head.iter_all_snapshots().count(), 2);
 
             head.modify(doc_a3.clone()).unwrap();
@@ -480,5 +488,19 @@ mod tests {
         head.modify(doc_a1.clone()).unwrap();
 
         assert_ne!(doc_a1.updated_at, head.get_single_document().updated_at);
+    }
+
+    #[test]
+    fn test_conflict_insert_snapshot() {
+        let doc_a1 = new_document(json!({})).with_rev(json!({ "a": 1, "b": 0 }));
+        let doc_a2 = doc_a1.clone().with_rev(json!({ "a": 0, "b": 1 }));
+        let doc_a3 = doc_a1.clone().with_rev(json!({ "a": 2, "b": 0 }));
+
+        let head = DocumentHead::new([doc_a1.clone(), doc_a2.clone()].into_iter()).unwrap();
+        assert!(head.is_unresolved_conflict());
+
+        let head = head.insert_snapshot(doc_a3).unwrap();
+        assert!(head.is_conflict());
+        assert_eq!(head.get_snapshots_count(), 2);
     }
 }

@@ -52,7 +52,7 @@ impl Baza {
         let total_referenced_blobs = self
             .state
             .iter_documents()
-            .filter(|head| head.get_single_document().document_type == ASSET_TYPE)
+            .filter(|head| head.get_type() == &ASSET_TYPE)
             .count();
 
         Ok(BLOBSCount {

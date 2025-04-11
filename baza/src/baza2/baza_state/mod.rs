@@ -145,7 +145,7 @@ impl BazaState {
         let mut latest_rev_computer = LatestRevComputer::new();
 
         for document in self.iter_documents() {
-            let document_revs = document.get_original_revisions();
+            let document_revs = document.iter_original_revs();
             latest_rev_computer.update(document_revs);
         }
 
@@ -162,7 +162,7 @@ impl BazaState {
     fn calculate_next_revision(&self) -> Revision {
         let all_revs = self
             .iter_documents()
-            .flat_map(|head| head.get_original_revisions());
+            .flat_map(|head| head.iter_original_revs());
 
         Revision::compute_next_rev(all_revs, &self.file.instance_id)
     }
@@ -222,6 +222,11 @@ impl BazaState {
         let current_value = self.file.documents.remove(&id);
 
         let updated_head = if let Some(document_head) = current_value {
+            ensure!(
+                !document_head.is_staged(),
+                "Can't insert into staged document"
+            );
+
             document_head.insert_snapshot(document)?
         } else {
             DocumentHead::new_committed(document)?
@@ -469,7 +474,11 @@ mod tests {
 
         assert!(state.get_document(&doc_a3.id).unwrap().is_committed());
         assert_eq!(
-            state.get_document(&doc_a3.id).unwrap().get_revision(),
+            state
+                .get_document(&doc_a3.id)
+                .unwrap()
+                .get_single_revision()
+                .unwrap(),
             &new_rev
         );
 

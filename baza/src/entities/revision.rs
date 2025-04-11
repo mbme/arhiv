@@ -248,36 +248,6 @@ impl Revision {
 
         max_rev
     }
-
-    #[must_use]
-    pub fn compare_revs<'r>(
-        rev: &Revision,
-        other_revs: impl Iterator<Item = &'r Revision>,
-    ) -> VectorClockOrder {
-        let mut has_before = false;
-        let mut has_after = false;
-        let mut has_equal = false;
-
-        for r in other_revs {
-            match rev.compare_vector_clocks(r) {
-                VectorClockOrder::Before => has_before = true,
-                VectorClockOrder::After => has_after = true,
-                VectorClockOrder::Equal => has_equal = true,
-                VectorClockOrder::Concurrent => return VectorClockOrder::Concurrent,
-            }
-
-            if has_before && has_after {
-                return VectorClockOrder::Concurrent;
-            }
-        }
-
-        match (has_before, has_after, has_equal) {
-            (true, false, false) => VectorClockOrder::Before,
-            (false, true, false) => VectorClockOrder::After,
-            (false, false, true) => VectorClockOrder::Equal,
-            _ => VectorClockOrder::Concurrent,
-        }
-    }
 }
 
 impl PartialEq for Revision {
@@ -660,38 +630,5 @@ mod tests {
 
             assert_eq!(latest_rev_computer.get(), HashSet::from_iter([&rev3]));
         }
-    }
-
-    #[test]
-    fn test_compare_revs() {
-        let rev1 = Revision::from_value(json!({ "a": 1, "b": 1 })).unwrap();
-        let rev2 = Revision::from_value(json!({ "a": 1, "b": 2 })).unwrap();
-        let rev3 = Revision::from_value(json!({ "a": 2, "b": 1 })).unwrap();
-        let rev31 = Revision::from_value(json!({ "a": 3, "b": 1 })).unwrap();
-        let rev4 = Revision::from_value(json!({ "a": 2, "b": 2 })).unwrap();
-
-        // Test when rev is before all other_revs
-        assert_eq!(
-            Revision::compare_revs(&rev1, vec![&rev2, &rev3, &rev4].into_iter()),
-            VectorClockOrder::Before
-        );
-
-        // Test when rev is after all other_revs
-        assert_eq!(
-            Revision::compare_revs(&rev4, vec![&rev1, &rev2, &rev3].into_iter()),
-            VectorClockOrder::After
-        );
-
-        // Test when rev is equal to all other_revs
-        assert_eq!(
-            Revision::compare_revs(&rev2, vec![&rev2].into_iter()),
-            VectorClockOrder::Equal
-        );
-
-        // Test when rev is concurrent with other_revs
-        assert_eq!(
-            Revision::compare_revs(&rev31, vec![&rev2, &rev3].into_iter()),
-            VectorClockOrder::Concurrent
-        );
     }
 }

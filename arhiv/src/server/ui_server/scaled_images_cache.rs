@@ -137,7 +137,7 @@ impl ScaledImagesCache {
 
                 let is_valid_asset = baza
                     .get_document(&asset_id)
-                    .is_some_and(|head| head.get_single_document().document_type == ASSET_TYPE);
+                    .is_some_and(|head| head.get_type() == &ASSET_TYPE);
 
                 if !is_valid_asset {
                     log::info!("Removing stale cache file: {file_name}");

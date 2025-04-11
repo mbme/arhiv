@@ -442,7 +442,15 @@ impl Baza {
         let mut keys = Vec::new();
         for key in storage.index.iter() {
             if let Some(head) = self.state.get_document(&key.id) {
-                if head.is_original_erased() && key.rev.is_older_than(head.get_revision()) {
+                if !head.is_original_erased() {
+                    continue;
+                }
+
+                let is_old_snapshot = head
+                    .iter_all_revs()
+                    .all(|head_rev| key.rev.is_older_than(head_rev));
+
+                if is_old_snapshot {
                     keys.push(key.serialize());
                 }
             }
@@ -504,11 +512,6 @@ fn update_state_from_storage<R: Read>(
 
     // compare storage index with state
     for (id, index_max_revs) in create_index_map(&storage.index) {
-        let index_max_rev = index_max_revs
-            .iter()
-            .next()
-            .context("index revs must not be empty")?;
-
         let document_head = if let Some(document_head) = state.get_document(id) {
             document_head
         } else {
@@ -521,23 +524,15 @@ fn update_state_from_storage<R: Read>(
             "Document {id} must be committed"
         );
 
-        let state_rev = document_head.get_revision();
+        let mut latest_rev_computer = LatestRevComputer::new();
+        latest_rev_computer.update(index_max_revs.iter().copied());
+        latest_rev_computer.update(document_head.iter_original_revs());
+        let max_revs = latest_rev_computer.get();
 
-        if state_rev > index_max_rev {
-            continue;
-        }
-
-        if state_rev < index_max_rev {
-            add_keys(&mut latest_snapshot_keys, id, index_max_revs.iter());
-            continue;
-        }
-
-        let all_state_revs = document_head.get_original_revisions().collect();
-        // conflicting revs
         add_keys(
             &mut latest_snapshot_keys,
             id,
-            index_max_revs.difference(&all_state_revs),
+            max_revs.difference(&document_head.get_original_revs()),
         );
     }
 
@@ -599,6 +594,7 @@ mod tests {
 
         let doc_a = new_document(json!({})).with_rev(json!({ "a": 1 }));
         let doc_a1 = doc_a.clone().with_rev(json!({ "b": 1 }));
+        let doc_a2 = doc_a.clone().with_rev(json!({ "b": 2 }));
 
         let doc_b = new_document(json!({})).with_rev(json!({ "b": 1 }));
         let doc_b1 = doc_b.clone().with_rev(json!({ "b": 2 }));
@@ -606,13 +602,14 @@ mod tests {
         let doc_c = new_document(json!({})).with_rev(json!({ "c": 3 }));
 
         let mut state = BazaState::new_test_state();
-        state.insert_snapshots(vec![doc_a.clone(), doc_b.clone()]);
+        state.insert_snapshots(vec![doc_a.clone(), doc_a1.clone(), doc_b.clone()]);
 
         let mut storage = create_test_storage(
             key.clone(),
             &vec![
                 doc_a.clone(),
                 doc_a1.clone(),
+                doc_a2.clone(),
                 doc_b.clone(),
                 doc_b1.clone(),
                 doc_c.clone(),
@@ -624,17 +621,21 @@ mod tests {
 
         assert_eq!(
             *state.get_document(&doc_a.id).unwrap(),
-            DocumentHead::new_conflict([doc_a.clone(), doc_a1.clone(),].into_iter()).unwrap(),
+            DocumentHead::new([doc_a.clone(), doc_a2.clone()].into_iter())
+                .unwrap()
+                .with_snapshots_count(3),
         );
 
         assert_eq!(
             *state.get_document(&doc_b.id).unwrap(),
-            DocumentHead::new_with_snapshots_count(doc_b1, 2),
+            DocumentHead::new_committed(doc_b1)
+                .unwrap()
+                .with_snapshots_count(2),
         );
 
         assert_eq!(
             *state.get_document(&doc_c.id).unwrap(),
-            DocumentHead::new_with_snapshots_count(doc_c, 1),
+            DocumentHead::new_committed(doc_c).unwrap()
         );
     }
 }

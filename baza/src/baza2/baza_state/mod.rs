@@ -276,6 +276,11 @@ impl BazaState {
             .any(|document_head| document_head.is_unresolved_conflict())
     }
 
+    pub fn has_conflicts(&self) -> bool {
+        self.iter_documents()
+            .any(|document_head| document_head.is_conflict())
+    }
+
     pub fn reset_all_documents(&mut self) -> Result<()> {
         let ids = self
             .file

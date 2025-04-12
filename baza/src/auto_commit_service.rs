@@ -97,6 +97,12 @@ impl AutoCommitService {
             );
 
             let mut baza = self.baza_manager.open_mut()?;
+
+            if baza.has_conflicts() {
+                log::trace!("Auto-commit: state contains conflicts");
+                return Ok(());
+            }
+
             baza.commit()?;
         }
 

@@ -241,6 +241,10 @@ impl Baza {
         self.state.has_staged_documents()
     }
 
+    pub fn has_conflicts(&self) -> bool {
+        self.state.has_conflicts()
+    }
+
     pub fn iter_documents(&self) -> impl Iterator<Item = &DocumentHead> {
         self.state.iter_documents()
     }

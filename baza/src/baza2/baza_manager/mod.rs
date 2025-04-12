@@ -251,9 +251,6 @@ mod tests {
 
         assert!(baza.has_staged_documents());
 
-        baza.insert_snapshot(new_document(json!({})).with_rev(json!({ "a": 1 })))
-            .unwrap();
-
         baza.commit().unwrap();
         drop(baza);
 
@@ -269,7 +266,7 @@ mod tests {
         assert!(!baza.has_staged_documents());
 
         let storage = open_storage(&manager);
-        assert_eq!(storage.index.len(), 3);
+        assert_eq!(storage.index.len(), 2);
     }
 
     #[test]

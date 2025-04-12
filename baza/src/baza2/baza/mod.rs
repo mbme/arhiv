@@ -249,11 +249,6 @@ impl Baza {
         self.state.iter_documents()
     }
 
-    #[cfg(test)]
-    pub fn insert_snapshot(&mut self, document: Document) -> Result<()> {
-        self.state.insert_snapshot(document)
-    }
-
     pub fn list_documents(&self, filter: &Filter) -> Result<ListPage> {
         let start_time = Instant::now();
 

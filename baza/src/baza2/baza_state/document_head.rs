@@ -1,9 +1,9 @@
 use std::{collections::HashSet, fmt};
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::entities::{Document, DocumentType, Id, Revision, VectorClockOrder};
+use crate::entities::{Document, DocumentType, Id, Revision};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct DocumentHead {
@@ -179,38 +179,6 @@ impl DocumentHead {
         Ok(())
     }
 
-    /// use snapshot if concurrent or newer than current original snapshots
-    pub fn insert_snapshot(self, new_document: Document) -> Result<Self> {
-        ensure!(
-            self.get_id() == &new_document.id,
-            "Document id must not change"
-        );
-        ensure!(!self.is_staged(), "Can't insert into staged document");
-
-        let mut snapshots = HashSet::new();
-
-        for document in self.original.into_iter() {
-            match new_document.rev.compare_vector_clocks(&document.rev) {
-                VectorClockOrder::Before => {
-                    bail!("Can't insert document with older rev");
-                }
-                VectorClockOrder::Equal => {
-                    bail!("Can't insert document with the same rev");
-                }
-                VectorClockOrder::After => {
-                    // new document is newer than existing document
-                }
-                VectorClockOrder::Concurrent => {
-                    snapshots.insert(document);
-                }
-            }
-        }
-
-        snapshots.insert(new_document);
-
-        DocumentHead::new(snapshots.into_iter())
-    }
-
     pub(super) fn update_snapshots_count(&mut self, snapshots_count: usize) {
         self.snapshots_count = snapshots_count;
     }
@@ -299,15 +267,6 @@ mod tests {
             assert!(!head.is_staged());
             assert_eq!(head.snapshots_count, 2);
 
-            let doc_c1 = doc_a1.clone().with_rev(json!({ "c": 1 }));
-            assert!(head.clone().insert_snapshot(doc_c1).unwrap().is_conflict());
-
-            assert!(!head
-                .clone()
-                .insert_snapshot(doc_a3.clone())
-                .unwrap()
-                .is_conflict());
-
             head.modify(doc_a3.clone()).unwrap();
             assert!(head.is_resolved_conflict());
         }
@@ -318,18 +277,6 @@ mod tests {
             assert!(head.is_committed());
             assert!(!head.is_staged());
             assert_eq!(head.snapshots_count, 1);
-
-            assert!(head
-                .clone()
-                .insert_snapshot(doc_a2.clone())
-                .unwrap()
-                .is_conflict());
-
-            assert!(!head
-                .clone()
-                .insert_snapshot(doc_a3.clone())
-                .unwrap()
-                .is_conflict());
 
             head.modify(doc_a3.clone()).unwrap();
 
@@ -343,7 +290,6 @@ mod tests {
             assert!(head.is_new_document());
             assert!(!head.is_committed());
             assert!(head.is_staged());
-            assert!(head.clone().insert_snapshot(doc_a3.clone()).is_err());
             assert_eq!(head.snapshots_count, 0);
 
             head.modify(doc_a3.clone()).unwrap();
@@ -357,7 +303,6 @@ mod tests {
             assert!(!head.is_unresolved_conflict());
             assert!(!head.is_committed());
             assert!(head.is_staged());
-            assert!(head.clone().insert_snapshot(doc_a3.clone()).is_err());
             assert_eq!(head.snapshots_count, 1);
 
             head.modify(doc_a3.clone()).unwrap();
@@ -370,7 +315,6 @@ mod tests {
             assert!(head.is_resolved_conflict());
             assert!(!head.is_committed());
             assert!(head.is_staged());
-            assert!(head.clone().insert_snapshot(doc_a3.clone()).is_err());
             assert_eq!(head.snapshots_count, 2);
 
             head.modify(doc_a3.clone()).unwrap();
@@ -488,19 +432,5 @@ mod tests {
         head.modify(doc_a1.clone()).unwrap();
 
         assert_ne!(doc_a1.updated_at, head.get_single_document().updated_at);
-    }
-
-    #[test]
-    fn test_conflict_insert_snapshot() {
-        let doc_a1 = new_document(json!({})).with_rev(json!({ "a": 1, "b": 0 }));
-        let doc_a2 = doc_a1.clone().with_rev(json!({ "a": 0, "b": 1 }));
-        let doc_a3 = doc_a1.clone().with_rev(json!({ "a": 2, "b": 0 }));
-
-        let head = DocumentHead::new([doc_a1.clone(), doc_a2.clone()].into_iter()).unwrap();
-        assert!(head.is_unresolved_conflict());
-
-        let head = head.insert_snapshot(doc_a3).unwrap();
-        assert!(head.is_conflict());
-        assert_eq!(head.get_snapshots_count(), 2);
     }
 }

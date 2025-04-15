@@ -27,6 +27,7 @@ use crate::{
         Document, DocumentKey, DocumentLock, DocumentLockKey, DocumentType, Id, InstanceId,
         LatestRevComputer, Revision,
     },
+    merge_expert::MergeExpert,
     schema::{Asset, AssetData, DataSchema, ASSET_TYPE},
 };
 
@@ -467,30 +468,39 @@ impl Drop for Baza {
     }
 }
 
-type DocumentsIndexMap<'i> = HashMap<&'i Id, HashSet<&'i Revision>>;
-
-fn create_index_map(index: &DocumentsIndex) -> DocumentsIndexMap {
-    let mut map: DocumentsIndexMap = HashMap::new();
+fn create_index_map(index: &DocumentsIndex) -> HashMap<Id, (HashSet<Revision>, Option<Revision>)> {
+    let mut document_revs_map: HashMap<&Id, HashSet<&Revision>> = HashMap::new();
 
     // insert all ids & revs into the map
     for key in index.iter() {
-        let entry = map.entry(&key.id).or_default();
+        let entry = document_revs_map.entry(&key.id).or_default();
 
         entry.insert(&key.rev);
     }
 
+    let mut result = HashMap::new();
+
     // calculate max rev per document
-    for revs in &mut map.values_mut() {
+    for (id, revs) in &mut document_revs_map.into_iter() {
         let mut latest_rev_computer = LatestRevComputer::new();
 
         latest_rev_computer.update(revs.iter().copied());
 
-        let mut latest_revs = latest_rev_computer.get();
+        let latest_revs = latest_rev_computer.get();
 
-        std::mem::swap(revs, &mut latest_revs);
+        // if conflict - also find base rev
+        let base_rev = if latest_revs.len() > 1 {
+            Revision::find_base_rev(&latest_revs, revs.iter().copied()).cloned()
+        } else {
+            None
+        };
+
+        let latest_revs = latest_revs.into_iter().cloned().collect::<HashSet<_>>();
+
+        result.insert(id.clone(), (latest_revs, base_rev));
     }
 
-    map
+    result
 }
 
 fn update_state_from_storage<R: Read>(
@@ -507,37 +517,40 @@ fn update_state_from_storage<R: Read>(
         "state info and storage info must match"
     );
 
-    let mut latest_snapshot_keys: HashSet<DocumentKey> = HashSet::new();
+    let mut storage_index_map = create_index_map(&storage.index);
 
-    // compare storage index with state
-    for (id, index_max_revs) in create_index_map(&storage.index) {
-        let document_head = if let Some(document_head) = state.get_document(id) {
-            document_head
-        } else {
-            add_keys(&mut latest_snapshot_keys, id, index_max_revs.iter());
-            continue;
-        };
+    // leave only documents that are outdated in the state
+    storage_index_map.retain(|id, (max_revs, _base_rev)| {
+        let is_in_state = state.get_document(id).is_some_and(|document_head| {
+            let state_max_revs = document_head.get_original_revs();
 
-        ensure!(
-            document_head.is_committed(),
-            "Document {id} must be committed"
-        );
+            // document in the state is up to date
+            state_max_revs == max_revs.iter().collect()
+        });
 
-        let mut latest_rev_computer = LatestRevComputer::new();
-        latest_rev_computer.update(index_max_revs.iter().copied());
-        latest_rev_computer.update(document_head.iter_original_revs());
-        let max_revs = latest_rev_computer.get();
+        !is_in_state
+    });
 
-        add_keys(
-            &mut latest_snapshot_keys,
-            id,
-            max_revs.difference(&document_head.get_original_revs()),
-        );
-    }
+    // collect snapshot keys for outdated documents
+    let mut latest_snapshot_keys =
+        storage_index_map
+            .iter()
+            .fold(HashSet::new(), |mut acc, (id, (max_revs, base_rev))| {
+                acc.extend(
+                    max_revs
+                        .iter()
+                        .map(|rev| DocumentKey::new(id.clone(), rev.clone())),
+                );
 
-    let latest_snapshots_count = latest_snapshot_keys.len();
+                if let Some(base_rev) = base_rev {
+                    acc.insert(DocumentKey::new(id.clone(), (*base_rev).clone()));
+                }
 
-    // read documents from storage & update state if needed
+                acc
+            });
+
+    // read necessary snapshots from the storage
+    let mut latest_snapshots = HashMap::new();
     while !latest_snapshot_keys.is_empty() {
         let (ref key, ref raw_document) = storage.next().context("No records in the storage")??;
 
@@ -548,30 +561,62 @@ fn update_state_from_storage<R: Read>(
         let document: Document =
             serde_json::from_str(raw_document).context("Failed to parse raw document")?;
 
-        state.insert_snapshot(document)?;
+        latest_snapshots.insert(key.clone(), document);
 
         latest_snapshot_keys.remove(key);
     }
 
+    let merge_expert = MergeExpert::new(state.get_schema().clone());
+    let mut latest_snapshots_count = 0;
+
+    for (id, (max_revs, base_rev)) in storage_index_map {
+        let snapshots = max_revs.into_iter().map(|rev| {
+            let key = DocumentKey::new(id.clone(), rev.clone());
+
+            latest_snapshots.remove(&key).expect("Snapshot is missing")
+        });
+
+        let mut document_head = DocumentHead::new(snapshots)?;
+
+        // count how many new snapshots we've read from storage
+        if let Some(head) = state.get_document(&id) {
+            latest_snapshots_count += document_head
+                .get_original_revs()
+                .difference(&head.get_original_revs())
+                .count();
+        } else {
+            latest_snapshots_count += document_head.get_snapshots_count();
+        }
+
+        // 3-way merge conflict
+        if document_head.is_conflict() {
+            let base = base_rev.map(|base_rev| {
+                let key = DocumentKey::new(id.clone(), base_rev.clone());
+
+                latest_snapshots.remove(&key).expect("Snapshot is missing")
+            });
+
+            let merged = merge_expert
+                .merge_originals(base, document_head.iter_original_snapshots().collect())?;
+
+            document_head.modify(merged)?;
+        }
+
+        state.insert_document_head(document_head)?;
+    }
+
+    // collect total snapshot count per document
     let mut document_snapshot_counts: HashMap<&Id, usize> = HashMap::new();
     for key in storage.index.iter() {
         *document_snapshot_counts.entry(&key.id).or_insert(0) += 1;
     }
 
-    // update state snapshots count from storage.index
+    // update snapshots count in the state
     for (id, snapshots_count) in document_snapshot_counts {
         state.update_snapshots_count(id, snapshots_count)?;
     }
 
     Ok(latest_snapshots_count)
-}
-
-fn add_keys<'r>(
-    keys: &mut HashSet<DocumentKey>,
-    id: &Id,
-    revs: impl Iterator<Item = &'r &'r Revision>,
-) {
-    keys.extend(revs.map(|rev| DocumentKey::new(id.clone(), (*rev).clone())));
 }
 
 #[cfg(test)]
@@ -618,12 +663,16 @@ mod tests {
         let changes = update_state_from_storage(&mut state, &mut storage).unwrap();
         assert_eq!(changes, 3);
 
-        assert_eq!(
-            *state.get_document(&doc_a.id).unwrap(),
-            DocumentHead::new([doc_a.clone(), doc_a2.clone()].into_iter())
-                .unwrap()
-                .with_snapshots_count(3),
-        );
+        {
+            let head = state.get_document(&doc_a.id).unwrap();
+            assert_eq!(head.get_snapshots_count(), 3);
+
+            let expected_head =
+                DocumentHead::new([doc_a.clone(), doc_a2.clone()].into_iter()).unwrap();
+            assert_eq!(head.get_original_revs(), expected_head.get_original_revs());
+
+            assert!(head.is_staged());
+        }
 
         assert_eq!(
             *state.get_document(&doc_b.id).unwrap(),

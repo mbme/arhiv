@@ -4,6 +4,7 @@ pub mod baza2;
 mod document_expert;
 pub mod entities;
 pub mod markup;
+mod merge_expert;
 pub mod schema;
 
 pub use auto_commit_service::{AutoCommitService, AutoCommitTask};

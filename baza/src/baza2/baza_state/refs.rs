@@ -100,10 +100,8 @@ mod tests {
             .with_rev(json!({ "a": 1 }))
             .with_data(json!({"ref": doc1.id}));
 
-        state.insert_snapshot(doc1.clone()).unwrap();
+        state.insert_snapshots(vec![doc1.clone(), doc2.clone()]);
         assert!(state.get_document_refs(&doc1.id).unwrap().is_empty());
-
-        state.insert_snapshot(doc2.clone()).unwrap();
         assert!(!state.get_document_refs(&doc2.id).unwrap().is_empty());
     }
 
@@ -131,8 +129,7 @@ mod tests {
             .with_id(doc2.id.clone())
             .with_data(json!({}));
 
-        state.insert_snapshot(doc1.clone()).unwrap();
-        state.insert_snapshot(doc2.clone()).unwrap();
+        state.insert_snapshots(vec![doc1.clone(), doc2.clone()]);
 
         state.stage_document(doc2_1.clone(), &None).unwrap();
         assert!(state.get_document_refs(&doc2.id).unwrap().is_empty());
@@ -154,9 +151,7 @@ mod tests {
             .with_id(doc3.id.clone())
             .with_data(json!({"ref": doc2.id}));
 
-        state.insert_snapshot(doc1.clone()).unwrap();
-        state.insert_snapshot(doc2.clone()).unwrap();
-        state.insert_snapshot(doc3.clone()).unwrap();
+        state.insert_snapshots(vec![doc1.clone(), doc2.clone(), doc3.clone()]);
 
         state.stage_document(doc3_1.clone(), &None).unwrap();
         assert!(state

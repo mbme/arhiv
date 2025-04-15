@@ -148,11 +148,11 @@ mod tests {
         }
 
         // Add more documents to test pagination
-        for _ in 0..PAGE_SIZE {
-            state
-                .insert_snapshot(new_empty_document().with_rev(json!({ "a": 1 })))
-                .unwrap();
-        }
+        state.insert_snapshots(
+            (0..PAGE_SIZE)
+                .map(|_| new_empty_document().with_rev(json!({ "a": 1 })))
+                .collect(),
+        );
 
         // Check if pagination works
         {

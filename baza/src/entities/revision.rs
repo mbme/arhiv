@@ -248,6 +248,35 @@ impl Revision {
 
         max_rev
     }
+
+    /// base rev is max rev from all_revs that's < than each of revs
+    pub fn find_base_rev<'r>(
+        revs: &HashSet<&'r Revision>,
+        all_revs: impl Iterator<Item = &'r Revision>,
+    ) -> Option<&'r Revision> {
+        let mut base_rev = None;
+
+        for rev in all_revs {
+            let could_be_base_rev = revs.iter().all(|item| rev.is_older_than(item));
+
+            if !could_be_base_rev {
+                continue;
+            }
+
+            match base_rev {
+                Some(current_base_rev) => {
+                    if rev > current_base_rev {
+                        base_rev = Some(rev);
+                    }
+                }
+                None => {
+                    base_rev = Some(rev);
+                }
+            }
+        }
+
+        base_rev
+    }
 }
 
 impl PartialEq for Revision {
@@ -630,5 +659,25 @@ mod tests {
 
             assert_eq!(latest_rev_computer.get(), HashSet::from_iter([&rev3]));
         }
+    }
+
+    #[test]
+    fn test_find_base_rev() {
+        let rev1 = Revision::from_value(json!({ "a": 1 })).unwrap();
+        let rev2 = Revision::from_value(json!({ "a": 1, "b": 1 })).unwrap();
+        let rev3 = Revision::from_value(json!({ "a": 2, "b": 1 })).unwrap();
+        let rev4 = Revision::from_value(json!({ "a": 1, "b": 2 })).unwrap();
+        let rev5 = Revision::from_value(json!({ "a": 1, "b": 3 })).unwrap();
+
+        let all_revs: HashSet<&Revision> = HashSet::from_iter([&rev1, &rev2, &rev3, &rev4, &rev5]);
+
+        let mut latest_rev_computer = LatestRevComputer::new();
+        latest_rev_computer.update(all_revs.iter().copied());
+
+        let latest_revs = latest_rev_computer.get();
+
+        let base_rev = Revision::find_base_rev(&latest_revs, all_revs.iter().copied());
+
+        assert_eq!(base_rev, Some(&rev2));
     }
 }

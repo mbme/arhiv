@@ -214,39 +214,45 @@ impl BazaState {
         Ok(document)
     }
 
-    pub(super) fn insert_snapshot(&mut self, document: Document) -> Result<()> {
-        ensure!(!document.is_staged(), "Can't insert staged document");
+    pub fn insert_document_head(&mut self, head: DocumentHead) -> Result<()> {
+        let current_value = self.file.documents.remove(head.get_id());
 
-        let id = document.id.clone();
-
-        let current_value = self.file.documents.remove(&id);
-
-        let updated_head = if let Some(document_head) = current_value {
+        if let Some(document_head) = current_value {
             ensure!(
                 !document_head.is_staged(),
                 "Can't insert into staged document"
             );
+        }
 
-            document_head.insert_snapshot(document)?
-        } else {
-            DocumentHead::new_committed(document)?
-        };
+        self.update_document_refs(&head)?;
+        self.search.index_document(head.get_single_document())?;
 
-        self.update_document_refs(&updated_head)?;
-        self.search
-            .index_document(updated_head.get_single_document())?;
-        self.file.documents.insert(id, updated_head);
+        self.file.documents.insert(head.get_id().clone(), head);
         self.file.modified = true;
-        log::trace!("State modified: inserted snapshot");
+
+        log::trace!("State modified: inserted document head");
 
         Ok(())
     }
 
     #[cfg(test)]
     pub fn insert_snapshots(&mut self, documents: Vec<Document>) {
+        use std::collections::HashMap;
+
+        let mut grouped_documents: HashMap<Id, Vec<Document>> = HashMap::new();
+
         for document in documents {
-            self.insert_snapshot(document)
-                .expect("must insert document");
+            grouped_documents
+                .entry(document.id.clone())
+                .or_insert_with(Vec::new)
+                .push(document);
+        }
+
+        for docs in grouped_documents.into_values() {
+            let document_head = DocumentHead::new(docs.into_iter()).unwrap();
+
+            self.insert_document_head(document_head)
+                .expect("must insert document head");
         }
     }
 
@@ -527,7 +533,7 @@ mod tests {
 
         let doc1 = new_empty_document().with_rev(json!({ "a": 1 }));
 
-        state.insert_snapshot(doc1.clone()).unwrap();
+        state.insert_snapshots(vec![doc1.clone()]);
 
         assert!(state
             .stage_document(
@@ -570,7 +576,7 @@ mod tests {
         assert!(state.is_modified());
 
         let doc2 = new_empty_document().with_rev(json!({ "a": 1 }));
-        state.insert_snapshot(doc2.clone()).unwrap();
+        state.insert_snapshots(vec![doc2.clone()]);
         state.stage_document(doc2.clone(), &None).unwrap();
 
         state.file.modified = false;

@@ -45,7 +45,6 @@ axum-extra = { version = "0.10", features = ["typed-header", "cookie"]}
 ordermap = { version = "0.5", features = ["serde"] } # hashmap & hashset that preserve insertion order
 rand = "0.9"
 bytes = "1"
-tinytemplate = "1" # simple string templates
 
 rayon = "1.8" # thread pool for executing CPU-heavy tasks, e.g. scaling images
 

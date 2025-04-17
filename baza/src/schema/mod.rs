@@ -43,7 +43,7 @@ impl DataSchema {
             "test",
             vec![DataDescription {
                 document_type: "test_type",
-                title_format: "{test}",
+                title_format: "${test}",
                 fields: vec![
                     Field {
                         name: "test",

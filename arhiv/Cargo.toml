@@ -30,8 +30,6 @@ tokio.workspace = true
 axum.workspace = true
 axum-extra.workspace = true
 
-tinytemplate.workspace = true
-
 include_dir = "0.7" # embed files into binary
 
 rayon.workspace = true

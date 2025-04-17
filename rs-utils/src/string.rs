@@ -1,6 +1,8 @@
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 
+use anyhow::{Context, Result};
 use rand::{distr::Alphanumeric, Rng};
+use serde_json::Value;
 
 #[must_use]
 pub fn fuzzy_match(needle: &str, haystack: &str) -> bool {
@@ -97,6 +99,36 @@ pub fn generate_random_id() -> String {
 
     // see https://zelark.github.io/nano-id-cc/
     nanoid::nanoid!(14, &chars)
+}
+
+pub fn value_as_string(value: Option<&Value>) -> Cow<str> {
+    if let Some(value) = value {
+        if let Some(str) = value.as_str() {
+            Cow::Borrowed(str)
+        } else {
+            Cow::Owned(value.to_string())
+        }
+    } else {
+        Cow::Borrowed("")
+    }
+}
+
+pub fn render_template(template: &str, value: &Value) -> Result<String> {
+    let value = value.as_object().context("value must be an object")?;
+
+    let variables = value
+        .into_iter()
+        .map(|(key, value)| (key.as_str(), value_as_string(Some(value))))
+        .collect();
+
+    render_template_with_vars(template, &variables)
+}
+
+pub fn render_template_with_vars<V: AsRef<str>>(
+    template: &str,
+    variables: &HashMap<&str, V>,
+) -> Result<String> {
+    subst::substitute(template, variables).context("Failed to render template")
 }
 
 #[cfg(test)]

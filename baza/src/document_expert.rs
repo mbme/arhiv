@@ -1,7 +1,8 @@
-use anyhow::{anyhow, bail, Context, Result};
-use tinytemplate::{format_unescaped, TinyTemplate};
+use std::collections::HashMap;
 
-use rs_utils::{is_http_url, is_image_url, parse_url};
+use anyhow::{anyhow, bail, Context, Result};
+
+use rs_utils::{is_http_url, is_image_url, parse_url, render_template_with_vars, value_as_string};
 
 use crate::{
     baza2::BazaManager,
@@ -32,21 +33,20 @@ impl<'s> DocumentExpert<'s> {
     }
 
     pub fn get_title(&self, document_type: &DocumentType, data: &DocumentData) -> Result<String> {
-        let mut tt = TinyTemplate::new();
-        tt.set_default_formatter(&format_unescaped);
+        let mut title_fields = HashMap::new();
+        for field in self.schema.iter_fields(document_type)? {
+            if field.could_be_in_title() {
+                title_fields.insert(field.name, value_as_string(data.get(field.name)));
+            }
+        }
 
-        tt.add_template(
-            "title",
+        render_template_with_vars(
             self.schema
                 .get_data_description(document_type)?
                 .title_format,
+            &title_fields,
         )
-        .context(anyhow!(
-            "failed to compile title template for {document_type}"
-        ))?;
-
-        tt.render("title", data)
-            .map_err(|err| anyhow!("failed to render title for {document_type}: {err}"))
+        .map_err(|err| anyhow!("failed to render title for {document_type}: {err}"))
     }
 
     fn pick_cover_field(&self, document_type: &DocumentType) -> Result<Option<&Field>> {

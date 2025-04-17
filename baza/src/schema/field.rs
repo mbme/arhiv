@@ -38,8 +38,17 @@ pub struct Field {
 
 impl Field {
     #[must_use]
-    pub fn could_be_title(&self) -> bool {
-        matches!(self.field_type, FieldType::String {})
+    pub fn could_be_in_title(&self) -> bool {
+        matches!(
+            self.field_type,
+            FieldType::String {}
+                | FieldType::NaturalNumber {}
+                | FieldType::Enum(_)
+                | FieldType::Date {}
+                | FieldType::Duration {}
+                | FieldType::People {}
+                | FieldType::Countries {}
+        )
     }
 
     #[must_use]

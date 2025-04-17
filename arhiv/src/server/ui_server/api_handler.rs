@@ -2,7 +2,6 @@ use std::{cmp::Ordering, fs, path::Path};
 
 use anyhow::{anyhow, bail, Context, Result};
 use serde::Serialize;
-use tinytemplate::{format_unescaped, TinyTemplate};
 
 use baza::{
     baza2::{Filter, StagingError, ValidationError},
@@ -13,7 +12,7 @@ use baza::{
 };
 use rs_utils::{
     ensure_dir_exists, get_crate_version, get_symlink_target_path, image::generate_qrcode_svg,
-    is_readable, log, path_to_string, remove_file_if_exists, to_base64, Timestamp,
+    is_readable, log, path_to_string, remove_file_if_exists, render_template, to_base64, Timestamp,
 };
 
 use crate::ui::dto::{
@@ -506,12 +505,8 @@ struct PageProps<'a> {
 }
 
 fn get_export_key_html_page(props: &PageProps) -> Result<String> {
-    let mut tt = TinyTemplate::new();
-    tt.set_default_formatter(&format_unescaped);
+    let source = include_str!("./export-key.html");
+    let props = serde_json::to_value(props).context("Failed to serialize PageProps")?;
 
-    tt.add_template("export-key", include_str!("./export-key.html"))
-        .context("failed to compile title template for export-key.html")?;
-
-    tt.render("export-key", props)
-        .map_err(|err| anyhow!("failed to render export-key: {err}"))
+    render_template(source, &props).map_err(|err| anyhow!("failed to render export-key: {err}"))
 }

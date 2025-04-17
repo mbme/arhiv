@@ -63,6 +63,7 @@ fslock = "0.2"
 flate2 = "1" # for compressed container
 async-stream = "0.3" # macro for creating async streams
 similar = { version = "2.7", features = ["unicode"] } # diff two strings
+subst = "0.3" # simple string templates
 
 # search engine
 strsim = "0.11" # string similarity

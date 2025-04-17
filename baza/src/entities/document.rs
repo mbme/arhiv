@@ -72,13 +72,7 @@ impl Document {
     }
 
     #[cfg(test)]
-    pub fn with_data(mut self, mut value: serde_json::Value) -> Self {
-        value
-            .as_object_mut()
-            .unwrap()
-            .entry("test")
-            .or_insert(serde_json::Value::Null);
-
+    pub fn with_data(mut self, value: serde_json::Value) -> Self {
         let data = value.try_into().expect("must be valid DocumentData");
         self.data = data;
 

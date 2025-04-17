@@ -26,8 +26,6 @@ pulldown-cmark = { version = "0.13", default-features = false, features = ["simd
 
 postcard = { version = "1",  default-features = false, features = ["use-std"] }
 
-tinytemplate.workspace = true
-
 ordermap.workspace = true
 
 thiserror = "2" # macro for better errors

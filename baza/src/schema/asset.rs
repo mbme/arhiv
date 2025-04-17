@@ -16,7 +16,7 @@ pub const ASSET_TYPE: &str = "asset";
 pub fn get_asset_definition() -> DataDescription {
     DataDescription {
         document_type: ASSET_TYPE,
-        title_format: "{filename}",
+        title_format: "${filename}",
         fields: vec![
             Field {
                 name: "filename",

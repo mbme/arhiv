@@ -8,7 +8,7 @@
 
     <style>
       html,
-      body \{
+      body {
         text-rendering: optimizeLegibility;
         background-color: white;
         font-size: 13px;
@@ -20,17 +20,17 @@
           'Segoe UI Emoji', 'Segoe UI Symbol';
       }
 
-      main \{
+      main {
         display: flex;
         flex-direction: column;
         align-items: center;
       }
 
-      h1 \{
+      h1 {
         margin: 0 0 8px;
       }
 
-      .age-key \{
+      .age-key {
         display: block;
         margin: 0 0 8px;
         font-size: 16px;
@@ -38,8 +38,8 @@
         letter-spacing: 1.3px;
       }
 
-      @media print \{
-        @page \{
+      @media print {
+        @page {
           size: A4 portrait;
           margin-top: 0.5in;
           margin-right: 0.4in;
@@ -51,20 +51,20 @@
   </head>
   <body>
     <main>
-      <h1>Encrypted Arhiv {arhiv_version} key</h1>
+      <h1>Encrypted Arhiv ${arhiv_version} key</h1>
 
       <div>
         Scan QR Code and import key into Arhiv
         <b><code>https://github.com/mbme/typed-v</code></b>
       </div>
 
-      <img src="data:image/svg+xml;base64,{qrcode_svg_base64}" />
+      <img src="data:image/svg+xml;base64,${qrcode_svg_base64}" />
 
       <pre class="age-key">
-        <code>{key}</code>
+        <code>${key}</code>
       </pre>
 
-      <div>{date}</div>
+      <div>${date}</div>
     </main>
   </body>
 </html>

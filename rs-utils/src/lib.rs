@@ -41,6 +41,7 @@ mod json;
 pub mod keyring;
 mod lock_file;
 pub mod log;
+pub mod merge;
 mod streams;
 mod string;
 mod time;

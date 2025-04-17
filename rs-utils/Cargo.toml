@@ -62,10 +62,11 @@ nanoid = "0.4.0" # generate short unique global ids
 fslock = "0.2"
 flate2 = "1" # for compressed container
 async-stream = "0.3" # macro for creating async streams
+similar = { version = "2.7", features = ["unicode"] } # diff two strings
 
 # search engine
 strsim = "0.11" # string similarity
-charabia = { version = "0.9", default-features = false } # tokenization & normalization
+charabia = { version = "0.9", default-features = false } # tokenization & normalization for search
 deunicode = "1.6" # turn translate unicode strings and emojis into ASCII
 
 # read password from platform-specific secure stores

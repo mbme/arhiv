@@ -50,15 +50,10 @@ fn get_word_diff<'s>(a: &'s str, b: &'s str) -> Vec<Change<'s>> {
 }
 
 // TODO case insensitivity? (prefer capital letters?);
-pub fn merge_strings(a: &str, b: &str) -> String {
+fn merge_strings(a: &str, b: &str) -> String {
     let all_changes = get_word_diff(a, b);
 
     let mut merged = String::new();
-
-    eprintln!("\n\n\n");
-    eprintln!("left: {a}");
-    eprintln!("right: {b}");
-    eprintln!("{all_changes:?}");
 
     // check if strings have non-whitespace equal changes
     let strings_have_common_chunks = all_changes.iter().any(|change| {
@@ -134,7 +129,7 @@ fn should_add_whitespace(left: &str, right: &str) -> bool {
     true
 }
 
-pub fn merge_three_way(base_text: &str, left_text: &str, right_text: &str) -> String {
+pub fn merge_strings_three_way(base_text: &str, left_text: &str, right_text: &str) -> String {
     let left_diff = get_word_diff(base_text, left_text);
     let mut left_iter = left_diff.into_iter().peekable();
 
@@ -291,10 +286,10 @@ mod tests {
     }
 
     #[test]
-    fn test_merge_three_way() {
+    fn test_merge_strings_three_way() {
         // no changes
         assert_eq!(
-            merge_three_way(
+            merge_strings_three_way(
                 "The quick brown fox",
                 "The quick brown fox",
                 "The quick brown fox"
@@ -304,25 +299,25 @@ mod tests {
 
         // non-conflicting insertions
         assert_eq!(
-            merge_three_way("a good test", "a bad test", "a good text"),
+            merge_strings_three_way("a good test", "a bad test", "a good text"),
             "a bad text"
         );
 
         // conflicting insertions
         assert_eq!(
-            merge_three_way("a good test", "a bad test", "a cool test"),
+            merge_strings_three_way("a good test", "a bad test", "a cool test"),
             "a bad cool test"
         );
 
         // conflicting insertions with the same input
         assert_eq!(
-            merge_three_way("a good test", "a bad text", "a good text"),
+            merge_strings_three_way("a good test", "a bad text", "a good text"),
             "a bad text"
         );
 
         // deletion in one branch
         assert_eq!(
-            merge_three_way(
+            merge_strings_three_way(
                 "The quick brown fox jumps",
                 "The quick brown fox jumps",
                 "The quick fox jumps",
@@ -332,7 +327,7 @@ mod tests {
 
         // conflicting deletion and insertion
         assert_eq!(
-            merge_three_way(
+            merge_strings_three_way(
                 "The quick brown fox",
                 "The quick fox",
                 "The quick red brown fox"
@@ -342,19 +337,19 @@ mod tests {
 
         // completely divergent
         assert_eq!(
-            merge_three_way("Hello world", "Hello universe", "Greetings world"),
+            merge_strings_three_way("Hello world", "Hello universe", "Greetings world"),
             "Greetings universe"
         );
 
         // empty base
         assert_eq!(
-            merge_three_way("", "Hello universe", "Greetings world"),
+            merge_strings_three_way("", "Hello universe", "Greetings world"),
             "Hello universe Greetings world"
         );
 
         // empty base, similar edits
         assert_eq!(
-            merge_three_way("", "Hello universe", "Hello universe and more"),
+            merge_strings_three_way("", "Hello universe", "Hello universe and more"),
             "Hello universe and more"
         );
     }

@@ -1,5 +1,7 @@
 use anyhow::{ensure, Context, Result};
 
+use rs_utils::merge::merge_strings_three_way;
+
 use crate::{
     entities::{parse_string_vec, Document},
     schema::{DataSchema, FieldType},
@@ -158,7 +160,9 @@ impl MergeExpert {
                         .as_str()
                         .context("Expected value_b to be a string")?;
 
-                    let resulting_value = self.merge_strings(value_base, value_a, value_b)?;
+                    let resulting_value =
+                        merge_strings_three_way(value_base.unwrap_or_default(), value_a, value_b);
+
                     result.data.set(field.name, resulting_value);
                 }
 
@@ -196,13 +200,6 @@ impl MergeExpert {
         }
 
         Ok(result)
-    }
-
-    fn merge_strings(&self, base: Option<&str>, doc_a: &str, doc_b: &str) -> Result<String> {
-        // Merge strings
-        // if there's no base, merge pairwise
-        // else 3-way merge using base
-        todo!()
     }
 
     fn merge_string_vec(

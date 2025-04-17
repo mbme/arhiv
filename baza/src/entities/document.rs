@@ -73,8 +73,13 @@ impl Document {
 
     #[cfg(test)]
     pub fn with_data(mut self, value: serde_json::Value) -> Self {
-        let data = value.try_into().expect("must be valid DocumentData");
-        self.data = data;
+        use super::new_test_data;
+
+        if value.is_null() {
+            self.erase();
+        } else {
+            self.data = new_test_data(value);
+        }
 
         self
     }

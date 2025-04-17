@@ -20,3 +20,5 @@ pub use revision::{LatestRevComputer, Revision, VectorClockOrder};
 
 #[cfg(test)]
 pub use document::{new_document, new_empty_document};
+#[cfg(test)]
+pub use document_data::new_test_data;

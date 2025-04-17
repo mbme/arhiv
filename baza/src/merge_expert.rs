@@ -1,9 +1,11 @@
+use std::collections::HashSet;
+
 use anyhow::{ensure, Context, Result};
 
-use rs_utils::merge::merge_strings_three_way;
+use rs_utils::merge::{merge_slices_three_way, merge_strings_three_way};
 
 use crate::{
-    entities::{parse_string_vec, Document},
+    entities::{parse_string_vec, Document, DocumentType},
     schema::{DataSchema, FieldType},
 };
 
@@ -23,26 +25,28 @@ impl MergeExpert {
             originals.len()
         );
 
-        let first_doc = originals.first().expect("Originals can't be empty");
-        let first_id = &first_doc.id;
-        let first_type = &first_doc.document_type;
+        let mut all_ids = originals.iter().map(|doc| &doc.id).collect::<HashSet<_>>();
 
-        ensure!(
-            originals
-                .iter()
-                .all(|doc| &doc.id == first_id && &doc.document_type == first_type),
-            "All documents must have the same id and document_type"
-        );
+        let mut all_doc_types = originals
+            .iter()
+            .map(|doc| &doc.document_type)
+            .collect::<HashSet<_>>();
 
         if let Some(base_doc) = &base {
-            let base_id = &base_doc.id;
-            let base_type = &base_doc.document_type;
-
-            ensure!(
-                first_id == base_id && first_type == base_type,
-                "All documents must have the same id and document_type"
-            );
+            all_ids.insert(&base_doc.id);
+            all_doc_types.insert(&base_doc.document_type);
         }
+
+        all_doc_types.remove(&DocumentType::erased());
+
+        ensure!(
+            all_ids.len() == 1,
+            "All documents must have the same id, got {all_ids:?}"
+        );
+        ensure!(
+            all_doc_types.len() < 2,
+            "All documents must have the same document_type, got {all_doc_types:?}"
+        );
 
         Ok(())
     }
@@ -75,7 +79,7 @@ impl MergeExpert {
 
         let mut doc_a = originals.next().expect("Originals can't be empty").clone();
 
-        while let Some(doc_b) = originals.next() {
+        for doc_b in originals {
             doc_a = self.merge_documents(base.as_ref(), &doc_a, doc_b)?;
         }
 
@@ -88,14 +92,12 @@ impl MergeExpert {
         doc_a: &Document,
         doc_b: &Document,
     ) -> Result<Document> {
-        let a_is_older = doc_a.updated_at < doc_b.updated_at;
-
         let mut result = doc_a.clone();
 
         for field in self.schema.iter_fields(&doc_a.document_type)? {
             let value_base = base.and_then(|base| base.data.get(field.name));
             let value_a = doc_a.data.get(field.name);
-            let value_b = doc_a.data.get(field.name);
+            let value_b = doc_b.data.get(field.name);
 
             // handle cases when field values are equal, or when there's an explicit resolution
             let (value_a, value_b) = match (value_base, value_a, value_b) {
@@ -126,7 +128,7 @@ impl MergeExpert {
                     continue;
                 }
                 (_, Some(value_a), Some(value_b)) => {
-                    // value_a and value_b are equal, no nothing
+                    // value_a and value_b are equal, do nothing
                     if value_a == value_b {
                         continue;
                     }
@@ -134,7 +136,7 @@ impl MergeExpert {
                     (value_a, value_b)
                 }
                 (None, None, None) | (Some(_), None, None) => {
-                    // value_a and value_b are equal, no nothing
+                    // value_a and value_b are equal, do nothing
                     continue;
                 }
             };
@@ -181,7 +183,12 @@ impl MergeExpert {
                     let value_b =
                         parse_string_vec(value_b).context("Failed to use value_b as Vec<&str>")?;
 
-                    let resulting_value = self.merge_string_vec(value_base, value_a, value_b)?;
+                    let resulting_value = merge_slices_three_way(
+                        value_base.unwrap_or_default().as_slice(),
+                        &value_a,
+                        &value_b,
+                    );
+
                     result.data.set(field.name, resulting_value);
                 }
 
@@ -192,22 +199,170 @@ impl MergeExpert {
                 | FieldType::Enum(_)
                 | FieldType::Date {}
                 | FieldType::Duration {} => {
-                    result
-                        .data
-                        .set(field.name, if a_is_older { value_b } else { value_a });
+                    result.data.set(field.name, value_b);
                 }
             }
         }
 
         Ok(result)
     }
+}
 
-    fn merge_string_vec(
-        &self,
-        base: Option<Vec<&str>>,
-        doc_a: Vec<&str>,
-        doc_b: Vec<&str>,
-    ) -> Result<Vec<&str>> {
-        todo!()
+#[cfg(test)]
+mod tests {
+    use serde_json::{json, Value};
+
+    use crate::{
+        entities::new_document,
+        schema::{DataDescription, Field},
+    };
+
+    use super::*;
+
+    fn assert_schema_merge_result(
+        schema: DataSchema,
+        base: Value,
+        originals: Vec<Value>,
+        result_data: Value,
+    ) {
+        let expert = MergeExpert::new(schema);
+
+        let base_doc = new_document(base);
+        let docs: Vec<_> = originals
+            .into_iter()
+            .map(|value| base_doc.clone().with_data(value))
+            .collect();
+        let refs: Vec<&_> = docs.iter().collect();
+
+        let result = expert
+            .merge_originals(Some(base_doc.clone()), refs)
+            .unwrap();
+
+        assert_eq!(result.data, new_document(result_data).data);
+    }
+
+    fn assert_merge_result(base: Value, originals: Vec<Value>, result_data: Value) {
+        let schema = DataSchema::new_test_schema();
+
+        assert_schema_merge_result(schema, base, originals, result_data);
+    }
+
+    #[test]
+    fn test_merge_erased() {
+        assert_merge_result(
+            json!({ "test": "base" }),
+            vec![
+                Value::Null, //
+                json!({ "test": "base 2" }),
+            ],
+            json!({ "test": "base 2"}),
+        );
+
+        assert_merge_result(
+            json!({ "test": "base" }),
+            vec![
+                Value::Null, //
+                Value::Null,
+            ],
+            Value::Null,
+        );
+
+        assert_merge_result(
+            Value::Null,
+            vec![
+                Value::Null, //
+                json!({ "test": "base 2" }),
+            ],
+            json!({ "test": "base 2"}),
+        );
+    }
+
+    #[test]
+    fn test_merge_last_write_wins() {
+        assert_merge_result(
+            json!({ "ref": "base" }),
+            vec![
+                json!({ "ref": "first" }), //
+                json!({ "ref": "second" }),
+            ],
+            json!({ "ref": "second"}),
+        );
+    }
+
+    #[test]
+    fn test_merge_ref_list() {
+        let schema = DataSchema::new(
+            "test",
+            vec![DataDescription {
+                document_type: "test_type",
+                title_format: "title",
+                fields: vec![Field {
+                    name: "refs",
+                    field_type: FieldType::RefList(&["*"]),
+                    mandatory: false,
+                    readonly: false,
+                }],
+            }],
+        );
+
+        assert_schema_merge_result(
+            schema,
+            json!({ "refs": &["base"] }),
+            vec![
+                json!({ "refs": &["first", "base"] }),
+                json!({ "refs": &["base", "second"] }),
+            ],
+            json!({ "refs": &["first", "base", "second"]}),
+        );
+    }
+
+    #[test]
+    fn test_merge_multiple() {
+        assert_merge_result(
+            json!({ "test": "base" }),
+            vec![
+                json!({ "test": "base left" }),
+                json!({ "test": "base right" }),
+                json!({ "test": "base third" }),
+            ],
+            json!({ "test": "base left right third"}),
+        );
+    }
+
+    #[test]
+    fn test_merge_originals() {
+        assert_merge_result(
+            json!({ "test": "base" }),
+            vec![json!({ "test": "base left" }), json!({})],
+            json!({ "test": "base left"}),
+        );
+
+        assert_merge_result(
+            json!({ "test": "base" }),
+            vec![json!({ "test": "base" }), json!({})],
+            json!({}),
+        );
+
+        assert_merge_result(
+            json!({ "test": "base" }),
+            vec![json!({}), json!({})],
+            json!({}),
+        );
+
+        assert_merge_result(
+            json!({}),
+            vec![json!({ "test": "left" }), json!({})],
+            json!({ "test": "left" }),
+        );
+
+        // merge conflict
+        assert_merge_result(
+            json!({ "test": "base" }),
+            vec![
+                json!({ "test": "base left" }),
+                json!({ "test": "base right" }),
+            ],
+            json!({ "test": "base left right"}),
+        );
     }
 }

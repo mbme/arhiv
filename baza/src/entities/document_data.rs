@@ -184,6 +184,11 @@ pub fn parse_string_vec(value: &Value) -> Result<Vec<&str>> {
 }
 
 #[cfg(test)]
+pub fn new_test_data(value: Value) -> DocumentData {
+    value.try_into().expect("must be valid DocumentData")
+}
+
+#[cfg(test)]
 mod tests {
     use anyhow::Result;
 

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { JSONObj } from 'utils';
 import { RPC } from 'utils/network';
 import { Form } from 'components/Form/Form';
@@ -18,7 +18,12 @@ export function ExportKeyForm({ onSuccess }: Props) {
   const [error, setError] = useState('');
   const [inProgress, setInProgress] = useState(false);
 
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   const passwordRepeatInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    passwordInputRef.current?.focus();
+  }, []);
 
   const onSubmit = async (values: JSONObj) => {
     const { password, exportPassword, exportPasswordRepeat } = values;
@@ -58,6 +63,7 @@ export function ExportKeyForm({ onSuccess }: Props) {
         <input
           type="password"
           name="password"
+          ref={passwordInputRef}
           required
           minLength={window.CONFIG.minPasswordLength}
           autoComplete="off"

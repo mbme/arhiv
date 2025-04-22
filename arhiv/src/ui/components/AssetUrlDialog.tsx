@@ -22,7 +22,6 @@ export function AssetUrlDialog({ onConfirm, onCancel }: Props) {
             className="grow"
             autoComplete="off"
             autoFocus
-            data-autofocus
           />
 
           <Button type="submit" variant="primary">

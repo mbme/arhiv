@@ -3,6 +3,8 @@ use std::{collections::HashSet, fmt};
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 
+use rs_utils::Timestamp;
+
 use crate::entities::{Document, DocumentType, Id, Revision};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -84,6 +86,19 @@ impl DocumentHead {
             .next()
             .expect("original must not be empty")
             .document_type
+    }
+
+    pub fn get_updated_at(&self) -> &Timestamp {
+        if let Some(staged) = &self.staged {
+            return &staged.updated_at;
+        }
+
+        &self
+            .original
+            .iter()
+            .next()
+            .expect("original must not be empty")
+            .updated_at
     }
 
     pub fn get_original_revs(&self) -> HashSet<&Revision> {

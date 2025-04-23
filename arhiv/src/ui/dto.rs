@@ -169,6 +169,7 @@ pub struct ListDocumentsResult {
     pub updated_at: Timestamp,
     pub data: DocumentData,
     pub cover: Option<Id>,
+    pub has_conflict: bool,
 }
 
 #[derive(Serialize)]

@@ -1,4 +1,5 @@
 import { DocumentData, DocumentId, DocumentType } from 'dto';
+import { cx } from 'utils';
 import { getScaledImageUrl } from 'utils/network';
 import { useSuspenseQuery } from 'utils/suspense';
 import { useSelectionManager } from 'utils/selection-manager';
@@ -66,7 +67,9 @@ export function Catalog({
   const items = result.documents.map((item) => (
     <div
       key={item.id}
-      className="cursor-pointer pr-2 py-2 sm-selectable hover:var-item-active-bg-color"
+      className={cx('cursor-pointer pr-2 py-2 sm-selectable hover:var-item-active-bg-color', {
+        'bg-red-700/20': item.hasConflict,
+      })}
       onClick={() => {
         onDocumentSelected({
           id: item.id,

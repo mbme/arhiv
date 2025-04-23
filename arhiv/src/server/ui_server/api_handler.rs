@@ -46,16 +46,19 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
             let documents = page
                 .items
                 .into_iter()
-                .map(|item| {
-                    let asset_id = document_expert.get_cover_asset_id(item)?;
+                .map(|head| {
+                    let doc = head.get_single_document();
+
+                    let asset_id = document_expert.get_cover_asset_id(doc)?;
 
                     Ok(ListDocumentsResult {
-                        title: document_expert.get_title(&item.document_type, &item.data)?,
+                        title: document_expert.get_title(&doc.document_type, &doc.data)?,
                         cover: asset_id,
-                        id: item.id.clone(),
-                        document_type: item.document_type.clone().into(),
-                        updated_at: item.updated_at,
-                        data: item.data.clone(),
+                        id: doc.id.clone(),
+                        document_type: doc.document_type.clone().into(),
+                        updated_at: doc.updated_at,
+                        data: doc.data.clone(),
+                        has_conflict: head.is_conflict(),
                     })
                 })
                 .collect::<Result<_>>()?;

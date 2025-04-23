@@ -1,9 +1,8 @@
 use anyhow::Result;
-use serde::Serialize;
 
-use crate::entities::{Document, DocumentType};
+use crate::entities::DocumentType;
 
-use super::BazaState;
+use super::{BazaState, DocumentHead};
 
 #[derive(Default)]
 pub struct Filter {
@@ -13,9 +12,9 @@ pub struct Filter {
 }
 
 impl Filter {
-    pub fn should_show_document(&self, doc: &Document) -> bool {
+    pub fn should_show_document(&self, head: &DocumentHead) -> bool {
         // we should ignore erased documents unless explicitly included in document_types
-        if doc.is_erased() {
+        if head.get_type().is_erased() {
             return self.document_types.contains(&DocumentType::erased());
         }
 
@@ -23,13 +22,13 @@ impl Filter {
             return true;
         }
 
-        self.document_types.contains(&doc.document_type)
+        self.document_types.contains(head.get_type())
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct ListPage<'d> {
-    pub items: Vec<&'d Document>,
+    pub items: Vec<&'d DocumentHead>,
     pub has_more: bool,
 }
 
@@ -40,14 +39,13 @@ impl BazaState {
         let page_start = (filter.page as usize) * PAGE_SIZE;
 
         if filter.query.trim().is_empty() {
-            let mut filtered_documents: Vec<&Document> = self
+            let mut filtered_documents = self
                 .iter_documents()
-                .map(|head| head.get_single_document())
-                .filter(|doc| filter.should_show_document(doc))
-                .collect();
+                .filter(|head| filter.should_show_document(head))
+                .collect::<Vec<_>>();
 
             // sort by modification time
-            filtered_documents.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+            filtered_documents.sort_by(|a, b| b.get_updated_at().cmp(a.get_updated_at()));
 
             let page_end = page_start + PAGE_SIZE;
             let paginated_documents =
@@ -62,7 +60,7 @@ impl BazaState {
                 .search
                 .search(&filter.query)
                 .map(|id| {
-                    self.must_get_document(&id)
+                    self.get_document(&id)
                         .expect("Document returned by search engine must exist")
                 })
                 .filter(|doc| filter.should_show_document(doc))
@@ -105,7 +103,7 @@ mod tests {
         {
             let result = state.list_documents(&Default::default()).unwrap();
             assert_eq!(result.items.len(), 2);
-            assert!(result.items[0].updated_at >= result.items[1].updated_at);
+            assert!(result.items[0].get_updated_at() >= result.items[1].get_updated_at());
             assert!(!result.has_more);
         }
 
@@ -118,7 +116,7 @@ mod tests {
 
             let result = state.list_documents(&filter).unwrap();
             assert_eq!(result.items.len(), 2);
-            assert!(result.items[0].updated_at >= result.items[1].updated_at);
+            assert!(result.items[0].get_updated_at() >= result.items[1].get_updated_at());
             assert!(!result.has_more);
         }
 
@@ -143,7 +141,7 @@ mod tests {
 
             let result = state.list_documents(&filter).unwrap();
             assert_eq!(result.items.len(), 1);
-            assert_eq!(result.items[0].document_type, DocumentType::erased());
+            assert!(result.items[0].get_type().is_erased());
             assert!(!result.has_more);
         }
 

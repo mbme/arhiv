@@ -218,6 +218,7 @@ export type ListDocumentsResult<D = DocumentData> = {
   updatedAt: string;
   data: D;
   cover?: DocumentId;
+  hasConflict: boolean;
 };
 
 export type DocumentData = JSONObj;

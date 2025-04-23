@@ -87,6 +87,7 @@ pub enum APIRequest {
         password: SecretString,
         export_password: SecretString,
     },
+    CountConflicts {},
 }
 
 #[derive(Serialize)]
@@ -152,6 +153,10 @@ pub enum APIResponse {
         key: String,
         qrcode_svg_base64: String,
         html_page: String,
+    },
+    #[serde(rename_all = "camelCase")]
+    CountConflicts {
+        conflicts_count: usize,
     },
 }
 

@@ -246,6 +246,12 @@ impl Baza {
         self.state.has_conflicts()
     }
 
+    pub fn iter_conflicts(&self) -> impl Iterator<Item = &DocumentHead> {
+        self.state
+            .iter_documents()
+            .filter(|head| head.is_conflict())
+    }
+
     pub fn iter_documents(&self) -> impl Iterator<Item = &DocumentHead> {
         self.state.iter_documents()
     }

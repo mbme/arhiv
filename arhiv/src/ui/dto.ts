@@ -92,6 +92,9 @@ export type APIRequest =
       password: string;
       exportPassword: string;
       secret: true;
+    }
+  | {
+      typeName: 'CountConflicts';
     };
 
 export type APIResponse =
@@ -176,6 +179,10 @@ export type APIResponse =
       key: string;
       qrcodeSvgBase64: string;
       htmlPage: string;
+    }
+  | {
+      typeName: 'CountConflicts';
+      conflictsCount: number;
     };
 
 export type DocumentId = NominalType<string, 'DocumentId'>;

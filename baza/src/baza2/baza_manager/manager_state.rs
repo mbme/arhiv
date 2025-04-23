@@ -120,6 +120,8 @@ impl BazaManager {
     fn maybe_read_state(&self) -> Result<()> {
         ensure!(self.storage_exists()?, "Storage doesn't exist");
 
+        self.paths.ensure_dirs_exist()?;
+
         if let Some(baza) = self.acquire_state_read_lock()?.baza.as_ref() {
             if baza.is_up_to_date_with_file()? {
                 log::trace!("Baza state is up to date with file");
@@ -164,6 +166,8 @@ impl BazaManager {
         log::info!("Unlocking baza using key file {}", self.paths.key_file);
 
         ensure!(self.key_exists()?, "Key file is missing");
+
+        self.paths.ensure_dirs_exist()?;
 
         let _lock = self.wait_for_file_lock()?;
         let mut state = self.acquire_state_write_lock()?;

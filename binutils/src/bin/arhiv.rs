@@ -214,7 +214,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, true)?;
 
-            arhiv.baza.create(password)?;
+            arhiv.create(password)?;
 
             println!("Done")
         }

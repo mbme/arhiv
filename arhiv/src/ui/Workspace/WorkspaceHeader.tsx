@@ -9,6 +9,7 @@ import { DropdownMenu } from 'components/DropdownMenu';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { NewDocumentDialog } from './NewDocumentDialog';
 import { CommitButton } from './CommitButton';
+import { ConflictsButton } from './ConflictsButton';
 import { ExportKeyDialog } from './ExportKeyDialog';
 
 export function WorkspaceHeader() {
@@ -36,19 +37,17 @@ export function WorkspaceHeader() {
 
   return (
     <SuspenseCacheProvider cacheId="workspace-header">
-      <nav className="fixed inset-x-0 top-0 z-20 var-bg-secondary-color pl-8 pr-4 flex flex-row gap-8">
-        <Button variant="text" disabled>
-          Player
-        </Button>
-
+      <nav className="fixed inset-x-0 top-0 z-20 var-bg-secondary-color pl-4 pr-4 flex flex-row gap-2 xs:gap-8">
         <IconButton
           icon="circle-half"
           title="Toggle light/dark theme"
           onClick={() => {
             app.toggleTheme();
           }}
-          className="ml-auto"
+          className="mr-auto"
         />
+
+        <ConflictsButton />
 
         <Button
           variant="text"

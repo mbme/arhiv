@@ -374,6 +374,11 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
                 html_page,
             }
         }
+        APIRequest::CountConflicts {} => {
+            let conflicts_count = arhiv.baza.open()?.iter_conflicts().count();
+
+            APIResponse::CountConflicts { conflicts_count }
+        }
     };
 
     Ok(response)

@@ -95,15 +95,18 @@ export function Toaster() {
   }, [toasts]);
 
   return createPortal(
-    <div className="fixed bottom-0 left-0 flex flex-col gap-3 pl-4 pb-4 z-100" ref={containerRef}>
+    <div
+      className="fixed top-10 left-1/2 transform -translate-x-1/2 flex flex-col gap-3 pl-4 pb-4 z-100"
+      ref={containerRef}
+    >
       {toasts.map((toast) => (
         <div
           key={toast.id}
           className={cx(
             'px-4 py-2 text-sm rounded-sm shadow-sm hover:shadow-lg cursor-default min-w-[15rem] group flex flex-row',
             {
-              'bg-sky-50 text-sky-700': toast.level === 'info',
-              'bg-orange-200 text-amber-700': toast.level === 'warn',
+              'bg-emerald-500': toast.level === 'info',
+              'bg-orange-600': toast.level === 'warn',
             },
           )}
         >

@@ -340,27 +340,21 @@ impl Default for LatestRevComputer<'_> {
 impl<'r> LatestRevComputer<'r> {
     pub fn update(&mut self, new_revs: impl IntoIterator<Item = &'r Revision>) {
         for new_rev in new_revs.into_iter() {
-            let mut latest_revs = HashSet::with_capacity(self.0.len() + 1);
-
-            for &rev in self.0.iter() {
-                match rev.compare_vector_clocks(new_rev) {
-                    VectorClockOrder::Before => {
-                        latest_revs.insert(new_rev);
-                    }
-                    VectorClockOrder::After => {
-                        latest_revs.insert(rev);
-                    }
-                    VectorClockOrder::Equal => {
-                        latest_revs.insert(rev);
-                    }
-                    VectorClockOrder::Concurrent => {
-                        latest_revs.insert(rev);
-                        latest_revs.insert(new_rev);
-                    }
-                }
+            // skip new_rev if any existing rev is newer
+            if self
+                .0
+                .iter()
+                .any(|&rev| rev.compare_vector_clocks(new_rev) == VectorClockOrder::After)
+            {
+                continue;
             }
 
-            self.0 = latest_revs;
+            // remove all existing revs older than new_rev
+            self.0
+                .retain(|&rev| rev.compare_vector_clocks(new_rev) != VectorClockOrder::Before);
+
+            // insert new_rev if no equal rev exists
+            self.0.insert(new_rev);
         }
     }
 
@@ -647,13 +641,26 @@ mod tests {
             let rev2 = Revision::from_value(json!({ "b": 1 })).unwrap();
             let rev3 = Revision::from_value(json!({ "b": 2 })).unwrap();
 
-            let mut latest_rev_computer = LatestRevComputer::new();
-            latest_rev_computer.update([&rev1, &rev2, &rev3]);
+            {
+                let mut latest_rev_computer = LatestRevComputer::new();
+                latest_rev_computer.update([&rev1, &rev2, &rev3]);
 
-            assert_eq!(
-                latest_rev_computer.get(),
-                HashSet::from_iter([&rev1, &rev3])
-            );
+                assert_eq!(
+                    latest_rev_computer.get(),
+                    HashSet::from_iter([&rev1, &rev3])
+                );
+            }
+
+            // different order
+            {
+                let mut latest_rev_computer = LatestRevComputer::new();
+                latest_rev_computer.update([&rev3, &rev1, &rev2]);
+
+                assert_eq!(
+                    latest_rev_computer.get(),
+                    HashSet::from_iter([&rev1, &rev3])
+                );
+            }
         }
 
         {

@@ -12,7 +12,7 @@ import { DownloadLink } from 'components/Link';
 import { dispatchDocumentChangeEvent } from 'Workspace/documentChangeUtils';
 import { useCardLock } from '../controller';
 import { EraseDocumentConfirmationDialog } from '../DocumentEditor/EraseDocumentConfirmationDialog';
-import { DocumentViewerHead } from '../DocumentEditor/DocumentViewerHead';
+import { DocumentViewerHead } from './DocumentViewerHead';
 import { DocumentEditor } from '../DocumentEditor/DocumentEditor';
 import { useLockDocument } from './useLockDocument';
 import { LockError } from './LockError';

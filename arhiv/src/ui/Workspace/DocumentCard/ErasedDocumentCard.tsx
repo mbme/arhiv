@@ -1,7 +1,7 @@
 import { DocumentDTO } from 'dto';
 import { CardContainer } from 'Workspace/CardContainer';
 import { ProgressLocker } from 'components/ProgressLocker';
-import { DocumentViewerHead } from '../DocumentEditor/DocumentViewerHead';
+import { DocumentViewerHead } from './DocumentViewerHead';
 
 type Props = {
   document: DocumentDTO;

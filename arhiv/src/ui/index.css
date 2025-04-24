@@ -206,4 +206,9 @@
     position: relative;
     z-index: 1;
   }
+
+  /* make transparent images more contrast in dark mode */
+  img {
+    background-color: white;
+  }
 }

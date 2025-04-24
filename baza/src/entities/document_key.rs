@@ -38,7 +38,7 @@ impl DocumentKey {
 
 impl fmt::Debug for DocumentKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[DocumentKey {}]", self.serialize())
+        write!(f, "<key: {}>", self.serialize())
     }
 }
 

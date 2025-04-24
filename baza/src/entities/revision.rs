@@ -1,3 +1,4 @@
+use core::fmt;
 use std::{
     cmp::Ordering,
     collections::{BTreeMap, HashSet},
@@ -10,7 +11,7 @@ use serde_json::Value;
 use super::instance_id::InstanceId;
 
 #[allow(clippy::derived_hash_with_manual_eq)]
-#[derive(Serialize, Deserialize, Hash, Clone, Debug, Eq)]
+#[derive(Serialize, Deserialize, Hash, Clone, Eq)]
 pub struct Revision(BTreeMap<InstanceId, u32>);
 
 #[derive(Debug, PartialEq)]
@@ -310,6 +311,12 @@ impl Ord for Revision {
 impl Default for &Revision {
     fn default() -> Self {
         Revision::INITIAL
+    }
+}
+
+impl fmt::Debug for Revision {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "<rev: {}>", self.to_file_name())
     }
 }
 

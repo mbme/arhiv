@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use rs_utils::generate_random_id;
 
-#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Hash)]
 pub struct Id(String);
 
 impl Id {
@@ -62,6 +62,12 @@ impl From<&Id> for String {
 impl fmt::Display for Id {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl fmt::Debug for Id {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "<id: {}>", self.0)
     }
 }
 

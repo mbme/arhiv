@@ -1,4 +1,5 @@
 use std::{
+    env,
     fs::{self, read_to_string},
     process,
 };
@@ -81,6 +82,10 @@ enum CLICommand {
         /// Print server info as JSON. The line will start with @@SERVER_INFO:
         #[arg(long, default_value_t = false)]
         json: bool,
+
+        /// Open in $BROWSER
+        #[arg(long, default_value_t = false)]
+        browser: bool,
     },
     /// Print current status
     Status,
@@ -438,20 +443,36 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 print_document(&document);
             }
         }
-        CLICommand::Server { port, json } => {
+        CLICommand::Server {
+            port,
+            json,
+            browser,
+        } => {
             let server = ArhivServer::start(ArhivOptions::new_desktop(), port).await?;
+            let server_info = server.get_info();
 
             if json {
-                let server_info = server.get_info();
-
                 eprintln!(
                     "@@SERVER_INFO: {}",
                     serde_json::to_string(server_info).expect("Failed to serialize ServerInfo")
                 );
             }
 
+            if browser {
+                let browser =
+                    env::var("BROWSER").context("Failed to read $BROWSER env variable")?;
+
+                process::Command::new(&browser)
+                    .arg(&server_info.ui_url_with_auth_token)
+                    .stdout(process::Stdio::null())
+                    .stderr(process::Stdio::null())
+                    .spawn()
+                    .unwrap_or_else(|_| panic!("failed to run browser {browser}"))
+                    .wait()
+                    .expect("Command wasn't running");
+            }
+
             if DEV_MODE {
-                let server_info = server.get_info();
                 log::info!("Dev server url: {}", server_info.ui_url_with_auth_token);
             }
 

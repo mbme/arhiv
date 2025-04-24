@@ -91,11 +91,9 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
         }
         APIRequest::GetDocument { ref id } => {
             let baza = arhiv.baza.open()?;
-            let document = baza.must_get_document(id)?;
-            let snapshots_count = baza
-                .get_document(id)
-                .context("document must exist")?
-                .get_snapshots_count();
+            let head = baza.get_document(id).context("Document is missing")?;
+            let document = head.get_single_document();
+            let snapshots_count = head.get_snapshots_count();
 
             let document_expert = arhiv.baza.get_document_expert();
 
@@ -141,6 +139,7 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
                 collections,
                 refs: refs.get_all_document_refs(),
                 snapshots_count,
+                has_conflict: head.is_conflict(),
             }
         }
         APIRequest::ParseMarkup { markup } => {

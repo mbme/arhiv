@@ -17,6 +17,7 @@ import { DocumentEditor } from '../DocumentEditor/DocumentEditor';
 import { useLockDocument } from './useLockDocument';
 import { LockError } from './LockError';
 import { DocumentTitle } from './DocumentTitle';
+import { CONFLICT_INDICATOR } from './ConflictIndicator';
 
 type Props = {
   document: DocumentDTO;
@@ -47,21 +48,25 @@ export function AssetCard({ document, isUpdating, options }: Props) {
     <CardContainer
       skipBack={isDirty}
       leftToolbar={
-        <DropdownMenu
-          icon="dots-horizontal"
-          align="bottom-left"
-          options={[
-            ...options,
-            {
-              text: `Erase ${document.documentType}`,
-              icon: 'erase-document',
-              alarming: true,
-              onClick: () => {
-                setShowErasetConfirmation(true);
+        <>
+          <DropdownMenu
+            icon="dots-horizontal"
+            align="bottom-left"
+            options={[
+              ...options,
+              {
+                text: `Erase ${document.documentType}`,
+                icon: 'erase-document',
+                alarming: true,
+                onClick: () => {
+                  setShowErasetConfirmation(true);
+                },
               },
-            },
-          ]}
-        />
+            ]}
+          />
+
+          {document.hasConflict && CONFLICT_INDICATOR}
+        </>
       }
       title={<DocumentTitle documentType={document.documentType} title={document.title} />}
       showTitleOnScroll

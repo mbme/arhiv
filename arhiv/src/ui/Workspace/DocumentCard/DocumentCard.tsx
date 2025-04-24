@@ -15,6 +15,7 @@ import { DocumentEditor } from '../DocumentEditor/DocumentEditor';
 import { useLockDocument } from './useLockDocument';
 import { LockError } from './LockError';
 import { DocumentTitle } from './DocumentTitle';
+import { CONFLICT_INDICATOR } from './ConflictIndicator';
 
 type Props = {
   document: DocumentDTO;
@@ -67,6 +68,8 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
               },
             ]}
           />
+
+          {document.hasConflict && CONFLICT_INDICATOR}
         </>
       }
       title={<DocumentTitle documentType={document.documentType} title={document.title} />}

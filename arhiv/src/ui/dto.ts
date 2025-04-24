@@ -122,6 +122,7 @@ export type APIResponse =
       collections: DocumentBackref[];
       refs: DocumentId[];
       snapshotsCount: number;
+      hasConflict: boolean;
     }
   | {
       typeName: 'ParseMarkup';

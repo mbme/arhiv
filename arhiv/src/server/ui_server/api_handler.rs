@@ -30,12 +30,14 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
             document_types,
             query,
             page,
+            only_conflicts,
         } => {
             let document_types = document_types.into_iter().map(DocumentType::new).collect();
             let filter = Filter {
                 query,
                 document_types,
                 page,
+                only_conflicts,
             };
 
             let document_expert = arhiv.baza.get_document_expert();

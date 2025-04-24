@@ -13,6 +13,8 @@ import { Pagination } from './Pagination';
 import { CatalogFilter, type Filter } from './CatalogFilter';
 import { CatalogItemBadges } from './CatalogItemBadges';
 
+export type { Filter };
+
 export type DocumentInfo = {
   id: DocumentId;
   documentType: DocumentType;
@@ -59,6 +61,7 @@ export function Catalog({
     query,
     page,
     documentTypes: filter.documentTypes,
+    onlyConflicts: filter.onlyConflicts ?? false,
   });
 
   const { setRootEl } = useSelectionManager([result]);

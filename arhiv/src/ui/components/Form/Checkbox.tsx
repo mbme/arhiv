@@ -5,6 +5,8 @@ type Props = {
   className?: string;
   name?: string;
   initialValue?: boolean;
+  value?: boolean;
+  onChange?: (value: boolean) => void;
   readonly?: boolean;
   required?: boolean;
   disabled?: boolean;
@@ -15,6 +17,8 @@ export function Checkbox({
   className,
   name,
   initialValue,
+  value,
+  onChange,
   readonly,
   required,
   disabled,
@@ -31,6 +35,7 @@ export function Checkbox({
       required={required}
       disabled={disabled}
       readOnly={readonly}
+      checked={value}
       onInputCapture={(e) => {
         if (readonly) {
           e.currentTarget.checked = !e.currentTarget.checked;
@@ -38,6 +43,9 @@ export function Checkbox({
         }
       }}
       defaultChecked={initialValue}
+      onChange={(e) => {
+        onChange?.(e.currentTarget.checked);
+      }}
     />
   );
 }

@@ -7,6 +7,7 @@ export type APIRequest =
       documentTypes: DocumentType[];
       query: string;
       page: number;
+      onlyConflicts: boolean;
     }
   | {
       typeName: 'GetDocuments';

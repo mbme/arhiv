@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { DocumentType } from 'dto';
 import { Dialog } from 'components/Dialog';
-import { Catalog, CatalogInfo, DocumentInfo } from 'components/Catalog/Catalog';
+import { Catalog, CatalogInfo, DocumentInfo, Filter } from 'components/Catalog/Catalog';
 
 export { DocumentInfo };
 
@@ -28,26 +28,28 @@ export function DocumentPicker({
 }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  const [documentTypes, setDocumentTypes] = useState(initialDocumentTypes);
+  const [filter, setFilter] = useState<Filter>({
+    documentTypes: initialDocumentTypes,
+  });
   const [page, setPage] = useState(0);
   const [query, setQuery] = useState(initialQuery);
 
   return (
     <Dialog
       innerRef={dialogRef}
-      title={title || `Pick ${documentTypes.join(', ') || 'document'}`}
+      title={title || `Pick ${filter.documentTypes.join(', ') || 'document'}`}
       onHide={onCancel}
       contentClassName="px-3 pb-0"
     >
       <Catalog
         autofocus
-        filter={{ documentTypes }}
+        filter={filter}
         query={query}
         page={page}
         onQueryChange={setQuery}
         onPageChange={setPage}
         onFilterChange={(filter) => {
-          setDocumentTypes(filter.documentTypes);
+          setFilter(filter);
         }}
         onDocumentSelected={(info) => {
           if (!dialogRef.current) {

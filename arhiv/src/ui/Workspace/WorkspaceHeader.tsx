@@ -47,7 +47,11 @@ export function WorkspaceHeader() {
           className="mr-auto"
         />
 
-        <ConflictsButton />
+        <ConflictsButton
+          onClick={() => {
+            app.workspace.open({ variant: 'catalog', onlyConflicts: true });
+          }}
+        />
 
         <Button
           variant="text"

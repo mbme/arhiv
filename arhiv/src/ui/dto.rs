@@ -17,6 +17,7 @@ pub enum APIRequest {
         document_types: Vec<String>,
         query: String,
         page: u8,
+        only_conflicts: bool,
     },
     GetDocuments {
         ids: Vec<Id>,

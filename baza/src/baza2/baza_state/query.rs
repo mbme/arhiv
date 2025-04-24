@@ -9,12 +9,18 @@ pub struct Filter {
     pub document_types: Vec<DocumentType>,
     pub query: String,
     pub page: u8,
+    pub only_conflicts: bool,
 }
 
 impl Filter {
     pub fn should_show_document(&self, head: &DocumentHead) -> bool {
+        self.should_show_document_type(head.get_type())
+            && self.should_show_if_conflict(head.is_conflict())
+    }
+
+    fn should_show_document_type(&self, document_type: &DocumentType) -> bool {
         // we should ignore erased documents unless explicitly included in document_types
-        if head.get_type().is_erased() {
+        if document_type.is_erased() {
             return self.document_types.contains(&DocumentType::erased());
         }
 
@@ -22,7 +28,15 @@ impl Filter {
             return true;
         }
 
-        self.document_types.contains(head.get_type())
+        self.document_types.contains(document_type)
+    }
+
+    fn should_show_if_conflict(&self, is_conflict: bool) -> bool {
+        if self.only_conflicts {
+            is_conflict
+        } else {
+            true
+        }
     }
 }
 
@@ -171,6 +185,33 @@ mod tests {
             let result = state.list_documents(&filter).unwrap();
             assert_eq!(result.items.len(), 2); // Remaining documents
             assert!(!result.has_more);
+        }
+    }
+
+    #[test]
+    fn test_list_conflics() {
+        let mut state = BazaState::new_test_state();
+
+        let doc = new_document(json!({"test": "value"})).with_rev(json!({"r": 1}));
+        let conflict1 = new_empty_document().with_rev(json!({"a": 1}));
+        let conflict2 = conflict1.clone().with_rev(json!({"b": 1}));
+        state.insert_snapshots(vec![doc.clone(), conflict1.clone(), conflict2.clone()]);
+
+        // Default should include both normal and conflict documents
+        {
+            let result = state.list_documents(&Default::default()).unwrap();
+            assert_eq!(result.items.len(), 2);
+        }
+
+        // Filter only_conflicts should return only the conflict document
+        {
+            let filter = Filter {
+                only_conflicts: true,
+                ..Default::default()
+            };
+            let result = state.list_documents(&filter).unwrap();
+            assert_eq!(result.items.len(), 1);
+            assert!(result.items[0].is_conflict());
         }
     }
 }

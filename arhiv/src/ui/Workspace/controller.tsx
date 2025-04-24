@@ -13,6 +13,7 @@ type CardVariant =
       query?: string;
       page?: number;
       documentTypes?: DocumentType[];
+      onlyConflicts?: boolean;
     }
   | {
       variant: 'status';

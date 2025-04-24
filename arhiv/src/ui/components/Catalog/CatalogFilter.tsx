@@ -3,9 +3,11 @@ import { cx, withItem, withoutItem } from 'utils';
 import { getDocumentTypes, isErasedDocument } from 'utils/schema';
 import { Badge } from 'components/Badge';
 import { Button } from 'components/Button';
+import { Checkbox } from 'components/Form/Checkbox';
 
 export interface Filter {
   documentTypes: DocumentType[];
+  onlyConflicts?: boolean;
 }
 
 const ALL_DOCUMENT_TYPES = [
@@ -48,6 +50,13 @@ export function CatalogFilter({ className, filter, onChange }: Props) {
     onChange({
       ...filter,
       documentTypes: [],
+    });
+  };
+
+  const changeOnlyConflicts = (onlyConflicts: boolean) => {
+    onChange({
+      ...filter,
+      onlyConflicts,
     });
   };
 
@@ -114,6 +123,17 @@ export function CatalogFilter({ className, filter, onChange }: Props) {
         <Button size="sm" variant="text" onClick={selectNone}>
           Select none
         </Button>
+      </div>
+
+      <div className="flex gap-2 w-full pl-2">
+        <label className="flex items-center gap-2">
+          <Checkbox
+            name="checkbox"
+            value={filter.onlyConflicts ?? false}
+            onChange={changeOnlyConflicts}
+          />
+          Only conflicts
+        </label>
       </div>
     </div>
   );

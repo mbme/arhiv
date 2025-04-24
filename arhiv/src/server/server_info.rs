@@ -1,10 +1,8 @@
 use anyhow::Result;
 use serde::Serialize;
 
-use baza::entities::Id;
-use rs_utils::{AuthToken, SelfSignedCertificate, Token};
+use rs_utils::SelfSignedCertificate;
 
-use super::certificate::{generate_ui_crypto_key, read_or_generate_certificate};
 use super::server_lock::ArhivServerLock;
 use super::ui_server::{HEALTH_PATH, UI_BASE_PATH};
 
@@ -19,12 +17,9 @@ pub struct ServerInfo {
 }
 
 impl ServerInfo {
-    pub fn new(port: u16, certificate: &SelfSignedCertificate, token: Token) -> Self {
+    pub fn new(port: u16, certificate: &SelfSignedCertificate, auth_token: String) -> Self {
         let ui_url = Self::get_ui_base_url(port);
         let health_url = Self::get_health_url(port);
-
-        let ui_hmac = generate_ui_crypto_key(certificate.private_key_der.clone());
-        let auth_token = AuthToken::generate(&ui_hmac, token).serialize();
 
         ServerInfo {
             ui_url_with_auth_token: format!("{ui_url}?AuthToken={auth_token}"),
@@ -35,21 +30,7 @@ impl ServerInfo {
         }
     }
 
-    pub fn collect(state_dir: &str) -> Result<Option<Self>> {
-        let (port, token) = if let Some((port, token)) = Self::get_server_info(state_dir)? {
-            (port, token)
-        } else {
-            return Ok(None);
-        };
-
-        let certificate = read_or_generate_certificate(state_dir)?;
-
-        let info = ServerInfo::new(port, &certificate, token);
-
-        Ok(Some(info))
-    }
-
-    pub fn get_server_info(state_dir: &str) -> Result<Option<(u16, Token)>> {
+    pub fn get_server_port(state_dir: &str) -> Result<Option<u16>> {
         let mut lock = ArhivServerLock::new(state_dir);
 
         // server isn't running
@@ -57,13 +38,13 @@ impl ServerInfo {
             return Ok(None);
         }
 
-        let (port, token) = lock.read_server_info()?;
+        let port = lock.read_server_info()?;
 
         if port == 0 {
             return Ok(None);
         }
 
-        Ok(Some((port, token)))
+        Ok(Some(port))
     }
 
     fn get_ui_base_url(port: u16) -> String {
@@ -72,9 +53,5 @@ impl ServerInfo {
 
     fn get_health_url(port: u16) -> String {
         format!("https://localhost:{port}{HEALTH_PATH}")
-    }
-
-    pub fn get_document_url(&self, id: &Id) -> String {
-        format!("{}&id={id}", self.ui_url_with_auth_token)
     }
 }

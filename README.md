@@ -4,17 +4,14 @@
 * Data files have their own Age x25519 keys stored in storage & state.
 * Web UI server generates self-signed **HTTPS certificate** and saves it in the state dir **in plain text**.
 * Desktop & Android apps verify the server HTTPS certificate.
-* Web UI server generates random **token** on startup and saves it into lock file in the state dir **in plain text**.
+* Web UI server generates random signed **auth token** on startup.
 * Desktop & Android apps
-  * read HTTPS certificate and token
-  * construct SHA256 HMAC using HTTPS certificate as a key
-  * sign token using HMAC to get an **auth token**
+  * start Web UI server and get **auth token** from it
   * send the auth token in a cookie to the Web UI server
-  * Web UI server denies requests without the auth token.
+  * Web UI server denies requests without the auth token
 * In Desktop & CLI apps user can save password to System keyring.
 * In Android app user can save password to the System KeyStore.
 * Desktop & Android apps **unlock server** using password they got from user or keyring. **The Web UI server stays unlocked** until the app is closed or manually locked.
-* **Anyone with read access to certificate file & server lock file can create an auth token and connect to potentially unlocked Web UI server!**
 
 # Installation
 

@@ -1,8 +1,8 @@
 use std::fs;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 
-use rs_utils::{bytes_to_hex_string, hex_string_to_bytes, log, LockFile, Token};
+use rs_utils::{log, LockFile};
 
 pub struct ArhivServerLock {
     lock_file: String,
@@ -26,27 +26,19 @@ impl ArhivServerLock {
         Ok(())
     }
 
-    pub fn read_server_info(&self) -> Result<(u16, Token)> {
+    pub fn read_server_info(&self) -> Result<u16> {
         let data = fs::read_to_string(&self.lock_file)?;
 
-        let (port, token) = data
+        let port = data
             .trim()
-            .split_once(' ')
-            .context("Failed to split data from server lock file")?;
+            .parse::<u16>()
+            .context("Failed to parse port as u16")?;
 
-        let port = port.parse::<u16>().context("Failed to parse port as u16")?;
-
-        let token = hex_string_to_bytes(token).context("Failed to parse token as hex string")?;
-        let token: Token = token
-            .try_into()
-            .map_err(|err| anyhow!("Failed to parse token as byte array: {err:?}"))?;
-
-        Ok((port, token))
+        Ok(port)
     }
 
-    pub fn write_server_info(&self, port: u16, token: &Token) -> Result<()> {
-        let data = format!("{port} {}", bytes_to_hex_string(token));
-
-        fs::write(&self.lock_file, data).context("Failed to write server info into lock file")
+    pub fn write_server_info(&self, port: u16) -> Result<()> {
+        fs::write(&self.lock_file, port.to_string())
+            .context("Failed to write server info into lock file")
     }
 }

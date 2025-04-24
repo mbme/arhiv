@@ -10,7 +10,7 @@ use clap::{
 use clap_complete::{generate, Shell};
 use dialoguer::{theme::ColorfulTheme, Password};
 
-use arhiv::{definitions::get_standard_schema, Arhiv, ArhivOptions, ArhivServer, ServerInfo};
+use arhiv::{definitions::get_standard_schema, Arhiv, ArhivOptions, ArhivServer};
 use baza::{
     baza2::BazaManager,
     entities::{Document, DocumentData, DocumentLockKey, DocumentType, Id},
@@ -75,12 +75,13 @@ enum CLICommand {
     /// Run server
     Server {
         /// The port to listen on
-        #[arg(long, env = "SERVER_PORT", default_value = "0")]
+        #[arg(long, env = "SERVER_PORT", default_value_t = ArhivServer::DEFAULT_PORT)]
         port: u16,
+
+        /// Print server info as JSON. The line will start with @@SERVER_INFO:
+        #[arg(long, default_value_t = false)]
+        json: bool,
     },
-    /// Print server info, in JSON format
-    #[clap(name = "server-info")]
-    ServerInfo,
     /// Print current status
     Status,
     /// List document locks
@@ -133,7 +134,7 @@ enum CLICommand {
         #[arg(num_args = 1.., value_hint = ValueHint::FilePath)]
         file_paths: Vec<String>,
         /// Remove original files
-        #[arg(short, default_value = "false")]
+        #[arg(short, default_value_t = false)]
         remove_original_file: bool,
     },
     #[clap(name = "generate-completions", hide = true)]
@@ -414,9 +415,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             baza.save_changes()?;
 
-            let server_info = arhiv.collect_server_info()?;
-
-            print_document(&document, &server_info);
+            print_document(&document);
         }
         CLICommand::Import {
             document_type,
@@ -425,8 +424,6 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         } => {
             let arhiv = Arhiv::new_desktop();
             unlock_arhiv(&arhiv);
-
-            let server_info = arhiv.collect_server_info()?;
 
             println!("Importing {} files", file_paths.len());
 
@@ -438,11 +435,20 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                     .import_document_from_file(&document_type, &file_path, remove_original_file)
                     .context("failed to import file")?;
 
-                print_document(&document, &server_info);
+                print_document(&document);
             }
         }
-        CLICommand::Server { port } => {
+        CLICommand::Server { port, json } => {
             let server = ArhivServer::start(ArhivOptions::new_desktop(), port).await?;
+
+            if json {
+                let server_info = server.get_info();
+
+                eprintln!(
+                    "@@SERVER_INFO: {}",
+                    serde_json::to_string(server_info).expect("Failed to serialize ServerInfo")
+                );
+            }
 
             if DEV_MODE {
                 let server_info = server.get_info();
@@ -452,15 +458,6 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             shutdown_signal().await;
 
             server.shutdown().await?;
-        }
-        CLICommand::ServerInfo => {
-            let arhiv = Arhiv::new_desktop();
-
-            let server_info = arhiv.collect_server_info()?;
-
-            let server_info =
-                serde_json::to_string(&server_info).context("Failed to serialize ServerInfo")?;
-            println!("{}", server_info);
         }
         CLICommand::Backup { backup_dir } => {
             let arhiv = Arhiv::new_desktop();
@@ -483,16 +480,8 @@ async fn handle_command(command: CLICommand) -> Result<()> {
     Ok(())
 }
 
-fn print_document(document: &Document, server_info: &Option<ServerInfo>) {
-    let document_url = server_info
-        .as_ref()
-        .map(|server_info| server_info.get_document_url(&document.id))
-        .unwrap_or_default();
-
-    println!(
-        "[{} {}] {}",
-        document.document_type, document.id, document_url
-    );
+fn print_document(document: &Document) {
+    println!("[{} {}]", document.document_type, document.id);
 }
 
 fn prompt_password(min_length: usize, with_confirmation: bool) -> Result<SecretString> {

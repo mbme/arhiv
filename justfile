@@ -8,7 +8,7 @@ alias c := check
 
 arhiv *PARAMS:
   npm run build --workspace arhiv
-  DEV_ARHIV_ROOT="{{root}}" cargo run --bin arhiv {{PARAMS}}
+  DEV_ARHIV_ROOT="{{root}}" SERVER_PORT=8443 cargo run --bin arhiv {{PARAMS}}
 
 run:
   cd arhiv; npm run clean; tmux new-session -s arhiv \

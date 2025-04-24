@@ -1,9 +1,7 @@
-import https from 'node:https';
 import { createHash } from 'node:crypto';
-import { execFile, spawn } from 'node:child_process';
-import { promisify } from 'node:util';
-
-const execFileAsync = promisify(execFile);
+import { spawn } from 'node:child_process';
+import { Readable, PassThrough } from 'node:stream';
+import { createInterface } from 'node:readline';
 
 function getArhivBin(): string {
   const isProduction = process.env.NODE_ENV === 'production';
@@ -32,22 +30,26 @@ export type ExtendedServerInfo = ServerInfo & {
   fingerprint: string;
 };
 
-export async function getServerInfo(): Promise<ExtendedServerInfo | undefined> {
-  const result = await execFileAsync(getArhivBin(), ['server-info'], { encoding: 'utf8' });
+async function readServerInfo(input: Readable): Promise<ExtendedServerInfo> {
+  const rl = createInterface({ input });
 
-  if (!result.stdout) {
-    throw new Error("Arhiv server-info didn't return any output");
+  for await (const line of rl) {
+    if (line.startsWith('@@SERVER_INFO:')) {
+      const json = line.slice('@@SERVER_INFO:'.length);
+
+      const serverInfo = JSON.parse(json) as ServerInfo | null;
+      if (!serverInfo) {
+        throw new Error('Failed to parse server info after marker');
+      }
+
+      return {
+        ...serverInfo,
+        fingerprint: getCertificateFingerprint(serverInfo.certificate),
+      };
+    }
   }
 
-  const serverInfo = JSON.parse(result.stdout.toString()) as ServerInfo | null;
-  if (!serverInfo) {
-    return undefined;
-  }
-
-  return {
-    ...serverInfo,
-    fingerprint: getCertificateFingerprint(serverInfo.certificate),
-  };
+  throw new Error('No server info marker found');
 }
 
 function getCertificateFingerprint(certificate: number[]): string {
@@ -58,71 +60,24 @@ function getCertificateFingerprint(certificate: number[]): string {
   return `sha256/${base64Hash}`;
 }
 
-export function startServer(onError: () => void): void {
+export async function startServer(): Promise<ExtendedServerInfo> {
   console.log('Starting Arhiv server');
-  const result = spawn(getArhivBin(), ['server'], { stdio: 'inherit' });
+
+  const result = spawn(getArhivBin(), ['server', '--json', '-v'], {
+    stdio: ['ignore', 'inherit', 'pipe'],
+  });
 
   result.on('close', (code) => {
     console.log(`Arhiv server: Process exited with code ${code}`);
   });
 
-  result.on('error', (err) => {
-    console.error('Arhiv server: Failed to start process:', err);
-    onError();
-  });
-
   process.on('exit', () => {
     result.kill();
   });
-}
 
-async function isServerRunning(url: string) {
-  return new Promise((resolve) => {
-    const req = https.request(
-      url,
-      {
-        rejectUnauthorized: false,
-      },
-      (res) => {
-        if (res.statusCode === 200) {
-          resolve(true);
-        } else {
-          resolve(false);
-        }
-      },
-    );
+  const tap = new PassThrough();
+  result.stderr.pipe(tap);
+  tap.pipe(process.stderr);
 
-    req.on('error', () => {
-      resolve(false);
-    });
-
-    req.end();
-  });
-}
-
-function promiseTimeout(timeoutMs: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, timeoutMs));
-}
-
-export async function waitForServer(): Promise<void> {
-  const MAX_ATTEMPTS = 20;
-
-  for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
-    const serverInfo = await getServerInfo();
-    if (serverInfo) {
-      console.log('waitForServer: checking server url %s', serverInfo.healthUrl);
-      const running = await isServerRunning(serverInfo.healthUrl);
-
-      if (running) {
-        console.log('waitForServer: Server is running');
-        return;
-      }
-    }
-
-    console.log('waitForServer: attempt %s failed, waiting', i);
-
-    await promiseTimeout(150);
-  }
-
-  throw new Error('Waiting for server timed out');
+  return await readServerInfo(tap);
 }

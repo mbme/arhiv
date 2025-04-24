@@ -34,7 +34,6 @@ impl MarkupStr<'_> {
             if let Event::Start(Tag::Link { ref dest_url, .. })
             | Event::Start(Tag::Image { ref dest_url, .. }) = event
             {
-                eprintln!("{event:?}");
                 if let Some(id) = extract_id(dest_url) {
                     refs.insert(id);
                 }

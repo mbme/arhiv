@@ -18,11 +18,8 @@ pub struct AuthToken {
 }
 
 impl AuthToken {
-    pub fn new_token() -> Token {
-        new_random_crypto_byte_array()
-    }
-
-    pub fn generate(key: &CryptoKey, token: Token) -> Self {
+    pub fn generate(key: &CryptoKey) -> Self {
+        let token: Token = new_random_crypto_byte_array();
         let signature = key.sign(&token);
 
         Self { token, signature }
@@ -64,14 +61,14 @@ impl AuthToken {
 mod tests {
     use anyhow::Result;
 
-    use crate::{crypto::crypto_key::CryptoKey, new_random_crypto_byte_array, AuthToken};
+    use crate::{crypto::crypto_key::CryptoKey, AuthToken};
 
     #[test]
     fn test_auth_token_parse_serialize() -> Result<()> {
         let key =
             CryptoKey::derive_subkey([0; 32].as_slice(), CryptoKey::salt_from_data("test1234")?)?;
 
-        let token = AuthToken::generate(&key, new_random_crypto_byte_array());
+        let token = AuthToken::generate(&key);
 
         let token_str = token.serialize();
 

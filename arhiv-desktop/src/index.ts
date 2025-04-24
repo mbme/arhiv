@@ -1,5 +1,5 @@
 import { app, BrowserWindow, session, Notification, shell } from 'electron';
-import { ExtendedServerInfo, getServerInfo, startServer, waitForServer } from './arhiv';
+import { ExtendedServerInfo, startServer } from './arhiv';
 
 export type Action = { type: 'open'; documentId?: string } | { type: 'search'; query: string };
 
@@ -104,24 +104,15 @@ async function start(args: string[]) {
     return;
   }
 
-  // check if server running, and start it if not
-  let serverInfo = await getServerInfo();
-  if (serverInfo) {
-    console.log('Arhiv server already running');
-  } else {
-    console.log('Arhiv server not running, starting server');
-    startServer(() => {
-      app.quit();
-    });
-
-    await waitForServer();
-
-    serverInfo = await getServerInfo();
+  let serverInfo: ExtendedServerInfo;
+  try {
+    serverInfo = await startServer();
+  } catch (e) {
+    console.error('Failed to start server', e);
+    app.quit();
+    return;
   }
 
-  if (!serverInfo) {
-    throw new Error("Arhiv server isn't running");
-  }
   console.log('Arhiv server base url:', serverInfo.uiUrl);
 
   app.on('second-instance', (_event, _commandLine, _workingDirectory, additionalData) => {

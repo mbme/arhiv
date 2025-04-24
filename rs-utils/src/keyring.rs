@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, time::Instant};
 
 use anyhow::{Context, Result};
 use keyring::Entry;
@@ -52,6 +52,8 @@ impl Keyring for SystemKeyring {
     fn get_string(&self, name: &str) -> Result<Option<SecretString>> {
         log::info!("{self}: Reading {name}");
 
+        let start_time = Instant::now();
+
         let entry = self.new_entry(name);
 
         let value = match entry.get_password() {
@@ -66,6 +68,9 @@ impl Keyring for SystemKeyring {
                 return Err(err.into());
             }
         };
+
+        let duration = start_time.elapsed();
+        log::debug!("{self}: Read {name} in {duration:?}");
 
         let value: SecretString = value.into();
 

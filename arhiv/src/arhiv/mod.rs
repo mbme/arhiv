@@ -15,7 +15,7 @@ use rs_utils::{
     num_cpus, SecretString,
 };
 
-use crate::{definitions::get_standard_schema, ServerInfo};
+use crate::definitions::get_standard_schema;
 
 pub use self::keyring::ArhivKeyring;
 pub use self::status::Status;
@@ -171,10 +171,6 @@ impl Arhiv {
         self.keyring.set_password(Some(new_password))?;
 
         Ok(())
-    }
-
-    pub fn collect_server_info(&self) -> Result<Option<ServerInfo>> {
-        ServerInfo::collect(self.baza.get_state_dir())
     }
 
     pub fn get_status(&self) -> Result<String> {

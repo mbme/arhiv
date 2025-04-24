@@ -2,6 +2,7 @@ use std::{
     io::{Read, Write},
     ops::{Deref, DerefMut},
     sync::{RwLockReadGuard, RwLockWriteGuard},
+    time::Instant,
 };
 
 use anyhow::{anyhow, ensure, Context, Result};
@@ -167,6 +168,8 @@ impl BazaManager {
 
         ensure!(self.key_exists()?, "Key file is missing");
 
+        let start_time = Instant::now();
+
         self.paths.ensure_dirs_exist()?;
 
         let _lock = self.wait_for_file_lock()?;
@@ -182,6 +185,9 @@ impl BazaManager {
         let key = AgeKey::from_age_x25519_key(key.try_into()?)?;
 
         state.unlock(key);
+
+        let duration = start_time.elapsed();
+        log::debug!("Unlocked baza in {duration:?}");
 
         Ok(())
     }

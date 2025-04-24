@@ -142,7 +142,7 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
         keyring: AndroidKeyring::new_arhiv_keyring(password, android_controller, jvm),
     };
 
-    let server_info = start_server(options, 23421).expect("must start server");
+    let server_info = start_server(options, ArhivServer::DEFAULT_PORT).expect("must start server");
 
     // Create an instance of me.mbsoftware.arhiv.ServerInfo using JNI
     let server_info_class = env

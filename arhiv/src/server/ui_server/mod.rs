@@ -306,7 +306,9 @@ async fn init_server_context_middleware(
 
             if arhiv.baza.storage_exists()? {
                 match arhiv.unlock_using_keyring() {
-                    Ok(_) => {}
+                    Ok(unlocked) => {
+                        log::info!("Unlocked using keyring: {unlocked}");
+                    }
                     Err(err) => {
                         log::error!("Failed to use keyring: {err}");
                     }

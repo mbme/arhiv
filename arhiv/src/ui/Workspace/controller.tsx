@@ -12,7 +12,6 @@ type CardVariant =
       variant: 'catalog';
       query?: string;
       page?: number;
-      showSettings?: boolean;
       documentTypes?: DocumentType[];
     }
   | {

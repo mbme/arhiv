@@ -20,10 +20,6 @@ export function CatalogCard() {
         onPageChange={(page) => {
           controller.update(card.id, { page });
         }}
-        showSettings={card.showSettings ?? false}
-        onToggleSettings={(showSettings) => {
-          controller.update(card.id, { showSettings });
-        }}
         documentTypes={card.documentTypes ?? []}
         onIncludedDocumentTypesChange={(documentTypes) => {
           controller.update(card.id, { documentTypes });

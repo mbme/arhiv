@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { DocumentData, DocumentId, DocumentType } from 'dto';
 import { cx } from 'utils';
 import { getScaledImageUrl } from 'utils/network';
@@ -30,10 +31,8 @@ type CatalogProps = {
   documentTypes: DocumentType[];
   query: string;
   page: number;
-  showSettings: boolean;
   onQueryChange: (query: string) => void;
   onPageChange: (page: number) => void;
-  onToggleSettings: (showSettings: boolean) => void;
   onIncludedDocumentTypesChange: (documentTypes: DocumentType[]) => void;
   onDocumentSelected: (info: DocumentInfo) => void;
   onCreateNote?: (title: string) => void;
@@ -46,15 +45,15 @@ export function Catalog({
   documentTypes,
   query,
   page,
-  showSettings,
   onQueryChange,
   onPageChange,
-  onToggleSettings,
   onIncludedDocumentTypesChange,
   onDocumentSelected,
   onCreateNote,
   onConvertToCard,
 }: CatalogProps) {
+  const [showSettings, setShowSettings] = useState(false);
+
   const { value: result, isUpdating } = useSuspenseQuery({
     typeName: 'ListDocuments',
     query,
@@ -130,7 +129,7 @@ export function Catalog({
           icon="cog"
           size="sm"
           onClick={() => {
-            onToggleSettings(!showSettings);
+            setShowSettings(!showSettings);
           }}
         />
 

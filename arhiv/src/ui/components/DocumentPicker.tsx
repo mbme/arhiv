@@ -31,7 +31,6 @@ export function DocumentPicker({
   const [documentTypes, setDocumentTypes] = useState(initialDocumentTypes);
   const [page, setPage] = useState(0);
   const [query, setQuery] = useState(initialQuery);
-  const [showSettings, setShowSettings] = useState(false);
 
   return (
     <Dialog
@@ -45,10 +44,8 @@ export function DocumentPicker({
         documentTypes={documentTypes}
         query={query}
         page={page}
-        showSettings={showSettings}
         onQueryChange={setQuery}
         onPageChange={setPage}
-        onToggleSettings={setShowSettings}
         onIncludedDocumentTypesChange={setDocumentTypes}
         onDocumentSelected={(info) => {
           if (!dialogRef.current) {

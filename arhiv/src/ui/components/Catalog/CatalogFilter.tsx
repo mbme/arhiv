@@ -1,8 +1,12 @@
 import { DocumentType, ERASED_DOCUMENT_TYPE } from 'dto';
-import { cx } from 'utils';
+import { cx, withItem, withoutItem } from 'utils';
 import { getDocumentTypes, isErasedDocument } from 'utils/schema';
 import { Badge } from 'components/Badge';
 import { Button } from 'components/Button';
+
+export interface Filter {
+  documentTypes: DocumentType[];
+}
 
 const ALL_DOCUMENT_TYPES = [
   ...getDocumentTypes(false), //
@@ -15,24 +19,36 @@ const ALL_DOCUMENT_TYPES_EXCEPT_ERASED = ALL_DOCUMENT_TYPES.filter(
 
 type Props = {
   className?: string;
-  selected: readonly DocumentType[];
-  onChange: (documentTypes: DocumentType[]) => void;
+  filter: Filter;
+  onChange: (filter: Filter) => void;
 };
-export function DocumentTypeSettings({ className, selected, onChange }: Props) {
+export function CatalogFilter({ className, filter, onChange }: Props) {
   const onClick = (documentType: DocumentType) => {
-    if (selected.includes(documentType)) {
-      onChange(selected.filter((item) => item !== documentType));
+    if (filter.documentTypes.includes(documentType)) {
+      onChange({
+        ...filter,
+        documentTypes: withoutItem(filter.documentTypes, documentType),
+      });
     } else {
-      onChange([...selected, documentType]);
+      onChange({
+        ...filter,
+        documentTypes: withItem(filter.documentTypes, documentType),
+      });
     }
   };
 
   const selectAll = () => {
-    onChange([...ALL_DOCUMENT_TYPES_EXCEPT_ERASED]);
+    onChange({
+      ...filter,
+      documentTypes: [...ALL_DOCUMENT_TYPES_EXCEPT_ERASED],
+    });
   };
 
   const selectNone = () => {
-    onChange([]);
+    onChange({
+      ...filter,
+      documentTypes: [],
+    });
   };
 
   return (
@@ -50,7 +66,7 @@ export function DocumentTypeSettings({ className, selected, onChange }: Props) {
                 key={documentType}
                 size="sm"
                 label={documentType}
-                checked={selected.includes(documentType)}
+                checked={filter.documentTypes.includes(documentType)}
                 onClick={() => {
                   onClick(documentType);
                 }}
@@ -63,7 +79,7 @@ export function DocumentTypeSettings({ className, selected, onChange }: Props) {
             size="sm"
             className="line-through"
             label="ERASED"
-            checked={selected.includes(ERASED_DOCUMENT_TYPE)}
+            checked={filter.documentTypes.includes(ERASED_DOCUMENT_TYPE)}
             onClick={() => {
               onClick(ERASED_DOCUMENT_TYPE);
             }}
@@ -80,7 +96,7 @@ export function DocumentTypeSettings({ className, selected, onChange }: Props) {
                 key={documentType}
                 size="sm"
                 label={documentType}
-                checked={selected.includes(documentType)}
+                checked={filter.documentTypes.includes(documentType)}
                 onClick={() => {
                   onClick(documentType);
                 }}

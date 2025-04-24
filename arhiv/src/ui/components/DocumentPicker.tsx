@@ -41,12 +41,14 @@ export function DocumentPicker({
     >
       <Catalog
         autofocus
-        documentTypes={documentTypes}
+        filter={{ documentTypes }}
         query={query}
         page={page}
         onQueryChange={setQuery}
         onPageChange={setPage}
-        onIncludedDocumentTypesChange={setDocumentTypes}
+        onFilterChange={(filter) => {
+          setDocumentTypes(filter.documentTypes);
+        }}
         onDocumentSelected={(info) => {
           if (!dialogRef.current) {
             throw new Error('dialog element is missing');

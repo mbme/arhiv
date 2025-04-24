@@ -10,7 +10,7 @@ import { SearchInput } from 'components/SearchInput';
 import { IconButton } from 'components/Button';
 import { DocumentIcon } from 'components/DocumentIcon';
 import { Pagination } from './Pagination';
-import { DocumentTypeSettings } from './DocumentTypeSettings';
+import { CatalogFilter, type Filter } from './CatalogFilter';
 import { CatalogItemBadges } from './CatalogItemBadges';
 
 export type DocumentInfo = {
@@ -28,12 +28,12 @@ export type CatalogInfo = {
 type CatalogProps = {
   autofocus?: boolean;
   className?: string;
-  documentTypes: DocumentType[];
+  filter: Filter;
   query: string;
   page: number;
   onQueryChange: (query: string) => void;
   onPageChange: (page: number) => void;
-  onIncludedDocumentTypesChange: (documentTypes: DocumentType[]) => void;
+  onFilterChange: (filter: Filter) => void;
   onDocumentSelected: (info: DocumentInfo) => void;
   onCreateNote?: (title: string) => void;
   onConvertToCard?: (info: CatalogInfo) => void;
@@ -42,12 +42,12 @@ type CatalogProps = {
 export function Catalog({
   autofocus = false,
   className,
-  documentTypes,
+  filter,
   query,
   page,
   onQueryChange,
   onPageChange,
-  onIncludedDocumentTypesChange,
+  onFilterChange,
   onDocumentSelected,
   onCreateNote,
   onConvertToCard,
@@ -58,7 +58,7 @@ export function Catalog({
     typeName: 'ListDocuments',
     query,
     page,
-    documentTypes,
+    documentTypes: filter.documentTypes,
   });
 
   const { setRootEl } = useSelectionManager([result]);
@@ -152,18 +152,18 @@ export function Catalog({
             title="Convert to card"
             disabled={query.trim().length === 0}
             onClick={() => {
-              onConvertToCard({ query, page, documentTypes });
+              onConvertToCard({ query, page, documentTypes: filter.documentTypes });
             }}
           />
         )}
       </div>
 
       {showSettings && (
-        <DocumentTypeSettings
+        <CatalogFilter
           className="mb-4 px-2 py-2 var-bg-tertiary-color"
-          selected={documentTypes}
-          onChange={(newDocumentTypes) => {
-            onIncludedDocumentTypesChange(newDocumentTypes);
+          filter={filter}
+          onChange={(newFilter) => {
+            onFilterChange(newFilter);
             onPageChange(0);
           }}
         />

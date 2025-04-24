@@ -274,11 +274,19 @@ export function fileAsBase64(file: File) {
   });
 }
 
-export function toSorted<T>(items: T[], compareFn?: (a: T, b: T) => number): T[] {
+export function toSorted<T>(items: readonly T[], compareFn?: (a: T, b: T) => number): T[] {
   const clone = [...items];
   clone.sort(compareFn);
 
   return clone;
+}
+
+export function withoutItem<T>(items: readonly T[], value: T): T[] {
+  return items.filter((item) => item !== value);
+}
+
+export function withItem<T>(items: readonly T[], value: T): T[] {
+  return [...items, value];
 }
 
 export function isDefined<T>(value: T | null | undefined): value is T {

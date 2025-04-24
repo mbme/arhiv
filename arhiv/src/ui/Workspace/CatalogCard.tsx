@@ -20,9 +20,9 @@ export function CatalogCard() {
         onPageChange={(page) => {
           controller.update(card.id, { page });
         }}
-        documentTypes={card.documentTypes ?? []}
-        onIncludedDocumentTypesChange={(documentTypes) => {
-          controller.update(card.id, { documentTypes });
+        filter={{ documentTypes: card.documentTypes ?? [] }}
+        onFilterChange={(filter) => {
+          controller.update(card.id, { documentTypes: filter.documentTypes });
         }}
         onDocumentSelected={(info) => {
           controller.pushDocument(card.id, info.id);

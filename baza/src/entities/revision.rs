@@ -164,7 +164,7 @@ impl Revision {
         }
     }
 
-    pub fn to_file_name(&self) -> String {
+    pub fn to_safe_string(&self) -> String {
         let mut items: Vec<_> = self
             .0
             .iter()
@@ -176,7 +176,7 @@ impl Revision {
         items.join("-")
     }
 
-    pub fn from_file_name(value: &str) -> Result<Self> {
+    pub fn from_safe_string(value: &str) -> Result<Self> {
         if value.trim().is_empty() {
             return Ok(Revision::initial());
         }
@@ -203,7 +203,7 @@ impl Revision {
                 Ok((id, version))
             })
             .collect::<Result<_>>()
-            .context(anyhow!("Failed to parse revision from file name {value}"))?;
+            .context(anyhow!("Failed to parse revision from safe string {value}"))?;
 
         Ok(Revision(map))
     }
@@ -316,7 +316,7 @@ impl Default for &Revision {
 
 impl fmt::Debug for Revision {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "<rev: {}>", self.to_file_name())
+        write!(f, "<rev: {}>", self.to_safe_string())
     }
 }
 
@@ -589,28 +589,28 @@ mod tests {
     }
 
     #[test]
-    fn test_revision_to_file_name() -> Result<()> {
+    fn test_revision_to_safe_string() -> Result<()> {
         {
             let rev1 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
             let rev2 = Revision::from_value(json!({ "b": 2, "a": 1 }))?;
 
-            assert_eq!(Revision::from_file_name(&rev1.to_file_name())?, rev1);
-            assert_eq!(Revision::from_file_name(&rev2.to_file_name())?, rev2);
+            assert_eq!(Revision::from_safe_string(&rev1.to_safe_string())?, rev1);
+            assert_eq!(Revision::from_safe_string(&rev2.to_safe_string())?, rev2);
         }
 
         Ok(())
     }
 
     #[test]
-    fn test_revision_from_file_name() -> Result<()> {
+    fn test_revision_from_safe_string() -> Result<()> {
         {
             let rev0 = Revision::initial();
             let rev1 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
             let rev2 = Revision::from_value(json!({ "b": 2, "a": 1 }))?;
 
-            assert_eq!(Revision::from_file_name(&rev0.to_file_name())?, rev0);
-            assert_eq!(Revision::from_file_name(&rev1.to_file_name())?, rev1);
-            assert_eq!(Revision::from_file_name(&rev2.to_file_name())?, rev2);
+            assert_eq!(Revision::from_safe_string(&rev0.to_safe_string())?, rev0);
+            assert_eq!(Revision::from_safe_string(&rev1.to_safe_string())?, rev1);
+            assert_eq!(Revision::from_safe_string(&rev2.to_safe_string())?, rev2);
         }
 
         Ok(())

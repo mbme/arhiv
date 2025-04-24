@@ -26,13 +26,13 @@ impl DocumentKey {
             .context(anyhow!("Failed to split value '{value}'"))?;
 
         let id = Id::from(id_raw);
-        let rev = Revision::from_file_name(rev_raw)?;
+        let rev = Revision::from_safe_string(rev_raw)?;
 
         Ok(Self { id, rev })
     }
 
     pub fn serialize(&self) -> String {
-        format!("{} {}", self.id, self.rev.to_file_name())
+        format!("{} {}", self.id, self.rev.to_safe_string())
     }
 }
 

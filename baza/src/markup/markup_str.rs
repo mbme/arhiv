@@ -31,7 +31,10 @@ impl MarkupStr<'_> {
 
         let parser = self.parse();
         for event in parser {
-            if let Event::Start(Tag::Link { ref dest_url, .. }) = event {
+            if let Event::Start(Tag::Link { ref dest_url, .. })
+            | Event::Start(Tag::Image { ref dest_url, .. }) = event
+            {
+                eprintln!("{event:?}");
                 if let Some(id) = extract_id(dest_url) {
                     refs.insert(id);
                 }
@@ -408,9 +411,14 @@ impl<'a> MarkupElement<'a> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
     use serde_json::Value;
 
-    use crate::markup::MarkupStr;
+    use crate::{
+        entities::Id,
+        markup::{create_image_ref, create_ref, MarkupStr},
+    };
 
     fn into_ast(value: &str) -> Value {
         let markup = MarkupStr::from(value);
@@ -499,5 +507,22 @@ mod tests {
         let ast = into_ast(r#"![test](http://example.com "some title")"#);
 
         insta::assert_json_snapshot!(ast);
+    }
+
+    #[test]
+    fn test_extract_refs() {
+        let id1 = Id::new();
+        let id2 = Id::new();
+        let id3 = Id::new();
+
+        let ref1 = create_ref(&id1, "");
+        let ref2 = create_ref(&id2, "test");
+        let ref3 = create_image_ref(&id3, "test");
+
+        let markup = MarkupStr::from(format!("{ref1}    {ref2}     {ref3}"));
+
+        let refs = markup.extract_refs();
+
+        assert_eq!(refs, HashSet::from_iter([id1, id2, id3]));
     }
 }

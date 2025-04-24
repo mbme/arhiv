@@ -14,7 +14,7 @@ pub fn extract_id(text: &str) -> Option<Id> {
 }
 
 #[must_use]
-pub fn create_link(url: &str, text: &str) -> String {
+fn create_link(url: &str, text: &str) -> String {
     if text.is_empty() {
         format!("<{url}>")
     } else {
@@ -23,6 +23,16 @@ pub fn create_link(url: &str, text: &str) -> String {
 }
 
 #[must_use]
+fn create_image(url: &str, text: &str) -> String {
+    format!("![{text}]({url})")
+}
+
+#[must_use]
 pub fn create_ref(id: &Id, text: &str) -> String {
     create_link(&format!("{REF_LINK_PREFIX}{id}"), text)
+}
+
+#[must_use]
+pub fn create_image_ref(id: &Id, text: &str) -> String {
+    create_image(&format!("{REF_LINK_PREFIX}{id}"), text)
 }

@@ -1,12 +1,12 @@
-use anyhow::Result;
-use serde::{Deserialize, Serialize};
+use anyhow::{Context, Result};
+use serde::{Deserialize, Serialize, Serializer};
 
-use rs_utils::{get_file_name, get_file_size, get_media_type, Download};
+use rs_utils::{Download, ExposeSecret, SecretString};
 
 use crate::{
-    entities::{BLOBId, Document, DocumentType},
+    baza2::BazaManager,
+    entities::Document,
     schema::{Field, FieldType},
-    BazaConnection,
 };
 
 use super::DataDescription;
@@ -16,7 +16,7 @@ pub const ASSET_TYPE: &str = "asset";
 pub fn get_asset_definition() -> DataDescription {
     DataDescription {
         document_type: ASSET_TYPE,
-        title_format: "{filename}",
+        title_format: "${filename}",
         fields: vec![
             Field {
                 name: "filename",
@@ -31,14 +31,14 @@ pub fn get_asset_definition() -> DataDescription {
                 readonly: false,
             },
             Field {
-                name: "blob",
-                field_type: FieldType::BLOBId {},
+                name: "size", // in bytes
+                field_type: FieldType::NaturalNumber {},
                 mandatory: true,
                 readonly: true,
             },
             Field {
-                name: "size", // in bytes
-                field_type: FieldType::NaturalNumber {},
+                name: "age_x25519_key",
+                field_type: FieldType::String {},
                 mandatory: true,
                 readonly: true,
             },
@@ -46,13 +46,21 @@ pub fn get_asset_definition() -> DataDescription {
     }
 }
 
+fn expose_secret_string<S>(secret: &SecretString, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serializer.serialize_str(secret.expose_secret())
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct AssetData {
     pub filename: String,
     pub media_type: String,
-    pub blob: BLOBId,
     pub size: u64,
+    #[serde(serialize_with = "expose_secret_string")]
+    pub age_x25519_key: SecretString,
 }
 
 impl AssetData {
@@ -69,44 +77,19 @@ impl AssetData {
 
 pub type Asset = Document<AssetData>;
 
-pub fn create_asset(
-    tx: &mut BazaConnection,
-    file_path: &str,
-    move_file: bool,
-    filename: Option<String>,
-) -> Result<Asset> {
-    let filename = filename.unwrap_or_else(|| get_file_name(file_path).to_string());
+pub async fn download_asset(url: &str, baza_manager: &BazaManager) -> Result<Asset> {
+    let download_result = Download::new_in_dir(url, baza_manager.get_downloads_dir())?
+        .start()
+        .await?;
 
-    let media_type = get_media_type(file_path)?;
-    let size = get_file_size(file_path)?;
+    let mut baza = baza_manager.open_mut()?;
+    let mut asset = baza.create_asset(&download_result.file_path)?;
+    asset.data.filename = download_result.original_file_name.clone();
 
-    let blob_id = tx.add_blob(file_path, move_file)?;
+    let document = asset.into_document()?;
+    let document = baza
+        .stage_document(document, &None)
+        .context("Failed to update asset filename")?;
 
-    let asset = Document::new_with_data(
-        DocumentType::new(ASSET_TYPE),
-        AssetData {
-            filename,
-            media_type,
-            size,
-            blob: blob_id,
-        },
-    );
-
-    let mut document = asset.into_document()?;
-    tx.stage_document(&mut document, None)?;
-
-    document.convert()
-}
-
-pub async fn download_asset(url: &str, tx: &mut BazaConnection) -> Result<Document> {
-    let download_result = Download::new(url)?.start().await?;
-
-    let asset = create_asset(
-        tx,
-        &download_result.file_path,
-        true,
-        Some(download_result.original_file_name.clone()),
-    )?;
-
-    asset.into_document()
+    document.clone().convert()
 }

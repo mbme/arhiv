@@ -1,6 +1,7 @@
 import { startTransition } from 'react';
 import { NOTE_DOCUMENT_TYPE } from 'dto';
 import { useKeydown, useSignal } from 'utils/hooks';
+import { RPC } from 'utils/network';
 import { useAppController } from 'controller';
 import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
 import { Button, IconButton } from 'components/Button';
@@ -8,13 +9,15 @@ import { DropdownMenu } from 'components/DropdownMenu';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { NewDocumentDialog } from './NewDocumentDialog';
 import { CommitButton } from './CommitButton';
-import { SyncButton } from './SyncButton';
+import { ConflictsButton } from './ConflictsButton';
+import { ExportKeyDialog } from './ExportKeyDialog';
 
 export function WorkspaceHeader() {
   const app = useAppController();
 
   const [showSearchDialog, initialSearchQuery] = useSignal(app.workspace.$showSearchDialog);
   const showNewDocumentDialog = useSignal(app.workspace.$showNewDocumentDialog);
+  const showExportKeyDialog = useSignal(app.workspace.$showExportKeyDialog);
 
   useKeydown(document.body, (e) => {
     // Search with Ctrl-K
@@ -34,18 +37,20 @@ export function WorkspaceHeader() {
 
   return (
     <SuspenseCacheProvider cacheId="workspace-header">
-      <nav className="fixed inset-x-0 top-0 z-20 var-bg-secondary-color pl-8 pr-4 flex flex-row gap-8">
-        <Button variant="text" disabled>
-          Player
-        </Button>
-
+      <nav className="fixed inset-x-0 top-0 z-20 var-bg-secondary-color pl-4 pr-4 flex flex-row gap-4 xs:gap-8">
         <IconButton
           icon="circle-half"
           title="Toggle light/dark theme"
           onClick={() => {
             app.toggleTheme();
           }}
-          className="ml-auto"
+          className="mr-auto"
+        />
+
+        <ConflictsButton
+          onClick={() => {
+            app.workspace.open({ variant: 'catalog', onlyConflicts: true });
+          }}
         />
 
         <Button
@@ -90,7 +95,6 @@ export function WorkspaceHeader() {
         </Button>
 
         <CommitButton />
-        <SyncButton />
 
         {showSearchDialog && (
           <DocumentPicker
@@ -112,6 +116,14 @@ export function WorkspaceHeader() {
               app.workspace.open({ variant: 'catalog', query, page, documentTypes });
             }}
             initialQuery={initialSearchQuery}
+          />
+        )}
+
+        {showExportKeyDialog && (
+          <ExportKeyDialog
+            onCancel={() => {
+              app.workspace.hideExportKeyDialog();
+            }}
           />
         )}
 
@@ -153,6 +165,29 @@ export function WorkspaceHeader() {
               icon: 'x',
               onClick: () => {
                 app.workspace.closeAll();
+              },
+            },
+
+            {
+              text: 'Export key',
+              icon: 'key',
+              onClick: () => {
+                app.workspace.showExportKeyDialog();
+              },
+            },
+
+            {
+              text: 'Lock arhiv',
+              icon: 'lock',
+              onClick: () => {
+                RPC.LockArhiv({}).then(
+                  () => {
+                    location.reload();
+                  },
+                  (err: unknown) => {
+                    console.error('Failed to lock Arhiv:', err);
+                  },
+                );
               },
             },
           ]}

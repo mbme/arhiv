@@ -1,13 +1,13 @@
-use anyhow::{anyhow, bail, Context, Result};
-use tinytemplate::{format_unescaped, TinyTemplate};
+use std::collections::HashMap;
 
-use rs_utils::{is_http_url, is_image_path};
+use anyhow::{anyhow, bail, Context, Result};
+
+use rs_utils::{is_http_url, is_image_url, parse_url, render_template_with_vars, value_as_string};
 
 use crate::{
+    baza2::BazaManager,
     entities::{Document, DocumentData, DocumentType, Id, Refs},
     schema::{download_asset, Asset, DataSchema, Field, FieldType, ASSET_TYPE},
-    search::MultiSearch,
-    BazaConnection,
 };
 
 pub struct DocumentExpert<'s> {
@@ -26,7 +26,6 @@ impl<'s> DocumentExpert<'s> {
             if let Some(value) = data.get(field.name) {
                 refs.documents.extend(field.extract_refs(value));
                 refs.collection.extend(field.extract_collection_refs(value));
-                refs.blobs.extend(field.extract_blob_ids(value));
             }
         }
 
@@ -34,21 +33,20 @@ impl<'s> DocumentExpert<'s> {
     }
 
     pub fn get_title(&self, document_type: &DocumentType, data: &DocumentData) -> Result<String> {
-        let mut tt = TinyTemplate::new();
-        tt.set_default_formatter(&format_unescaped);
+        let mut title_fields = HashMap::new();
+        for field in self.schema.iter_fields(document_type)? {
+            if field.could_be_in_title() {
+                title_fields.insert(field.name, value_as_string(data.get(field.name)));
+            }
+        }
 
-        tt.add_template(
-            "title",
+        render_template_with_vars(
             self.schema
                 .get_data_description(document_type)?
                 .title_format,
+            &title_fields,
         )
-        .context(anyhow!(
-            "failed to compile title template for {document_type}"
-        ))?;
-
-        tt.render("title", data)
-            .map_err(|err| anyhow!("failed to render title for {document_type}: {err}"))
+        .map_err(|err| anyhow!("failed to render title for {document_type}: {err}"))
     }
 
     fn pick_cover_field(&self, document_type: &DocumentType) -> Result<Option<&Field>> {
@@ -86,40 +84,6 @@ impl<'s> DocumentExpert<'s> {
             .any(|field| !field.readonly);
 
         Ok(is_editable)
-    }
-
-    pub fn search(
-        &self,
-        document_type: &DocumentType,
-        data: &DocumentData,
-        pattern: &str,
-    ) -> Result<usize> {
-        let title = self.get_title(document_type, data)?;
-
-        let mut final_score = 0;
-        let multi_search = MultiSearch::new(pattern);
-
-        // increase score if field is a title
-        let title_score = multi_search.search(&title) * 3;
-        final_score += title_score;
-
-        for field in self.schema.iter_fields(document_type)? {
-            let value = if let Some(value) = data.get(field.name) {
-                value
-            } else {
-                continue;
-            };
-
-            let search_data = if let Some(search_data) = field.extract_search_data(value)? {
-                search_data
-            } else {
-                continue;
-            };
-
-            final_score += multi_search.search(&search_data);
-        }
-
-        Ok(final_score)
     }
 
     fn find_collection_field_for(
@@ -206,7 +170,7 @@ impl<'s> DocumentExpert<'s> {
     pub async fn prepare_assets(
         &self,
         document: &mut Document,
-        tx: &mut BazaConnection,
+        baza_manager: &BazaManager,
     ) -> Result<()> {
         let fields = self
             .schema
@@ -218,15 +182,21 @@ impl<'s> DocumentExpert<'s> {
                 FieldType::Ref(_) => {
                     let value = document.data.get_str(field.name);
                     if let Some(value) = value {
-                        if !is_http_url(value) {
+                        let url = if let Ok(url) = parse_url(value) {
+                            url
+                        } else {
+                            continue;
+                        };
+
+                        if !is_http_url(&url) {
                             continue;
                         }
 
-                        if !is_image_path(value) {
+                        if !is_image_url(&url) {
                             bail!("Only image asset URLs are supported, got '{value}'");
                         }
 
-                        let asset = download_asset(value, tx).await?;
+                        let asset = download_asset(value, baza_manager).await?;
 
                         document.data.set(field.name, asset.id);
                     }
@@ -242,15 +212,21 @@ impl<'s> DocumentExpert<'s> {
                         .collect::<Vec<_>>();
 
                     for value in values.iter_mut() {
-                        if !is_http_url(value) {
+                        let url = if let Ok(url) = parse_url(value) {
+                            url
+                        } else {
+                            continue;
+                        };
+
+                        if !is_http_url(&url) {
                             continue;
                         }
 
-                        if !is_image_path(value.clone()) {
+                        if !is_image_url(&url) {
                             bail!("Only image asset URLs are supported, got '{value}'");
                         }
 
-                        let asset = download_asset(value, tx).await?;
+                        let asset = download_asset(value, baza_manager).await?;
 
                         *value = asset.id.to_string();
                     }
@@ -264,5 +240,28 @@ impl<'s> DocumentExpert<'s> {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        entities::{DocumentData, DocumentType},
+        schema::DataSchema,
+    };
+
+    use super::DocumentExpert;
+
+    #[test]
+    fn test_title() {
+        let schema = DataSchema::new_test_schema();
+        let expert = DocumentExpert::new(&schema);
+
+        let mut data = DocumentData::new();
+        data.set("test", "test");
+        let title = expert
+            .get_title(&DocumentType::new("test_type"), &data)
+            .unwrap();
+        assert_eq!(title, "test");
     }
 }

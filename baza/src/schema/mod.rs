@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use anyhow::{anyhow, Result};
 use serde::Serialize;
 
@@ -7,12 +5,10 @@ use crate::entities::{DocumentType, ERASED_DOCUMENT_TYPE};
 
 pub use asset::*;
 pub use data_description::*;
-pub use data_migration::*;
 pub use field::*;
 
 mod asset;
 mod data_description;
-mod data_migration;
 mod field;
 
 const ERASED_DOCUMENT_DATA_DESCRIPTION: &DataDescription = &DataDescription {
@@ -24,63 +20,46 @@ const ERASED_DOCUMENT_DATA_DESCRIPTION: &DataDescription = &DataDescription {
 #[derive(Serialize, Clone)]
 pub struct DataSchema {
     name: String,
+    data_version: u8,
     modules: Vec<DataDescription>,
-    #[serde(skip)]
-    pub(crate) migrations: Arc<DataMigrations>,
 }
 
 impl DataSchema {
     #[must_use]
-    pub fn new(name: impl Into<String>, modules: Vec<DataDescription>) -> Self {
-        Self::with_migrations(name, modules, vec![])
+    pub fn new(name: impl Into<String>, mut modules: Vec<DataDescription>) -> Self {
+        modules.push(ERASED_DOCUMENT_DATA_DESCRIPTION.clone());
+        modules.push(get_asset_definition());
+
+        DataSchema {
+            name: name.into(),
+            data_version: 1,
+            modules,
+        }
     }
 
     #[cfg(test)]
     pub fn new_test_schema() -> Self {
         Self::new(
             "test",
-            vec![
-                DataDescription {
-                    document_type: "test_type",
-                    title_format: "{test}",
-                    fields: vec![
-                        Field {
-                            name: "test",
-                            field_type: FieldType::String {},
-                            mandatory: false,
-                            readonly: false,
-                        },
-                        Field {
-                            name: "blob",
-                            field_type: FieldType::BLOBId {},
-                            mandatory: false,
-                            readonly: false,
-                        },
-                        Field {
-                            name: "ref",
-                            field_type: FieldType::Ref(&["test_type"]),
-                            mandatory: false,
-                            readonly: false,
-                        },
-                    ],
-                },
-                get_asset_definition(),
-            ],
+            vec![DataDescription {
+                document_type: "test_type",
+                title_format: "${test}",
+                fields: vec![
+                    Field {
+                        name: "test",
+                        field_type: FieldType::String {},
+                        mandatory: false,
+                        readonly: false,
+                    },
+                    Field {
+                        name: "ref",
+                        field_type: FieldType::Ref(&["test_type"]),
+                        mandatory: false,
+                        readonly: false,
+                    },
+                ],
+            }],
         )
-    }
-
-    pub fn with_migrations(
-        name: impl Into<String>,
-        mut modules: Vec<DataDescription>,
-        migrations: DataMigrations,
-    ) -> Self {
-        modules.push(ERASED_DOCUMENT_DATA_DESCRIPTION.clone());
-
-        DataSchema {
-            name: name.into(),
-            modules,
-            migrations: Arc::new(migrations),
-        }
     }
 
     #[must_use]
@@ -106,7 +85,7 @@ impl DataSchema {
     pub fn iter_fields(
         &self,
         document_type: &DocumentType,
-    ) -> Result<impl Iterator<Item = &Field>> {
+    ) -> Result<impl Iterator<Item = &Field> + use<'_>> {
         let data_description = self.get_data_description(document_type)?;
 
         Ok(data_description.fields.iter())
@@ -122,17 +101,6 @@ impl DataSchema {
 
     #[must_use]
     pub fn get_latest_data_version(&self) -> u8 {
-        self.migrations.iter().fold(0, |latest_version, migration| {
-            migration.get_version().max(latest_version)
-        })
-    }
-
-    #[must_use]
-    pub fn get_min_data_migration_version(&self) -> u8 {
-        self.migrations
-            .iter()
-            .fold(u8::MAX, |latest_version, migration| {
-                migration.get_version().min(latest_version)
-            })
+        self.data_version
     }
 }

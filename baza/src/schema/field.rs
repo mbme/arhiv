@@ -1,11 +1,11 @@
 use std::collections::HashSet;
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{anyhow, bail, Result};
 use serde::Serialize;
 use serde_json::Value;
 
 use crate::{
-    entities::{BLOBId, DocumentType, Id},
+    entities::{DocumentType, Id},
     markup::MarkupStr,
     schema::ASSET_TYPE,
 };
@@ -20,7 +20,6 @@ pub enum FieldType {
     Ref(&'static [&'static str]), // string
     // DocumentType[], empty array means any document type
     RefList(&'static [&'static str]), // string[]
-    BLOBId {},                        // string
     // string[], possible enum values
     Enum(&'static [&'static str]), // string
     Date {},                       // string
@@ -39,8 +38,17 @@ pub struct Field {
 
 impl Field {
     #[must_use]
-    pub fn could_be_title(&self) -> bool {
-        matches!(self.field_type, FieldType::String {})
+    pub fn could_be_in_title(&self) -> bool {
+        matches!(
+            self.field_type,
+            FieldType::String {}
+                | FieldType::NaturalNumber {}
+                | FieldType::Enum(_)
+                | FieldType::Date {}
+                | FieldType::Duration {}
+                | FieldType::People {}
+                | FieldType::Countries {}
+        )
     }
 
     #[must_use]
@@ -94,28 +102,17 @@ impl Field {
         result
     }
 
-    /// Extract ids of the BLOBs that are referenced by current document
-    #[must_use]
-    pub fn extract_blob_ids(&self, value: &Value) -> HashSet<BLOBId> {
-        let mut result = HashSet::new();
-
-        if matches!(self.field_type, FieldType::BLOBId {}) {
-            let value: BLOBId = serde_json::from_value(value.clone()).expect("field must parse");
-
-            result.insert(value);
-        }
-
-        result
-    }
-
-    pub fn extract_search_data(&self, value: &Value) -> Result<Option<String>> {
+    pub fn extract_search_data<'v>(&self, value: &'v Value) -> Result<Option<&'v str>> {
         // TODO also search in Ref and RefList document titles
 
         match self.field_type {
-            FieldType::String {} | FieldType::MarkupString {} | FieldType::People {} => value
-                .as_str()
-                .map(|value| Some(value.to_lowercase()))
-                .ok_or_else(|| anyhow!("failed to extract field {}", self.name)),
+            FieldType::String {} | FieldType::MarkupString {} | FieldType::People {} => {
+                let data = value
+                    .as_str()
+                    .ok_or_else(|| anyhow!("failed to extract field {}", self.name))?;
+
+                Ok(Some(data))
+            }
             _ => Ok(None),
         }
     }
@@ -217,27 +214,6 @@ impl Field {
                         options.join(", ")
                     );
                 }
-            }
-
-            FieldType::BLOBId {} => {
-                if is_empty_string {
-                    return Ok(());
-                }
-
-                if !value.is_string() {
-                    bail!(
-                        "field '{}' expected to be a string, got: {}",
-                        self.name,
-                        value
-                    );
-                }
-
-                let blob_id = value.as_str().unwrap_or_default();
-
-                BLOBId::is_valid_blob_id(blob_id).context(anyhow!(
-                    "field '{}' expected to be a valid BLOB id",
-                    self.name
-                ))?;
             }
         }
 

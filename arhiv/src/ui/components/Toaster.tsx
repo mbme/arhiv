@@ -1,15 +1,17 @@
 import { useEffect, useReducer, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { cx } from 'utils';
 import { IconButton } from 'components/Button';
 
-const TOAST_TIMEOUT_MS = 5000;
+const DEFAULT_TOAST_TIMEOUT_MS = 5000;
 
 type ToastOptions = {
   level: 'info' | 'warn';
   message: string;
+  timeoutMs?: number;
 };
 
-type Toast = ToastOptions & { id: number; createdAtMs: number };
+type Toast = ToastOptions & { id: number; createdAtMs: number; timeoutMs: number };
 let toastId = 0;
 
 class ToastEvent extends CustomEvent<ToastOptions> {
@@ -52,10 +54,12 @@ export function Toaster() {
 
   useEffect(() => {
     const onToast = (e: Event) => {
+      const toastOptions = (e as ToastEvent).detail;
       const toast = {
-        ...(e as ToastEvent).detail,
+        ...toastOptions,
         id: (toastId += 1),
         createdAtMs: Date.now(),
+        timeoutMs: toastOptions.timeoutMs ?? DEFAULT_TOAST_TIMEOUT_MS,
       };
 
       dispatch({ type: 'open', toast });
@@ -79,7 +83,7 @@ export function Toaster() {
       }
 
       for (const toast of toasts) {
-        if (Date.now() - toast.createdAtMs > TOAST_TIMEOUT_MS) {
+        if (Date.now() - toast.createdAtMs > toast.timeoutMs) {
           dispatch({ type: 'close', id: toast.id });
         }
       }
@@ -90,16 +94,19 @@ export function Toaster() {
     };
   }, [toasts]);
 
-  return (
-    <div className="fixed bottom-0 left-0 flex flex-col gap-3 pl-4 pb-4" ref={containerRef}>
+  return createPortal(
+    <div
+      className="fixed top-10 left-1/2 transform -translate-x-1/2 flex flex-col gap-3 pl-4 pb-4 z-100"
+      ref={containerRef}
+    >
       {toasts.map((toast) => (
         <div
           key={toast.id}
           className={cx(
             'px-4 py-2 text-sm rounded-sm shadow-sm hover:shadow-lg cursor-default min-w-[15rem] group flex flex-row',
             {
-              'bg-sky-50 text-sky-700': toast.level === 'info',
-              'bg-orange-200 text-amber-700': toast.level === 'warn',
+              'bg-emerald-500': toast.level === 'info',
+              'bg-orange-600': toast.level === 'warn',
             },
           )}
         >
@@ -115,6 +122,7 @@ export function Toaster() {
           />
         </div>
       ))}
-    </div>
+    </div>,
+    document.body,
   );
 }

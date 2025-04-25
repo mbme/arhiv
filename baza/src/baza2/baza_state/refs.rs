@@ -1,15 +1,13 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use anyhow::Result;
 
 use crate::{
-    entities::{BLOBId, Document, DocumentKey, Id, Refs},
+    entities::{Document, DocumentKey, Id, Refs},
     DocumentExpert,
 };
 
 use super::{BazaState, DocumentHead};
-
-pub type BazaRefsState = HashMap<DocumentKey, Refs>;
 
 impl BazaState {
     pub(super) fn update_document_refs(&mut self, head: &DocumentHead) -> Result<()> {
@@ -35,21 +33,6 @@ impl BazaState {
         expert.extract_refs(&document.document_type, &document.data)
     }
 
-    pub(super) fn update_all_documents_refs(&mut self) -> Result<()> {
-        self.file.refs = self
-            .iter_documents()
-            .flat_map(|head| head.iter_all_snapshots())
-            .map(|document| {
-                let key = DocumentKey::for_document(document);
-                let snapshot_refs = self.extract_document_refs(document)?;
-
-                Ok((key, snapshot_refs))
-            })
-            .collect::<Result<BazaRefsState>>()?;
-
-        Ok(())
-    }
-
     pub fn get_document_snapshot_refs(&self, key: &DocumentKey) -> Option<&Refs> {
         self.file.refs.get(key)
     }
@@ -62,14 +45,44 @@ impl BazaState {
         self.get_document_snapshot_refs(&key)
     }
 
-    pub fn get_all_blob_refs(&self) -> HashSet<BLOBId> {
-        let mut blob_refs = HashSet::new();
+    pub fn find_document_backrefs(&self, id: &Id) -> HashSet<Id> {
+        let mut backrefs = HashSet::new();
 
-        for refs in self.file.refs.values() {
-            blob_refs.extend(refs.blobs.iter().cloned());
+        let keys = self
+            .iter_documents()
+            .map(|head| head.get_single_document().create_key());
+
+        for key in keys {
+            let refs = self
+                .get_document_snapshot_refs(&key)
+                .expect("Document refs must be known");
+
+            if refs.documents.contains(id) {
+                backrefs.insert(key.id.clone());
+            }
         }
 
-        blob_refs
+        backrefs
+    }
+
+    pub fn find_document_collections(&self, id: &Id) -> HashSet<Id> {
+        let mut collections = HashSet::new();
+
+        let keys = self
+            .iter_documents()
+            .map(|head| head.get_single_document().create_key());
+
+        for key in keys {
+            let refs = self
+                .get_document_snapshot_refs(&key)
+                .expect("Document refs must be known");
+
+            if refs.collection.contains(id) {
+                collections.insert(key.id);
+            }
+        }
+
+        collections
     }
 }
 
@@ -77,7 +90,7 @@ impl BazaState {
 mod tests {
     use serde_json::json;
 
-    use crate::{baza2::BazaState, tests::new_empty_document};
+    use crate::{baza2::BazaState, entities::new_empty_document};
 
     #[test]
     fn test_extracts_refs_on_insert() {
@@ -87,10 +100,8 @@ mod tests {
             .with_rev(json!({ "a": 1 }))
             .with_data(json!({"ref": doc1.id}));
 
-        state.insert_snapshot(doc1.clone()).unwrap();
+        state.insert_snapshots(vec![doc1.clone(), doc2.clone()]);
         assert!(state.get_document_refs(&doc1.id).unwrap().is_empty());
-
-        state.insert_snapshot(doc2.clone()).unwrap();
         assert!(!state.get_document_refs(&doc2.id).unwrap().is_empty());
     }
 
@@ -118,8 +129,7 @@ mod tests {
             .with_id(doc2.id.clone())
             .with_data(json!({}));
 
-        state.insert_snapshot(doc1.clone()).unwrap();
-        state.insert_snapshot(doc2.clone()).unwrap();
+        state.insert_snapshots(vec![doc1.clone(), doc2.clone()]);
 
         state.stage_document(doc2_1.clone(), &None).unwrap();
         assert!(state.get_document_refs(&doc2.id).unwrap().is_empty());
@@ -141,9 +151,7 @@ mod tests {
             .with_id(doc3.id.clone())
             .with_data(json!({"ref": doc2.id}));
 
-        state.insert_snapshot(doc1.clone()).unwrap();
-        state.insert_snapshot(doc2.clone()).unwrap();
-        state.insert_snapshot(doc3.clone()).unwrap();
+        state.insert_snapshots(vec![doc1.clone(), doc2.clone(), doc3.clone()]);
 
         state.stage_document(doc3_1.clone(), &None).unwrap();
         assert!(state

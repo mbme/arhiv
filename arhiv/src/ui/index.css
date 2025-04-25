@@ -12,6 +12,10 @@
 /* Apply dark theme styles when there's .dark class in html tree */
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --breakpoint-xs: 21rem;
+}
+
 @utility var-bg-color {
   @apply bg-white dark:bg-gray-900;
 }
@@ -201,5 +205,10 @@
     overflow: hidden;
     position: relative;
     z-index: 1;
+  }
+
+  /* make transparent images more contrast in dark mode */
+  img {
+    background-color: white;
   }
 }

@@ -26,17 +26,19 @@ impl ArhivServerLock {
         Ok(())
     }
 
-    pub fn read_server_port(&self) -> Result<u16> {
-        let value = fs::read_to_string(&self.lock_file)?;
+    pub fn read_server_info(&self) -> Result<u16> {
+        let data = fs::read_to_string(&self.lock_file)?;
 
-        value
+        let port = data
             .trim()
             .parse::<u16>()
-            .with_context(|| format!("Can't parse port number from string `{}`", value))
+            .context("Failed to parse port as u16")?;
+
+        Ok(port)
     }
 
-    pub fn write_server_port(&self, port: u16) -> Result<()> {
+    pub fn write_server_info(&self, port: u16) -> Result<()> {
         fs::write(&self.lock_file, port.to_string())
-            .context("Failed to write server port into lock file")
+            .context("Failed to write server info into lock file")
     }
 }

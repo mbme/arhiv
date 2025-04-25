@@ -1,29 +1,20 @@
-use std::io::Cursor;
+use std::io::{BufRead, Cursor, Seek};
 
 use anyhow::{Context, Result};
 use image::{DynamicImage, GenericImageView, ImageReader};
+use qrcode::{render::svg, QrCode};
 
-fn open_image(file_path: &str) -> Result<DynamicImage> {
-    ImageReader::open(file_path)
-        .context("failed to open image")?
+fn open_image(img: impl BufRead + Seek) -> Result<DynamicImage> {
+    ImageReader::new(img)
         .with_guessed_format()
         .context("failed to guess format")?
         .decode()
         .context("failed to decode image")
 }
 
-/// returns (width, height)
-pub fn get_image_dimensions(file_path: &str) -> Result<(u32, u32)> {
-    let img = open_image(file_path)?;
-
-    Ok(img.dimensions())
-}
-
 // returns webp image
-pub fn scale_image(file_path: &str, max_w: Option<u32>, max_h: Option<u32>) -> Result<Vec<u8>> {
+fn scale_image(img: &DynamicImage, max_w: Option<u32>, max_h: Option<u32>) -> Result<Vec<u8>> {
     const MAX_THUMBNAIL_SIZE: u32 = 96;
-
-    let img = open_image(file_path)?;
 
     let mut bytes: Vec<u8> = Vec::new();
 
@@ -43,19 +34,25 @@ pub fn scale_image(file_path: &str, max_w: Option<u32>, max_h: Option<u32>) -> R
     Ok(bytes)
 }
 
-pub async fn scale_image_async(
-    file_path: &str,
+pub fn scale_image_file(
+    img_reader: impl BufRead + Seek,
     max_w: Option<u32>,
     max_h: Option<u32>,
 ) -> Result<Vec<u8>> {
-    let (send, recv) = tokio::sync::oneshot::channel();
+    let img = open_image(img_reader)?;
 
-    let file_path = file_path.to_string();
-    rayon::spawn_fifo(move || {
-        let result = scale_image(&file_path, max_w, max_h);
+    scale_image(&img, max_w, max_h)
+}
 
-        let _ = send.send(result);
-    });
+pub fn generate_qrcode_svg(data: &[u8]) -> Result<Vec<u8>> {
+    let qrcode = QrCode::with_error_correction_level(data, qrcode::EcLevel::Q)
+        .context("Failed to generate qrcode")?;
 
-    recv.await.expect("Panic in rayon::spawn")
+    let result = qrcode
+        .render()
+        .dark_color(svg::Color("#000000"))
+        .light_color(svg::Color("#ffffff"))
+        .build();
+
+    Ok(result.into_bytes())
 }

@@ -2,13 +2,23 @@
 [profile.dev]
 debug = 0
 
+# Always max optimize flate2 & miniz_oxide otherwise it's VERY slow
+[profile.dev.package.miniz_oxide]
+opt-level = 3
+[profile.dev.package.flate2]
+opt-level = 3
+
+# Always max optimize image otherwise it's VERY slow
+[profile.dev.package.image]
+opt-level = 3
+
 [profile.release]
 lto = true
 codegen-units = 1
 panic = "unwind"
 
 [workspace]
-resolver = "2"
+resolver = "3"
 members = [
   "baza",
   "arhiv",
@@ -29,17 +39,13 @@ futures = "0.3"
 tokio = { version = "1", features = ["fs", "macros", "signal", "process", "rt-multi-thread", "test-util"] }
 tokio-util = { version = "0.7", features = ["compat", "codec"] }
 
-rustls = { version = "*", features = ["dangerous_configuration"]}
-reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls-webpki-roots"] }
-hyper = "1"
+rustls = { version = "*" }
 axum = { version = "0.8", features = ["tracing", "tokio", "http1"] }
 axum-extra = { version = "0.10", features = ["typed-header", "cookie"]}
-axum-server = { version= "0.7", features = ["tls-rustls-no-provider"]}
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "chrono"] }
-chrono = { version = "0.4", features = ["serde"] }
 ordermap = { version = "0.5", features = ["serde"] } # hashmap & hashset that preserve insertion order
 rand = "0.9"
 bytes = "1"
+
+rayon = "1.8" # thread pool for executing CPU-heavy tasks, e.g. scaling images
 
 insta = { version = "1", features = ["redactions", "json"] }

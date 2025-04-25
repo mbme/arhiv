@@ -10,7 +10,7 @@ pub fn get_task_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {
             document_type: PROJECT_TYPE,
-            title_format: "{name}",
+            title_format: "${name}",
             fields: vec![
                 Field {
                     name: "name",
@@ -34,7 +34,7 @@ pub fn get_task_definitions() -> Vec<DataDescription> {
         },
         DataDescription {
             document_type: TASK_TYPE,
-            title_format: "{title}",
+            title_format: "${title}",
             fields: vec![
                 Field {
                     name: "title",

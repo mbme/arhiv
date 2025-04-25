@@ -3,7 +3,7 @@ use std::fmt;
 use anyhow::{Context, Result};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use rs_utils::{now, Timestamp};
+use rs_utils::Timestamp;
 
 use super::{DocumentData, DocumentKey, DocumentType, Id, Revision, ERASED_DOCUMENT_TYPE};
 
@@ -24,7 +24,7 @@ impl<D> Document<D> {
             id: Id::new(),
             rev: Revision::initial(),
             document_type,
-            updated_at: now(),
+            updated_at: Timestamp::now(),
             data,
         }
     }
@@ -73,20 +73,26 @@ impl Document {
 
     #[cfg(test)]
     pub fn with_data(mut self, value: serde_json::Value) -> Self {
-        let data = value.try_into().expect("must be valid DocumentData");
-        self.data = data;
+        use super::new_test_data;
+
+        if value.is_null() {
+            self.erase();
+        } else {
+            self.data = new_test_data(value);
+        }
 
         self
     }
 
-    pub(crate) fn erase(&mut self) {
+    pub fn erase(&mut self) {
         self.document_type = DocumentType::erased();
         self.data = DocumentData::new();
-        self.updated_at = now();
+        self.updated_at = Timestamp::now();
     }
 
     pub(crate) fn stage(&mut self) {
         self.rev = Revision::initial();
+        self.updated_at = Timestamp::now();
     }
 
     pub fn convert<D: DeserializeOwned>(self) -> Result<Document<D>> {
@@ -136,4 +142,14 @@ impl fmt::Display for Document {
             Revision::to_string(&self.rev),
         )
     }
+}
+
+#[cfg(test)]
+pub fn new_document(value: serde_json::Value) -> Document {
+    Document::new(DocumentType::new("test_type")).with_data(value)
+}
+
+#[cfg(test)]
+pub fn new_empty_document() -> Document {
+    new_document(serde_json::json!({}))
 }

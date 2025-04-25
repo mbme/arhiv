@@ -8,6 +8,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  # override rustflags from .cargo/config.toml
+  RUSTFLAGS: '-Clink-arg=-fuse-ld=lld'
 
 jobs:
   build:
@@ -20,6 +22,9 @@ jobs:
 
       - name: Install LLD (fast linker)
         run: sudo apt-get install lld
+
+      - name: Install libdbus (for keyring)
+        run: sudo apt-get install libdbus-1-dev
 
       - uses: actions/checkout@v4
       - name: Use Node.js

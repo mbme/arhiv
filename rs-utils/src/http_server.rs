@@ -9,7 +9,7 @@ use anyhow::{Context, Result};
 use axum::{
     body::{to_bytes, Body},
     extract::Request,
-    http::{header, HeaderMap, HeaderValue, StatusCode},
+    http::{header, HeaderMap, HeaderValue, StatusCode, Uri},
     middleware::{self, Next},
     response::{IntoResponse, Response},
     Router,
@@ -19,11 +19,10 @@ use axum_server::{
     tls_rustls::{RustlsAcceptor, RustlsConfig},
     Handle, Server,
 };
-use hyper::Uri;
 use secrecy::ExposeSecret;
 use tokio::task::JoinHandle;
 
-use crate::SelfSignedCertificate;
+use crate::{log, SelfSignedCertificate};
 
 pub struct ServerError(anyhow::Error);
 
@@ -54,7 +53,7 @@ where
 pub fn add_no_cache_headers(headers: &mut HeaderMap) {
     headers.insert(
         header::CACHE_CONTROL,
-        HeaderValue::from_static("no-cache, no-store, must-revalidate"),
+        HeaderValue::from_static("no-cache, no-store, must-revalidate, max-age=0"),
     );
     headers.typed_insert(headers::Expires::from(UNIX_EPOCH));
 }

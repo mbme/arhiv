@@ -47,6 +47,12 @@ impl From<DocumentType> for String {
     }
 }
 
+impl PartialEq<&str> for DocumentType {
+    fn eq(&self, other: &&str) -> bool {
+        self.0.as_str() == *other
+    }
+}
+
 impl fmt::Display for DocumentType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.0.as_str() {

@@ -1,23 +1,48 @@
 use anyhow::Result;
-use serde::Serialize;
 
-use crate::{
-    entities::{Document, DocumentType},
-    DocumentExpert,
-};
+use crate::entities::DocumentType;
 
-use super::BazaState;
+use super::{BazaState, DocumentHead};
 
 #[derive(Default)]
 pub struct Filter {
-    document_types: Vec<DocumentType>,
-    query: String,
-    page: u8,
+    pub document_types: Vec<DocumentType>,
+    pub query: String,
+    pub page: u8,
+    pub only_conflicts: bool,
 }
 
-#[derive(Debug, Serialize)]
+impl Filter {
+    pub fn should_show_document(&self, head: &DocumentHead) -> bool {
+        self.should_show_document_type(head.get_type())
+            && self.should_show_if_conflict(head.is_conflict())
+    }
+
+    fn should_show_document_type(&self, document_type: &DocumentType) -> bool {
+        // we should ignore erased documents unless explicitly included in document_types
+        if document_type.is_erased() {
+            return self.document_types.contains(&DocumentType::erased());
+        }
+
+        if self.document_types.is_empty() {
+            return true;
+        }
+
+        self.document_types.contains(document_type)
+    }
+
+    fn should_show_if_conflict(&self, is_conflict: bool) -> bool {
+        if self.only_conflicts {
+            is_conflict
+        } else {
+            true
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct ListPage<'d> {
-    pub items: Vec<&'d Document>,
+    pub items: Vec<&'d DocumentHead>,
     pub has_more: bool,
 }
 
@@ -25,72 +50,55 @@ const PAGE_SIZE: usize = 10;
 
 impl BazaState {
     pub fn list_documents(&self, filter: &Filter) -> Result<ListPage> {
-        let mut filtered_documents: Vec<&Document> = self
-            .iter_documents()
-            .map(|head| head.get_single_document())
-            .filter(|doc| {
-                // we should ignore erased documents unless explicitly included in document_types
-                if doc.is_erased() {
-                    return filter.document_types.contains(&DocumentType::erased());
-                }
+        let page_start = (filter.page as usize) * PAGE_SIZE;
 
-                if filter.document_types.is_empty() {
-                    return true;
-                }
+        if filter.query.trim().is_empty() {
+            let mut filtered_documents = self
+                .iter_documents()
+                .filter(|head| filter.should_show_document(head))
+                .collect::<Vec<_>>();
 
-                filter.document_types.contains(&doc.document_type)
-            })
-            .collect();
-
-        if filter.query.is_empty() {
             // sort by modification time
-            filtered_documents.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+            filtered_documents.sort_by(|a, b| b.get_updated_at().cmp(a.get_updated_at()));
+
+            let page_end = page_start + PAGE_SIZE;
+            let paginated_documents =
+                &filtered_documents[page_start..filtered_documents.len().min(page_end)];
+
+            Ok(ListPage {
+                items: paginated_documents.to_vec(),
+                has_more: page_end < filtered_documents.len(),
+            })
         } else {
-            let document_expert = DocumentExpert::new(&self.schema);
-
-            let mut scored_documents: Vec<(&Document, usize)> = filtered_documents
-                .iter()
-                .map(|doc| {
-                    let score = document_expert
-                        .search(&doc.document_type, &doc.data, &filter.query)
-                        .unwrap_or(0);
-                    (*doc, score)
+            let mut items = self
+                .search
+                .search(&filter.query)
+                .map(|id| {
+                    self.get_document(&id)
+                        .expect("Document returned by search engine must exist")
                 })
-                .filter(|(_, score)| *score > 0)
-                .collect();
+                .filter(|doc| filter.should_show_document(doc))
+                .skip(page_start)
+                .take(PAGE_SIZE + 1)
+                .collect::<Vec<_>>();
 
-            // sort by score, then by modification time
-            scored_documents.sort_by(|a, b| {
-                let score_cmp = b.1.cmp(&a.1);
-                if score_cmp != std::cmp::Ordering::Equal {
-                    return score_cmp;
-                }
+            let has_more = items.len() > PAGE_SIZE;
+            if has_more {
+                items.remove(PAGE_SIZE);
+            }
 
-                b.0.updated_at.cmp(&a.0.updated_at)
-            });
-
-            filtered_documents = scored_documents.into_iter().map(|(doc, _)| doc).collect();
+            Ok(ListPage { items, has_more })
         }
-
-        let start = (filter.page as usize) * PAGE_SIZE;
-        let end = start + PAGE_SIZE;
-        let paginated_documents = &filtered_documents[start..filtered_documents.len().min(end)];
-
-        Ok(ListPage {
-            items: paginated_documents.to_vec(),
-            has_more: end < filtered_documents.len(),
-        })
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::{
-        entities::{DocumentType, Id},
-        tests::{new_document, new_empty_document},
-    };
     use serde_json::json;
+
+    use crate::entities::{new_document, new_empty_document, DocumentType, Id};
+
+    use super::*;
 
     #[test]
     fn test_list_documents() {
@@ -109,7 +117,7 @@ mod tests {
         {
             let result = state.list_documents(&Default::default()).unwrap();
             assert_eq!(result.items.len(), 2);
-            assert!(result.items[0].updated_at >= result.items[1].updated_at);
+            assert!(result.items[0].get_updated_at() >= result.items[1].get_updated_at());
             assert!(!result.has_more);
         }
 
@@ -122,7 +130,7 @@ mod tests {
 
             let result = state.list_documents(&filter).unwrap();
             assert_eq!(result.items.len(), 2);
-            assert!(result.items[0].updated_at >= result.items[1].updated_at);
+            assert!(result.items[0].get_updated_at() >= result.items[1].get_updated_at());
             assert!(!result.has_more);
         }
 
@@ -147,16 +155,16 @@ mod tests {
 
             let result = state.list_documents(&filter).unwrap();
             assert_eq!(result.items.len(), 1);
-            assert_eq!(result.items[0].document_type, DocumentType::erased());
+            assert!(result.items[0].get_type().is_erased());
             assert!(!result.has_more);
         }
 
         // Add more documents to test pagination
-        for _ in 0..PAGE_SIZE {
-            state
-                .insert_snapshot(new_empty_document().with_rev(json!({ "a": 1 })))
-                .unwrap();
-        }
+        state.insert_snapshots(
+            (0..PAGE_SIZE)
+                .map(|_| new_empty_document().with_rev(json!({ "a": 1 })))
+                .collect(),
+        );
 
         // Check if pagination works
         {
@@ -177,6 +185,33 @@ mod tests {
             let result = state.list_documents(&filter).unwrap();
             assert_eq!(result.items.len(), 2); // Remaining documents
             assert!(!result.has_more);
+        }
+    }
+
+    #[test]
+    fn test_list_conflics() {
+        let mut state = BazaState::new_test_state();
+
+        let doc = new_document(json!({"test": "value"})).with_rev(json!({"r": 1}));
+        let conflict1 = new_empty_document().with_rev(json!({"a": 1}));
+        let conflict2 = conflict1.clone().with_rev(json!({"b": 1}));
+        state.insert_snapshots(vec![doc.clone(), conflict1.clone(), conflict2.clone()]);
+
+        // Default should include both normal and conflict documents
+        {
+            let result = state.list_documents(&Default::default()).unwrap();
+            assert_eq!(result.items.len(), 2);
+        }
+
+        // Filter only_conflicts should return only the conflict document
+        {
+            let filter = Filter {
+                only_conflicts: true,
+                ..Default::default()
+            };
+            let result = state.list_documents(&filter).unwrap();
+            assert_eq!(result.items.len(), 1);
+            assert!(result.items[0].is_conflict());
         }
     }
 }

@@ -23,7 +23,7 @@ import { Link } from 'components/Link';
 import { QueryError } from 'components/QueryError';
 import { Ref } from 'components/Ref';
 import { Spoiler } from 'components/Spoiler';
-import { Toaster, showToast } from 'components/Toaster';
+import { showToast } from 'components/Toaster';
 import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
 
 export function ComponentsDemo() {
@@ -215,8 +215,6 @@ export function ComponentsDemo() {
             <div>
               <h1>Toaster</h1>
               <div className="examples">
-                <Toaster />
-
                 <Button
                   variant="primary"
                   onClick={() => {

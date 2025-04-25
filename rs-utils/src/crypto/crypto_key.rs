@@ -11,9 +11,12 @@ type HkdfSha256 = Hkdf<Sha256>;
 
 pub const KEY_SIZE: usize = 32;
 pub const SALT_SIZE: usize = 32;
+pub const SIGNATURE_SIZE: usize = 32;
 
 pub type Key = SecretByteArray<KEY_SIZE>;
 pub type Salt = SecretByteArray<SALT_SIZE>;
+
+pub type Signature = [u8; SIGNATURE_SIZE];
 
 /// Derive secure key from a password & salt.
 pub struct CryptoKey {
@@ -110,7 +113,7 @@ impl CryptoKey {
         &self.salt
     }
 
-    pub fn sign(&self, msg: &[u8]) -> [u8; 32] {
+    pub fn sign(&self, msg: &[u8]) -> Signature {
         let mut mac = HmacSha256::new_from_slice(self.key.expose_secret())
             .expect("HMAC can take key of any size");
         mac.update(msg);
@@ -120,7 +123,7 @@ impl CryptoKey {
         result.into_bytes().into()
     }
 
-    pub fn verify_signature(&self, msg: &[u8], tag: &[u8]) -> bool {
+    pub fn verify_signature(&self, msg: &[u8], tag: &Signature) -> bool {
         let mut mac = HmacSha256::new_from_slice(self.key.expose_secret())
             .expect("HMAC can take key of any size");
 

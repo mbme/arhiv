@@ -1,27 +1,15 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use axum::{
-    extract::{Request, State},
-    http::HeaderMap,
-    middleware::{self, Next},
-    response::{IntoResponse, Response},
-    routing::get,
-    Router,
+
+use rs_utils::{create_dir_if_not_exist, http_server::HttpServer, log, AuthToken};
+
+use self::{
+    certificate::generate_ui_crypto_key, server_lock::ArhivServerLock, ui_server::build_ui_router,
 };
-use certificate::generate_ui_crypto_key;
-use reqwest::StatusCode;
+use crate::{Arhiv, ArhivOptions};
 
-use baza::sync::build_rpc_router;
-use rs_utils::{
-    http_server::{add_no_cache_headers, fallback_route, HttpServer},
-    log,
-};
-
-use self::ui_server::{build_ui_router, UIState, UI_BASE_PATH};
-use self::{certificate::read_or_generate_certificate, server_lock::ArhivServerLock};
-use crate::ArhivOptions;
-
+use self::certificate::read_or_generate_certificate;
 pub use self::server_info::ServerInfo;
 
 mod certificate;
@@ -29,102 +17,64 @@ mod server_info;
 mod server_lock;
 mod ui_server;
 
-pub const HEALTH_PATH: &str = "/health";
-
 pub struct ArhivServer {
-    state: Arc<UIState>,
+    pub arhiv: Arc<Arhiv>,
     server: HttpServer,
     _lock: ArhivServerLock,
+    server_info: ServerInfo,
 }
 
 impl ArhivServer {
-    pub async fn start(root_dir: &str, options: ArhivOptions, server_port: u16) -> Result<Self> {
-        let mut lock = ArhivServerLock::new(root_dir);
+    pub const DEFAULT_PORT: u16 = 23421;
+
+    pub async fn start(options: ArhivOptions, server_port: u16) -> Result<Self> {
+        let state_dir = options.state_dir.clone();
+        log::info!("Starting server in {state_dir}");
+
+        create_dir_if_not_exist(&state_dir)?;
+
+        let mut lock = ArhivServerLock::new(&state_dir);
         lock.acquire()?;
-        lock.write_server_port(server_port)?;
+        lock.write_server_info(server_port)?;
 
-        let state = Arc::new(UIState::new(root_dir, options.clone())?);
+        let mut arhiv = Arhiv::new(options);
+        arhiv.init_auto_commit_service();
 
-        let certificate = read_or_generate_certificate(root_dir)?;
-        let rpc_router = build_rpc_router(certificate.certificate_der.clone())?.route_layer(
-            middleware::from_fn_with_state(state.clone(), extract_baza_from_state),
-        );
+        let arhiv = Arc::new(arhiv);
 
-        let ui_key = generate_ui_crypto_key(certificate.private_key_der.clone())?;
-        let ui_router = build_ui_router(ui_key).with_state(state.clone());
+        let certificate = read_or_generate_certificate(arhiv.baza.get_state_dir())?;
 
-        let router = Router::new()
-            .merge(rpc_router)
-            .nest(UI_BASE_PATH, ui_router)
-            .route(HEALTH_PATH, get(health_handler))
-            .fallback(fallback_route);
+        let ui_hmac = generate_ui_crypto_key(certificate.private_key_der.clone());
+        let auth_token = AuthToken::generate(&ui_hmac);
+        let auth_token_string = auth_token.serialize();
+        let router = build_ui_router(auth_token, arhiv.clone());
 
-        let server = HttpServer::new_https(server_port, router, certificate).await?;
+        let server = HttpServer::new_https(server_port, router, certificate.clone()).await?;
 
         let actual_server_port = server.get_address().port();
-        lock.write_server_port(actual_server_port)?;
+        lock.write_server_info(actual_server_port)?;
 
-        if options.discover_peers {
-            state.start_mdns_server(actual_server_port)?;
-        }
+        log::info!("Started server on port: {actual_server_port}");
+
+        let server_info = ServerInfo::new(actual_server_port, &certificate, auth_token_string);
 
         Ok(ArhivServer {
-            state,
+            arhiv,
             server,
             _lock: lock,
+            server_info,
         })
     }
 
     pub async fn shutdown(self) -> Result<()> {
         self.server.shutdown().await?;
 
-        self.state.stop_arhiv()?;
+        self.arhiv.stop();
 
         Ok(())
     }
-}
 
-async fn extract_baza_from_state(
-    State(state): State<Arc<UIState>>,
-    mut request: Request,
-    next: Next,
-) -> Response {
-    let baza = match state.must_get_arhiv() {
-        Ok(arhiv) => arhiv.baza.clone(),
-        Err(err) => {
-            log::error!("Attempt to access Arhiv that isn't initialized yet: {err}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Arhiv not initialized: {err}"),
-            )
-                .into_response();
-        }
-    };
-
-    let shared_key = match state.must_get_shared_key() {
-        Ok(shared_key) => shared_key.clone(),
-        Err(err) => {
-            log::error!("Attempt to access shared_key that isn't initialized yet: {err}");
-
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Shared_key not initialized: {err}"),
-            )
-                .into_response();
-        }
-    };
-
-    request.extensions_mut().insert(baza);
-    request.extensions_mut().insert(shared_key);
-
-    next.run(request).await
-}
-
-#[allow(clippy::unused_async)]
-async fn health_handler() -> impl IntoResponse {
-    let mut headers = HeaderMap::new();
-    add_no_cache_headers(&mut headers);
-
-    (StatusCode::OK, headers)
+    pub fn get_info(&self) -> &ServerInfo {
+        &self.server_info
+    }
 }

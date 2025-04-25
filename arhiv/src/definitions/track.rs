@@ -15,7 +15,7 @@ pub fn get_track_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {
             document_type: TRACK_TYPE,
-            title_format: "{artist} - {title}",
+            title_format: "${artist} - ${title}",
             fields: vec![
                 Field {
                     name: "title",
@@ -63,7 +63,7 @@ pub fn get_track_definitions() -> Vec<DataDescription> {
         },
         DataDescription {
             document_type: TRACK_COLLECTION_TYPE,
-            title_format: "{name}",
+            title_format: "${name}",
             fields: vec![
                 Field {
                     name: "name",

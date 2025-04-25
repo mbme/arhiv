@@ -1,31 +1,31 @@
+mod keyring;
+
 use std::{
-    sync::{LazyLock, Mutex},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        LazyLock, Mutex,
+    },
     time::Duration,
 };
 
 use anyhow::{anyhow, ensure, Context, Result};
 use jni::{
-    objects::{JClass, JString},
-    sys::jstring,
+    objects::{JClass, JObject, JString, JValue},
     JNIEnv,
 };
 use tokio::runtime::Runtime;
 
-use arhiv::{Arhiv, ArhivOptions, ArhivServer, Credentials, ServerInfo};
-use rs_utils::log;
+use arhiv::{Arhiv, ArhivOptions, ArhivServer, ServerInfo};
+use rs_utils::{init_global_rayon_threadpool, log, SecretString};
+
+use self::keyring::AndroidKeyring;
+
+static LOG_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 static RUNTIME: LazyLock<Mutex<Option<Runtime>>> = LazyLock::new(|| Mutex::new(None));
 static ARHIV_SERVER: LazyLock<Mutex<Option<ArhivServer>>> = LazyLock::new(|| Mutex::new(None));
 
-fn get_root_dir(files_dir: &str) -> String {
-    if cfg!(feature = "production-mode") {
-        format!("{files_dir}/arhiv")
-    } else {
-        format!("{files_dir}/arhiv-debug")
-    }
-}
-
-fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Result<String> {
+fn start_server(options: ArhivOptions, port: u16) -> Result<ServerInfo> {
     let mut runtime_lock = RUNTIME
         .lock()
         .map_err(|err| anyhow!("Failed to lock RUNTIME: {err}"))?;
@@ -36,41 +36,27 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
         .map_err(|err| anyhow!("Failed to lock ARHIV_SERVER: {err}"))?;
     ensure!(server_lock.is_none(), "Server already started");
 
-    let root_dir = get_root_dir(files_dir);
+    let worker_threads_count = Arhiv::optimal_number_of_worker_threads();
+    log::debug!("Using {worker_threads_count} worker threads");
+
+    init_global_rayon_threadpool(worker_threads_count)?;
 
     let mut builder = tokio::runtime::Builder::new_multi_thread();
+    builder.worker_threads(worker_threads_count);
     builder.enable_all();
-    let runtime = builder.build().context("failed to create tokio runtime")?;
+    let runtime = builder.build().context("Failed to create tokio runtime")?;
 
-    let _guard = runtime.enter();
+    let server = runtime.block_on(ArhivServer::start(options, port))?;
+    let server_info = server.get_info().clone();
 
-    let arhiv_options = {
-        if cfg!(test) {
-            let auth = Credentials::new("test".to_string(), "test1234".into())?;
-
-            Arhiv::create(root_dir.clone(), auth)?;
-
-            ArhivOptions {
-                file_browser_root_dir,
-                ..Default::default()
-            }
-        } else {
-            ArhivOptions {
-                auto_commit: true,
-                discover_peers: true,
-                file_browser_root_dir,
-            }
-        }
-    };
-
-    let server = runtime.block_on(ArhivServer::start(&root_dir, arhiv_options, 0))?;
-    let port = ServerInfo::get_server_port(&root_dir)?.context("Can't find server port")?;
-    let ui_url = ServerInfo::get_ui_base_url(port);
+    if cfg!(test) {
+        server.arhiv.baza.create("test1234".into())?;
+    }
 
     *server_lock = Some(server);
     *runtime_lock = Some(runtime);
 
-    Ok(ui_url)
+    Ok(server_info)
 }
 
 fn stop_server() -> Result<()> {
@@ -92,36 +78,122 @@ fn stop_server() -> Result<()> {
     Ok(())
 }
 
-#[no_mangle]
-pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer(
-    mut env: JNIEnv,
+#[unsafe(no_mangle)]
+pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
+    mut env: JNIEnv<'local>,
     _class: JClass,
-    files_dir: JString,
-    storage_dir: JString,
-) -> jstring {
-    log::setup_android_logger("me.mbsoftware.arhiv");
+    app_files_dir: JString,
+    external_storage_dir: JString,
+    downloads_dir: JString,
+    password: JString,
+    android_controller: JObject, // AndroidController
+) -> JObject<'local> {
+    // the function might be called multiple times, if android app was unloaded in background
+    if LOG_INITIALIZED.load(Ordering::SeqCst) {
+        log::info!("Logger already initialized");
+    } else {
+        log::setup_android_logger("me.mbsoftware.arhiv");
+        log::setup_panic_hook();
+        LOG_INITIALIZED.store(true, Ordering::SeqCst);
 
-    let files_dir: String = env
-        .get_string(&files_dir)
-        .expect("Must read JNI string files_dir")
+        log::debug!("Initialized logger and panic hook");
+    }
+
+    let app_files_dir: String = env
+        .get_string(&app_files_dir)
+        .expect("Must read JNI string app_files_dir")
         .into();
-    log::debug!("Files dir: {files_dir}");
+    log::debug!("Files dir: {app_files_dir}");
 
-    let storage_dir: String = env
-        .get_string(&storage_dir)
-        .expect("Must read JNI string storage_dir")
+    let external_storage_dir: String = env
+        .get_string(&external_storage_dir)
+        .expect("Must read JNI string external_storage_dir")
         .into();
-    log::debug!("Storage dir: {storage_dir}");
+    log::debug!("Storage dir: {external_storage_dir}");
 
-    let url = start_server(&files_dir, Some(storage_dir)).expect("must start server");
-    log::info!("Started server: {url}");
+    let downloads_dir: String = env
+        .get_string(&downloads_dir)
+        .expect("Must read JNI string downloads_dir")
+        .into();
+    log::debug!("Donwloads dir: {downloads_dir}");
 
-    let output = env.new_string(url).expect("Couldn't create java string!");
+    let password: Option<SecretString> = if password.as_raw().is_null() {
+        log::debug!("No password");
+        None
+    } else {
+        log::debug!("Got password");
+        let password: String = env
+            .get_string(&password)
+            .expect("Must read JNI string password")
+            .into();
 
-    output.into_raw()
+        Some(password.into())
+    };
+
+    let android_controller = env
+        .new_global_ref(android_controller)
+        .expect("Must turn AndroidController instance into global ref");
+    let jvm = env.get_java_vm().expect("Can't get reference to JVM");
+    let options = ArhivOptions {
+        storage_dir: format!("{external_storage_dir}/Arhiv"),
+        state_dir: app_files_dir,
+        downloads_dir,
+        file_browser_root_dir: external_storage_dir,
+        keyring: AndroidKeyring::new_arhiv_keyring(password, android_controller, jvm),
+    };
+
+    let server_info = start_server(options, ArhivServer::DEFAULT_PORT).expect("must start server");
+
+    // Create an instance of me.mbsoftware.arhiv.ServerInfo using JNI
+    let server_info_class = env
+        .find_class("me/mbsoftware/arhiv/ServerInfo")
+        .expect("Couldn't find ServerInfo class");
+    let server_info_object = env
+        .alloc_object(&server_info_class)
+        .expect("Couldn't allocate ServerInfo object");
+
+    // Set ServerInfo.uiUrl field on the Java object
+    let ui_url_field = env
+        .get_field_id(&server_info_class, "uiUrl", "Ljava/lang/String;")
+        .expect("Couldn't find object field String uiUrl");
+    let ui_url = env
+        .new_string(server_info.ui_url)
+        .expect("Couldn't create java String!");
+    env.set_field_unchecked(&server_info_object, ui_url_field, JValue::from(&ui_url))
+        .expect("Couldn't set field String uiUrl");
+
+    // Set ServerInfo.authToken field on the Java object
+    let auth_token_field = env
+        .get_field_id(&server_info_class, "authToken", "Ljava/lang/String;")
+        .expect("Couldn't find object field String authToken");
+    let auth_token = env
+        .new_string(server_info.auth_token)
+        .expect("Couldn't create java String!");
+    env.set_field_unchecked(
+        &server_info_object,
+        auth_token_field,
+        JValue::from(&auth_token),
+    )
+    .expect("Couldn't set field String authToken");
+
+    // Set ServerInfo.certificate field on the Java object
+    let certificate_field = env
+        .get_field_id(&server_info_class, "certificate", "[B") // byte[] in Java
+        .expect("Couldn't find object field byte[] certificate");
+    let certificate = env
+        .byte_array_from_slice(&server_info.certificate)
+        .expect("Couldn't create java byte[]!");
+    env.set_field_unchecked(
+        &server_info_object,
+        certificate_field,
+        JValue::from(&certificate),
+    )
+    .expect("Couldn't set field byte[] certificate");
+
+    server_info_object
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_stopServer() {
     stop_server().expect("must stop server");
     log::info!("Stopped server");
@@ -132,6 +204,7 @@ mod tests {
     use core::time;
     use std::thread;
 
+    use arhiv::{ArhivKeyring, ArhivOptions};
     use rs_utils::TempFile;
 
     use crate::{start_server, stop_server};
@@ -141,7 +214,14 @@ mod tests {
         let temp_dir = TempFile::new_with_details("AndroidTest", "");
         temp_dir.mkdir().expect("must create temp dir");
 
-        start_server(temp_dir.as_ref(), None).expect("must start server");
+        let options = ArhivOptions {
+            storage_dir: format!("{temp_dir}/storage"),
+            state_dir: format!("{temp_dir}/state"),
+            downloads_dir: format!("{temp_dir}/downloads"),
+            file_browser_root_dir: temp_dir.to_string(),
+            keyring: ArhivKeyring::new_noop(),
+        };
+        start_server(options, 0).expect("must start server");
 
         thread::sleep(time::Duration::from_secs(1));
 

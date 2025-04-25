@@ -3,8 +3,7 @@ use std::io::Write;
 use std::process;
 use std::process::{Command, Stdio};
 
-use anyhow::{anyhow, bail, Context, Result};
-use gethostname::gethostname;
+use anyhow::{bail, Context, Result};
 use tokio::signal;
 
 pub use bytes::*;
@@ -24,6 +23,7 @@ pub use string::*;
 pub use time::*;
 pub use tools::*;
 
+mod algorithms;
 mod bytes;
 mod compression;
 mod container;
@@ -32,14 +32,16 @@ mod download;
 mod fs;
 mod fs_temp;
 mod fs_transaction;
+pub mod full_text_search;
 mod http;
 pub mod http_server;
 pub mod image;
 mod iter;
 mod json;
+pub mod keyring;
 mod lock_file;
 pub mod log;
-pub mod mdns;
+pub mod merge;
 mod streams;
 mod string;
 mod time;
@@ -128,15 +130,6 @@ pub fn get_crate_version() -> &'static str {
     option_env!("TYPED_V_VERSION").unwrap_or("dev-build")
 }
 
-pub fn get_hostname() -> Result<String> {
-    gethostname().into_string().map_err(|err| {
-        anyhow!(
-            "failed to convert hostname into string: {}",
-            err.to_string_lossy()
-        )
-    })
-}
-
 pub async fn shutdown_signal() {
     let ctrl_c = async {
         signal::ctrl_c()
@@ -177,4 +170,20 @@ pub async fn shutdown_signal() {
             log::info!("Signals: got SIGINT");
         },
     }
+}
+
+pub fn num_cpus() -> Result<usize> {
+    let num_cpus = std::thread::available_parallelism()
+        .context("Failed to determine the number of available CPUs")?;
+
+    Ok(num_cpus.get())
+}
+
+pub fn init_global_rayon_threadpool(num_threads: usize) -> Result<()> {
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(num_threads)
+        .build_global()
+        .context("Failed to init global rayon thread pool")?;
+
+    Ok(())
 }

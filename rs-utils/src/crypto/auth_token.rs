@@ -1,33 +1,32 @@
 use anyhow::{ensure, Result};
 
-use crate::{bytes_to_hex_string, generate_alpanumeric_string, hex_string_to_bytes};
+use crate::{
+    concat_bytes, crypto_key::SIGNATURE_SIZE, decode_url_safe_base64, new_random_crypto_byte_array,
+    to_url_safe_base64,
+};
 
-use super::crypto_key::CryptoKey;
+use super::crypto_key::{CryptoKey, Signature};
+
+const TOKEN_LEN: usize = 6;
+
+pub type Token = [u8; TOKEN_LEN];
 
 #[derive(Debug, PartialEq)]
 pub struct AuthToken {
-    plain_text: String,
-    signature: Vec<u8>,
+    token: Token,
+    signature: Signature,
 }
 
 impl AuthToken {
     pub fn generate(key: &CryptoKey) -> Self {
-        AuthToken::generate_with_length(key, 256)
-    }
+        let token: Token = new_random_crypto_byte_array();
+        let signature = key.sign(&token);
 
-    pub fn generate_with_length(key: &CryptoKey, plain_text_length: usize) -> Self {
-        let plain_text = generate_alpanumeric_string(plain_text_length);
-
-        let signature = key.sign(plain_text.as_bytes());
-
-        Self {
-            plain_text,
-            signature: signature.into(),
-        }
+        Self { token, signature }
     }
 
     pub fn assert_is_valid(&self, key: &CryptoKey) -> Result<()> {
-        let is_valid = key.verify_signature(self.plain_text.as_bytes(), &self.signature);
+        let is_valid = key.verify_signature(&self.token, &self.signature);
 
         ensure!(is_valid, "Auth token is invalid");
 
@@ -35,24 +34,26 @@ impl AuthToken {
     }
 
     pub fn serialize(&self) -> String {
-        format!(
-            "{}-{}",
-            self.plain_text,
-            bytes_to_hex_string(&self.signature)
-        )
+        to_url_safe_base64(&concat_bytes(&self.token, &self.signature))
     }
 
     pub fn parse(value: &str) -> Result<Self> {
-        let parts: Vec<&str> = value.splitn(2, '-').collect();
-        ensure!(parts.len() == 2, "Invalid input string");
+        let data = decode_url_safe_base64(value)?;
 
-        let plain_text = parts[0].to_string();
-        let signature = hex_string_to_bytes(parts[1])?;
+        const AUTH_TOKEN_LEN: usize = TOKEN_LEN + SIGNATURE_SIZE;
 
-        Ok(AuthToken {
-            plain_text,
-            signature,
-        })
+        ensure!(
+            data.len() == AUTH_TOKEN_LEN,
+            "Wrong AuthToken len: {} instead of {AUTH_TOKEN_LEN}",
+            data.len()
+        );
+
+        let (first, second) = data.split_at(TOKEN_LEN);
+
+        let token: Token = first.try_into().expect("Invalid token size");
+        let signature: Signature = second.try_into().expect("Invalid signature size");
+
+        Ok(AuthToken { token, signature })
     }
 }
 

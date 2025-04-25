@@ -1,7 +1,7 @@
 [package]
 name = "binutils"
 version = "0.0.0"
-edition = "2021"
+edition = "2024"
 authors = ["mbme"]
 publish = false
 
@@ -18,7 +18,8 @@ clap = { version = "4", features = ["derive", "env"] }
 clap_complete = "4.0"
 dialoguer = { version = "0.11", default-features = false, features = ["password"] }
 
-serde.workspace = true
+rusqlite = { version = "0.34", features = ["serde_json", "collation"] } # for baza2 migration tool
+
 serde_json.workspace = true
 
 tokio.workspace = true

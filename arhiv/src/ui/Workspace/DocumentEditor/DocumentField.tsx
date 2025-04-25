@@ -5,6 +5,7 @@ import { Checkbox } from 'components/Form/Checkbox';
 import { Select } from 'components/Form/Select';
 import { Editor } from 'components/Form/Editor';
 import { Ref, RefInput } from 'components/Form/RefInput';
+import { ErrorMessage } from 'components/ErrorMessage';
 
 type ValueEditorProps = {
   id: string;
@@ -184,9 +185,9 @@ export function DocumentField({
       />
 
       {errors.map((error, index) => (
-        <div key={index} className="text-red-500 text-xs pl-1 my-2 w-full">
+        <ErrorMessage key={index} small className="pl-1 my-2">
           {error}
-        </div>
+        </ErrorMessage>
       ))}
     </div>
   );

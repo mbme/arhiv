@@ -1,6 +1,8 @@
-use std::fs;
+use std::{fs, time::Instant};
 
 use anyhow::{bail, Result};
+
+use crate::log;
 
 pub struct LockFile {
     lock: fslock::LockFile,
@@ -30,9 +32,14 @@ impl LockFile {
     pub fn wait_for_lock(file_path: &str) -> Result<Self> {
         log::debug!("Waiting to lock file {file_path}");
 
+        let start_time = Instant::now();
+
         let mut lock = fslock::LockFile::open(file_path)?;
 
         lock.lock()?;
+
+        let duration = start_time.elapsed();
+        log::trace!("Locked file {file_path} in {:?}", duration);
 
         Ok(Self {
             lock,

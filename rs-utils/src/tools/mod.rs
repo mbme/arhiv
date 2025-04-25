@@ -140,23 +140,6 @@ impl Chromedriver {
     }
 }
 
-pub struct ZStd(String);
-
-impl ZStd {
-    pub fn check() -> Result<Self> {
-        find_bin("zstd")?
-            .map(Self)
-            .context("ZStd must be available")
-    }
-
-    pub fn compress(&self, src_path: &str, dest_path: &str) -> Result<()> {
-        run_command(&self.0, vec!["--compress", src_path, "-o", dest_path])
-            .context("failed to run zstd")?;
-
-        Ok(())
-    }
-}
-
 /// part of ffmpeg
 pub struct FFProbe(String);
 

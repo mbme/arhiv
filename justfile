@@ -2,35 +2,38 @@
 
 home := env("HOME")
 root := home + "/temp/arhiv"
-debug_log_level := "debug,h2=info,rustls=info,mdns_sd=info,rs_utils=info,hyper=info,axum::rejection=trace"
+debug_log_level := "debug,h2=info,rustls=info,i18n_embed=warn,rs_utils::http_server=info,hyper=info,axum::rejection=trace,keyring=info"
 
 alias c := check
 
 arhiv *PARAMS:
-  DEV_ARHIV_ROOT="{{root}}" cargo run --bin arhiv {{PARAMS}}
-
-arhiv-server:
-  just arhiv server
+  npm run build --workspace arhiv
+  DEV_ARHIV_ROOT="{{root}}" SERVER_PORT=8443 cargo run --bin arhiv {{PARAMS}}
 
 run:
   cd arhiv; npm run clean; tmux new-session -s arhiv \
-     'DEV_ARHIV_ROOT={{root}} SERVER_PORT=8443 RUST_LOG={{debug_log_level}} cargo run -p binutils --bin arhiv server' \; \
+     'DEV_ARHIV_ROOT={{root}} SERVER_PORT=8443 RUST_LOG={{debug_log_level}} BROWSER=chromium cargo run -p binutils --bin arhiv server --browser' \; \
      split-window -h 'npm run watch:js' \; \
      split-window 'npm run watch:css' \; \
      select-pane -t 0
 
 desktop *ARGS:
+  #!/usr/bin/env bash
+  set -euxo pipefail
+
+  npm run build --workspace arhiv
   npm run build --workspace arhiv-desktop
 
-  DEV_ARHIV_ROOT={{root}} \
-  SERVER_PORT=8443 \
-  RUST_LOG={{debug_log_level}} \
-  ARHIV_BIN="{{justfile_directory()}}/target/debug/arhiv" \
-  ELECTRON_OZONE_PLATFORM_HINT=wayland \
-  npm run start --workspace arhiv-desktop -- {{ARGS}}
+  export DEV_ARHIV_ROOT={{root}}
+  export SERVER_PORT=8443
+  export RUST_LOG={{debug_log_level}}
 
-mdns-tester:
-  cargo run --bin mdns-tester
+  cargo build -p binutils
+
+  export ARHIV_BIN="{{justfile_directory()}}/target/debug/arhiv"
+  export ELECTRON_OZONE_PLATFORM_HINT=wayland
+
+  npm run start --workspace arhiv-desktop -- {{ARGS}}
 
 bump-version:
   ./bump-version.sh
@@ -41,12 +44,10 @@ prod-build-install:
   rm -rf pkg
   rm -f *.pkg.tar.zst
   rm PKGBUILD
-  systemctl --user daemon-reload
-  systemctl --user restart arhiv-server.service
 
 # install the arhiv locally using Cargo
 cargo-install:
-  npm install
+  npm run prod:build --workspace arhiv
   cargo install --path binutils --bin arhiv --features production-mode
 
 build-timings:
@@ -69,8 +70,31 @@ clean-all:
   cargo clean --release
   rm -rf .log
 
-build-android-libs:
-  cd arhiv-android; rm -rf ./app/src/main/jniLibs; ANDROID_NDK_HOME=~/Android/Sdk/ndk/ cargo ndk -t x86_64 -t arm64-v8a -o ./app/src/main/jniLibs build # --release
+build-android-libs *RELEASE_FLAG:
+  #!/usr/bin/env bash
+  set -euxo pipefail
+
+  npm run prod:build --workspace arhiv
+
+  cd arhiv-android
+
+  rm -rf ./app/src/main/jniLibs
+  mkdir ./app/src/main/jniLibs
+
+  # WARN: the --platform MUST match minSdk from build.gradle
+  cargo ndk -t x86_64 -t arm64-v8a --platform 30 -o ./app/src/main/jniLibs build {{RELEASE_FLAG}}
+
+prod-build-android-libs:
+  just build-android-libs --release --features production-mode
+
+build-android-app:
+  cd arhiv-android; ./gradlew assembleDebug
+
+prod-build-android-app:
+  cd arhiv-android; ./gradlew assembleRelease
+
+install-android-app:
+  cd arhiv-android; ./gradlew installDebug
 
 bench *PARAMS:
   cd rs-utils; cargo bench -- {{PARAMS}}

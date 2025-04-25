@@ -6,7 +6,7 @@ pkgver="0.0.0"
 pkgdesc='Personal computing environment'
 arch=(x86_64)
 license=(MIT)
-depends=(sqlite zstd)
+depends=(dbus)
 optdepends=(
     'electron34: to run Arhiv desktop app'
 )
@@ -36,6 +36,8 @@ build() {
 
   export TYPED_V_VERSION=$(git describe --tags)
 
+  npm run prod:build --workspace arhiv
+
   cargo build --frozen --release --features production-mode -p binutils --bin arhiv
 
   npm run prod:build --workspace arhiv-desktop
@@ -62,7 +64,6 @@ package() {
   install -Dm 644 "arhiv-desktop/electron-package.json" "$pkgdir/usr/share/arhiv-desktop/package.json"
 
   install -Dm 644 "binutils/resources/v.arhiv.ui.desktop" "${pkgdir}/usr/share/applications/v.arhiv.ui.desktop"
-  install -Dm 755 "binutils/resources/arhiv-server.service" "${pkgdir}/usr/lib/systemd/user/arhiv-server.service"
 
   mkdir -p "target/completions"
   "target/release/arhiv" generate-completions bash > "target/completions/arhiv.bash"

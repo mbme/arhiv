@@ -26,6 +26,11 @@ pub fn new_random_crypto_byte_array<const SIZE: usize>() -> [u8; SIZE] {
 }
 
 #[must_use]
+pub fn to_base64(bytes: &[u8]) -> String {
+    BASE64.encode(bytes)
+}
+
+#[must_use]
 pub fn to_url_safe_base64(bytes: &[u8]) -> String {
     BASE64URL.encode(bytes)
 }
@@ -35,10 +40,10 @@ pub fn is_valid_base64(value: &str) -> bool {
     BASE64URL.decode(value.as_bytes()).is_ok()
 }
 
-pub fn decode_base64(data: &str) -> Result<Vec<u8>> {
-    BASE64
+pub fn decode_url_safe_base64(data: &str) -> Result<Vec<u8>> {
+    BASE64URL
         .decode(data.as_bytes())
-        .context("Failed to decode base64 string")
+        .context("Failed to decode url safe base64 string")
 }
 
 pub fn bytes_to_hex_string(bytes: &[u8]) -> String {
@@ -56,6 +61,22 @@ pub fn read_all_as_string(mut reader: impl Read) -> io::Result<String> {
     reader.read_to_string(&mut result)?;
 
     Ok(result)
+}
+
+pub fn read_all(mut reader: impl Read) -> io::Result<Vec<u8>> {
+    let mut data = Vec::new();
+
+    reader.read_to_end(&mut data)?;
+
+    Ok(data)
+}
+
+pub fn concat_bytes(a: &[u8], b: &[u8]) -> Vec<u8> {
+    let mut combined = Vec::with_capacity(a.len() + b.len());
+    combined.extend_from_slice(a);
+    combined.extend_from_slice(b);
+
+    combined
 }
 
 pub struct ReaderWithTrailer<const SIZE: usize, R: Read> {
@@ -207,11 +228,10 @@ mod tests {
     fn test_reader_with_trailer() -> Result<()> {
         {
             let data = generate_bytes(100);
-            let mut reader = ReaderWithTrailer::<200, _>::new(data.as_slice());
+            let reader = ReaderWithTrailer::<200, _>::new(data.as_slice());
 
-            let mut result = Vec::new();
             // not enough data for a trailer
-            assert!(reader.read_to_end(&mut result).is_err());
+            assert!(read_all(reader).is_err());
         }
 
         {
@@ -241,9 +261,8 @@ mod tests {
 
             reader.seek(SeekFrom::Current(250))?;
 
-            let mut result = Vec::new();
             // not enough data for a trailer
-            assert!(reader.read_to_end(&mut result).is_err());
+            assert!(read_all(reader).is_err());
         }
 
         {
@@ -252,8 +271,7 @@ mod tests {
 
             reader.seek(SeekFrom::Current(200))?;
 
-            let mut result = Vec::new();
-            reader.read_to_end(&mut result)?;
+            let result = read_all(&mut reader)?;
 
             assert_eq!(result.len(), 0);
             assert_eq!(reader.get_trailer().unwrap(), &data[200..]);
@@ -281,10 +299,9 @@ mod tests {
 
         {
             let data = generate_bytes(300);
-            let (mut reader, header) = ReaderWithHeader::<200, _>::new(data.as_slice())?;
+            let (reader, header) = ReaderWithHeader::<200, _>::new(data.as_slice())?;
 
-            let mut result = Vec::new();
-            reader.read_to_end(&mut result)?;
+            let result = read_all(reader)?;
 
             assert_eq!(header, &data[0..200]);
             assert_eq!(result, &data[200..]);
@@ -296,8 +313,7 @@ mod tests {
 
             reader.seek(SeekFrom::Current(50))?;
 
-            let mut result = Vec::new();
-            reader.read_to_end(&mut result)?;
+            let result = read_all(reader)?;
 
             assert_eq!(result, &data[150..]);
         }

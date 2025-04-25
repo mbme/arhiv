@@ -58,6 +58,4 @@ class LocalStorage implements Storage {
   }
 }
 
-export const storage = window.FEATURES.use_local_storage
-  ? new LocalStorage()
-  : new SessionStorage();
+export const storage = window.CONFIG.useLocalStorage ? new LocalStorage() : new SessionStorage();

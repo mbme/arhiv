@@ -5,13 +5,14 @@ use std::{
     fmt,
     fs::File,
     io::{BufReader, Read, Write},
+    time::Instant,
 };
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 
 use rs_utils::{
-    age::AgeKey, create_file_reader, create_file_writer, AgeGzReader, AgeGzWriter, ContainerPatch,
-    ContainerReader, ContainerWriter,
+    age::AgeKey, create_file_reader, create_file_writer, log, AgeGzReader, AgeGzWriter,
+    ContainerPatch, ContainerReader, ContainerWriter,
 };
 
 use crate::entities::{Document, DocumentKey};
@@ -46,7 +47,7 @@ impl<'i, R: Read + 'i> fmt::Debug for BazaStorage<'i, R> {
 
 impl<'i, R: Read + 'i> BazaStorage<'i, R> {
     pub fn read(reader: R, key: AgeKey) -> Result<Self> {
-        let agegz_reader = AgeGzReader::create(reader, key.clone())?;
+        let agegz_reader = AgeGzReader::new(reader, key.clone())?;
         let reader = ContainerReader::init(agegz_reader)?;
 
         let index =
@@ -77,7 +78,7 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
         }
 
         match &mut self.inner {
-            ReaderOrLinesIter::LinesIter(ref mut iter) => iter,
+            ReaderOrLinesIter::LinesIter(iter) => iter,
             _ => unreachable!("must be LinesIter"),
         }
     }
@@ -106,7 +107,7 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
         ensure!(!patch.is_empty(), "container patch must not be empty");
 
         // apply patch & write db
-        let agegz_writer = AgeGzWriter::create(writer, self.key)?;
+        let agegz_writer = AgeGzWriter::new(writer, self.key)?;
         let container_writer = ContainerWriter::new(agegz_writer);
 
         match self.inner {
@@ -155,17 +156,34 @@ pub type BazaFileStorage<'i> = BazaStorage<'i, BufReader<File>>;
 
 impl BazaFileStorage<'_> {
     pub fn read_file(file: &str, key: AgeKey) -> Result<Self> {
+        log::debug!("Reading storage from file {file}");
+
+        let start_time = Instant::now();
+
         let storage_reader = create_file_reader(file)?;
 
-        BazaStorage::read(storage_reader, key)
+        let storage = BazaStorage::read(storage_reader, key)?;
+
+        let duration = start_time.elapsed();
+        log::debug!("Opened storage from file in {:?}", duration);
+
+        Ok(storage)
     }
 
     pub fn patch_and_save_to_file(self, file: &str, patch: ContainerPatch) -> Result<()> {
-        let mut storage_writer = create_file_writer(file, false)?;
+        log::debug!("Writing storage to file {file}");
+
+        let start_time = Instant::now();
+
+        let mut storage_writer =
+            create_file_writer(file, false).context("Failed to create storage file writer")?;
 
         self.patch(&mut storage_writer, patch)?;
 
         storage_writer.flush()?;
+
+        let duration = start_time.elapsed();
+        log::info!("Wrote storage to file in {:?}", duration);
 
         Ok(())
     }
@@ -218,7 +236,7 @@ pub fn create_storage(
     info: &BazaInfo,
     new_documents: &[Document],
 ) -> Result<()> {
-    let agegz_writer = AgeGzWriter::create(writer, key)?;
+    let agegz_writer = AgeGzWriter::new(writer, key)?;
     let mut container_writer = ContainerWriter::new(agegz_writer);
 
     let index =
@@ -255,7 +273,7 @@ pub fn create_empty_storage_file(file: &str, key: AgeKey, info: &BazaInfo) -> Re
 pub fn create_test_storage<'k>(
     key: AgeKey,
     new_documents: &[Document],
-) -> BazaStorage<'k, impl Read> {
+) -> BazaStorage<'k, impl Read + use<>> {
     use std::io::Cursor;
 
     let info = BazaInfo::new_test_info();
@@ -267,20 +285,16 @@ pub fn create_test_storage<'k>(
     BazaStorage::read(data, key).unwrap()
 }
 
-pub fn merge_storages(
-    info: &BazaInfo,
-    mut storages: Vec<BazaStorage<impl Read>>,
-    writer: impl Write,
-) -> Result<()> {
+pub fn merge_storages(mut storages: Vec<BazaStorage<impl Read>>, writer: impl Write) -> Result<()> {
     ensure!(!storages.is_empty(), "storages must not be empty");
 
     let is_same_info = storages
         .iter_mut()
         .map(|s| s.get_info())
         .collect::<Result<Vec<_>>>()?
-        .into_iter()
-        .all(|s_info| s_info == info);
-    ensure!(is_same_info, "all storages must have same info");
+        .windows(2)
+        .all(|w| w[0] == w[1]);
+    ensure!(is_same_info, "all storages must have the same info");
 
     let mut keys_per_storage = storages
         .into_iter()
@@ -331,7 +345,8 @@ pub fn merge_storages(
     let index = DocumentsIndex::from_document_keys_refs(index_keys);
 
     let key = &keys_per_storage[0].0.key;
-    let agegz_writer = AgeGzWriter::create(writer, key.clone())?;
+    let info = &keys_per_storage[0].0.info;
+    let agegz_writer = AgeGzWriter::new(writer, key.clone())?;
     let mut container_writer = ContainerWriter::new(agegz_writer);
 
     container_writer.write_index(&index)?;
@@ -366,16 +381,19 @@ pub fn merge_storages(
     Ok(())
 }
 
-pub fn merge_storages_to_file(
-    info: &BazaInfo,
-    storages: Vec<BazaStorage<impl Read>>,
-    file: &str,
-) -> Result<()> {
+pub fn merge_storages_to_file(storages: Vec<BazaStorage<impl Read>>, file: &str) -> Result<()> {
+    log::debug!("Merging {} storages to file {file}", storages.len());
+
+    let start_time = Instant::now();
+
     let mut storage_writer = create_file_writer(file, false)?;
 
-    merge_storages(info, storages, &mut storage_writer)?;
+    merge_storages(storages, &mut storage_writer)?;
 
     storage_writer.flush()?;
+
+    let duration = start_time.elapsed();
+    log::info!("Merged storages to file in {:?}", duration);
 
     Ok(())
 }
@@ -389,7 +407,7 @@ mod tests {
     use rs_utils::age::AgeKey;
     use serde_json::json;
 
-    use crate::{baza2::baza_storage::create_test_storage, tests::new_document};
+    use crate::{baza2::baza_storage::create_test_storage, entities::new_document};
 
     use super::{create_container_patch, create_storage, merge_storages, BazaInfo, BazaStorage};
 
@@ -477,7 +495,7 @@ mod tests {
 
         // merge storages
         let mut result = Cursor::new(Vec::<u8>::new());
-        merge_storages(&info, vec![storage1, storage2, storage3], &mut result).unwrap();
+        merge_storages(vec![storage1, storage2, storage3], &mut result).unwrap();
         result.set_position(0);
 
         let mut storage = BazaStorage::read(&mut result, key.clone()).unwrap();

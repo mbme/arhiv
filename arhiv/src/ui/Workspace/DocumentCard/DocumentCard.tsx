@@ -7,13 +7,15 @@ import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';
 import { useIsFormDirty } from 'components/Form/Form';
 import { ProgressLocker } from 'components/ProgressLocker';
+import { dispatchDocumentChangeEvent } from 'Workspace/documentChangeUtils';
 import { useCardContext, useCardLock } from '../controller';
 import { EraseDocumentConfirmationDialog } from '../DocumentEditor/EraseDocumentConfirmationDialog';
-import { DocumentViewerHead } from '../DocumentEditor/DocumentViewerHead';
+import { DocumentViewerHead } from './DocumentViewerHead';
 import { DocumentEditor } from '../DocumentEditor/DocumentEditor';
 import { useLockDocument } from './useLockDocument';
 import { LockError } from './LockError';
 import { DocumentTitle } from './DocumentTitle';
+import { CONFLICT_INDICATOR } from './ConflictIndicator';
 
 type Props = {
   document: DocumentDTO;
@@ -66,6 +68,8 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
               },
             ]}
           />
+
+          {document.hasConflict && CONFLICT_INDICATOR}
         </>
       }
       title={<DocumentTitle documentType={document.documentType} title={document.title} />}
@@ -101,6 +105,7 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
         documentType={document.documentType}
         updatedAt={document.updatedAt}
         backrefs={document.backrefs}
+        snapshotsCount={document.snapshotsCount}
       />
 
       {Boolean(lockError) && (
@@ -134,6 +139,8 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
           if (submitResult.errors) {
             return submitResult.errors;
           }
+
+          dispatchDocumentChangeEvent([document.id]);
         }}
       />
 

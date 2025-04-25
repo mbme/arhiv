@@ -1,5 +1,7 @@
-import { APIRequest, APIResponse, BLOBId, DocumentId } from 'dto';
+import { APIRequest, APIResponse, DocumentId } from 'dto';
 import { formatBytes, Obj } from './index';
+
+const SECRET_PLACEHOLDER = '{ SECRET }';
 
 export type RPCResponse<Request extends APIRequest> = Extract<
   APIResponse,
@@ -11,14 +13,25 @@ export async function doRPC<Request extends APIRequest>(
   request: Request,
   signal?: AbortSignal,
 ): Promise<RPCResponse<Request>> {
-  console.debug('RPC: %s', request.typeName, request);
+  const containsSecret = '$secret' in request;
+
+  console.debug('RPC: %s', request.typeName, containsSecret ? SECRET_PLACEHOLDER : request);
 
   const onAbort = () => {
-    console.debug('RPC: aborted %s', request.typeName, request);
+    console.debug(
+      'RPC: aborted %s',
+      request.typeName,
+      containsSecret ? SECRET_PLACEHOLDER : request,
+    );
   };
   signal?.addEventListener('abort', onAbort);
 
   try {
+    if (containsSecret) {
+      // @ts-expect-error remove marker prop
+      delete request.$secret;
+    }
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -75,7 +88,7 @@ function createRPCProxy<Request extends SerdeEnum, Response extends SerdeEnum>(
   ) as ProxyHandlers<Request, Response>;
 }
 
-export const API_ENDPOINT = `${window.BASE_PATH}/api`;
+export const API_ENDPOINT = `${window.CONFIG.basePath}/api`;
 
 export const RPC = createRPCProxy<APIRequest, APIResponse>(API_ENDPOINT);
 
@@ -88,7 +101,7 @@ export async function uploadFile(file: File, signal?: AbortSignal): Promise<Docu
   signal?.addEventListener('abort', onAbort);
 
   try {
-    const response = await fetch(`${window.BASE_PATH}/blobs`, {
+    const response = await fetch(`${window.CONFIG.basePath}/assets`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/octet-stream',
@@ -118,31 +131,18 @@ export async function uploadFile(file: File, signal?: AbortSignal): Promise<Docu
   }
 }
 
-export async function createArhiv(login: string, password: string) {
-  const response = await fetch(`${window.BASE_PATH}/create`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ login, password }),
-  });
-
-  const message = await response.text();
-
-  if (!response.ok) {
-    console.error(`Failed to create arhiv: ${response.status}\n${message}`);
-    throw new Error(`Failed to create arhiv: ${message}`);
-  }
+export function getDocumentUrl(documentId: DocumentId): string {
+  return `${window.location.origin}${window.CONFIG.basePath}?id=${documentId}`;
 }
 
-export function getDocumentUrl(documentId: string): string {
-  return `${window.location.origin}${window.BASE_PATH}?id=${documentId}`;
+export function getAssetUrl(assetId: DocumentId): string {
+  return `${window.CONFIG.basePath}/assets/${assetId}`;
 }
 
-export function getBlobUrl(blobId: BLOBId): string {
-  return `${window.BASE_PATH}/blobs/${blobId}`;
-}
-
-export function getScaledImageUrl(blobId: BLOBId, maxWidth: number, maxHeight: number): string {
-  return `${window.BASE_PATH}/blobs/images/${blobId}?max_w=${maxWidth}&max_h=${maxHeight}`;
+export function getScaledImageUrl(
+  assetId: DocumentId,
+  maxWidth: number,
+  maxHeight: number,
+): string {
+  return `${window.CONFIG.basePath}/assets/images/${assetId}?max_w=${maxWidth}&max_h=${maxHeight}`;
 }

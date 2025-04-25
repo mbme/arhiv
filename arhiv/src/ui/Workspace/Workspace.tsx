@@ -5,7 +5,6 @@ import { useScrollRestoration, useSignal } from 'utils/hooks';
 import { useAppController } from 'controller';
 import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
 import { RefClickHandlerContext } from 'components/Ref';
-import { Toaster } from 'components/Toaster';
 import { ErrorBoundary } from 'components/ErrorBoundary';
 import { QueryError } from 'components/QueryError';
 import { Card, CardContextProvider, throwBadCardVariant } from './controller';
@@ -58,8 +57,6 @@ export function Workspace() {
           app.workspace.openDocument(documentId);
         }}
       />
-
-      <Toaster />
     </RefClickHandlerContext.Provider>
   );
 }

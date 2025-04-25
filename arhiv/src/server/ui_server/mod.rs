@@ -1,104 +1,106 @@
-use std::sync::Arc;
+use std::{panic::AssertUnwindSafe, sync::Arc};
 
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use axum::{
-    extract::{DefaultBodyLimit, Path, Query, Request, State},
-    http::HeaderMap,
+    extract::{DefaultBodyLimit, Query, Request, State},
+    http::{HeaderMap, StatusCode},
     middleware::{self, Next},
     response::{Html, IntoResponse, Response},
     routing::{get, post},
-    Extension, Json, Router,
+    Json, Router,
 };
-use axum_extra::{
-    extract::{cookie::Cookie, CookieJar},
-    headers, TypedHeader,
-};
-use reqwest::StatusCode;
-use serde::{Deserialize, Serialize};
+use axum_extra::extract::{cookie::Cookie, CookieJar};
+use serde::Deserialize;
 use serde_json::Value;
 
-use baza::{entities::BLOBId, schema::create_asset, sync::respond_with_blob, Credentials};
+use baza::{baza2::BazaManager, DEV_MODE};
 use rs_utils::{
-    crypto_key::CryptoKey,
-    http_server::{add_no_cache_headers, ServerError},
-    log, stream_to_file, AuthToken, SecretString,
+    http_server::{add_no_cache_headers, fallback_route, ServerError},
+    log::{self, tracing},
+    stream_to_file, AuthToken, TempFile,
 };
 
-use crate::{definitions::get_standard_schema, dto::APIRequest};
+use crate::{
+    ui::dto::{APIRequest, ArhivUIConfig},
+    Arhiv,
+};
 
 use self::api_handler::handle_api_request;
-use self::image_handler::image_handler;
+use self::assets_handler::assets_handler;
 use self::public_assets_handler::public_assets_handler;
-pub use self::state::UIState;
+use self::scaled_image_handler::scaled_image_handler;
+use self::scaled_images_cache::ScaledImagesCache;
 
 mod api_handler;
-mod image_handler;
+mod assets_handler;
 mod public_assets_handler;
-mod state;
+mod scaled_image_handler;
+mod scaled_images_cache;
 
 pub const UI_BASE_PATH: &str = "/ui";
 
-pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<UIState>> {
-    Router::new()
+pub const HEALTH_PATH: &str = "/health";
+
+#[derive(Clone)]
+pub struct ServerContext {
+    pub arhiv: Arc<Arhiv>,
+    pub img_cache: Arc<ScaledImagesCache>,
+}
+
+pub fn build_ui_router(auth_token: AuthToken, arhiv: Arc<Arhiv>) -> Router<()> {
+    let img_cache_dir = format!("{}/img-cache", arhiv.baza.get_state_dir());
+    let img_cache = ScaledImagesCache::new(img_cache_dir);
+
+    let ctx = ServerContext {
+        arhiv,
+        img_cache: Arc::new(img_cache),
+    };
+
+    let ui_router = Router::new()
         .route("/", get(index_page))
-        .route("/create", post(create_arhiv_handler))
         .route("/api", post(api_handler))
-        .route("/blobs", post(create_blob_handler))
-        .route("/blobs/{blob_id}", get(blob_handler))
-        .route("/blobs/images/{blob_id}", get(image_handler))
+        .route("/assets", post(create_asset_handler))
+        .route("/assets/{asset_id}", get(assets_handler))
+        .route("/assets/images/{asset_id}", get(scaled_image_handler))
+        .layer(middleware::from_fn(no_cache_middleware))
         .route("/{*fileName}", get(public_assets_handler))
         .layer(DefaultBodyLimit::disable())
-        .layer(middleware::from_fn(client_authenticator))
-        .layer(Extension(Arc::new(ui_key)))
+        .layer(middleware::from_fn_with_state(
+            Arc::new(auth_token),
+            client_authenticator,
+        ))
+        .layer(middleware::from_fn(catch_panic_middleware))
+        .with_state(ctx);
+
+    Router::new()
+        .nest(UI_BASE_PATH, ui_router)
+        .route(HEALTH_PATH, get(health_handler))
+        .fallback(fallback_route)
 }
 
-#[derive(Deserialize)]
-struct CreateArhivRequest {
-    login: String,
-    password: SecretString,
-}
+#[tracing::instrument(skip(ctx), level = "debug")]
+async fn index_page(ctx: State<ServerContext>) -> Result<impl IntoResponse, ServerError> {
+    let arhiv = &ctx.arhiv;
 
-async fn create_arhiv_handler(
-    state: State<Arc<UIState>>,
-    Json(create_arhiv_request): Json<CreateArhivRequest>,
-) -> Result<impl IntoResponse, ServerError> {
-    if state.arhiv_exists()? {
-        return Err(anyhow!("Arhiv already exists").into());
-    }
-
-    log::info!("Creating new arhiv");
-
-    let auth = Credentials::new(create_arhiv_request.login, create_arhiv_request.password)?;
-
-    state.create_arhiv(auth)?;
-
-    Ok(())
-}
-
-#[derive(Serialize)]
-struct Features {
-    use_local_storage: bool,
-}
-
-async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, ServerError> {
-    let create_arhiv = !state.arhiv_exists()?;
-
-    let schema =
-        serde_json::to_string(&get_standard_schema()).context("failed to serialize schema")?;
-
-    let features = Features {
+    let config = serde_json::to_string_pretty(&ArhivUIConfig {
+        storage_dir: arhiv.baza.get_storage_dir(),
+        base_path: UI_BASE_PATH,
+        schema: arhiv.baza.get_schema(),
         use_local_storage: true,
-    };
-    let features = serde_json::to_string(&features).context("failed to serialize features")?;
-    let min_login_length = Credentials::MIN_LOGIN_LENGTH;
-    let min_password_length = Credentials::MIN_PASSWORD_LENGTH;
+        min_password_length: BazaManager::MIN_PASSWORD_LENGTH,
+        arhiv_missing: !arhiv.baza.storage_exists()?,
+        arhiv_key_missing: !arhiv.baza.key_exists()?,
+        arhiv_locked: arhiv.baza.is_locked(),
+        dev_mode: DEV_MODE,
+    })
+    .context("Failed to serialize ArhivUI config")?;
 
     let content = format!(
         r#"
             <!DOCTYPE html>
             <html lang="en" dir="ltr">
                 <head>
-                    <title>Arhiv</title>
+                    <title>{}</title>
 
                     <meta charset="UTF-8" />
                     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -110,54 +112,42 @@ async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, Ser
                     <main></main>
 
                     <script>
-                        window.BASE_PATH = "{UI_BASE_PATH}";
-                        window.SCHEMA = {schema};
-                        window.FEATURES = {features};
-                        window.MIN_LOGIN_LENGTH = {min_login_length};
-                        window.MIN_PASSWORD_LENGTH = {min_password_length};
-                        window.CREATE_ARHIV = {create_arhiv};
+                        window.CONFIG = {config};
                     </script>
 
                     <script src="{UI_BASE_PATH}/index.js"></script>
                 </body>
-            </html>"#
+            </html>"#,
+        if DEV_MODE { "Arhiv DEV" } else { "Arhiv" }
     );
 
-    let mut headers = HeaderMap::new();
-    add_no_cache_headers(&mut headers);
-
-    Ok((headers, Html(content)))
+    Ok(Html(content))
 }
 
-#[tracing::instrument(skip(state, request_value), level = "debug")]
+#[tracing::instrument(skip(ctx, request_value), level = "debug")]
 async fn api_handler(
-    state: State<Arc<UIState>>,
+    ctx: State<ServerContext>,
     Json(request_value): Json<Value>,
 ) -> Result<impl IntoResponse, ServerError> {
-    let arhiv = state.must_get_arhiv()?;
-
     log::info!(
         "API request: {}",
-        request_value.get("typeName").unwrap_or(&Value::Null)
+        request_value
+            .get("typeName")
+            .unwrap_or(&serde_json::Value::Null)
     );
 
     let request: APIRequest =
         serde_json::from_value(request_value).context("failed to parse APIRequest")?;
-    let response = handle_api_request(&arhiv, request).await?;
+    let response = handle_api_request(&ctx, request).await?;
 
-    let mut headers = HeaderMap::new();
-    add_no_cache_headers(&mut headers);
-
-    Ok((headers, Json(response)))
+    Ok(Json(response))
 }
 
-#[tracing::instrument(skip(state, request), level = "debug")]
-async fn create_blob_handler(
-    state: State<Arc<UIState>>,
+#[tracing::instrument(skip(ctx, request), level = "debug")]
+async fn create_asset_handler(
+    ctx: State<ServerContext>,
     request: Request,
 ) -> Result<impl IntoResponse, ServerError> {
-    let arhiv = state.must_get_arhiv()?;
-
     let file_name = request
         .headers()
         .get("X-File-Name")
@@ -166,30 +156,28 @@ async fn create_blob_handler(
         .context("Failed to read X-File-Name header as a string")?
         .to_string();
 
-    let temp_file = arhiv.baza.get_path_manager().new_temp_file("arhiv-blob");
+    let arhiv = &ctx.arhiv;
+
+    let temp_file = TempFile::new_in_dir(arhiv.baza.get_downloads_dir(), "arhiv-asset");
     let stream = request.into_body().into_data_stream();
 
     stream_to_file(temp_file.open_tokio_file(0).await?, stream).await?;
 
-    let mut tx = arhiv.baza.get_tx()?;
+    let mut baza = arhiv.baza.open_mut()?;
 
-    let asset = create_asset(&mut tx, &temp_file.path, true, Some(file_name))?;
+    let mut asset = baza.create_asset(&temp_file.path)?;
+    asset.data.filename = file_name;
 
-    tx.commit()?;
+    let document = asset.into_document()?;
+    let document = baza
+        .stage_document(document, &None)
+        .context("Failed to update asset filename")?;
 
-    Ok(asset.id.to_string())
-}
+    let asset_id = document.id.to_string();
 
-async fn blob_handler(
-    state: State<Arc<UIState>>,
-    Path(blob_id): Path<String>,
-    range: Option<TypedHeader<headers::Range>>,
-) -> impl IntoResponse {
-    let arhiv = state.must_get_arhiv()?;
+    baza.save_changes()?;
 
-    let blob_id = BLOBId::from_string(blob_id)?;
-
-    respond_with_blob(&arhiv.baza, &blob_id, &range.map(|val| val.0)).await
+    Ok(asset_id)
 }
 
 #[derive(Deserialize)]
@@ -198,10 +186,11 @@ struct AuthTokenQuery {
     auth_token: Option<String>,
 }
 
+/// Extract AuthToken either from url query param, or from the cookie
 async fn client_authenticator(
     jar: CookieJar,
     auth_token_query: Query<AuthTokenQuery>,
-    Extension(ui_key): Extension<Arc<CryptoKey>>,
+    State(server_auth_token): State<Arc<AuthToken>>,
     request: Request,
     next: Next,
 ) -> Response {
@@ -240,8 +229,8 @@ async fn client_authenticator(
         return (StatusCode::UNAUTHORIZED, "AuthToken is missing").into_response();
     };
 
-    if let Err(err) = auth_token.assert_is_valid(&ui_key) {
-        log::warn!("Got unauthenticated client: {err}");
+    if auth_token != *server_auth_token {
+        log::warn!("Got client with an invalid auth token");
 
         return (StatusCode::UNAUTHORIZED, "Invalid AuthToken").into_response();
     }
@@ -263,4 +252,42 @@ async fn client_authenticator(
     );
 
     response
+}
+
+async fn no_cache_middleware(req: Request, next: Next) -> Response {
+    let mut response = next.run(req).await;
+
+    add_no_cache_headers(response.headers_mut());
+
+    response
+}
+
+async fn catch_panic_middleware(req: Request, next: Next) -> Response {
+    use futures::FutureExt;
+
+    let result = AssertUnwindSafe(next.run(req)).catch_unwind().await;
+
+    match result {
+        Ok(response) => response,
+        Err(err) => {
+            let err = if let Some(s) = err.downcast_ref::<String>() {
+                s.as_str()
+            } else if let Some(s) = err.downcast_ref::<&str>() {
+                s
+            } else {
+                ""
+            };
+
+            log::error!("Panic: {err}");
+
+            (StatusCode::INTERNAL_SERVER_ERROR, format!("Panic: {err}")).into_response()
+        }
+    }
+}
+
+async fn health_handler() -> impl IntoResponse {
+    let mut headers = HeaderMap::new();
+    add_no_cache_headers(&mut headers);
+
+    (StatusCode::OK, headers)
 }

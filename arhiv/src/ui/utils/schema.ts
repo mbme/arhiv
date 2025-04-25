@@ -29,7 +29,6 @@ export type FieldType =
   | { NaturalNumber: EmptyObj }
   | { Ref: DocumentType[] }
   | { RefList: DocumentType[] }
-  | { BLOBId: EmptyObj }
   | { Enum: string[] }
   | { Date: EmptyObj }
   | { Duration: EmptyObj }
@@ -37,14 +36,14 @@ export type FieldType =
   | { Countries: EmptyObj };
 
 export function getDocumentTypes(collections: boolean): DocumentType[] {
-  return window.SCHEMA.modules
+  return window.CONFIG.schema.modules
     .filter((module) => isModuleCollection(module) === collections)
     .map((module) => module.document_type)
     .sort();
 }
 
 export function getDataDescription(documentType: DocumentType): DataDescription {
-  const dataDescription = window.SCHEMA.modules.find(
+  const dataDescription = window.CONFIG.schema.modules.find(
     (module) => module.document_type === documentType,
   );
   if (!dataDescription) {
@@ -71,7 +70,7 @@ function isModuleCollectionForDocument(module: DataDescription, documentType: Do
 }
 
 export function getCollectionTypesForDocument(documentType: DocumentType) {
-  return window.SCHEMA.modules
+  return window.CONFIG.schema.modules
     .filter((module) => isModuleCollectionForDocument(module, documentType))
     .map((module) => module.document_type);
 }

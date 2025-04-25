@@ -1,7 +1,7 @@
 [package]
 name = "rs-utils"
 version = "0.0.0"
-edition = "2021"
+edition = "2024"
 authors = ["mbme"]
 publish = false
 
@@ -13,9 +13,8 @@ name = "container_benchmark"
 harness = false
 
 [dependencies]
-log = "0.4"
-tracing.workspace = true
-tracing-subscriber.workspace = true
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "local-time"] }
 
 anyhow.workspace = true
 
@@ -26,16 +25,18 @@ tokio-util.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 
-hyper.workspace = true
-reqwest.workspace = true
 axum.workspace = true
 axum-extra.workspace = true
-axum-server.workspace = true
+axum-server = { version= "0.7", features = ["tls-rustls-no-provider"]}
 
 bytes.workspace = true
 rand.workspace = true
-chrono.workspace = true
 ordermap.workspace = true
+rayon.workspace = true
+
+time = { version = "0.3", features = ["formatting", "serde", "local-offset"] }
+
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls-webpki-roots"] }
 
 scrypt = { version = "0.11", default-features = false } # derive secure cryptographic key from password & salt
 sha2 = "0.10" # popular crypto hash
@@ -43,7 +44,7 @@ hmac = "0.12" # generic HMAC implementation
 hkdf = "0.12" # generic HKDF implementation
 secrecy = { version = "0.10", features = ["serde"]} # replace secrets in memory with 0s after use
 
-age = "0.11" # file encryption format
+age = { version = "0.11", features = ["armor"] } # file encryption format
 
 rcgen = "0.13" # generate self-signed certificates
 pem = "*" # serialize TLS private key & certificate into PEM file
@@ -53,18 +54,26 @@ mime_guess = "2"
 infer = "0.19"
 url = "2.2.2"
 regex = "1.5.4"
-image = "0.25" # encode/decode/scale images, guess image types
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "webp"]} # encode/decode/scale images, guess image types
+qrcode = "0.14" # generate QRCodes
 shellexpand = "3.0.0"
 which = "7"
 nanoid = "0.4.0" # generate short unique global ids
-mdns-sd = "0.13" # for MDNS discovery
-gethostname = "1" # for MDNS discovery
-rayon = "1.8.0"
 fslock = "0.2"
 flate2 = "1" # for compressed container
+async-stream = "0.3" # macro for creating async streams
+similar = { version = "2.7", features = ["unicode"] } # diff two strings
+subst = "0.3" # simple string templates
 
-[target.'cfg(android)'.dependencies]
-tracing-android = "0.2"
+# search engine
+strsim = "0.11" # string similarity
+charabia = { version = "0.9", default-features = false } # tokenization & normalization for search
+deunicode = "1.6" # turn translate unicode strings and emojis into ASCII
+
+# read password from platform-specific secure stores
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
+
+tracing-android = "0.2" # tracing compatibility layer for android
 
 [dev-dependencies]
 criterion = "0.5"

@@ -74,17 +74,6 @@ impl DocumentData {
             .unwrap_or_else(|| panic!("str field '{field}' must be present"))
     }
 
-    #[must_use]
-    pub fn get_bool(&self, field: &str) -> Option<bool> {
-        // FIXME this must return a Result<Option<bool>>
-        self.get(field).and_then(serde_json::Value::as_bool)
-    }
-
-    #[must_use]
-    pub fn get_number(&self, field: &str) -> Option<u64> {
-        self.get(field).and_then(serde_json::Value::as_u64)
-    }
-
     pub fn get_ref_list(&self, field: &str) -> Result<Option<Vec<&str>>> {
         let value = if let Some(value) = self.get(field) {
             value
@@ -92,20 +81,7 @@ impl DocumentData {
             return Ok(None);
         };
 
-        let arr = if let Some(value) = value.as_array() {
-            value
-        } else {
-            bail!("Field '{field}' expected to be an array")
-        };
-
-        let arr = arr
-            .iter()
-            .map(|value| {
-                value.as_str().context(anyhow!(
-                    "Field '{field}' expected to be an array of strings"
-                ))
-            })
-            .collect::<Result<Vec<_>>>()?;
+        let arr = parse_string_vec(value)?;
 
         Ok(Some(arr))
     }
@@ -186,6 +162,30 @@ impl TryInto<DocumentData> for Value {
             _ => bail!("failed to convert into DocumentData: Value is not an object"),
         }
     }
+}
+
+pub fn parse_string_vec(value: &Value) -> Result<Vec<&str>> {
+    let arr = if let Some(value) = value.as_array() {
+        value
+    } else {
+        bail!("Value expected to be an array")
+    };
+
+    let arr = arr
+        .iter()
+        .map(|value| {
+            value
+                .as_str()
+                .context(anyhow!("Value expected to be an array of strings"))
+        })
+        .collect::<Result<Vec<_>>>()?;
+
+    Ok(arr)
+}
+
+#[cfg(test)]
+pub fn new_test_data(value: Value) -> DocumentData {
+    value.try_into().expect("must be valid DocumentData")
 }
 
 #[cfg(test)]

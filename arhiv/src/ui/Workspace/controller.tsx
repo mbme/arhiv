@@ -12,8 +12,8 @@ type CardVariant =
       variant: 'catalog';
       query?: string;
       page?: number;
-      showSettings?: boolean;
       documentTypes?: DocumentType[];
+      onlyConflicts?: boolean;
     }
   | {
       variant: 'status';
@@ -51,6 +51,7 @@ export class WorkspaceController {
   readonly $cards = signal<Card[]>([]);
   readonly $showSearchDialog = signal<[boolean, string]>([false, '']);
   readonly $showNewDocumentDialog = signal(false);
+  readonly $showExportKeyDialog = signal(false);
 
   constructor() {
     this.$cards.value = storage.getValue<Card[]>(STORAGE_KEY, []).map((card) => ({
@@ -233,6 +234,14 @@ export class WorkspaceController {
 
   hideNewDocumentDialog() {
     this.$showNewDocumentDialog.value = false;
+  }
+
+  showExportKeyDialog() {
+    this.$showExportKeyDialog.value = true;
+  }
+
+  hideExportKeyDialog() {
+    this.$showExportKeyDialog.value = false;
   }
 
   reload() {

@@ -1,14 +1,18 @@
-use log::LevelFilter;
+use std::panic;
+
+use time::{macros::format_description, UtcOffset};
+use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{
-    fmt::{self, format::FmtSpan, time::ChronoLocal},
+    fmt::{self, format::FmtSpan, time::OffsetTime},
     layer::SubscriberExt,
     util::SubscriberInitExt,
 };
 
-pub use log::{debug, error, info, trace, warn, Level};
+pub use tracing;
+pub use tracing::{debug, error, info, trace, warn, Level};
 
 const DEFAULT_LOG_LEVELS: &str =
-    "hyper=info,h2=info,rustls=info,mdns_sd=info,axum::rejection=trace";
+    "hyper=info,h2=info,rustls=info,axum::rejection=trace,i18n_embed=warn,keyring=info";
 
 #[cfg(target_os = "android")]
 pub fn setup_android_logger(package: &str) {
@@ -26,6 +30,9 @@ pub fn setup_android_logger(_package: &str) {
 }
 
 fn setup_logger_with_level(log_level: LevelFilter) {
+    let offset = UtcOffset::current_local_offset().expect("should get local offset!");
+    let timer = OffsetTime::new(offset, format_description!("[month repr:short] [day padding:zero] [year] [hour padding:zero]:[minute padding:zero]:[second padding:zero]"));
+
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -34,7 +41,7 @@ fn setup_logger_with_level(log_level: LevelFilter) {
         .with(
             fmt::Layer::new()
                 .compact()
-                .with_timer(ChronoLocal::new("[%Y-%m-%d][%H:%M:%S]".to_string()))
+                .with_timer(timer)
                 .with_span_events(FmtSpan::CLOSE)
                 .with_writer(std::io::stderr),
         )
@@ -42,21 +49,39 @@ fn setup_logger_with_level(log_level: LevelFilter) {
 }
 
 pub fn setup_error_logger() {
-    setup_logger_with_level(LevelFilter::Error);
+    setup_logger_with_level(LevelFilter::ERROR);
 }
 
 pub fn setup_warn_logger() {
-    setup_logger_with_level(LevelFilter::Warn);
+    setup_logger_with_level(LevelFilter::WARN);
 }
 
 pub fn setup_logger() {
-    setup_logger_with_level(LevelFilter::Info);
+    setup_logger_with_level(LevelFilter::INFO);
 }
 
 pub fn setup_debug_logger() {
-    setup_logger_with_level(LevelFilter::Debug);
+    setup_logger_with_level(LevelFilter::DEBUG);
 }
 
 pub fn setup_trace_logger() {
-    setup_logger_with_level(LevelFilter::Trace);
+    setup_logger_with_level(LevelFilter::TRACE);
+}
+
+pub fn setup_panic_hook() {
+    panic::set_hook(Box::new(|panic_info| {
+        if let Some(location) = panic_info.location() {
+            error!(
+                "Panic occurred: {} at {}:{}",
+                panic_info
+                    .payload()
+                    .downcast_ref::<&str>()
+                    .unwrap_or(&"Unknown"),
+                location.file(),
+                location.line(),
+            );
+        } else {
+            error!("Panic occurred: {}", panic_info);
+        }
+    }));
 }

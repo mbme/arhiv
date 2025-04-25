@@ -1,52 +1,43 @@
 use std::str::FromStr;
 
-use anyhow::Context;
 use axum::{
     extract::Path,
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
-use axum_extra::{
-    headers::{self, HeaderMapExt},
-    TypedHeader,
-};
-use rust_embed::RustEmbed;
+use axum_extra::headers::{self, HeaderMapExt};
 
-use rs_utils::{bytes_to_hex_string, get_mime_from_path, http_server::ServerError};
+use rs_utils::{get_mime_from_path, http_server::ServerError};
 
-#[derive(RustEmbed)]
-#[folder = "$CARGO_MANIFEST_DIR/public"]
-struct PublicAssets;
+#[cfg(any(feature = "embed-public", not(debug_assertions)))]
+fn get_public_file(rel_file_path: &str) -> Option<&'static [u8]> {
+    use include_dir::{include_dir, Dir};
 
-pub async fn public_assets_handler(
-    Path(asset): Path<String>,
-    if_none_match: Option<TypedHeader<headers::IfNoneMatch>>,
-) -> Result<Response, ServerError> {
-    let embedded_file = {
-        if let Some(data) = PublicAssets::get(&asset) {
-            data
-        } else {
-            return Ok(StatusCode::NOT_FOUND.into_response());
-        }
+    static PUBLIC_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/public");
+
+    let file = PUBLIC_DIR.get_file(rel_file_path)?;
+
+    Some(file.contents())
+}
+
+#[cfg(all(not(feature = "embed-public"), debug_assertions))]
+fn get_public_file(rel_file_path: &str) -> Option<Vec<u8>> {
+    let path = format!("{}/public/{}", env!("CARGO_MANIFEST_DIR"), rel_file_path);
+
+    std::fs::read(path).ok()
+}
+
+pub async fn public_assets_handler(Path(asset): Path<String>) -> Result<Response, ServerError> {
+    let data = if let Some(data) = get_public_file(&asset) {
+        data
+    } else {
+        return Ok(StatusCode::NOT_FOUND.into_response());
     };
-
-    let hash = embedded_file.metadata.sha256_hash();
-    let hash = bytes_to_hex_string(&hash);
-
-    let etag = headers::ETag::from_str(&format!("\"{hash}\"")).context("failed to parse ETag")?;
-
-    if let Some(if_none_match) = if_none_match {
-        // TODO ensure it works
-        if !if_none_match.precondition_passes(&etag) {
-            return Ok(StatusCode::NOT_MODIFIED.into_response());
-        }
-    }
 
     let mime = get_mime_from_path(asset);
 
     let mut headers = HeaderMap::new();
-    headers.typed_insert(etag);
     headers.typed_insert(headers::ContentType::from_str(&mime)?);
 
-    Ok((StatusCode::OK, headers, embedded_file.data).into_response())
+    Ok((StatusCode::OK, headers, data).into_response())
 }

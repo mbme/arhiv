@@ -23,6 +23,7 @@ import { Button, IconButton } from 'components/Button';
 import { Spoiler } from 'components/Spoiler';
 import { Icon } from 'components/Icon';
 import { DocumentTitle } from './DocumentTitle';
+import { CONFLICT_INDICATOR } from './ConflictIndicator';
 
 type TaskItemProps = {
   id: DocumentId;
@@ -196,7 +197,12 @@ export function ProjectCard({
 
   return (
     <CardContainer
-      leftToolbar={<DropdownMenu icon="dots-horizontal" align="bottom-left" options={options} />}
+      leftToolbar={
+        <>
+          <DropdownMenu icon="dots-horizontal" align="bottom-left" options={options} />
+          {document.hasConflict && CONFLICT_INDICATOR}
+        </>
+      }
       title={<DocumentTitle documentType={document.documentType} title={document.title} />}
       showTitleOnScroll
       rightToolbar={

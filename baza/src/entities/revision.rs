@@ -1,3 +1,4 @@
+use core::fmt;
 use std::{
     cmp::Ordering,
     collections::{BTreeMap, HashSet},
@@ -10,7 +11,7 @@ use serde_json::Value;
 use super::instance_id::InstanceId;
 
 #[allow(clippy::derived_hash_with_manual_eq)]
-#[derive(Serialize, Deserialize, Hash, Clone, Debug, Eq)]
+#[derive(Serialize, Deserialize, Hash, Clone, Eq)]
 pub struct Revision(BTreeMap<InstanceId, u32>);
 
 #[derive(Debug, PartialEq)]
@@ -163,7 +164,7 @@ impl Revision {
         }
     }
 
-    pub fn to_file_name(&self) -> String {
+    pub fn to_safe_string(&self) -> String {
         let mut items: Vec<_> = self
             .0
             .iter()
@@ -175,7 +176,7 @@ impl Revision {
         items.join("-")
     }
 
-    pub fn from_file_name(value: &str) -> Result<Self> {
+    pub fn from_safe_string(value: &str) -> Result<Self> {
         if value.trim().is_empty() {
             return Ok(Revision::initial());
         }
@@ -202,7 +203,7 @@ impl Revision {
                 Ok((id, version))
             })
             .collect::<Result<_>>()
-            .context(anyhow!("Failed to parse revision from file name {value}"))?;
+            .context(anyhow!("Failed to parse revision from safe string {value}"))?;
 
         Ok(Revision(map))
     }
@@ -238,32 +239,6 @@ impl Revision {
     }
 
     #[must_use]
-    pub fn get_latest_rev<'r>(revs: &[&'r Revision]) -> HashSet<&'r Revision> {
-        revs.iter().fold(HashSet::new(), |mut acc, rev| {
-            if acc.is_empty() {
-                acc.insert(rev);
-
-                return acc;
-            }
-
-            let max_rev = acc.iter().next().expect("acc isn't empty");
-
-            if rev > max_rev {
-                acc.clear();
-                acc.insert(rev);
-
-                return acc;
-            }
-
-            if rev.is_concurrent_or_equal(max_rev) {
-                acc.insert(rev);
-            }
-
-            acc
-        })
-    }
-
-    #[must_use]
     pub fn compute_next_rev<'r>(
         revs: impl Iterator<Item = &'r Revision>,
         for_instance: &InstanceId,
@@ -273,6 +248,35 @@ impl Revision {
         max_rev.inc(for_instance);
 
         max_rev
+    }
+
+    /// base rev is max rev from all_revs that's < than each of revs
+    pub fn find_base_rev<'r>(
+        revs: &HashSet<&'r Revision>,
+        all_revs: impl Iterator<Item = &'r Revision>,
+    ) -> Option<&'r Revision> {
+        let mut base_rev = None;
+
+        for rev in all_revs {
+            let could_be_base_rev = revs.iter().all(|item| rev.is_older_than(item));
+
+            if !could_be_base_rev {
+                continue;
+            }
+
+            match base_rev {
+                Some(current_base_rev) => {
+                    if rev > current_base_rev {
+                        base_rev = Some(rev);
+                    }
+                }
+                None => {
+                    base_rev = Some(rev);
+                }
+            }
+        }
+
+        base_rev
     }
 }
 
@@ -310,6 +314,12 @@ impl Default for &Revision {
     }
 }
 
+impl fmt::Debug for Revision {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "<rev: {}>", self.to_safe_string())
+    }
+}
+
 pub struct LatestRevComputer<'r>(HashSet<&'r Revision>);
 
 impl LatestRevComputer<'_> {
@@ -330,16 +340,20 @@ impl Default for LatestRevComputer<'_> {
 impl<'r> LatestRevComputer<'r> {
     pub fn update(&mut self, new_revs: impl IntoIterator<Item = &'r Revision>) {
         for new_rev in new_revs.into_iter() {
-            let latest_rev = self.0.iter().next().expect("latest revs must not be empty");
-
-            if latest_rev > &new_rev {
+            // skip new_rev if any existing rev is newer
+            if self
+                .0
+                .iter()
+                .any(|&rev| rev.compare_vector_clocks(new_rev) == VectorClockOrder::After)
+            {
                 continue;
             }
 
-            if latest_rev < &new_rev {
-                self.0.clear();
-            }
+            // remove all existing revs older than new_rev
+            self.0
+                .retain(|&rev| rev.compare_vector_clocks(new_rev) != VectorClockOrder::Before);
 
+            // insert new_rev if no equal rev exists
             self.0.insert(new_rev);
         }
     }
@@ -365,7 +379,7 @@ mod tests {
     fn test_revision_inc() -> Result<()> {
         {
             let mut rev = Revision::from_value(json!({}))?;
-            let instance_id = InstanceId::from_string("a");
+            let instance_id = InstanceId::from_string("a").unwrap();
 
             rev.inc(&instance_id);
 
@@ -374,7 +388,7 @@ mod tests {
 
         {
             let mut rev = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
-            let instance_id = InstanceId::from_string("a");
+            let instance_id = InstanceId::from_string("a").unwrap();
 
             rev.inc(&instance_id);
 
@@ -531,33 +545,6 @@ mod tests {
     }
 
     #[test]
-    fn test_revision_get_latest_rev() -> Result<()> {
-        let rev1 = Revision::from_value(json!({ "a": 1, "b": 1 }))?;
-        let rev2 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
-        let rev3 = Revision::from_value(json!({ "a": 2, "b": 1 }))?;
-
-        {
-            let refs = vec![&rev1, &rev2, &rev3];
-
-            assert_eq!(
-                Revision::get_latest_rev(refs.as_slice()),
-                vec![&rev2, &rev3].into_iter().collect(),
-            );
-        }
-
-        {
-            let refs = vec![&rev1, &rev3];
-
-            assert_eq!(
-                Revision::get_latest_rev(refs.as_slice()),
-                vec![&rev3].into_iter().collect()
-            );
-        }
-
-        Ok(())
-    }
-
-    #[test]
     fn test_revision_compute_next_rev() -> Result<()> {
         let rev1 = Revision::from_value(json!({ "a": 1, "b": 1 }))?;
         let rev2 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
@@ -567,7 +554,7 @@ mod tests {
             let refs = [rev1.clone(), rev2.clone(), rev3.clone()];
 
             assert_eq!(
-                Revision::compute_next_rev(refs.iter(), &InstanceId::from_string("a")),
+                Revision::compute_next_rev(refs.iter(), &InstanceId::from_string("a").unwrap()),
                 Revision::from_value(json!({ "a": 3, "b": 2 }))?
             );
         }
@@ -576,7 +563,7 @@ mod tests {
             let refs = [rev1.clone(), rev2.clone(), rev3.clone()];
 
             assert_eq!(
-                Revision::compute_next_rev(refs.iter(), &InstanceId::from_string("c")),
+                Revision::compute_next_rev(refs.iter(), &InstanceId::from_string("c").unwrap()),
                 Revision::from_value(json!({ "a": 2, "b": 2, "c": 1 }))?
             );
         }
@@ -587,7 +574,7 @@ mod tests {
             let refs = [rev1.clone(), rev2.clone(), rev3.clone(), rev4.clone()];
 
             assert_eq!(
-                Revision::compute_next_rev(refs.iter(), &InstanceId::from_string("c")),
+                Revision::compute_next_rev(refs.iter(), &InstanceId::from_string("c").unwrap()),
                 Revision::from_value(json!({ "a": 2, "b": 2, "c": 3 }))?
             );
         }
@@ -596,28 +583,28 @@ mod tests {
     }
 
     #[test]
-    fn test_revision_to_file_name() -> Result<()> {
+    fn test_revision_to_safe_string() -> Result<()> {
         {
             let rev1 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
             let rev2 = Revision::from_value(json!({ "b": 2, "a": 1 }))?;
 
-            assert_eq!(Revision::from_file_name(&rev1.to_file_name())?, rev1);
-            assert_eq!(Revision::from_file_name(&rev2.to_file_name())?, rev2);
+            assert_eq!(Revision::from_safe_string(&rev1.to_safe_string())?, rev1);
+            assert_eq!(Revision::from_safe_string(&rev2.to_safe_string())?, rev2);
         }
 
         Ok(())
     }
 
     #[test]
-    fn test_revision_from_file_name() -> Result<()> {
+    fn test_revision_from_safe_string() -> Result<()> {
         {
             let rev0 = Revision::initial();
             let rev1 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
             let rev2 = Revision::from_value(json!({ "b": 2, "a": 1 }))?;
 
-            assert_eq!(Revision::from_file_name(&rev0.to_file_name())?, rev0);
-            assert_eq!(Revision::from_file_name(&rev1.to_file_name())?, rev1);
-            assert_eq!(Revision::from_file_name(&rev2.to_file_name())?, rev2);
+            assert_eq!(Revision::from_safe_string(&rev0.to_safe_string())?, rev0);
+            assert_eq!(Revision::from_safe_string(&rev1.to_safe_string())?, rev1);
+            assert_eq!(Revision::from_safe_string(&rev2.to_safe_string())?, rev2);
         }
 
         Ok(())
@@ -648,6 +635,34 @@ mod tests {
             );
         }
 
+        // keep only latest revision of each conflicting branch
+        {
+            let rev1 = Revision::from_value(json!({ "a": 1 })).unwrap();
+            let rev2 = Revision::from_value(json!({ "b": 1 })).unwrap();
+            let rev3 = Revision::from_value(json!({ "b": 2 })).unwrap();
+
+            {
+                let mut latest_rev_computer = LatestRevComputer::new();
+                latest_rev_computer.update([&rev1, &rev2, &rev3]);
+
+                assert_eq!(
+                    latest_rev_computer.get(),
+                    HashSet::from_iter([&rev1, &rev3])
+                );
+            }
+
+            // different order
+            {
+                let mut latest_rev_computer = LatestRevComputer::new();
+                latest_rev_computer.update([&rev3, &rev1, &rev2]);
+
+                assert_eq!(
+                    latest_rev_computer.get(),
+                    HashSet::from_iter([&rev1, &rev3])
+                );
+            }
+        }
+
         {
             let rev1 = Revision::from_value(json!({ "a": 1 })).unwrap();
             let rev2 = Revision::from_value(json!({ "b": 1 })).unwrap();
@@ -658,5 +673,25 @@ mod tests {
 
             assert_eq!(latest_rev_computer.get(), HashSet::from_iter([&rev3]));
         }
+    }
+
+    #[test]
+    fn test_find_base_rev() {
+        let rev1 = Revision::from_value(json!({ "a": 1 })).unwrap();
+        let rev2 = Revision::from_value(json!({ "a": 1, "b": 1 })).unwrap();
+        let rev3 = Revision::from_value(json!({ "a": 2, "b": 1 })).unwrap();
+        let rev4 = Revision::from_value(json!({ "a": 1, "b": 2 })).unwrap();
+        let rev5 = Revision::from_value(json!({ "a": 1, "b": 3 })).unwrap();
+
+        let all_revs: HashSet<&Revision> = HashSet::from_iter([&rev1, &rev2, &rev3, &rev4, &rev5]);
+
+        let mut latest_rev_computer = LatestRevComputer::new();
+        latest_rev_computer.update(all_revs.iter().copied());
+
+        let latest_revs = latest_rev_computer.get();
+
+        let base_rev = Revision::find_base_rev(&latest_revs, all_revs.iter().copied());
+
+        assert_eq!(base_rev, Some(&rev2));
     }
 }

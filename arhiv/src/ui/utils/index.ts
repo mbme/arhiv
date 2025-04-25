@@ -169,7 +169,7 @@ export const throttle = <Args extends any[], F extends (...args: Args) => void>(
   return throttled as F;
 };
 
-// FIXME improve types, handle multiple fields
+// TODO improve types, handle multiple fields
 export function formDataToObject(fd: FormData): Record<string, string | undefined> {
   const result: Record<string, string> = {};
 
@@ -274,11 +274,19 @@ export function fileAsBase64(file: File) {
   });
 }
 
-export function toSorted<T>(items: T[], compareFn?: (a: T, b: T) => number): T[] {
+export function toSorted<T>(items: readonly T[], compareFn?: (a: T, b: T) => number): T[] {
   const clone = [...items];
   clone.sort(compareFn);
 
   return clone;
+}
+
+export function withoutItem<T>(items: readonly T[], value: T): T[] {
+  return items.filter((item) => item !== value);
+}
+
+export function withItem<T>(items: readonly T[], value: T): T[] {
+  return [...items, value];
 }
 
 export function isDefined<T>(value: T | null | undefined): value is T {

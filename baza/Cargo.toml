@@ -1,7 +1,7 @@
 [package]
 name = "baza"
 version = "0.0.0"
-edition = "2021"
+edition = "2024"
 authors = ["mbme"]
 publish = false
 
@@ -16,28 +16,19 @@ production-mode = []
 
 [dependencies]
 anyhow.workspace = true
-tracing.workspace = true
 
 serde.workspace = true
 serde_json.workspace = true
 
-futures.workspace = true
 tokio.workspace = true
-
-aho-corasick = "1.1.0"
 
 pulldown-cmark = { version = "0.13", default-features = false, features = ["simd", "serde"] }
 
-tinytemplate = "1"
+postcard = { version = "1",  default-features = false, features = ["use-std"] }
 
-rusqlite = { version = "0.33", features = ["chrono", "serde_json", "functions", "collation", "bundled"] }
+ordermap.workspace = true
 
 thiserror = "2" # macro for better errors
-
-reqwest.workspace = true
-axum.workspace = true
-axum-extra.workspace = true
-ordermap.workspace = true
 
 rs-utils = { path = "../rs-utils" }
 

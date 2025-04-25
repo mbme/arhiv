@@ -1,15 +1,5 @@
-import {
-  app,
-  Tray,
-  Menu,
-  nativeImage,
-  BrowserWindow,
-  session,
-  Notification,
-  shell,
-} from 'electron';
-import { ExtendedServerInfo, getServerInfo, startServer, waitForServer } from './arhiv';
-import favicon from '../../resources/favicon-16x16.png';
+import { app, BrowserWindow, session, Notification, shell } from 'electron';
+import { ExtendedServerInfo, startServer } from './arhiv';
 
 export type Action = { type: 'open'; documentId?: string } | { type: 'search'; query: string };
 
@@ -31,32 +21,6 @@ function parseAction(args: string[]): Action | undefined {
 }
 
 let win: BrowserWindow | undefined;
-let tray: Tray | undefined;
-
-function showTrayIcon(serverInfo: ExtendedServerInfo) {
-  const icon = nativeImage.createFromDataURL(favicon);
-  tray = new Tray(icon);
-
-  const contextMenu = Menu.buildFromTemplate([
-    { label: 'Open', type: 'normal', click: () => void handleAction({ type: 'open' }, serverInfo) },
-    {
-      label: 'Search',
-      type: 'normal',
-      click: () => void handleAction({ type: 'search', query: '' }, serverInfo),
-    },
-    { type: 'separator' },
-    {
-      label: 'Quit',
-      type: 'normal',
-      click: () => {
-        app.quit();
-      },
-    },
-  ]);
-
-  tray.setToolTip('Arhiv Desktop App');
-  tray.setContextMenu(contextMenu);
-}
 
 async function handleAction(action: Action, serverInfo: ExtendedServerInfo) {
   console.log('Handling action', action);
@@ -102,7 +66,7 @@ async function handleAction(action: Action, serverInfo: ExtendedServerInfo) {
       sameSite: 'strict',
     });
 
-    await win.loadURL(`${serverInfo.uiUrl}?AuthToken=${serverInfo.authToken}`).catch(() => {
+    await win.loadURL(serverInfo.uiUrl).catch(() => {
       console.error('failed to open Arhiv');
     });
   }
@@ -140,19 +104,16 @@ async function start(args: string[]) {
     return;
   }
 
-  if (args.includes('--start-server')) {
-    startServer(() => {
-      app.quit();
-    });
-
-    await waitForServer();
+  let serverInfo: ExtendedServerInfo;
+  try {
+    serverInfo = await startServer();
+  } catch (e) {
+    console.error('Failed to start server', e);
+    app.quit();
+    return;
   }
 
-  const serverInfo = await getServerInfo();
-  if (!serverInfo) {
-    throw new Error("arhiv server isn't running");
-  }
-  console.log('server base url:', serverInfo.uiUrl);
+  console.log('Arhiv server base url:', serverInfo.uiUrl);
 
   app.on('second-instance', (_event, _commandLine, _workingDirectory, additionalData) => {
     const actionFromSecondInstance = additionalData as Action | undefined;
@@ -181,21 +142,12 @@ async function start(args: string[]) {
   // needed to prevent quiting the app when last window is closed
   app.on('window-all-closed', () => {
     console.log('last window closed');
-    if (!tray) {
-      app.quit();
-    }
+    app.quit();
   });
 
   await app.whenReady();
 
-  if (args.includes('--tray')) {
-    showTrayIcon(serverInfo);
-    if (action) {
-      await handleAction(action, serverInfo);
-    }
-  } else {
-    await handleAction(action ?? DEFAULT_ACTION, serverInfo);
-  }
+  await handleAction(action ?? DEFAULT_ACTION, serverInfo);
 }
 
 const args = process.argv.slice(2);

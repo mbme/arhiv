@@ -1,10 +1,11 @@
-use std::sync::LazyLock;
+use std::{io::Read, sync::LazyLock};
 
 use anyhow::{bail, ensure, Context, Result};
 use axum::{
     body::Body,
     response::{IntoResponse, Response},
 };
+use futures::StreamExt;
 use regex::Regex;
 use tokio::{
     fs as tokio_fs,
@@ -12,6 +13,12 @@ use tokio::{
 };
 use tokio_util::codec::{BytesCodec, FramedRead};
 use url::Url;
+
+use crate::{is_image_path, reader_to_stream};
+
+pub fn parse_url(url: &str) -> Result<Url> {
+    Url::parse(url).context("Failed to parse url")
+}
 
 #[must_use]
 pub fn extract_file_name_from_url(url: &Url) -> String {
@@ -28,8 +35,14 @@ pub fn extract_file_name_from_url(url: &Url) -> String {
     file_name
 }
 
-pub fn is_http_url(s: &str) -> bool {
-    Url::parse(s).is_ok_and(|value| value.scheme() == "http" || value.scheme() == "https")
+pub fn is_http_url(url: &Url) -> bool {
+    url.scheme() == "http" || url.scheme() == "https"
+}
+
+pub fn is_image_url(url: &Url) -> bool {
+    let file_name = extract_file_name_from_url(url);
+
+    is_image_path(file_name)
 }
 
 pub fn parse_content_disposition_header(header: &str) -> Result<Option<String>> {
@@ -196,6 +209,23 @@ pub async fn create_body_from_file(
     Ok(body)
 }
 
+pub async fn create_body_from_reader<R: Read + Send + 'static>(
+    reader: R,
+    limit: Option<u64>,
+) -> Result<Body> {
+    let s = reader_to_stream(reader, 1024 * 1024);
+
+    let body = if let Some(limit) = limit {
+        let s = s.take(limit as usize);
+
+        Body::from_stream(s)
+    } else {
+        Body::from_stream(s)
+    };
+
+    Ok(body)
+}
+
 #[cfg(test)]
 mod tests {
     use std::fs;
@@ -219,6 +249,10 @@ mod tests {
         assert_eq!(
             extract_file_name_from_url(&Url::parse("http://test.com/").unwrap()),
             "unknown"
+        );
+        assert_eq!(
+            extract_file_name_from_url(&Url::parse("http://test.com/image.png?test=123").unwrap()),
+            "image.png"
         );
     }
 

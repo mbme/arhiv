@@ -8,7 +8,7 @@ use std::{
 
 use anyhow::{bail, ensure, Context, Result};
 
-use crate::{bytes_to_hex_string, get_file_hash_sha256, get_string_hash_sha256};
+use crate::{bytes_to_hex_string, get_file_hash_sha256, get_string_hash_sha256, log, Timestamp};
 
 pub fn path_exists(path: impl AsRef<str>) -> bool {
     fs::metadata(path.as_ref()).is_ok()
@@ -109,6 +109,16 @@ pub fn set_file_size(path: &str, size: u64) -> Result<()> {
     Ok(())
 }
 
+pub fn get_file_modification_time(path: &str) -> Result<Timestamp> {
+    let metadata = fs::metadata(path).expect("Failed to get metadata");
+
+    let modified_time = metadata
+        .modified()
+        .expect("Failed to get modification time");
+
+    Ok(modified_time.into())
+}
+
 #[must_use]
 pub fn format_bytes(bytes: u64) -> String {
     const KB: u64 = 1024;
@@ -145,30 +155,25 @@ pub fn remove_file_extension(path: &str) -> Result<String> {
 }
 
 #[must_use]
-pub fn get_home_dir() -> Option<String> {
+pub fn get_linux_home_dir() -> Option<String> {
     env::var_os("HOME").map(|path| {
         path.into_string()
             .expect("HOME env var must be a valid string")
     })
 }
 
-/// `$XDG_CONFIG_HOME` or `$HOME/.config`
+/// `$XDG_DATA_HOME` or `$HOME/.local/share`
 #[must_use]
-pub fn get_config_home() -> Option<String> {
-    if let Some(path) = env::var_os("XDG_CONFIG_HOME") {
+pub fn get_linux_data_home() -> Option<String> {
+    if let Some(path) = env::var_os("XDG_DATA_HOME") {
         return path
             .into_string()
-            .expect("XDG_CONFIG_HOME env var must be a valid string")
+            .expect("XDG_DATA_HOME env var must be a valid string")
             .into();
     }
 
-    if let Some(path) = env::var_os("HOME") {
-        return format!(
-            "{}/.config",
-            path.into_string()
-                .expect("HOME env var must be a valid string")
-        )
-        .into();
+    if let Some(home_dir) = get_linux_home_dir() {
+        return format!("{home_dir}/.local/share").into();
     }
 
     None
@@ -176,7 +181,7 @@ pub fn get_config_home() -> Option<String> {
 
 /// `$XDG_DOWNLOAD_DIR` or `$HOME/Downloads`
 #[must_use]
-pub fn get_downloads_dir() -> Option<String> {
+pub fn get_linux_downloads_dir() -> Option<String> {
     if let Some(path) = env::var_os("XDG_DOWNLOAD_DIR") {
         return path
             .into_string()
@@ -240,8 +245,6 @@ pub fn move_file(src: impl AsRef<str>, dest: impl AsRef<str>) -> Result<()> {
     // if error is due to src and dest being on different file systems
     // then copy src into dest, and remove src
 
-    // FIXME check number of written bytes
-    // FIXME add sync_all() where apropriate
     fs::copy(src, dest).context("failed to copy file data")?;
 
     if let Err(err) = fs::remove_file(src) {
@@ -415,7 +418,7 @@ pub fn create_file_reader(file_path: &str) -> Result<BufReader<File>> {
     Ok(data_reader)
 }
 
-pub fn create_file_writer(file_path: &str, overwrite: bool) -> Result<impl Write> {
+pub fn create_file_writer(file_path: &str, overwrite: bool) -> Result<impl Write + use<>> {
     if !overwrite && file_exists(file_path)? {
         bail!("File {file_path} already exists");
     }

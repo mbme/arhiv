@@ -398,3 +398,19 @@ export function useClipboardPasteHandler(handler: (data: DataTransfer) => Promis
     };
   }, [handlerRef]);
 }
+
+export function useBlobUrl(text: string, mimeType: string): string | undefined {
+  const [blobUrl, setBlobUrl] = useState<string>();
+
+  useEffect(() => {
+    const blob = new Blob([text], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    setBlobUrl(url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [text, mimeType]);
+
+  return blobUrl;
+}

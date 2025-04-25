@@ -1,10 +1,11 @@
 use std::{
-    io::{self, BufRead, Read, Seek, SeekFrom, Write},
+    io::{self, BufRead, BufReader, Read, Seek, SeekFrom, Write},
     iter,
     str::FromStr,
 };
 
 use age::{
+    armor::{ArmoredReader, ArmoredWriter, Format},
     scrypt,
     secrecy::{ExposeSecret, SecretString},
     stream::{StreamReader, StreamWriter},
@@ -12,13 +13,13 @@ use age::{
 };
 use anyhow::{anyhow, ensure, Context, Result};
 
-use crate::{create_file_reader, create_file_writer};
+use crate::{create_file_reader, create_file_writer, log, read_all};
 
 use super::SecretBytes;
 
 #[derive(Clone)]
 pub enum AgeKey {
-    Password(SecretString),
+    Password(SecretString, Option<u8>),
     Key(x25519::Identity),
 }
 
@@ -32,7 +33,15 @@ impl AgeKey {
             Self::MIN_PASSWORD_LEN
         );
 
-        Ok(AgeKey::Password(password))
+        Ok(AgeKey::Password(password, None))
+    }
+
+    pub fn test_mode(&mut self) {
+        log::error!("TEST MODE ENABLED FOR PASSWORD-BASED AGE KEY");
+
+        if let AgeKey::Password(_, work_factor) = self {
+            *work_factor = Some(1);
+        }
     }
 
     pub fn from_age_x25519_key(key: SecretString) -> Result<Self> {
@@ -50,29 +59,21 @@ impl AgeKey {
 
     pub fn serialize(&self) -> SecretString {
         match self {
-            AgeKey::Password(password) => password.clone(),
+            AgeKey::Password(password, _) => password.clone(),
             AgeKey::Key(identity) => identity.to_string(),
         }
     }
 
     fn into_identity(self) -> Box<dyn Identity> {
         match self {
-            AgeKey::Password(password) => {
-                #[cfg(test)]
-                {
-                    let mut identity = scrypt::Identity::new(password);
+            AgeKey::Password(password, max_work_factor) => {
+                let mut identity = scrypt::Identity::new(password);
 
-                    identity.set_max_work_factor(1);
-
-                    Box::new(identity)
+                if let Some(max_work_factor) = max_work_factor {
+                    identity.set_max_work_factor(max_work_factor);
                 }
 
-                #[cfg(not(test))]
-                {
-                    let identity = scrypt::Identity::new(password);
-
-                    Box::new(identity)
-                }
+                Box::new(identity)
             }
             AgeKey::Key(identity) => Box::new(identity),
         }
@@ -80,21 +81,14 @@ impl AgeKey {
 
     fn into_recipient(self) -> Box<dyn Recipient> {
         match self {
-            AgeKey::Password(password) => {
-                #[cfg(test)]
-                {
-                    let mut recipient = scrypt::Recipient::new(password);
-                    recipient.set_work_factor(1);
+            AgeKey::Password(password, work_factor) => {
+                let mut recipient = scrypt::Recipient::new(password);
 
-                    Box::new(recipient)
+                if let Some(work_factor) = work_factor {
+                    recipient.set_work_factor(work_factor);
                 }
 
-                #[cfg(not(test))]
-                {
-                    let recipient = scrypt::Recipient::new(password);
-
-                    Box::new(recipient)
-                }
+                Box::new(recipient)
             }
             AgeKey::Key(identity) => Box::new(identity.to_public()),
         }
@@ -110,6 +104,12 @@ impl<R: Read> AgeReader<R> {
         let decryptor = Decryptor::new(reader)?;
 
         Self::create(decryptor, key)
+    }
+
+    pub fn new_armored(reader: R, key: AgeKey) -> Result<AgeReader<ArmoredReader<BufReader<R>>>> {
+        let decryptor = Decryptor::new(ArmoredReader::new(reader))?;
+
+        AgeReader::create(decryptor, key)
     }
 
     fn create(decryptor: Decryptor<R>, key: AgeKey) -> Result<Self> {
@@ -142,11 +142,28 @@ impl<R: Read + Seek> Seek for AgeReader<R> {
 }
 
 pub struct AgeWriter<W: Write> {
-    inner: StreamWriter<W>,
+    inner: StreamWriter<ArmoredWriter<W>>,
 }
 
 impl<W: Write> AgeWriter<W> {
     pub fn new(writer: W, key: AgeKey) -> Result<Self> {
+        AgeWriter::create(writer, key, false)
+    }
+
+    pub fn new_armored(writer: W, key: AgeKey) -> Result<Self> {
+        AgeWriter::create(writer, key, true)
+    }
+
+    fn create(writer: W, key: AgeKey, armored: bool) -> Result<Self> {
+        let writer = ArmoredWriter::wrap_output(
+            writer,
+            if armored {
+                Format::AsciiArmor
+            } else {
+                Format::Binary
+            },
+        )?;
+
         let encryptor = Encryptor::with_recipients(iter::once(key.into_recipient().as_ref()))?;
 
         let inner = encryptor.wrap_output(writer)?;
@@ -155,10 +172,11 @@ impl<W: Write> AgeWriter<W> {
     }
 
     pub fn finish(self) -> Result<W> {
-        let mut writer = self.inner.finish()?;
-        writer.flush()?;
+        let armored_writer = self.inner.finish()?;
 
-        Ok(writer)
+        let inner_writer = armored_writer.finish()?;
+
+        Ok(inner_writer)
     }
 }
 
@@ -172,27 +190,55 @@ impl<W: Write> Write for AgeWriter<W> {
     }
 }
 
-pub fn read_and_decrypt_file(file_path: &str, key: AgeKey) -> Result<SecretBytes> {
+pub fn read_and_decrypt_file(file_path: &str, key: AgeKey, armored: bool) -> Result<SecretBytes> {
     let reader = create_file_reader(file_path)?;
-    let mut age_reader = AgeReader::new_buffered(reader, key)?;
 
-    let mut data = Vec::new();
-    age_reader.read_to_end(&mut data)?;
+    read_and_decrypt(reader, key, armored)
+}
+
+pub fn read_and_decrypt(reader: impl BufRead, key: AgeKey, armored: bool) -> Result<SecretBytes> {
+    let data = if armored {
+        let age_reader = AgeReader::new_armored(reader, key)?;
+
+        read_all(age_reader)?
+    } else {
+        let age_reader = AgeReader::new_buffered(reader, key)?;
+
+        read_all(age_reader)?
+    };
 
     let data = SecretBytes::new(data);
 
     Ok(data)
 }
 
-pub fn encrypt_and_write_file(file_path: &str, key: AgeKey, data: SecretBytes) -> Result<()> {
+pub fn encrypt_and_write_file(
+    file_path: &str,
+    key: AgeKey,
+    data: &[u8],
+    armored: bool,
+) -> Result<()> {
     let writer = create_file_writer(file_path, false)?;
 
-    let mut age_writer = AgeWriter::new(writer, key)?;
-
-    age_writer.write_all(data.expose_secret())?;
-    age_writer.finish()?;
+    encrypt_and_write(writer, key, data, armored)?;
 
     Ok(())
+}
+
+pub fn encrypt_and_write<W: Write>(
+    writer: W,
+    key: AgeKey,
+    data: &[u8],
+    armored: bool,
+) -> Result<W> {
+    let mut age_writer = if armored {
+        AgeWriter::new_armored(writer, key)?
+    } else {
+        AgeWriter::new(writer, key)?
+    };
+
+    age_writer.write_all(data)?;
+    age_writer.finish()
 }
 
 #[cfg(test)]
@@ -224,9 +270,30 @@ mod tests {
     }
 
     #[test]
+    fn test_write_read_armored() {
+        let data = generate_alpanumeric_string(100 * 1024);
+        let key = AgeKey::generate_age_x25519_key();
+
+        let encrypted = {
+            let mut writer = AgeWriter::new_armored(Vec::new(), key.clone()).unwrap();
+            writer.write_all(data.as_bytes()).unwrap();
+            writer.finish().unwrap()
+        };
+
+        let decrypted = {
+            let reader = AgeReader::new_armored(Cursor::new(encrypted), key).unwrap();
+
+            read_all_as_string(reader).unwrap()
+        };
+
+        assert_eq!(decrypted, data);
+    }
+
+    #[test]
     fn test_write_read_with_password() {
         let data = generate_alpanumeric_string(100 * 1024);
-        let key = AgeKey::from_password("test1234".into()).unwrap();
+        let mut key = AgeKey::from_password("test1234".into()).unwrap();
+        key.test_mode();
 
         let encrypted = {
             let mut writer = AgeWriter::new(Vec::new(), key.clone()).unwrap();
@@ -258,10 +325,7 @@ mod tests {
             let mut reader = AgeReader::new(Cursor::new(encrypted), key).unwrap();
             reader.seek(SeekFrom::Start(50)).unwrap();
 
-            let mut decrypted = Vec::new();
-            reader.read_to_end(&mut decrypted).unwrap();
-
-            decrypted
+            read_all(reader).unwrap()
         };
 
         assert_eq!(&decrypted, &data.as_bytes()[50..]);

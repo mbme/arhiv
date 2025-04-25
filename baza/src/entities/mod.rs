@@ -1,5 +1,3 @@
-mod blob;
-mod blob_id;
 mod document;
 mod document_data;
 mod document_key;
@@ -10,10 +8,8 @@ mod instance_id;
 mod refs;
 mod revision;
 
-pub use blob::BLOB;
-pub use blob_id::BLOBId;
 pub use document::Document;
-pub use document_data::DocumentData;
+pub use document_data::{parse_string_vec, DocumentData};
 pub use document_key::DocumentKey;
 pub use document_lock::{DocumentLock, DocumentLockKey};
 pub use document_type::{DocumentType, ERASED_DOCUMENT_TYPE};
@@ -21,3 +17,8 @@ pub use id::Id;
 pub use instance_id::InstanceId;
 pub use refs::Refs;
 pub use revision::{LatestRevComputer, Revision, VectorClockOrder};
+
+#[cfg(test)]
+pub use document::{new_document, new_empty_document};
+#[cfg(test)]
+pub use document_data::new_test_data;

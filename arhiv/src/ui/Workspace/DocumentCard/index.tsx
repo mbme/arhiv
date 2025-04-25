@@ -1,11 +1,11 @@
 import { isAsset, isErasedDocument, isProject } from 'utils/schema';
 import { useSuspenseQuery } from 'utils/suspense';
 import { copyTextToClipbard } from 'utils';
-import { getDocumentUrl } from 'utils/network';
 import { TASK_DOCUMENT_TYPE } from 'dto';
 import { Card, useCardContext } from 'Workspace/controller';
 import { DropdownOptions } from 'components/DropdownMenu';
 import { showToast } from 'components/Toaster';
+import { useDocumentChangeHandler } from 'Workspace/documentChangeUtils';
 import { DocumentCard } from './DocumentCard';
 import { ErasedDocumentCard } from './ErasedDocumentCard';
 import { AssetCard } from './AssetCard';
@@ -16,9 +16,31 @@ type DocumentCard = Extract<Card, { variant: 'document' }>;
 export function DocumentCardContainer() {
   const { card, controller } = useCardContext<DocumentCard>();
 
-  const { value: document, isUpdating } = useSuspenseQuery({
+  const {
+    value: document,
+    isUpdating,
+    triggerRefresh,
+  } = useSuspenseQuery({
     typeName: 'GetDocument',
     id: card.documentId,
+  });
+
+  // refresh document if referenced document changes
+  useDocumentChangeHandler((updatedDocumentsIds) => {
+    const referencedDocumentIds = new Set([
+      document.id,
+      ...document.refs,
+      ...document.backrefs.map((item) => item.id),
+      ...document.collections.map((item) => item.id),
+    ]);
+
+    const someReferencedDocumentsUpdated = [...referencedDocumentIds].some((id) =>
+      updatedDocumentsIds.has(id),
+    );
+
+    if (someReferencedDocumentsUpdated) {
+      triggerRefresh(true);
+    }
   });
 
   const documentActions: DropdownOptions = [
@@ -30,18 +52,6 @@ export function DocumentCardContainer() {
           showToast({
             level: 'info',
             message: 'Copied document id to clipboard!',
-          });
-        });
-      },
-    },
-    {
-      text: 'Copy link',
-      icon: 'clipboard',
-      onClick: () => {
-        void copyTextToClipbard(getDocumentUrl(document.id)).then(() => {
-          showToast({
-            level: 'info',
-            message: 'Copied document url to clipboard!',
           });
         });
       },

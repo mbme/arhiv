@@ -6,6 +6,7 @@ import { RPC } from 'utils/network';
 import { Button } from 'components/Button';
 import { Dialog } from 'components/Dialog';
 import { QueryError } from 'components/QueryError';
+import { dispatchDocumentChangeEvent } from 'Workspace/documentChangeUtils';
 
 type EraseDocumentButtonProps = {
   documentId: DocumentId;
@@ -24,6 +25,7 @@ export function EraseDocumentConfirmationDialog({
   const { error, inProgress, triggerRefresh } = useQuery(
     async (abortSignal) => {
       await RPC.EraseDocument({ id: documentId }, abortSignal);
+      dispatchDocumentChangeEvent([documentId]);
       hideModal();
     },
     {

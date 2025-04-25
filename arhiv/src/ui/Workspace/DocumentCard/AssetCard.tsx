@@ -1,20 +1,23 @@
 import { useEffect, useState } from 'react';
 import { DocumentDTO } from 'dto';
 import { useUnsavedChangesWarning } from 'utils/hooks';
-import { RPC } from 'utils/network';
+import { getAssetUrl, RPC } from 'utils/network';
 import { Button } from 'components/Button';
 import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';
 import { useIsFormDirty } from 'components/Form/Form';
 import { AssetPreview, canPreview } from 'components/AssetPreview';
 import { ProgressLocker } from 'components/ProgressLocker';
+import { DownloadLink } from 'components/Link';
+import { dispatchDocumentChangeEvent } from 'Workspace/documentChangeUtils';
 import { useCardLock } from '../controller';
 import { EraseDocumentConfirmationDialog } from '../DocumentEditor/EraseDocumentConfirmationDialog';
-import { DocumentViewerHead } from '../DocumentEditor/DocumentViewerHead';
+import { DocumentViewerHead } from './DocumentViewerHead';
 import { DocumentEditor } from '../DocumentEditor/DocumentEditor';
 import { useLockDocument } from './useLockDocument';
 import { LockError } from './LockError';
 import { DocumentTitle } from './DocumentTitle';
+import { CONFLICT_INDICATOR } from './ConflictIndicator';
 
 type Props = {
   document: DocumentDTO;
@@ -39,25 +42,31 @@ export function AssetCard({ document, isUpdating, options }: Props) {
     }
   }, [form, lockError]);
 
+  const filename = document.data['filename'] as string;
+
   return (
     <CardContainer
       skipBack={isDirty}
       leftToolbar={
-        <DropdownMenu
-          icon="dots-horizontal"
-          align="bottom-left"
-          options={[
-            ...options,
-            {
-              text: `Erase ${document.documentType}`,
-              icon: 'erase-document',
-              alarming: true,
-              onClick: () => {
-                setShowErasetConfirmation(true);
+        <>
+          <DropdownMenu
+            icon="dots-horizontal"
+            align="bottom-left"
+            options={[
+              ...options,
+              {
+                text: `Erase ${document.documentType}`,
+                icon: 'erase-document',
+                alarming: true,
+                onClick: () => {
+                  setShowErasetConfirmation(true);
+                },
               },
-            },
-          ]}
-        />
+            ]}
+          />
+
+          {document.hasConflict && CONFLICT_INDICATOR}
+        </>
       }
       title={<DocumentTitle documentType={document.documentType} title={document.title} />}
       showTitleOnScroll
@@ -92,6 +101,7 @@ export function AssetCard({ document, isUpdating, options }: Props) {
         documentType={document.documentType}
         updatedAt={document.updatedAt}
         backrefs={document.backrefs}
+        snapshotsCount={document.snapshotsCount}
       />
 
       {Boolean(lockError) && (
@@ -105,9 +115,11 @@ export function AssetCard({ document, isUpdating, options }: Props) {
 
       {canPreview(document.documentType, document.data) && (
         <div className="mb-8 empty:hidden">
-          <AssetPreview data={document.data} />
+          <AssetPreview assetId={document.id} data={document.data} />
         </div>
       )}
+
+      <DownloadLink url={getAssetUrl(document.id)} fileName={filename} title="Download file" />
 
       <DocumentEditor
         key={document.updatedAt} // force form fields to use fresh values from the document after save
@@ -131,6 +143,8 @@ export function AssetCard({ document, isUpdating, options }: Props) {
           if (submitResult.errors) {
             return submitResult.errors;
           }
+
+          dispatchDocumentChangeEvent([document.id]);
         }}
       />
 

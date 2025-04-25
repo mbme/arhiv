@@ -18,7 +18,7 @@ pub struct AgeGzReader<R: Read> {
 }
 
 impl<R: Read> AgeGzReader<R> {
-    pub fn create(reader: R, key: AgeKey) -> Result<Self> {
+    pub fn new(reader: R, key: AgeKey) -> Result<Self> {
         let age_reader = AgeReader::new(reader, key)?;
         let age_buf_reader = BufReader::new(age_reader);
 
@@ -39,7 +39,7 @@ pub struct AgeGzWriter<W: Write> {
 }
 
 impl<W: Write> AgeGzWriter<W> {
-    pub fn create(writer: W, key: AgeKey) -> Result<Self> {
+    pub fn new(writer: W, key: AgeKey) -> Result<Self> {
         let age_writer = AgeWriter::new(writer, key)?;
         let gz_writer = create_gz_writer(age_writer);
 
@@ -95,12 +95,12 @@ mod tests {
 
         let key = AgeKey::generate_age_x25519_key();
 
-        let mut writer = AgeGzWriter::create(Vec::new(), key.clone()).unwrap();
+        let mut writer = AgeGzWriter::new(Vec::new(), key.clone()).unwrap();
         writer.write_all(data.as_bytes()).unwrap();
 
         let compressed = writer.finish().unwrap();
 
-        let reader = AgeGzReader::create(compressed.as_slice(), key).unwrap();
+        let reader = AgeGzReader::new(compressed.as_slice(), key).unwrap();
         let result = read_all_as_string(reader).unwrap();
 
         assert_eq!(result, data);

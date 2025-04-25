@@ -62,6 +62,8 @@ Cross-platform desktop app that uses `Electron` to display Web UI. Uses system k
 Java Webview app that displays Web UI. Uses biometric authentication or device authentication to safely store password in KeyStore.
 Needs `MANAGE_EXTERNAL_STORAGE` permission to read/write files in user directory (next to Music, Downloads etc.).
 
+**Minimum supported Webview version is 111**.
+
 ## Prerequisites
 * Android Studio; use it to install Android SDK & NDK
 * Android SDK & NDK

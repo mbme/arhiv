@@ -2,6 +2,7 @@ package me.mbsoftware.arhiv;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.net.http.SslCertificate;
@@ -23,6 +24,7 @@ import android.webkit.WebViewClient;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.security.cert.X509Certificate;
@@ -40,6 +42,11 @@ public class MainActivity extends AppCompatActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    boolean hasAcceptableWebView = this.ensureMinWebViewVersion();
+    if (!hasAcceptableWebView) {
+      return;
+    }
 
     // Mark window as secure to avoid screenshots & avoid previews when pressing Overview button
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
@@ -72,6 +79,44 @@ public class MainActivity extends AppCompatActivity {
       });
 
     ensureIsExternalStorageManager();
+  }
+
+  private boolean ensureMinWebViewVersion() {
+    PackageInfo info = WebView.getCurrentWebViewPackage();
+    String version = info == null ? "0" : info.versionName;
+    int major = 0;
+    try {
+      assert version != null;
+      major = Integer.parseInt(version.split("\\.")[0]);
+    } catch (Exception ignored) {
+    }
+
+    if (major < 111) {
+      Log.e(TAG, "WebView version is too old: " + version);
+
+      AlertDialog.Builder builder = new AlertDialog.Builder(this);
+      builder
+        .setTitle("Update WebView")
+        .setMessage("Please install Android System WebView v111+")
+        .setPositiveButton("Update", (d, w) -> startActivity(new Intent(
+          Intent.ACTION_VIEW,
+          Uri.parse("market://details?id=com.google.android.webview")
+        )))
+        .setCancelable(false);
+
+      // Create and attach the OnDismissListener to exit the app immediately when the dialog is dismissed
+      AlertDialog dialog = builder.create();
+      dialog.setOnDismissListener(d -> {
+        // Closes all activities in this task and exits
+        finishAffinity();
+      });
+
+      dialog.show();
+
+      return false;
+    }
+
+    return true;
   }
 
   private void ensureIsExternalStorageManager() {

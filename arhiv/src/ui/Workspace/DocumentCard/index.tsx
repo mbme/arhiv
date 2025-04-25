@@ -57,18 +57,6 @@ export function DocumentCardContainer() {
         });
       },
     },
-    {
-      text: 'Copy link',
-      icon: 'clipboard',
-      onClick: () => {
-        void copyTextToClipbard(getDocumentUrl(document.id)).then(() => {
-          showToast({
-            level: 'info',
-            message: 'Copied document url to clipboard!',
-          });
-        });
-      },
-    },
   ];
 
   if (card.forceEditor) {

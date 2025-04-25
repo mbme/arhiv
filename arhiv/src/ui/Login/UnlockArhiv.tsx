@@ -13,7 +13,7 @@ export function UnlockArhiv() {
   const [password, setPassword] = useState('');
 
   const { error, inProgress, triggerRefresh } = useQuery(
-    (abortSignal) => RPC.UnlockArhiv({ password, secret: true }, abortSignal),
+    (abortSignal) => RPC.UnlockArhiv({ password, $secret: true }, abortSignal),
     {
       refreshOnMount: false,
       onSuccess() {

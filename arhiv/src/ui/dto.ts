@@ -80,19 +80,19 @@ export type APIRequest =
   | {
       typeName: 'UnlockArhiv';
       password: string;
-      secret: true;
+      $secret: true;
     }
   | {
       typeName: 'ImportKey';
       encryptedKey: string;
       password: string;
-      secret: true;
+      $secret: true;
     }
   | {
       typeName: 'ExportKey';
       password: string;
       exportPassword: string;
-      secret: true;
+      $secret: true;
     }
   | {
       typeName: 'CountConflicts';

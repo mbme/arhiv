@@ -22,7 +22,7 @@ export function ImportArhivKey({ onCancel }: Props) {
     inProgress,
     triggerRefresh,
   } = useQuery(
-    (abortSignal) => RPC.ImportKey({ encryptedKey, password, secret: true }, abortSignal),
+    (abortSignal) => RPC.ImportKey({ encryptedKey, password, $secret: true }, abortSignal),
     {
       refreshOnMount: false,
       onSuccess() {

@@ -13,7 +13,7 @@ export async function doRPC<Request extends APIRequest>(
   request: Request,
   signal?: AbortSignal,
 ): Promise<RPCResponse<Request>> {
-  const containsSecret = 'secret' in request;
+  const containsSecret = '$secret' in request;
 
   console.debug('RPC: %s', request.typeName, containsSecret ? SECRET_PLACEHOLDER : request);
 
@@ -29,7 +29,7 @@ export async function doRPC<Request extends APIRequest>(
   try {
     if (containsSecret) {
       // @ts-expect-error remove marker prop
-      delete request.secret;
+      delete request.$secret;
     }
 
     const response = await fetch(url, {

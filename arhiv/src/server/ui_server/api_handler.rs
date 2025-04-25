@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, fs, path::Path};
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use serde::Serialize;
 
 use baza::{
@@ -333,7 +333,13 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
             APIResponse::LockArhiv {}
         }
         APIRequest::UnlockArhiv { password } => {
-            arhiv.unlock(password)?;
+            if let Some(password) = password {
+                arhiv.unlock(password)?;
+            } else {
+                let unlocked = arhiv.unlock_using_keyring()?;
+                ensure!(unlocked, "Failed to unlock Arhiv: no password in Keyring");
+            }
+
             ctx.img_cache.init(&arhiv.baza).await?;
 
             APIResponse::UnlockArhiv {}

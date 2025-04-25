@@ -76,7 +76,7 @@ pub enum APIRequest {
     },
     LockArhiv {},
     UnlockArhiv {
-        password: SecretString,
+        password: Option<SecretString>,
     },
     #[serde(rename_all = "camelCase")]
     ImportKey {

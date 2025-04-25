@@ -12,7 +12,6 @@ use axum::{
 use axum_extra::extract::{cookie::Cookie, CookieJar};
 use serde::Deserialize;
 use serde_json::Value;
-use tokio::sync::OnceCell;
 
 use baza::{baza2::BazaManager, DEV_MODE};
 use rs_utils::{
@@ -46,7 +45,6 @@ pub const HEALTH_PATH: &str = "/health";
 pub struct ServerContext {
     pub arhiv: Arc<Arhiv>,
     pub img_cache: Arc<ScaledImagesCache>,
-    init: Arc<OnceCell<()>>,
 }
 
 pub fn build_ui_router(auth_token: AuthToken, arhiv: Arc<Arhiv>) -> Router<()> {
@@ -56,7 +54,6 @@ pub fn build_ui_router(auth_token: AuthToken, arhiv: Arc<Arhiv>) -> Router<()> {
     let ctx = ServerContext {
         arhiv,
         img_cache: Arc::new(img_cache),
-        init: Arc::new(OnceCell::const_new()),
     };
 
     let ui_router = Router::new()
@@ -68,10 +65,6 @@ pub fn build_ui_router(auth_token: AuthToken, arhiv: Arc<Arhiv>) -> Router<()> {
         .layer(middleware::from_fn(no_cache_middleware))
         .route("/{*fileName}", get(public_assets_handler))
         .layer(DefaultBodyLimit::disable())
-        .layer(middleware::from_fn_with_state(
-            ctx.clone(),
-            init_server_context_middleware,
-        ))
         .layer(middleware::from_fn_with_state(
             Arc::new(auth_token),
             client_authenticator,
@@ -290,41 +283,6 @@ async fn catch_panic_middleware(req: Request, next: Next) -> Response {
             (StatusCode::INTERNAL_SERVER_ERROR, format!("Panic: {err}")).into_response()
         }
     }
-}
-
-async fn init_server_context_middleware(
-    ctx: State<ServerContext>,
-    req: Request,
-    next: Next,
-) -> Response {
-    let arhiv = &ctx.arhiv;
-
-    // init server context on first request
-    ctx.init
-        .get_or_try_init(|| async {
-            log::info!("Initializing UI server context");
-
-            if arhiv.baza.storage_exists()? {
-                match arhiv.unlock_using_keyring() {
-                    Ok(unlocked) => {
-                        log::info!("Unlocked using keyring: {unlocked}");
-                    }
-                    Err(err) => {
-                        log::error!("Failed to use keyring: {err}");
-                    }
-                }
-            }
-
-            if arhiv.baza.is_unlocked() {
-                ctx.img_cache.init(&arhiv.baza).await?;
-            }
-
-            Ok::<(), anyhow::Error>(())
-        })
-        .await
-        .expect("Failed to initialize UI server context");
-
-    next.run(req).await
 }
 
 async fn health_handler() -> impl IntoResponse {

@@ -79,7 +79,7 @@ export type APIRequest =
     }
   | {
       typeName: 'UnlockArhiv';
-      password: string;
+      password?: string;
       $secret: true;
     }
   | {

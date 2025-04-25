@@ -1,6 +1,9 @@
 # Privacy and Security
-* All the data is encrypted with Age encryption.
-* An x25519 Age key for storage file & state file is stored in key.age in storage dir. It is encrypted with password-based Age key.
+* **All data is encrypted with [Age encryption](https://age-encryption.org/v1)**.
+* An x25519 Age key for storage file & state file is stored in `key.age` in storage dir.
+It is encrypted with password-based Age key.
+**If you loose this file or your password, you lose access to your data!**.
+You should export backup copies of your key using Arhiv CLI or UI.
 * Data files have their own Age x25519 keys stored in storage & state.
 * Web UI server generates self-signed **HTTPS certificate** and saves it in the state dir **in plain text**.
 * Desktop & Android apps verify the server HTTPS certificate.
@@ -9,8 +12,8 @@
   * start Web UI server and get **auth token** from it
   * send the auth token in a cookie to the Web UI server
   * Web UI server denies requests without the auth token
-* In Desktop & CLI apps user can save password to System keyring.
-* In Android app user can save password to the System KeyStore.
+* In Desktop & CLI apps password is saved to System keyring.
+* In Android app password is saved to the System KeyStore.
 * Desktop & Android apps **unlock server** using password they got from user or keyring. **The Web UI server stays unlocked** until the app is closed or manually locked.
 
 # Installation
@@ -73,6 +76,12 @@ Needs `MANAGE_EXTERNAL_STORAGE` permission to read/write files in user directory
 ```
 rustup target add aarch64-linux-android x86_64-linux-android
 ```
+
+## Debugging
+* Connect your device via USB (ensure Developer mode + USB debugging is enabled)
+* Run debug build of Arhiv app on your device (i.e. through Android Studio)
+* Open Chrome on your desktop -> `chrome://inspect`
+* Find your WebView under Remote Target -> Click Inspect
 
 # Scraper
 Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbme/scraper) userscript or bookmarklet.

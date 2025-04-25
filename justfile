@@ -44,8 +44,6 @@ prod-build-install:
   rm -rf pkg
   rm -f *.pkg.tar.zst
   rm PKGBUILD
-  systemctl --user daemon-reload
-  systemctl --user restart arhiv-server.service
 
 # install the arhiv locally using Cargo
 cargo-install:

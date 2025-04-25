@@ -15,6 +15,9 @@ use crate::{
     DocumentExpert,
 };
 
+const TITLE_FIELD_NAME: &str = "@title";
+const ID_FIELD_NAME: &str = "@id";
+
 pub struct SearchEngine {
     fts: FTSEngine,
     schema: DataSchema,
@@ -77,10 +80,12 @@ impl SearchEngine {
 
         let document_expert = DocumentExpert::new(&self.schema);
         let title = document_expert.get_title(&document.document_type, &document.data)?;
-        fields.insert("title", title.as_str());
+        fields.insert(TITLE_FIELD_NAME, title.as_str());
+        fields.insert(ID_FIELD_NAME, &document.id);
 
         let mut boost_fields = HashMap::new();
-        boost_fields.insert("title", FieldBoost::new(1.5)?);
+        boost_fields.insert(TITLE_FIELD_NAME, FieldBoost::new(1.5)?);
+        boost_fields.insert(ID_FIELD_NAME, FieldBoost::new(2.0)?);
 
         for field in self.schema.iter_fields(&document.document_type)? {
             let value = if let Some(value) = document.data.get(field.name) {

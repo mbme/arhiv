@@ -467,7 +467,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                     .stdout(process::Stdio::null())
                     .stderr(process::Stdio::null())
                     .spawn()
-                    .expect(&format!("failed to run browser {browser}"))
+                    .unwrap_or_else(|_| panic!("Failed to run browser {browser}"))
                     .wait()
                     .expect("Command wasn't running");
             }

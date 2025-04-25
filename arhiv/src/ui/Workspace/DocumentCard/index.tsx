@@ -1,7 +1,6 @@
 import { isAsset, isErasedDocument, isProject } from 'utils/schema';
 import { useSuspenseQuery } from 'utils/suspense';
 import { copyTextToClipbard } from 'utils';
-import { getDocumentUrl } from 'utils/network';
 import { TASK_DOCUMENT_TYPE } from 'dto';
 import { Card, useCardContext } from 'Workspace/controller';
 import { DropdownOptions } from 'components/DropdownMenu';

@@ -1,0 +1,28 @@
+name: Setup
+description: Setup environment for build
+runs:
+  using: 'composite'
+  steps:
+    - name: Use Rust
+      shell: bash
+      run: rustup toolchain install stable --profile minimal
+
+    - name: Install LLD (fast linker)
+      shell: bash
+      run: sudo apt-get install lld
+
+    - name: Install libdbus (for keyring)
+      shell: bash
+      run: sudo apt-get install libdbus-1-dev
+
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '23.7'
+
+    - name: Rust cache
+      uses: Swatinem/rust-cache@v2
+
+    - name: Install JS modules
+      shell: bash
+      run: ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci

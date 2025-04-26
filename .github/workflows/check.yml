@@ -16,26 +16,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # toolchain must be selected before the rust-cache init
-      - name: Use Rust
-        run: rustup toolchain install stable --profile minimal
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Install LLD (fast linker)
-        run: sudo apt-get install lld
-
-      - name: Install libdbus (for keyring)
-        run: sudo apt-get install libdbus-1-dev
-
-      - uses: actions/checkout@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '23.7'
-
-      - uses: Swatinem/rust-cache@v2
-
-      - name: Install JS modules
-        run: ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci
+      - name: Setup environment
+        uses: ./.github/actions/setup
 
       - name: Lint & test Rust
         run: cargo clippy --all-targets --all-features -- -D warnings && cargo test

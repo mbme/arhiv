@@ -11,6 +11,14 @@ runs:
       shell: bash
       run: rustup toolchain install stable --profile minimal
 
+    - name: Add target for Android app build
+      shell: bash
+      run: rustup target add aarch64-linux-android
+
+    - name: Install cargo-ndk (build & cache for Android app build)
+      shell: bash
+      run: cargo install --locked cargo-ndk
+
     - name: Install Just runner, LLD (fast linker), and libdbus (for keyring)
       shell: bash
       run: sudo apt-get update && sudo apt-get install -y just lld libdbus-1-dev

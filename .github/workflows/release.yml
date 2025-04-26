@@ -1,0 +1,39 @@
+name: Build & Release APK
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17' # Gradle plugin target
+          cache: 'gradle'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build native libs
+        run: just prod-build-android-libs
+
+      - name: Build Release APK
+        run: just prod-build-android-app
+
+      - name: Publish to GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }} # e.g. "v1.2.3"
+          artifacts: ./arhiv-android/app/build/outputs/apk/release/app-release-unsigned.apk

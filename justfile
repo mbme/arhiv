@@ -4,6 +4,9 @@ home := env("HOME")
 root := home + "/temp/arhiv"
 debug_log_level := "debug,h2=info,rustls=info,i18n_embed=warn,rs_utils::http_server=info,hyper=info,axum::rejection=trace,keyring=info"
 
+# WARN: the --platform MUST match minSdk from build.gradle
+android_platform_version := "30"
+
 alias c := check
 
 arhiv *PARAMS:
@@ -70,7 +73,7 @@ clean-all:
   cargo clean --release
   rm -rf .log
 
-build-android-libs *RELEASE_FLAG:
+_prepare_to_building_android_libs:
   #!/usr/bin/env bash
   set -euxo pipefail
 
@@ -81,17 +84,17 @@ build-android-libs *RELEASE_FLAG:
   rm -rf ./app/src/main/jniLibs
   mkdir ./app/src/main/jniLibs
 
-  # WARN: the --platform MUST match minSdk from build.gradle
-  cargo ndk -t x86_64 -t arm64-v8a --platform 30 -o ./app/src/main/jniLibs build {{RELEASE_FLAG}}
+build-android-libs: _prepare_to_building_android_libs
+  cd arhiv-android; cargo ndk -t x86_64 -t arm64-v8a --platform {{android_platform_version}} -o ./app/src/main/jniLibs build --release
 
-prod-build-android-libs:
-  just build-android-libs --release --features production-mode
+prod-build-android-libs: _prepare_to_building_android_libs
+  cd arhiv-android; cargo ndk -t arm64-v8a --platform {{android_platform_version}} -o ./app/src/main/jniLibs build --release --features production-mode
 
 build-android-app:
   cd arhiv-android; ./gradlew assembleDebug
 
 prod-build-android-app:
-  cd arhiv-android; ./gradlew assembleRelease
+  cd arhiv-android; ./gradlew assembleRelease --no-daemon
 
 install-android-app:
   cd arhiv-android; ./gradlew installDebug

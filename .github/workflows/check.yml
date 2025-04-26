@@ -18,7 +18,7 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Lint & test Rust
-        run: cargo clippy --all-targets --all-features -- -D warnings && cargo test
+        run: just check-rs
 
       - name: Lint and test TS
-        run: npm run check
+        run: just check-ts

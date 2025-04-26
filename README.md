@@ -79,6 +79,10 @@ Needs `MANAGE_EXTERNAL_STORAGE` permission to read/write files in user directory
 rustup target add aarch64-linux-android x86_64-linux-android
 ```
 
+## Release
+* `just prod-build-android-libs prod-build-android-app`
+* Install `arhiv.apk`
+
 ## Debugging
 * Connect your device via USB (ensure Developer mode + USB debugging is enabled)
 * Run debug build of Arhiv app on your device (i.e. through Android Studio)

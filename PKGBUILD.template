@@ -34,7 +34,7 @@ build() {
 
   export NODE_ENV=production
 
-  export TYPED_V_VERSION=$(git describe --tags)
+  export TYPED_V_VERSION=$(git describe --tags --always)
 
   npm run prod:build --workspace arhiv
 

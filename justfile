@@ -48,9 +48,11 @@ prod-build-install:
   rm -f *.pkg.tar.zst
   rm PKGBUILD
 
-# install the arhiv locally using Cargo
-cargo-install:
+_prod-npm-build:
   npm run prod:build --workspace arhiv
+
+# install the Arhiv CLI locally using Cargo
+cargo-install: _prod-npm-build
   cargo install --path binutils --bin arhiv --features production-mode
 
 build-timings:
@@ -73,16 +75,9 @@ clean-all:
   cargo clean --release
   rm -rf .log
 
-_prepare_to_building_android_libs:
-  #!/usr/bin/env bash
-  set -euxo pipefail
-
-  npm run prod:build --workspace arhiv
-
-  cd arhiv-android
-
-  rm -rf ./app/src/main/jniLibs
-  mkdir ./app/src/main/jniLibs
+_prepare_to_building_android_libs: _prod-npm-build
+  rm -rf arhiv-android/app/src/main/jniLibs
+  mkdir arhiv-android/app/src/main/jniLibs
 
 build-android-libs: _prepare_to_building_android_libs
   cd arhiv-android; cargo ndk -t x86_64 -t arm64-v8a --platform {{android_platform_version}} -o ./app/src/main/jniLibs build --release

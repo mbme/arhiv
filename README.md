@@ -16,14 +16,14 @@ You should export backup copies of your key using Arhiv CLI or UI.
 * In Android app password is saved to the System KeyStore.
 * Desktop & Android apps **unlock server** using password they got from user or keyring. **The Web UI server stays unlocked** until the app is closed or manually locked.
 
-# Installation
+# Arhiv CLI installation
 
 ## Using Cargo
 * `npm install`
 * `just cargo-install`
 
 ## On ArchLinux, using makepkg
-* `just prod-build-install`
+* `just prod-build-install` - also installs `arhiv-desktop` GUI
 
 # Build dependencies
 * `rust`
@@ -43,6 +43,7 @@ You should export backup copies of your key using Arhiv CLI or UI.
 
 ## Special switches
 * `production-mode` feature flag - to distinguish between dev Arhiv & prod Arhiv
+* `TYPED_V_VERSION` - env variable to be set on compile time that contains current Arhiv version
 
 ## Release process
 * `just bump-version` - increment major version, create & push git tag

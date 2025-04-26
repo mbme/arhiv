@@ -3,6 +3,10 @@ description: Setup environment for build
 runs:
   using: 'composite'
   steps:
+    - name: Setup env variables
+      shell: bash
+      run: export CARGO_TERM_COLOR=always
+
     - name: Use Rust
       shell: bash
       run: rustup toolchain install stable --profile minimal

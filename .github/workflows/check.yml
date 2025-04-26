@@ -6,11 +6,6 @@ on:
   pull_request:
     branches: [master]
 
-env:
-  CARGO_TERM_COLOR: always
-  # override rustflags from .cargo/config.toml
-  RUSTFLAGS: '-Clink-arg=-fuse-ld=lld'
-
 jobs:
   build:
     runs-on: ubuntu-latest

@@ -23,7 +23,7 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Build Linux CLI
-        run: just prod-build --bin baza2-migrate
+        run: just prod-build
 
       - name: Build Windows CLI
         run: just prod-build-windows
@@ -48,4 +48,4 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }} # e.g. "v1.2.3"
-          artifacts: './arhiv.apk,target/release/arhiv,target/release/baza2-migrate,target/x86_64-pc-windows-gnu/release/arhiv.exe'
+          artifacts: './arhiv.apk,target/release/arhiv,target/x86_64-pc-windows-gnu/release/arhiv.exe'

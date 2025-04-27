@@ -84,7 +84,7 @@ prod-build-desktop:
 
 # install the Arhiv CLI locally using Cargo
 cargo-install: _prod-npm-build
-  cargo install --path binutils --bin arhiv --bin baza2-migrate --features production-mode
+  cargo install --path binutils --bin arhiv --features production-mode
 
 check-rs:
   cargo clippy --all-targets --all-features -- -D warnings

@@ -32,7 +32,7 @@ prepare() {
 build() {
   cd ..
 
-  just prod-build --bin baza2-migrate
+  just prod-build
   just prod-build-desktop
 }
 
@@ -47,7 +47,6 @@ package() {
 
   # arhiv CLI
   install -Dm 755 -t "$pkgdir/usr/bin/" "target/release/arhiv"
-  install -Dm 755 -t "$pkgdir/usr/bin/" "target/release/baza2-migrate"
 
   # arhiv desktop app
   install -Dm 755 "arhiv-desktop/arhiv-desktop" "$pkgdir/usr/bin/arhiv-desktop"

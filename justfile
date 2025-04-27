@@ -75,7 +75,7 @@ _prod-npm-build:
 
 prod-build: _prod-npm-build
   TYPED_V_VERSION=$(just _print-long-version) \
-  cargo build --frozen --release --features production-mode -p binutils --bin arhiv
+  cargo build --frozen --release --features production-mode -p binutils --bin arhiv --bin baza2-migrate
 
 prod-build-desktop:
   npm run prod:build --workspace arhiv-desktop

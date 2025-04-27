@@ -1,4 +1,4 @@
-name: Build & Release APK
+name: Build & Release Arhiv
 
 on:
   workflow_dispatch:
@@ -20,6 +20,9 @@ jobs:
       - name: Setup environment
         uses: ./.github/actions/setup
 
+      - name: Build Linux CLI
+        run: just prod-build
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -40,4 +43,4 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }} # e.g. "v1.2.3"
-          artifacts: ./arhiv.apk
+          artifacts: './arhiv.apk,target/release/arhiv,target/release/baza2-migrate'

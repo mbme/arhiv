@@ -7,10 +7,6 @@ runs:
       shell: bash
       run: echo "CARGO_TERM_COLOR=always" >> $GITHUB_ENV
 
-    - name: Setup env variables
-      shell: bash
-      run: echo "TYPED_V_VERSION=$(git describe --tags --always)" >> $GITHUB_ENV
-
     - name: Use Rust
       shell: bash
       run: rustup toolchain install stable --profile minimal

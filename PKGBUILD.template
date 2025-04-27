@@ -13,10 +13,13 @@ optdepends=(
 makedepends=(git cargo lld nodejs npm)
 options=(!buildflags !debug) # some of the build flags seem to break linking with native libs sqlite & libwebp
 
+export RUSTUP_TOOLCHAIN=stable
+export CARGO_TARGET_DIR=target
+
 pkgver() {
   cd ..
 
-  git describe --abbrev=0 --tags
+  just print-version
 }
 
 prepare() {
@@ -29,27 +32,14 @@ prepare() {
 build() {
   cd ..
 
-  export RUSTUP_TOOLCHAIN=stable
-  export CARGO_TARGET_DIR=target
-
-  export NODE_ENV=production
-
-  export TYPED_V_VERSION=$(git describe --tags --always)
-
-  npm run prod:build --workspace arhiv
-
-  cargo build --frozen --release --features production-mode -p binutils --bin arhiv
-
-  npm run prod:build --workspace arhiv-desktop
+  just prod-build
+  just prod-build-desktop
 }
 
 check() {
   cd ..
 
-  export RUSTUP_TOOLCHAIN=stable
-  export CARGO_TARGET_DIR=target
-
-  cargo test --locked --release --features production-mode
+  just check
 }
 
 package() {

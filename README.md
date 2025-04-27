@@ -23,7 +23,7 @@ You should export backup copies of your key using Arhiv CLI or UI.
 * `just cargo-install`
 
 ## On ArchLinux, using makepkg
-* `just prod-build-install` - also installs `arhiv-desktop` GUI
+* `just arch-install` - also installs `arhiv-desktop` GUI
 
 # Build dependencies
 * `rust`

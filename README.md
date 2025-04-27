@@ -1,5 +1,17 @@
+# Arhiv
+Arhiv is a local-first personal encrypted database. It can store structured records, as well as files.
+
+Arhiv doesn't rely on a central server. Data can be synchronized between multiple devices using solutions like [Syncthing](https://github.com/syncthing/syncthing), or services like Google Drive or Dropbox, or by manually transferring files using USB flash drive etc.
+Records are stored in the `baza.gz.age` storage file.
+In case of simultaneous edits on multiple devices, there likely to be multiple versions of the storage file.
+On startup, Arhiv will merge multiple storage files into one. Conflicts would be automatically resolved; there would be a list of documents with resolved conflicts on UI.
+
+Currently, record schema is hardcoded, so it's impossible to add new record types without recompilation. This will change in future.
+
+There's a cross-platform CLI app that can run a web server with UI. There's Android app, and Electron-based UI (currently it's built only in ArchLinux).
+
 # Privacy and Security
-* **All data is encrypted with [Age encryption](https://age-encryption.org/v1)**.
+* **All data (including files) is encrypted with [Age encryption](https://age-encryption.org/v1)**.
 * An x25519 Age key for storage file & state file is stored in `key.age` in storage dir.
 It is encrypted with password-based Age key.
 **If you loose this file or your password, you lose access to your data!**.

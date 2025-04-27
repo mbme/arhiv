@@ -32,7 +32,7 @@ prepare() {
 build() {
   cd ..
 
-  just prod-build
+  just prod-build --bin baza2-migrate
   just prod-build-desktop
 }
 

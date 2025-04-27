@@ -11,17 +11,21 @@ runs:
       shell: bash
       run: rustup toolchain install stable --profile minimal
 
-    - name: Add target for Android app build
+    - name: Add target for Android build
       shell: bash
       run: rustup target add aarch64-linux-android
+
+    - name: Add target for Windows build
+      shell: bash
+      run: rustup target add x86_64-pc-windows-gnu
 
     - name: Install cargo-ndk (build & cache for Android app build)
       shell: bash
       run: cargo install --locked cargo-ndk
 
-    - name: Install Just runner, LLD (fast linker), and libdbus (for keyring)
+    - name: Install Just runner, LLD (fast linker), libdbus (for keyring), and MinGW for Windows cross-compilation
       shell: bash
-      run: sudo apt-get update && sudo apt-get install -y just lld libdbus-1-dev
+      run: sudo apt-get update && sudo apt-get install -y just lld libdbus-1-dev mingw-w64
 
     - name: Use Node.js
       uses: actions/setup-node@v4

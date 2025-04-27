@@ -2,7 +2,6 @@ use std::{
     env,
     fs::{self, File},
     io::{BufReader, BufWriter, ErrorKind, Write},
-    os::unix::prelude::MetadataExt,
     path::{Path, PathBuf},
 };
 
@@ -68,14 +67,6 @@ pub fn get_symlink_target_path(path: &str) -> Result<String> {
     let target_path = fs::read_link(path).context("failed to read a symlink")?;
 
     Ok(path_to_string(target_path))
-}
-
-/// check if path1 and path2 belong to the same filesystem or not
-pub fn is_same_filesystem(path1: &str, path2: &str) -> Result<bool> {
-    let meta1 = fs::metadata(path1)?;
-    let meta2 = fs::metadata(path2)?;
-
-    Ok(meta1.dev() == meta2.dev())
 }
 
 #[must_use]
@@ -275,8 +266,10 @@ pub fn into_absolute_path(path: impl AsRef<str>, canonicalize: bool) -> Result<S
     Ok(path_to_string(path))
 }
 
-#[must_use]
+#[cfg(unix)]
 pub fn is_readable(metadata: &fs::Metadata) -> bool {
+    use std::os::unix::prelude::MetadataExt;
+
     let mode = metadata.mode();
 
     // TODO check also user / group (uid/gid)
@@ -289,6 +282,12 @@ pub fn is_readable(metadata: &fs::Metadata) -> bool {
     }
 
     user_has_read_access
+}
+
+#[cfg(windows)]
+pub fn is_readable(_metadata: &fs::Metadata) -> bool {
+    // TODO: better check? for Windows
+    true
 }
 
 pub fn get_media_type(file_path: impl AsRef<str>) -> Result<String> {

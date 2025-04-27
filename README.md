@@ -18,12 +18,14 @@ You should export backup copies of your key using Arhiv CLI or UI.
 
 # Arhiv CLI installation
 
-## Using Cargo
+You can download CLI & Android app builds from [Github Releases](https://github.com/mbme/typed-v/releases).
+
+## Install using Cargo
 * `npm install`
 * `just cargo-install`
 
-## On ArchLinux, using makepkg
-* `just arch-install` - also installs `arhiv-desktop` GUI
+## Install on ArchLinux
+Using makepkg: `just arch-install`. It also installs `arhiv-desktop` GUI.
 
 # Build dependencies
 * `rust`
@@ -32,6 +34,12 @@ You should export backup copies of your key using Arhiv CLI or UI.
 * `npm`
 * `lld` - a fast linker from the LLVM project
 * `just` command runner https://github.com/casey/just
+
+# Cross-compiling for Windows
+* Add rust target for Windows cross-compilation: `rustup target add x86_64-pc-windows-gnu`
+* Install MinGW-w64 toolchain (i.e. `mingw-w64-gcc` on ArchLinux, `mingw-w64` on Ubuntu)
+* Run `just prod-build-windows`
+* Use `target/x86_64-pc-windows-gnu/release/arhiv.exe`
 
 # Dev tools
 * `cargo-outdated` to find out which packages to upgrade

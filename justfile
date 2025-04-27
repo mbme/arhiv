@@ -73,16 +73,18 @@ arch-install:
 _prod-npm-build:
   npm run prod:build --workspace arhiv
 
-prod-build: _prod-npm-build
+prod-build *ARGS: _prod-npm-build
   TYPED_V_VERSION=$(just _print-long-version) \
-  cargo build --frozen --release --features production-mode -p binutils --bin arhiv --bin baza2-migrate
+  cargo build --frozen --release --features production-mode -p binutils --bin arhiv {{ARGS}}
+
+prod-build-windows: (prod-build "--target x86_64-pc-windows-gnu")
 
 prod-build-desktop:
   npm run prod:build --workspace arhiv-desktop
 
 # install the Arhiv CLI locally using Cargo
 cargo-install: _prod-npm-build
-  cargo install --path binutils --bin arhiv --features production-mode
+  cargo install --path binutils --bin arhiv --bin baza2-migrate --features production-mode
 
 check-rs:
   cargo clippy --all-targets --all-features -- -D warnings

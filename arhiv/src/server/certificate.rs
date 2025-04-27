@@ -31,7 +31,8 @@ pub fn read_or_generate_certificate(root_dir: &str) -> Result<SelfSignedCertific
         file.write_all(data.expose_secret().as_bytes())?;
         file.sync_all()?;
 
-        if cfg!(unix) {
+        #[cfg(unix)]
+        {
             use std::os::unix::fs::PermissionsExt;
 
             // Set permissions to 600 (only owner can read/write)

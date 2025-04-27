@@ -16,6 +16,8 @@ jobs:
         with:
           fetch-depth: 100 # fetch last 100 commits so that git describe --tags works
           fetch-tags: true
+          # this is necessary due to using both fetch-depth & fetch-tags https://github.com/actions/checkout/issues/1467
+          ref: ${{ github.ref }}
 
       - name: Setup environment
         uses: ./.github/actions/setup

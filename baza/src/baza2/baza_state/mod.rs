@@ -62,7 +62,7 @@ impl BazaState {
             match SearchEngine::read(&paths.state_search_index_file, key.clone(), schema.clone()) {
                 Ok(search) => search,
                 Err(err) => {
-                    log::error!("Failed to read search index: {err}");
+                    log::debug!("Failed to read search index: {err}");
 
                     let mut search = SearchEngine::new(schema.clone());
 
@@ -83,12 +83,16 @@ impl BazaState {
                 }
             };
 
-        let locks = match DocumentLocksFile::read(&paths.state_document_locks_file, key) {
+        let locks = match DocumentLocksFile::read(&paths.state_document_locks_file, key.clone()) {
             Ok(locks) => locks,
             Err(err) => {
-                log::error!("Failed to read document locks file: {err}");
+                log::debug!("Failed to read document locks file: {err}");
 
-                DocumentLocksFile::new()
+                let mut locks = DocumentLocksFile::new();
+
+                locks.write(&paths.state_document_locks_file, key.clone())?;
+
+                locks
             }
         };
 

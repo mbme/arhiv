@@ -9,6 +9,8 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    environment:
+      name: Release
 
     steps:
       - name: Checkout code
@@ -21,6 +23,9 @@ jobs:
 
       - name: Setup environment
         uses: ./.github/actions/setup
+        with:
+          packages: mingw-w64 # MinGW for Windows cross-compilation
+          targets: aarch64-linux-android x86_64-pc-windows-gnu # Android & Windows targets for rustup
 
       - name: Build Linux CLI
         run: just prod-build
@@ -37,11 +42,27 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: ''
+          log-accepted-android-sdk-licenses: false
 
-      - name: Build native libs
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > arhiv-android/release.keystore
+
+      - name: Write keystore.properties
+        run: |
+          cat <<EOF > arhiv-android/keystore.properties
+          storeFile=$PWD/arhiv-android/release.keystore
+          storePassword=${{ secrets.KEY_STORE_PASS }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          keyPassword=${{ secrets.KEY_PASS }}
+          EOF
+
+      - name: Build Native Libs
         run: just prod-build-android-libs
 
-      - name: Build Release APK
+      - name: Build & Sign Release APK
         run: just prod-build-android-app
 
       - name: Publish to GitHub Release

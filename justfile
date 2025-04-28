@@ -118,7 +118,7 @@ build-android-app:
 
 prod-build-android-app:
   cd arhiv-android; ./gradlew assembleRelease --no-daemon
-  mv ./arhiv-android/app/build/outputs/apk/release/app-release-unsigned.apk arhiv.apk
+  mv ./arhiv-android/app/build/outputs/apk/release/app-release.apk arhiv.apk
 
 install-android-app:
   cd arhiv-android; ./gradlew installDebug

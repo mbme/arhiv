@@ -101,6 +101,25 @@ rustup target add aarch64-linux-android x86_64-linux-android
 ```
 
 ## Release
+* Generate keystore (it's mandatory to sign the release apk):
+```
+keytool -genkeypair \
+  -alias Arhiv \
+  -keyalg RSA -keysize 2048 \
+  -validity 10000 \
+  -keystore release.keystore \
+  -dname "CN=Your Name, OU=Your Org, O=Your Company, L=City, ST=State, C=US" \
+  -storepass YOUR_STORE_PASS \
+  -keypass YOUR_KEY_PASS
+```
+* Put the `release.keystore` into arhiv-android dir.
+* In the arhiv-android dir, create `keystore.properties`:
+```
+storeFile=../release.keystore
+storePassword=YOUR_STORE_PASS
+keyAlias=Arhiv
+keyPassword=YOUR_KEY_PASS
+```
 * `just prod-build-android-libs prod-build-android-app`
 * Install `arhiv.apk`
 

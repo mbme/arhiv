@@ -1,39 +1,61 @@
 name: Setup
 description: Setup environment for build
+inputs:
+  packages:
+    description: 'Additional packages to install'
+    required: false
+    default: ''
+  targets:
+    description: 'Additional rustup targets to install'
+    required: false
+    default: ''
 runs:
   using: 'composite'
   steps:
-    - name: Setup env variables
+    - name: Install Just runner, LLD (fast linker), and libdbus (for keyring)
       shell: bash
-      run: echo "CARGO_TERM_COLOR=always" >> $GITHUB_ENV
+      run: sudo apt-get update && sudo apt-get install -y just lld libdbus-1-dev ${{ inputs.packages }}
+
+    - name: Setup Cargo environment variables
+      shell: bash
+      run: |
+        echo "CARGO_TERM_COLOR=always" >> $GITHUB_ENV
+
+        # Disable incremental compilation for faster from-scratch builds
+        echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
+
+        # Disable debug info
+        echo "CARGO_PROFILE_TEST_DEBUG=0" >> $GITHUB_ENV
 
     - name: Use Rust
-      shell: bash
-      run: rustup toolchain install stable --profile minimal
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        target: ${{ inputs.targets }}
 
-    - name: Add target for Android build
-      shell: bash
-      run: rustup target add aarch64-linux-android
+    # - name: Add target for Android build
+    #   shell: bash
+    #   run: rustup target add aarch64-linux-android
 
-    - name: Add target for Windows build
-      shell: bash
-      run: rustup target add x86_64-pc-windows-gnu
+    # - name: Add target for Windows build
+    #   shell: bash
+    #   run: rustup target add x86_64-pc-windows-gnu
 
     - name: Install cargo-ndk (build & cache for Android app build)
       shell: bash
       run: cargo install --locked cargo-ndk
 
-    - name: Install Just runner, LLD (fast linker), libdbus (for keyring), and MinGW for Windows cross-compilation
+    - name: Install Rust dependencies
       shell: bash
-      run: sudo apt-get update && sudo apt-get install -y just lld libdbus-1-dev mingw-w64
+      run: cargo fetch --locked
 
     - name: Use Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '23.7'
+        cache: npm
 
-    - name: Rust cache
-      uses: Swatinem/rust-cache@v2
+    # - name: Rust cache
+    #   uses: Swatinem/rust-cache@v2
 
     - name: Install JS modules
       shell: bash

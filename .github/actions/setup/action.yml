@@ -46,8 +46,8 @@ runs:
         node-version: '23.7'
         cache: npm
 
-    # - name: Rust cache
-    #   uses: Swatinem/rust-cache@v2
+    - name: Rust cache
+      uses: Swatinem/rust-cache@v2
 
     - name: Install JS modules
       shell: bash

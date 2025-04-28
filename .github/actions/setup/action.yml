@@ -32,10 +32,6 @@ runs:
       with:
         target: ${{ inputs.targets }}
 
-    - name: Install cargo-ndk (build & cache for Android app build)
-      shell: bash
-      run: cargo install --locked cargo-ndk
-
     - name: Install Rust dependencies
       shell: bash
       run: cargo fetch --locked

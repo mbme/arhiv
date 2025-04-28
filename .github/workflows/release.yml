@@ -33,6 +33,13 @@ jobs:
       - name: Build Windows CLI
         run: just prod-build-windows
 
+      - name: Install cargo-ndk
+        shell: bash
+        run: cargo install --locked cargo-ndk
+
+      - name: Build Android Native Libs
+        run: just prod-build-android-libs
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -58,9 +65,6 @@ jobs:
           keyAlias=${{ secrets.KEY_ALIAS }}
           keyPassword=${{ secrets.KEY_PASS }}
           EOF
-
-      - name: Build Android Native Libs
-        run: just prod-build-android-libs
 
       - name: Build & Sign Release APK
         run: just prod-build-android-app

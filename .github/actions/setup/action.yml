@@ -32,14 +32,6 @@ runs:
       with:
         target: ${{ inputs.targets }}
 
-    # - name: Add target for Android build
-    #   shell: bash
-    #   run: rustup target add aarch64-linux-android
-
-    # - name: Add target for Windows build
-    #   shell: bash
-    #   run: rustup target add x86_64-pc-windows-gnu
-
     - name: Install cargo-ndk (build & cache for Android app build)
       shell: bash
       run: cargo install --locked cargo-ndk

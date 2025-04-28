@@ -59,7 +59,7 @@ jobs:
           keyPassword=${{ secrets.KEY_PASS }}
           EOF
 
-      - name: Build Native Libs
+      - name: Build Android Native Libs
         run: just prod-build-android-libs
 
       - name: Build & Sign Release APK

@@ -9,7 +9,10 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use axum_extra::extract::{cookie::Cookie, CookieJar};
+use axum_extra::{
+    extract::{cookie::Cookie, CookieJar},
+    response::JavaScript,
+};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -58,6 +61,7 @@ pub fn build_ui_router(auth_token: AuthToken, arhiv: Arc<Arhiv>) -> Router<()> {
 
     let ui_router = Router::new()
         .route("/", get(index_page))
+        .route("/config.js", get(config_handler))
         .route("/api", post(api_handler))
         .route("/assets", post(create_asset_handler))
         .route("/assets/{asset_id}", get(assets_handler))
@@ -79,7 +83,7 @@ pub fn build_ui_router(auth_token: AuthToken, arhiv: Arc<Arhiv>) -> Router<()> {
 }
 
 #[tracing::instrument(skip(ctx), level = "debug")]
-async fn index_page(ctx: State<ServerContext>) -> Result<impl IntoResponse, ServerError> {
+async fn config_handler(ctx: State<ServerContext>) -> Result<impl IntoResponse, ServerError> {
     let arhiv = &ctx.arhiv;
 
     let config = serde_json::to_string_pretty(&ArhivUIConfig {
@@ -95,6 +99,13 @@ async fn index_page(ctx: State<ServerContext>) -> Result<impl IntoResponse, Serv
     })
     .context("Failed to serialize ArhivUI config")?;
 
+    let content = format!("window.CONFIG = {config}");
+
+    Ok(JavaScript(content))
+}
+
+#[tracing::instrument(level = "debug")]
+async fn index_page() -> Result<impl IntoResponse, ServerError> {
     let content = format!(
         r#"
             <!DOCTYPE html>
@@ -104,6 +115,7 @@ async fn index_page(ctx: State<ServerContext>) -> Result<impl IntoResponse, Serv
 
                     <meta charset="UTF-8" />
                     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                    <meta http-equiv="Content-Security-Policy" content="script-src 'self'; ">
 
                     <link rel="icon" type="image/svg+xml" href="{UI_BASE_PATH}/favicon.svg" />
                     <link rel="stylesheet" href="{UI_BASE_PATH}/index.css" />
@@ -111,10 +123,7 @@ async fn index_page(ctx: State<ServerContext>) -> Result<impl IntoResponse, Serv
                 <body>
                     <main></main>
 
-                    <script>
-                        window.CONFIG = {config};
-                    </script>
-
+                    <script src="{UI_BASE_PATH}/config.js"></script>
                     <script src="{UI_BASE_PATH}/index.js"></script>
                 </body>
             </html>"#,

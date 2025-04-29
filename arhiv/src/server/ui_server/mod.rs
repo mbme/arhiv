@@ -13,7 +13,7 @@ use axum_extra::extract::{cookie::Cookie, CookieJar};
 use serde::Deserialize;
 use serde_json::Value;
 
-use baza::{baza2::BazaManager, DEV_MODE};
+use baza::{BazaManager, DEV_MODE};
 use rs_utils::{
     http_server::{add_no_cache_headers, fallback_route, ServerError},
     log::{self, tracing},

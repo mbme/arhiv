@@ -4,9 +4,7 @@ use anyhow::Result;
 use serde::Serialize;
 
 use baza::{
-    baza2::{BLOBSCount, Baza, DocumentsCount, Locks},
-    entities::Revision,
-    AutoCommitService, DEV_MODE,
+    entities::Revision, AutoCommitService, BLOBSCount, Baza, DocumentsCount, Locks, DEV_MODE,
 };
 use rs_utils::{get_crate_version, log, Timestamp};
 

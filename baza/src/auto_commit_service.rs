@@ -5,7 +5,7 @@ use tokio::{task::JoinHandle, time::interval};
 
 use rs_utils::{log, FakeTime, Timestamp};
 
-use crate::baza2::BazaManager;
+use crate::BazaManager;
 
 pub type AutoCommitTask = JoinHandle<()>;
 
@@ -118,7 +118,7 @@ mod tests {
     use rs_utils::TempFile;
     use tokio::time::{advance, sleep};
 
-    use crate::{baza2::BazaManager, entities::new_empty_document, AutoCommitService};
+    use crate::{entities::new_empty_document, AutoCommitService, BazaManager};
 
     #[tokio::test(flavor = "current_thread", start_paused = true)]
     async fn test_auto_commit_on_start() -> Result<()> {

@@ -13,9 +13,8 @@ use dialoguer::{theme::ColorfulTheme, Password};
 
 use arhiv::{definitions::get_standard_schema, Arhiv, ArhivOptions, ArhivServer};
 use baza::{
-    baza2::BazaManager,
     entities::{Document, DocumentData, DocumentLockKey, DocumentType, Id},
-    DEV_MODE,
+    BazaManager, DEV_MODE,
 };
 use rs_utils::{
     ensure_file_exists, file_exists, get_crate_version, image::generate_qrcode_svg,

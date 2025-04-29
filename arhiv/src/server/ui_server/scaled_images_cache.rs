@@ -9,11 +9,7 @@ use anyhow::{ensure, Context, Result};
 use serde::Deserialize;
 use tokio::{sync::RwLock, time::Instant};
 
-use baza::{
-    baza2::{Baza, BazaManager},
-    entities::Id,
-    schema::ASSET_TYPE,
-};
+use baza::{entities::Id, schema::ASSET_TYPE, Baza, BazaManager};
 use rs_utils::{
     create_dir_if_not_exist, create_file_reader, create_file_writer, file_exists, format_bytes,
     get_file_name, image::scale_image_file, list_files, log, read_all, Timestamp,

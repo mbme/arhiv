@@ -150,7 +150,7 @@ mod tests {
 
     use rs_utils::{generate_alpanumeric_string, read_all_as_string, TempFile};
 
-    use crate::{baza2::baza_manager::BazaManager, entities::Id};
+    use crate::{baza_manager::BazaManager, entities::Id};
 
     #[test]
     fn test_blobs() {

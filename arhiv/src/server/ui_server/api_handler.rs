@@ -4,11 +4,10 @@ use anyhow::{anyhow, bail, ensure, Context, Result};
 use serde::Serialize;
 
 use baza::{
-    baza2::{Filter, StagingError, ValidationError},
     entities::{Document, DocumentType},
     markup::MarkupStr,
     schema::DataSchema,
-    DocumentExpert,
+    DocumentExpert, Filter, StagingError, ValidationError,
 };
 use rs_utils::{
     ensure_dir_exists, get_crate_version, get_symlink_target_path, image::generate_qrcode_svg,

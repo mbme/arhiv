@@ -18,17 +18,15 @@ use rs_utils::{
 };
 
 use crate::{
-    baza2::{
-        baza_paths::BazaPaths,
-        baza_storage::{create_container_patch, STORAGE_VERSION},
-        BazaInfo, BazaState, BazaStorage, DocumentHead, Filter, ListPage, Locks,
-    },
+    baza_paths::BazaPaths,
+    baza_storage::{create_container_patch, STORAGE_VERSION},
     entities::{
         Document, DocumentKey, DocumentLock, DocumentLockKey, DocumentType, Id, InstanceId,
         LatestRevComputer, Revision,
     },
     merge_expert::MergeExpert,
     schema::{Asset, AssetData, DataSchema, ASSET_TYPE},
+    BazaInfo, BazaState, BazaStorage, DocumentHead, Filter, ListPage, Locks,
 };
 
 pub use blobs::write_and_encrypt_blob;
@@ -142,7 +140,7 @@ impl Baza {
     pub fn create_storage_file(&self, file_path: &str, docs: &[Document]) {
         use rs_utils::create_file_writer;
 
-        use crate::baza2::baza_storage::create_storage;
+        use crate::baza_storage::create_storage;
 
         let mut storage_writer = create_file_writer(file_path, false).unwrap();
         create_storage(&mut storage_writer, self.key.clone(), self.get_info(), docs).unwrap();
@@ -632,8 +630,7 @@ mod tests {
     use rs_utils::age::AgeKey;
 
     use crate::{
-        baza2::{baza_storage::create_test_storage, BazaState, DocumentHead},
-        entities::new_document,
+        baza_storage::create_test_storage, entities::new_document, BazaState, DocumentHead,
     };
 
     use super::update_state_from_storage;

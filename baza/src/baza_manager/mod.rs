@@ -200,11 +200,11 @@ mod tests {
     use rs_utils::{dir_exists, file_exists, TempFile};
 
     use crate::{
-        baza2::{
-            baza_manager::BazaManager, baza_paths::BazaPaths, baza_storage::BazaFileStorage,
-            BazaStorage,
-        },
+        baza_manager::BazaManager,
+        baza_paths::BazaPaths,
+        baza_storage::BazaFileStorage,
         entities::{new_document, new_empty_document},
+        BazaStorage,
     };
 
     fn open_storage<'s>(manager: &BazaManager) -> BazaFileStorage<'s> {

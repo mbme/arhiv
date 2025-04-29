@@ -5,10 +5,10 @@ use anyhow::{ensure, Result};
 use rs_utils::{age::AgeKey, file_exists, log, FsTransaction};
 
 use crate::{
-    baza2::{
-        baza::write_and_encrypt_blob, baza_storage::create_container_patch, Baza, BazaStorage,
-    },
+    baza::write_and_encrypt_blob,
+    baza_storage::create_container_patch,
     entities::{Document, Id, InstanceId},
+    Baza, BazaStorage,
 };
 
 use super::BazaManager;

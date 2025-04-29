@@ -6,10 +6,7 @@ use std::{cmp::min, sync::Arc};
 
 use anyhow::{bail, Result};
 
-use baza::{
-    baza2::{BazaManager, BazaPaths},
-    AutoCommitService, AutoCommitTask, DEV_MODE,
-};
+use baza::{AutoCommitService, AutoCommitTask, BazaManager, BazaPaths, DEV_MODE};
 use rs_utils::{
     get_linux_data_home, get_linux_downloads_dir, get_linux_home_dir, into_absolute_path, log,
     num_cpus, SecretString,

@@ -7,7 +7,7 @@ use rs_utils::{
     log, ExposeSecret, FsTransaction, LockFile, SecretString,
 };
 
-use crate::baza2::BazaStorage;
+use crate::BazaStorage;
 
 use super::BazaManager;
 
@@ -170,7 +170,7 @@ impl BazaManager {
 mod tests {
     use rs_utils::TempFile;
 
-    use crate::baza2::{baza_manager::BazaManager, baza_paths::BazaPaths};
+    use crate::{baza_manager::BazaManager, baza_paths::BazaPaths};
 
     #[test]
     fn test_change_password() {

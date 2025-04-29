@@ -407,7 +407,7 @@ mod tests {
     use rs_utils::age::AgeKey;
     use serde_json::json;
 
-    use crate::{baza2::baza_storage::create_test_storage, entities::new_document};
+    use crate::{baza_storage::create_test_storage, entities::new_document};
 
     use super::{create_container_patch, create_storage, merge_storages, BazaInfo, BazaStorage};
 

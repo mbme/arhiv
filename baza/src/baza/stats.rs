@@ -1,7 +1,7 @@
 use anyhow::Result;
 use serde::Serialize;
 
-use crate::{baza2::BazaStorage, schema::ASSET_TYPE};
+use crate::{schema::ASSET_TYPE, BazaStorage};
 
 use super::Baza;
 

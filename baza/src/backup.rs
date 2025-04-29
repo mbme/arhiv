@@ -7,7 +7,7 @@ use rs_utils::{
     Timestamp,
 };
 
-use crate::baza2::BazaManager;
+use crate::BazaManager;
 
 impl BazaManager {
     pub fn backup(&self, backup_dir: &str) -> Result<()> {

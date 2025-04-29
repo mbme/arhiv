@@ -8,8 +8,8 @@ use rs_utils::{
 };
 
 use crate::{
-    baza2::BazaInfo,
     entities::{DocumentKey, Id, InstanceId, Refs},
+    BazaInfo,
 };
 
 use super::DocumentHead;

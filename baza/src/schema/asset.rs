@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize, Serializer};
 use rs_utils::{Download, ExposeSecret, SecretString};
 
 use crate::{
-    baza2::BazaManager,
     entities::Document,
     schema::{Field, FieldType},
+    BazaManager,
 };
 
 use super::DataDescription;

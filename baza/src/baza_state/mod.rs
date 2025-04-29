@@ -7,12 +7,11 @@ use rs_utils::{age::AgeKey, log, Timestamp};
 pub use self::search::SearchEngine;
 use self::state_file::BazaStateFile;
 use crate::{
-    baza2::BazaInfo,
     entities::{
         Document, DocumentLock, DocumentLockKey, Id, InstanceId, LatestRevComputer, Revision,
     },
     schema::DataSchema,
-    DocumentExpert,
+    BazaInfo, DocumentExpert,
 };
 
 mod document_head;
@@ -452,8 +451,8 @@ mod tests {
     use serde_json::json;
 
     use crate::{
-        baza2::BazaPaths,
         entities::{new_document, new_empty_document, DocumentLockKey, Id, Revision},
+        BazaPaths,
     };
 
     use super::BazaState;

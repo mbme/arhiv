@@ -5,9 +5,9 @@ use anyhow::{anyhow, bail, Context, Result};
 use rs_utils::{is_http_url, is_image_url, parse_url, render_template_with_vars, value_as_string};
 
 use crate::{
-    baza2::BazaManager,
     entities::{Document, DocumentData, DocumentType, Id, Refs},
     schema::{download_asset, Asset, DataSchema, Field, FieldType, ASSET_TYPE},
+    BazaManager,
 };
 
 pub struct DocumentExpert<'s> {

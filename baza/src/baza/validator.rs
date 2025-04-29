@@ -239,9 +239,9 @@ mod tests {
     use rs_utils::TempFile;
 
     use crate::{
-        baza2::BazaManager,
         entities::new_document,
         schema::{DataDescription, DataSchema, Field, FieldType},
+        BazaManager,
     };
 
     #[test]

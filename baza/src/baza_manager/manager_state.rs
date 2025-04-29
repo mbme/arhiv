@@ -12,7 +12,7 @@ use rs_utils::{
     log, LockFile, SecretString,
 };
 
-use crate::{baza2::Baza, entities::InstanceId};
+use crate::{entities::InstanceId, Baza};
 
 use super::BazaManager;
 

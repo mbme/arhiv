@@ -187,7 +187,7 @@ impl BazaManager {
         state.unlock(key);
 
         let duration = start_time.elapsed();
-        log::debug!("Unlocked baza in {duration:?}");
+        log::info!("Unlocked baza in {duration:?}");
 
         Ok(())
     }

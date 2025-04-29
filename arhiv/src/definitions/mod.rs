@@ -5,6 +5,7 @@ pub use contact::{CONTACT_COLLECTION_TYPE, CONTACT_TYPE};
 pub use film::{FILM_COLLECTION_TYPE, FILM_TYPE};
 pub use game::{GAME_COLLECTION_TYPE, GAME_TYPE};
 pub use note::NOTE_TYPE;
+pub use tag::TAG_TYPE;
 pub use task::{PROJECT_TYPE, TASK_STATUS, TASK_TYPE};
 pub use track::{TrackDocument, TRACK_COLLECTION_TYPE, TRACK_TYPE};
 
@@ -15,6 +16,7 @@ mod contact;
 mod film;
 mod game;
 mod note;
+mod tag;
 mod task;
 mod track;
 
@@ -30,6 +32,7 @@ pub fn get_standard_schema() -> DataSchema {
             game::get_game_definitions(),
             track::get_track_definitions(),
             contact::get_contact_definitions(),
+            tag::get_tag_definitions(),
         ]
         .concat(),
     )

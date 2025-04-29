@@ -12,7 +12,7 @@ import { CatalogCard } from './CatalogCard';
 import { NewDocumentCard } from './NewDocumentCard';
 import { DocumentCardContainer } from './DocumentCard';
 import { StatusCard } from './StatusCard';
-import { WorkspaceHeader } from './WorkspaceHeader';
+import { WorkspaceHeader } from './WorkspaceHeader/WorkspaceHeader';
 import { ImagePasteHandler } from './ImagePasteHandler';
 import { CardContainer } from './CardContainer';
 import { useScrapedDataPasteHandler } from './useScrapedDataPasteHandler';

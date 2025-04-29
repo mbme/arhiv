@@ -180,7 +180,7 @@ export function Editor({
 
       {preview && <Markup ref={markupRef} markup={editorRef.current?.getValue() ?? defaultValue} />}
 
-      <div className="sticky bottom-8 float-right mr-4 mt-1 flex gap-3">
+      <div className="sticky bottom-0 float-right mr-4 mt-1 flex gap-3">
         {!preview && (
           <AddRefButton
             className="editor-btn"

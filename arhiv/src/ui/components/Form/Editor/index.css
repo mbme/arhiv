@@ -57,7 +57,7 @@
 
   .editor-btn,
   .editor-edit-btn {
-    @apply bg-indigo-100 dark:bg-indigo-900 drop-shadow-md;
+    @apply bg-indigo-100 dark:bg-indigo-900 drop-shadow-md cursor-pointer;
   }
 
   @media (hover: hover) {

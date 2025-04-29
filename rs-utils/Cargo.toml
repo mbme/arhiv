@@ -70,9 +70,6 @@ strsim = "0.11" # string similarity
 charabia = { version = "0.9", default-features = false } # tokenization & normalization for search
 deunicode = "1.6" # turn translate unicode strings and emojis into ASCII
 
-# read password from platform-specific secure stores
-keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
-
 tracing-android = "0.2" # tracing compatibility layer for android
 
 [dev-dependencies]

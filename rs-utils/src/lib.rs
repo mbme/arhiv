@@ -38,7 +38,6 @@ pub mod http_server;
 pub mod image;
 mod iter;
 mod json;
-pub mod keyring;
 mod lock_file;
 pub mod log;
 pub mod merge;

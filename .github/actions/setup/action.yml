@@ -12,9 +12,9 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Install Just runner, LLD (fast linker), and libdbus (for keyring)
+    - name: Install Just runner and LLD (fast linker)
       shell: bash
-      run: sudo apt-get update && sudo apt-get install -y just lld libdbus-1-dev ${{ inputs.packages }}
+      run: sudo apt-get update && sudo apt-get install -y just lld ${{ inputs.packages }}
 
     - name: Setup Cargo environment variables
       shell: bash

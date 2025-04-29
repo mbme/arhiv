@@ -75,7 +75,7 @@ _prod-npm-build:
 
 prod-build *ARGS: _prod-npm-build
   TYPED_V_VERSION=$(just _print-long-version) \
-  cargo build --frozen --release --features production-mode -p binutils --bin arhiv {{ARGS}}
+  cargo build --frozen --release --features production-mode --features with-keyring -p binutils --bin arhiv {{ARGS}}
 
 prod-build-windows: (prod-build "--target x86_64-pc-windows-gnu")
 
@@ -84,7 +84,7 @@ prod-build-desktop:
 
 # install the Arhiv CLI locally using Cargo
 cargo-install: _prod-npm-build
-  cargo install --path binutils --bin arhiv --features production-mode
+  cargo install --path binutils --bin arhiv --features production-mode --features with-keyring
 
 check-rs:
   cargo clippy --all-targets --all-features -- -D warnings

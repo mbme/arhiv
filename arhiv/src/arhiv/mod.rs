@@ -17,7 +17,7 @@ use rs_utils::{
 
 use crate::definitions::get_standard_schema;
 
-pub use self::keyring::ArhivKeyring;
+pub use self::keyring::{ArhivKeyring, Keyring};
 pub use self::status::Status;
 
 pub struct ArhivOptions {

@@ -1,5 +1,5 @@
 import { DocumentType, ERASED_DOCUMENT_TYPE } from 'dto';
-import { cx, withItem, withoutItem } from 'utils';
+import { cx, withItems, withoutItems } from 'utils';
 import { getDocumentTypes, isErasedDocument } from 'utils/schema';
 import { Badge } from 'components/Badge';
 import { Button } from 'components/Button';
@@ -29,12 +29,12 @@ export function CatalogFilter({ className, filter, onChange }: Props) {
     if (filter.documentTypes.includes(documentType)) {
       onChange({
         ...filter,
-        documentTypes: withoutItem(filter.documentTypes, documentType),
+        documentTypes: withoutItems(filter.documentTypes, documentType),
       });
     } else {
       onChange({
         ...filter,
-        documentTypes: withItem(filter.documentTypes, documentType),
+        documentTypes: withItems(filter.documentTypes, documentType),
       });
     }
   };

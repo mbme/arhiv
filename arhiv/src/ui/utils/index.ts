@@ -281,12 +281,12 @@ export function toSorted<T>(items: readonly T[], compareFn?: (a: T, b: T) => num
   return clone;
 }
 
-export function withoutItem<T>(items: readonly T[], value: T): T[] {
-  return items.filter((item) => item !== value);
+export function withoutItems<T>(items: readonly T[], ...values: T[]): T[] {
+  return items.filter((item) => !values.includes(item));
 }
 
-export function withItem<T>(items: readonly T[], value: T): T[] {
-  return [...items, value];
+export function withItems<T>(items: readonly T[], ...values: T[]): T[] {
+  return [...items, ...values];
 }
 
 export function isDefined<T>(value: T | null | undefined): value is T {

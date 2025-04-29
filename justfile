@@ -11,11 +11,11 @@ alias c := check
 
 arhiv *PARAMS:
   npm run build --workspace arhiv
-  DEV_ARHIV_ROOT="{{root}}" SERVER_PORT=8443 cargo run --bin arhiv {{PARAMS}}
+  DEV_ARHIV_ROOT="{{root}}" SERVER_PORT=8443 cargo run -p binutils --features with-keyring --bin arhiv {{PARAMS}}
 
 run:
   cd arhiv; npm run clean; tmux new-session -s arhiv \
-     'DEV_ARHIV_ROOT={{root}} SERVER_PORT=8443 RUST_LOG={{debug_log_level}} BROWSER=chromium cargo run -p binutils --bin arhiv server --browser' \; \
+     'DEV_ARHIV_ROOT={{root}} SERVER_PORT=8443 RUST_LOG={{debug_log_level}} BROWSER=chromium cargo run -p binutils --features with-keyring --bin arhiv server --browser' \; \
      split-window -h 'npm run watch:js' \; \
      split-window 'npm run watch:css' \; \
      select-pane -t 0
@@ -31,7 +31,7 @@ desktop *ARGS:
   export SERVER_PORT=8443
   export RUST_LOG={{debug_log_level}}
 
-  cargo build -p binutils
+  cargo build -p binutils --features with-keyring
 
   export ARHIV_BIN="{{justfile_directory()}}/target/debug/arhiv"
   export ELECTRON_OZONE_PLATFORM_HINT=wayland

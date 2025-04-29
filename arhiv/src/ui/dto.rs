@@ -94,10 +94,11 @@ pub enum APIRequest {
 #[derive(Serialize)]
 #[serde(deny_unknown_fields, tag = "typeName")]
 pub enum APIResponse {
+    #[serde(rename_all = "camelCase")]
     ListDocuments {
         documents: Vec<ListDocumentsResult>,
-        #[serde(rename = "hasMore")]
         has_more: bool,
+        total: usize,
     },
     GetDocuments {
         documents: Vec<GetDocumentsResult>,

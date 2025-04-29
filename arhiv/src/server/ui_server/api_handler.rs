@@ -68,6 +68,7 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
             APIResponse::ListDocuments {
                 has_more: page.has_more,
                 documents,
+                total: page.total,
             }
         }
         APIRequest::GetDocuments { ids } => {

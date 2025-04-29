@@ -103,6 +103,7 @@ export type APIResponse =
       typeName: 'ListDocuments';
       documents: ListDocumentsResult[];
       hasMore: boolean;
+      total: number;
     }
   | {
       typeName: 'GetDocuments';

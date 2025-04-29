@@ -172,6 +172,8 @@ export function Catalog({
         />
       )}
 
+      <div className="section-heading ml-8 mb-4">{result.total} documents</div>
+
       <div className="divide-y border-gray-200">
         {items}
         {items.length === 0 && <div className="text-center mb-4">No results 😿</div>}

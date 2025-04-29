@@ -44,6 +44,7 @@ impl Filter {
 pub struct ListPage<'d> {
     pub items: Vec<&'d DocumentHead>,
     pub has_more: bool,
+    pub total: usize,
 }
 
 const PAGE_SIZE: usize = 10;
@@ -68,6 +69,7 @@ impl BazaState {
             Ok(ListPage {
                 items: paginated_documents.to_vec(),
                 has_more: page_end < filtered_documents.len(),
+                total: filtered_documents.len(),
             })
         } else {
             let mut items = self
@@ -82,12 +84,18 @@ impl BazaState {
                 .take(PAGE_SIZE + 1)
                 .collect::<Vec<_>>();
 
+            let total = items.len();
+
             let has_more = items.len() > PAGE_SIZE;
             if has_more {
                 items.remove(PAGE_SIZE);
             }
 
-            Ok(ListPage { items, has_more })
+            Ok(ListPage {
+                items,
+                has_more,
+                total,
+            })
         }
     }
 }
@@ -119,6 +127,7 @@ mod tests {
             assert_eq!(result.items.len(), 2);
             assert!(result.items[0].get_updated_at() >= result.items[1].get_updated_at());
             assert!(!result.has_more);
+            assert_eq!(result.total, 2);
         }
 
         // Check if query "Val" returns 2 documents
@@ -132,6 +141,7 @@ mod tests {
             assert_eq!(result.items.len(), 2);
             assert!(result.items[0].get_updated_at() >= result.items[1].get_updated_at());
             assert!(!result.has_more);
+            assert_eq!(result.total, 2);
         }
 
         // Check if query "oth" returns 1 document
@@ -144,6 +154,7 @@ mod tests {
             let result = state.list_documents(&filter).unwrap();
             assert_eq!(result.items.len(), 1);
             assert!(!result.has_more);
+            assert_eq!(result.total, 1);
         }
 
         // Check if querying for erased document returns 1 erased document
@@ -157,6 +168,7 @@ mod tests {
             assert_eq!(result.items.len(), 1);
             assert!(result.items[0].get_type().is_erased());
             assert!(!result.has_more);
+            assert_eq!(result.total, 1);
         }
 
         // Add more documents to test pagination
@@ -176,6 +188,7 @@ mod tests {
             let result = state.list_documents(&filter).unwrap();
             assert_eq!(result.items.len(), PAGE_SIZE);
             assert!(result.has_more);
+            assert_eq!(result.total, 12);
 
             let filter = Filter {
                 page: 1,
@@ -185,6 +198,7 @@ mod tests {
             let result = state.list_documents(&filter).unwrap();
             assert_eq!(result.items.len(), 2); // Remaining documents
             assert!(!result.has_more);
+            assert_eq!(result.total, 12);
         }
     }
 

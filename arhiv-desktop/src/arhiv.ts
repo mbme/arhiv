@@ -60,10 +60,10 @@ function getCertificateFingerprint(certificate: number[]): string {
   return `sha256/${base64Hash}`;
 }
 
-export async function startServer(): Promise<ExtendedServerInfo> {
-  console.log('Starting Arhiv server');
+export async function startServer(args: string[] = []): Promise<ExtendedServerInfo> {
+  console.log('Starting Arhiv server; args: ', ...args);
 
-  const result = spawn(getArhivBin(), ['server', '--json', '-v'], {
+  const result = spawn(getArhivBin(), ['server', '--json', '-v', ...args], {
     stdio: ['ignore', 'inherit', 'pipe'],
   });
 

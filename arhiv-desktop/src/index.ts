@@ -98,6 +98,8 @@ async function start(args: string[]) {
   const action = parseAction(args);
   console.log('action:', action);
 
+  const verbosityArg = args.find((item) => /^-v+$/.test(item));
+
   if (!app.requestSingleInstanceLock(action)) {
     console.log('The other instance already running, quiting');
     app.quit();
@@ -106,7 +108,11 @@ async function start(args: string[]) {
 
   let serverInfo: ExtendedServerInfo;
   try {
-    serverInfo = await startServer();
+    const arhivArgs = [];
+    if (verbosityArg) {
+      arhivArgs.push(verbosityArg);
+    }
+    serverInfo = await startServer(arhivArgs);
   } catch (e) {
     console.error('Failed to start server', e);
     app.quit();

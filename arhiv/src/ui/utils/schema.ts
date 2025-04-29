@@ -98,3 +98,8 @@ export function formatDocumentType(documentType: DocumentType): string {
 
   return documentType;
 }
+
+export const ALL_DOCUMENT_TYPES = [
+  ...getDocumentTypes(false), //
+  ...getDocumentTypes(true),
+];

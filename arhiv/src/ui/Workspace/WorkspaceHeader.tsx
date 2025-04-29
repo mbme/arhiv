@@ -1,5 +1,7 @@
 import { startTransition } from 'react';
-import { NOTE_DOCUMENT_TYPE } from 'dto';
+import { ASSET_DOCUMENT_TYPE, ERASED_DOCUMENT_TYPE, NOTE_DOCUMENT_TYPE } from 'dto';
+import { ALL_DOCUMENT_TYPES } from 'utils/schema';
+import { withoutItems } from 'utils';
 import { useKeydown, useSignal } from 'utils/hooks';
 import { RPC } from 'utils/network';
 import { useAppController } from 'controller';
@@ -11,6 +13,12 @@ import { NewDocumentDialog } from './NewDocumentDialog';
 import { CommitButton } from './CommitButton';
 import { ConflictsButton } from './ConflictsButton';
 import { ExportKeyDialog } from './ExportKeyDialog';
+
+const SEARCH_DOCUMENT_TYPES = withoutItems(
+  ALL_DOCUMENT_TYPES,
+  ERASED_DOCUMENT_TYPE,
+  ASSET_DOCUMENT_TYPE,
+);
 
 export function WorkspaceHeader() {
   const app = useAppController();
@@ -99,6 +107,7 @@ export function WorkspaceHeader() {
         {showSearchDialog && (
           <DocumentPicker
             title="Search"
+            documentTypes={SEARCH_DOCUMENT_TYPES}
             hideOnSelect
             onSelected={(info) => {
               app.workspace.hideSearchDialog();

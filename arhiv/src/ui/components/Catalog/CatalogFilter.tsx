@@ -1,6 +1,6 @@
 import { DocumentType, ERASED_DOCUMENT_TYPE } from 'dto';
 import { cx, withItems, withoutItems } from 'utils';
-import { getDocumentTypes, isErasedDocument } from 'utils/schema';
+import { ALL_DOCUMENT_TYPES, getDocumentTypes, isErasedDocument } from 'utils/schema';
 import { Badge } from 'components/Badge';
 import { Button } from 'components/Button';
 import { Checkbox } from 'components/Form/Checkbox';
@@ -10,14 +10,7 @@ export interface Filter {
   onlyConflicts?: boolean;
 }
 
-const ALL_DOCUMENT_TYPES = [
-  ...getDocumentTypes(false), //
-  ...getDocumentTypes(true),
-];
-
-const ALL_DOCUMENT_TYPES_EXCEPT_ERASED = ALL_DOCUMENT_TYPES.filter(
-  (documentType) => !isErasedDocument(documentType),
-);
+const ALL_DOCUMENT_TYPES_EXCEPT_ERASED = withoutItems(ALL_DOCUMENT_TYPES, ERASED_DOCUMENT_TYPE);
 
 type Props = {
   className?: string;

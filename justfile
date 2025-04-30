@@ -117,11 +117,17 @@ build-android-app:
   cd arhiv-android; ./gradlew assembleDebug
 
 prod-build-android-app:
-  cd arhiv-android; ./gradlew assembleRelease --no-daemon
+  cd arhiv-android; \
+  VERSION_CODE=$(just print-version) \
+  TYPED_V_VERSION=$(just _print-long-version) \
+  ./gradlew assembleRelease --no-daemon
   mv ./arhiv-android/app/build/outputs/apk/release/app-release.apk arhiv.apk
 
 install-android-app:
   cd arhiv-android; ./gradlew installDebug
+
+install-prod-android-app:
+  adb install -r arhiv.apk
 
 # ----------------------------------------------------
 

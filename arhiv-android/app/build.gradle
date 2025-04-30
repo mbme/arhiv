@@ -17,8 +17,9 @@ android {
   defaultConfig {
     applicationId 'me.mbsoftware.arhiv'
     minSdk 30 // WARN: MUST match cargo ndk --platform flag
-    versionCode 1
-    versionName '1.0'
+
+    versionCode = (System.getenv("VERSION_CODE") ?: "1").toInteger()
+    versionName = System.getenv("TYPED_V_VERSION") ?: "1-dev"
 
     ndk {
       //noinspection ChromeOsAbiSupport

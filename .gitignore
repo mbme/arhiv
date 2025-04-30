@@ -7,6 +7,7 @@ dist/
 cargo-timing*
 .aider*
 log.md
+arhiv.apk
 
 *.pkg.tar.zst
 

@@ -10,19 +10,21 @@ import { ImportArhivKey } from './ImportArhivKey';
 
 export function UnlockArhiv() {
   const [importMode, setImportMode] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   const [password, setPassword] = useState<string>();
 
-  const { error, inProgress, triggerRefresh, result } = useQuery(
-    (abortSignal) => RPC.UnlockArhiv({ password, $secret: true }, abortSignal),
-    {
-      onSuccess() {
-        location.reload();
-      },
-    },
-  );
+  const { error, inProgress, triggerRefresh, result } = useQuery(async (abortSignal) => {
+    try {
+      await RPC.UnlockArhiv({ password, $secret: true }, abortSignal);
+      location.reload();
+    } catch (e) {
+      setInitialized(true);
+      throw e;
+    }
+  });
 
-  const isUnlocking = inProgress || result;
+  const isUnlocking = !initialized || inProgress || result;
 
   if (importMode) {
     return (

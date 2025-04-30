@@ -24,8 +24,8 @@ jobs:
       - name: Setup environment
         uses: ./.github/actions/setup
         with:
-          # MinGW for Windows cross-compilation, libdbus for system keyring
-          packages: mingw-w64  libdbus-1-dev
+          # MinGW for Windows cross-compilation
+          packages: mingw-w64
           targets: aarch64-linux-android x86_64-pc-windows-gnu # Android & Windows targets for rustup
 
       - name: Build Linux CLI

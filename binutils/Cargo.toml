@@ -10,7 +10,6 @@ workspace = true
 
 [features]
 production-mode = ["arhiv/production-mode"]
-with-keyring = ["arhiv/with-keyring"]
 
 [dependencies]
 anyhow.workspace = true

@@ -11,11 +11,11 @@ alias c := check
 
 arhiv *PARAMS:
   npm run build --workspace arhiv
-  DEV_ARHIV_ROOT="{{root}}" SERVER_PORT=8443 cargo run -p binutils --features with-keyring --bin arhiv {{PARAMS}}
+  DEV_ARHIV_ROOT="{{root}}" SERVER_PORT=8443 cargo run -p binutils --bin arhiv {{PARAMS}}
 
 run:
   cd arhiv; npm run clean; tmux new-session -s arhiv \
-     'DEV_ARHIV_ROOT={{root}} SERVER_PORT=8443 RUST_LOG={{debug_log_level}} BROWSER=chromium cargo run -p binutils --features with-keyring --bin arhiv server --browser' \; \
+     'DEV_ARHIV_ROOT={{root}} SERVER_PORT=8443 RUST_LOG={{debug_log_level}} BROWSER=chromium cargo run -p binutils --bin arhiv server --browser' \; \
      split-window -h 'npm run watch:js' \; \
      split-window 'npm run watch:css' \; \
      select-pane -t 0
@@ -31,7 +31,7 @@ desktop *ARGS:
   export SERVER_PORT=8443
   export RUST_LOG={{debug_log_level}}
 
-  cargo build -p binutils --features with-keyring
+  cargo build -p binutils
 
   export ARHIV_BIN="{{justfile_directory()}}/target/debug/arhiv"
   export ELECTRON_OZONE_PLATFORM_HINT=wayland
@@ -75,7 +75,7 @@ _prod-npm-build:
 
 prod-build *ARGS: _prod-npm-build
   ARHIV_VERSION=$(just _print-long-version) \
-  cargo build --frozen --release --features production-mode --features with-keyring -p binutils --bin arhiv {{ARGS}}
+  cargo build --frozen --release --features production-mode -p binutils --bin arhiv {{ARGS}}
 
 prod-build-windows: (prod-build "--target x86_64-pc-windows-gnu")
 
@@ -84,7 +84,7 @@ prod-build-desktop:
 
 # install the Arhiv CLI locally using Cargo
 cargo-install: _prod-npm-build
-  cargo install --path binutils --bin arhiv --features production-mode --features with-keyring
+  cargo install --path binutils --bin arhiv --features production-mode
 
 check-rs:
   cargo clippy --all-targets --all-features -- -D warnings

@@ -14,7 +14,6 @@ doctest = false
 [features]
 production-mode = ["baza/production-mode"]
 embed-public = []
-with-keyring = ["keyring"]
 
 [dependencies]
 baza = { path = "../baza" }
@@ -34,6 +33,6 @@ axum-extra.workspace = true
 include_dir = "0.7" # embed files into binary
 
 # read password from platform-specific secure stores
-keyring = { version = "3", optional = true, features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
 
 rayon.workspace = true

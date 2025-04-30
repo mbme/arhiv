@@ -9,7 +9,7 @@ use std::{
     time::Instant,
 };
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use thiserror::Error;
 
 use rs_utils::{
@@ -362,17 +362,16 @@ impl Baza {
     }
 
     pub fn commit(&mut self) -> Result<HashSet<Id>> {
-        self.save_changes()?;
-
         if !self.has_staged_documents() {
             log::debug!("Can't commit: nothing to commit");
             return Ok(Default::default());
         }
 
         if self.state.has_document_locks() {
-            log::debug!("Can't commit: some documents are locked");
-            return Ok(Default::default());
+            bail!("Can't commit: some documents are locked");
         }
+
+        self.save_changes()?;
 
         let mut fs_tx = FsTransaction::new();
 

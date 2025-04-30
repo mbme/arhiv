@@ -38,6 +38,7 @@ type Options<TResult> = {
   refreshIfChange?: Inputs;
   refreshOnMount?: boolean;
   onSuccess?: (result: TResult) => void;
+  onError?: (error: unknown) => void;
 };
 
 type QueryHookResult<TResult> = {
@@ -85,6 +86,7 @@ export function useQuery<TResult>(
         setResult(undefined);
         setError(error as Error | string);
         setInProgress(false);
+        optionsRef.current.onError?.(error);
       },
     );
 

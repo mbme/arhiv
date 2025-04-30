@@ -20,6 +20,12 @@ export function CommitButton({ disabled }: CommitButtonProps) {
           message: `Committed ${committedIds.length} documents`,
         });
       },
+      onError(error) {
+        showToast({
+          level: 'warn',
+          message: `Failed to commit: ${String(error)}`,
+        });
+      },
     },
   );
 

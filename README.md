@@ -28,6 +28,10 @@ You should export backup copies of your key using Arhiv CLI or UI.
 * In Android app password is saved to the System KeyStore.
 * Desktop & Android apps **unlock server** using password they got from user or keyring. **The Web UI server stays unlocked** until the app is closed or manually locked.
 
+# Usage with Syncthing
+When using Syncthing to synchronize Arhiv storage across devices, you should turn off the file versioning (it seems to be turned on by default on Android).
+That way, if you'll modify Arhiv on both devices simultaneously, Syncthing will keep both storage file versions, and Arhiv will merge them after restart.
+
 # Arhiv CLI installation
 
 You can download CLI & Android app builds from [Github Releases](https://github.com/mbme/arhiv/releases).

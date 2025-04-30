@@ -250,4 +250,5 @@ pub struct ArhivUIConfig<'a> {
     pub arhiv_key_missing: bool,
     pub arhiv_locked: bool,
     pub dev_mode: bool,
+    pub arhiv_version: &'a str,
 }

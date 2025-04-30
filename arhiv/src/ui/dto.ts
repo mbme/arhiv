@@ -440,4 +440,5 @@ export type ArhivUIConfig = {
   arhivKeyMissing: boolean;
   arhivLocked: boolean;
   devMode: boolean;
+  arhivVersion: string;
 };

@@ -119,18 +119,6 @@ export function useLatestRef<T>(value: T): MutableRefObject<T> {
   return valueRef;
 }
 
-export function useAbortSignal() {
-  const [abortController] = useState(() => new AbortController());
-
-  useEffect(() => {
-    return () => {
-      abortController.abort();
-    };
-  }, [abortController]);
-
-  return abortController.signal;
-}
-
 export function useUpdateEffect(effect: EffectCallback, deps: Inputs) {
   const isFirstRef = useRef(true);
   useEffect(() => {

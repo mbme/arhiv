@@ -13,6 +13,7 @@ import { NewDocumentDialog } from './NewDocumentDialog';
 import { CommitButton } from './CommitButton';
 import { ConflictsButton } from './ConflictsButton';
 import { ExportKeyDialog } from './ExportKeyDialog';
+import { OutdatedChecker } from './OutdatedChecker';
 
 const SEARCH_DOCUMENT_TYPES = withoutItems(
   ALL_DOCUMENT_TYPES,
@@ -45,15 +46,18 @@ export function WorkspaceHeader() {
 
   return (
     <SuspenseCacheProvider cacheId="workspace-header">
-      <nav className="fixed inset-x-0 top-0 z-20 var-bg-secondary-color pl-4 pr-4 flex flex-row gap-4 xs:gap-8">
+      <nav className="fixed inset-x-0 top-0 z-20 var-bg-secondary-color xs:px-4 flex flex-row gap-4 xs:gap-8">
         <IconButton
           icon="circle-half"
           title="Toggle light/dark theme"
           onClick={() => {
             app.toggleTheme();
           }}
-          className="mr-auto"
         />
+
+        <OutdatedChecker />
+
+        <div className="mr-auto" />
 
         <ConflictsButton
           onClick={() => {

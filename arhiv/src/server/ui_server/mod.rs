@@ -18,6 +18,7 @@ use serde_json::Value;
 
 use baza::{BazaManager, DEV_MODE};
 use rs_utils::{
+    get_crate_version,
     http_server::{add_no_cache_headers, fallback_route, ServerError},
     log::{self, tracing},
     stream_to_file, AuthToken, TempFile,
@@ -96,6 +97,7 @@ async fn config_handler(ctx: State<ServerContext>) -> Result<impl IntoResponse, 
         arhiv_key_missing: !arhiv.baza.key_exists()?,
         arhiv_locked: arhiv.baza.is_locked(),
         dev_mode: DEV_MODE,
+        arhiv_version: get_crate_version(),
     })
     .context("Failed to serialize ArhivUI config")?;
 

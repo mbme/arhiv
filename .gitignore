@@ -1,6 +1,7 @@
 target/
 node_modules/
 dist/
+pkg/
 .log/
 .eslintcache
 *.tsbuildinfo

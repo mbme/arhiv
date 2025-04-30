@@ -22,7 +22,7 @@
     <activity
       android:name=".MainActivity"
       android:exported="true"
-      android:configChanges="uiMode"
+      android:configChanges="orientation|screenSize|uiMode"
       android:theme="@style/AppFullScreenTheme">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />

@@ -3,8 +3,8 @@ use std::{collections::HashSet, fmt::Display};
 use anyhow::Result;
 
 use rs_utils::{
-    create_dir_if_not_exist, dir_exists, file_exists, get_file_modification_time, get_file_name,
-    list_files, Timestamp,
+    create_dir_if_not_exist, dir_exists, file_exists, fuzzy_match, get_file_modification_time,
+    get_file_name, list_files, Timestamp,
 };
 
 use crate::entities::Id;
@@ -93,7 +93,7 @@ impl BazaPaths {
     pub fn list_storage_db_files(&self) -> Result<Vec<String>> {
         let result = list_files(&self.storage_dir)?
             .into_iter()
-            .filter(|file| file.ends_with(STORAGE_EXT))
+            .filter(|file| is_baza_file(file))
             .collect();
 
         Ok(result)
@@ -183,4 +183,23 @@ fn list_blobs_in_dir(dir: &str, trim_ext: &str) -> Result<HashSet<Id>> {
         .collect();
 
     Ok(ids)
+}
+
+fn is_baza_file(file_name: &str) -> bool {
+    fuzzy_match("baza.gz.age", file_name)
+}
+
+#[test]
+fn test_is_baza_file() {
+    assert!(!is_baza_file(""));
+    assert!(!is_baza_file("x.gzbaza.age"));
+    assert!(!is_baza_file("x.age.gzbaza"));
+
+    assert!(is_baza_file("baza.gz.age"));
+    assert!(is_baza_file("gzbaza.gz.age"));
+    assert!(is_baza_file("2025-04-27_20-59-39.baza.gz.age"));
+    assert!(is_baza_file(
+        "baza.gz.sync-conflict-20250430-132940-UMKYIGZ.age"
+    ));
+    assert!(is_baza_file("baza.gz.sync-conflict-XXX.age"));
 }

@@ -126,7 +126,7 @@ pub fn run_npm<'a>(commands: impl AsRef<[&'a str]>) {
 }
 
 pub fn get_crate_version() -> &'static str {
-    option_env!("TYPED_V_VERSION").unwrap_or("dev-build")
+    option_env!("ARHIV_VERSION").unwrap_or("dev-build")
 }
 
 pub async fn shutdown_signal() {

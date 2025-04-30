@@ -63,7 +63,7 @@ Using makepkg: `just arch-install`. It also installs `arhiv-desktop` GUI.
 
 ## Special switches
 * `production-mode` feature flag - to distinguish between dev Arhiv & prod Arhiv
-* `TYPED_V_VERSION` - env variable to be set on compile time that contains current Arhiv version
+* `ARHIV_VERSION` - env variable to be set on compile time that contains current Arhiv version
 
 ## Release process
 * `just bump-version` - increment major version, create & push git tag

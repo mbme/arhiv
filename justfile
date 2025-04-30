@@ -74,7 +74,7 @@ _prod-npm-build:
   npm run prod:build --workspace arhiv
 
 prod-build *ARGS: _prod-npm-build
-  TYPED_V_VERSION=$(just _print-long-version) \
+  ARHIV_VERSION=$(just _print-long-version) \
   cargo build --frozen --release --features production-mode --features with-keyring -p binutils --bin arhiv {{ARGS}}
 
 prod-build-windows: (prod-build "--target x86_64-pc-windows-gnu")
@@ -110,7 +110,7 @@ build-android-libs: _prepare_to_building_android_libs
 
 prod-build-android-libs: _prepare_to_building_android_libs
   cd arhiv-android; \
-  TYPED_V_VERSION=$(just _print-long-version) \
+  ARHIV_VERSION=$(just _print-long-version) \
   cargo ndk -t arm64-v8a --platform {{android_platform_version}} -o ./app/src/main/jniLibs build --frozen --release --features production-mode
 
 build-android-app:
@@ -119,7 +119,7 @@ build-android-app:
 prod-build-android-app:
   cd arhiv-android; \
   VERSION_CODE=$(just print-version) \
-  TYPED_V_VERSION=$(just _print-long-version) \
+  ARHIV_VERSION=$(just _print-long-version) \
   ./gradlew assembleRelease --no-daemon
   mv ./arhiv-android/app/build/outputs/apk/release/app-release.apk arhiv.apk
 

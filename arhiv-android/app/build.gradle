@@ -19,7 +19,7 @@ android {
     minSdk 30 // WARN: MUST match cargo ndk --platform flag
 
     versionCode = (System.getenv("VERSION_CODE") ?: "1").toInteger()
-    versionName = System.getenv("TYPED_V_VERSION") ?: "1-dev"
+    versionName = System.getenv("ARHIV_VERSION") ?: "dev-build"
 
     ndk {
       //noinspection ChromeOsAbiSupport

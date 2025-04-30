@@ -30,7 +30,7 @@ export function OutdatedChecker() {
     }
 
     const abortController = new AbortController();
-    fetch('https://api.github.com/repos/mbme/typed-v/releases/latest', {
+    fetch('https://api.github.com/repos/mbme/arhiv/releases/latest', {
       signal: abortController.signal,
     })
       .then((res) => {

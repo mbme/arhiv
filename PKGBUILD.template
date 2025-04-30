@@ -1,6 +1,6 @@
 # Maintainer: mbme
 
-pkgname=typed-v
+pkgname=arhiv
 pkgrel=1
 pkgver="0.0.0"
 pkgdesc='Personal computing environment'

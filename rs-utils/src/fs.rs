@@ -430,7 +430,7 @@ pub fn create_file_writer(file_path: &str, overwrite: bool) -> Result<impl Write
 
 #[must_use]
 pub fn workspace_relpath(subpath: &str) -> String {
-    // Here CARGO_MANIFEST_DIR is /typed-v/rs-utils/
+    // Here CARGO_MANIFEST_DIR is /arhiv/rs-utils/
     format!("{}/../{}", env!("CARGO_MANIFEST_DIR"), subpath)
 }
 

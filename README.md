@@ -30,7 +30,7 @@ You should export backup copies of your key using Arhiv CLI or UI.
 
 # Arhiv CLI installation
 
-You can download CLI & Android app builds from [Github Releases](./releases).
+You can download CLI & Android app builds from [Github Releases](https://github.com/mbme/typed-v/releases).
 
 ## Install using Cargo
 * `npm install`

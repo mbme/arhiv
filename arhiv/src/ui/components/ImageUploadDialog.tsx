@@ -15,7 +15,12 @@ type Props = {
 export function ImageUploadDialog({ file, onSuccess, onCancel }: Props) {
   const { error, inProgress, triggerRefresh } = useQuery(
     async (abortSignal) => {
-      return uploadFile(file, abortSignal);
+      const result = await uploadFile([file], abortSignal);
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      return result.ids[0]!;
     },
     {
       refreshOnMount: false,

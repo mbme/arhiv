@@ -252,3 +252,9 @@ pub struct ArhivUIConfig<'a> {
     pub dev_mode: bool,
     pub arhiv_version: &'a str,
 }
+
+#[derive(Serialize)]
+pub struct FileUploadResult {
+    pub ids: Vec<Id>,
+    pub error: Option<String>,
+}

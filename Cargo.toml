@@ -40,7 +40,7 @@ tokio = { version = "1", features = ["fs", "macros", "signal", "process", "rt-mu
 tokio-util = { version = "0.7", features = ["compat", "codec"] }
 
 rustls = { version = "*" }
-axum = { version = "0.8", features = ["tracing", "tokio", "http1"] }
+axum = { version = "0.8", features = ["tracing", "tokio", "http1", "multipart"] }
 axum-extra = { version = "0.10", features = ["typed-header", "cookie"]}
 ordermap = { version = "0.5", features = ["serde"] } # hashmap & hashset that preserve insertion order
 rand = "0.9"

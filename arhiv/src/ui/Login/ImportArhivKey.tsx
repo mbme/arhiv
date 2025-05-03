@@ -56,7 +56,7 @@ export function ImportArhivKey({ onCancel }: Props) {
         <FileInput
           label="Load key from file"
           variant="text"
-          onFileSelected={(file) => {
+          onSelected={(file) => {
             if (!file) {
               return;
             }

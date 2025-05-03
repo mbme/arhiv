@@ -1,5 +1,5 @@
-import { APIRequest, APIResponse, DocumentId } from 'dto';
-import { formatBytes, Obj } from './index';
+import { APIRequest, APIResponse, DocumentId, FileUploadResult } from 'dto';
+import { ensure, Obj } from './index';
 
 const SECRET_PLACEHOLDER = '{ SECRET }';
 
@@ -92,32 +92,37 @@ export const API_ENDPOINT = `${window.CONFIG.basePath}/api`;
 
 export const RPC = createRPCProxy<APIRequest, APIResponse>(API_ENDPOINT);
 
-export async function uploadFile(file: File, signal?: AbortSignal): Promise<DocumentId> {
-  console.debug('File upload: %s %s', file.name, formatBytes(file.size));
+export async function uploadFile(files: File[], signal?: AbortSignal): Promise<FileUploadResult> {
+  ensure(files.length > 0, 'No files to upload provided');
+
+  console.debug('Uploading %s files', files.length);
 
   const onAbort = () => {
-    console.debug('File upload: aborted %s', file.name);
+    console.debug('File upload: aborted');
   };
   signal?.addEventListener('abort', onAbort);
 
   try {
-    const response = await fetch(`${window.CONFIG.basePath}/assets`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/octet-stream',
-        'X-File-Name': file.name,
-      },
-      body: file,
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('files', file);
     });
 
-    console.debug('File upload: %s finished', file.name);
-    const message = await response.text();
+    const response = await fetch(`${window.CONFIG.basePath}/assets`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    console.debug('File upload: finished');
+    const resultText = await response.text();
 
     if (!response.ok) {
-      throw new Error(`File upload failed: ${response.status}\n${message}`);
+      throw new Error(`File upload failed: ${response.status}\n${resultText}`);
     }
 
-    return message as DocumentId;
+    const result = JSON.parse(resultText) as FileUploadResult;
+
+    return result;
   } catch (e) {
     const isAbortError = e instanceof Error && e.name === 'AbortError';
 

@@ -82,9 +82,14 @@ export function WorkspaceHeader() {
               app.workspace.hideNewDocumentDialog();
               app.workspace.newDocument(documentType);
             }}
-            onAssetCreated={(assetId) => {
+            onAssetCreated={(assets) => {
               app.workspace.hideNewDocumentDialog();
-              app.workspace.openDocument(assetId);
+
+              if (assets.length === 1) {
+                app.workspace.openDocument(assets[0]!);
+              } else {
+                app.workspace.openDocumentsList(assets);
+              }
             }}
             onCancel={() => {
               app.workspace.hideNewDocumentDialog();

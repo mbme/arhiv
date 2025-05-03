@@ -1,9 +1,11 @@
 use std::{io::Seek, ops::Bound, str::FromStr};
 
+use anyhow::{Context, Result};
 use axum::{
-    extract::{Path, State},
+    extract::{multipart::Field, Multipart, Path, State},
     http::{self, HeaderMap, HeaderValue, StatusCode},
     response::{IntoResponse, Response},
+    Json,
 };
 use axum_extra::{
     headers::{self, HeaderMapExt},
@@ -15,7 +17,10 @@ use rs_utils::{
     create_body_from_reader,
     http_server::ServerError,
     log::{self, tracing},
+    stream_to_file, TempFile,
 };
+
+use crate::{ui::dto::FileUploadResult, Arhiv};
 
 use super::ServerContext;
 
@@ -98,4 +103,63 @@ pub async fn assets_handler(
 
         Ok((StatusCode::OK, headers, body).into_response())
     }
+}
+
+#[tracing::instrument(skip(ctx), level = "debug")]
+pub async fn create_asset_handler(
+    ctx: State<ServerContext>,
+    mut multipart: Multipart,
+) -> Result<impl IntoResponse, ServerError> {
+    let arhiv = &ctx.arhiv;
+
+    let mut ids = Vec::new();
+    let mut error: Option<String> = None;
+
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .context("Failed to read next form field")?
+    {
+        let index = ids.len();
+        log::debug!("Multipart file upload: uploading file {index}");
+
+        match upload_asset(field, arhiv).await {
+            Ok(id) => {
+                ids.push(id);
+            }
+            Err(err) => {
+                log::error!("Multipart file upload: failed to upload file {index}: {err}");
+                error = Some(err.to_string());
+                break;
+            }
+        };
+    }
+
+    let result = FileUploadResult { ids, error };
+
+    Ok(Json(result))
+}
+
+async fn upload_asset(field: Field<'_>, arhiv: &Arhiv) -> Result<Id> {
+    let file_name = field.file_name().map(ToString::to_string);
+
+    let temp_file = TempFile::new_in_dir(arhiv.baza.get_downloads_dir(), "arhiv-asset");
+    stream_to_file(temp_file.open_tokio_file(0).await?, field).await?;
+
+    let mut baza = arhiv.baza.open_mut()?;
+
+    let mut asset = baza.create_asset(&temp_file.path)?;
+    if let Some(file_name) = file_name {
+        asset.data.filename = file_name.to_string();
+    }
+
+    let document = asset.into_document()?;
+    let document = baza
+        .stage_document(document, &None)
+        .context("Failed to update asset filename")?;
+    let id = document.id.clone();
+
+    baza.save_changes()?;
+
+    Ok(id)
 }

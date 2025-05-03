@@ -50,7 +50,7 @@ function ResultsSection({ heading, filter, items }: ResultsSectionProps) {
 
 type Props = {
   onNewDocument: (documentType: DocumentType) => void;
-  onAssetCreated: (assetId: DocumentId) => void;
+  onAssetCreated: (assets: DocumentId[]) => void;
   onCancel: () => void;
 };
 
@@ -71,7 +71,7 @@ export function NewDocumentDialog({ onNewDocument, onAssetCreated, onCancel }: P
     return (
       <FilePickerDialog
         onAssetCreated={(documentId) => {
-          onAssetCreated(documentId);
+          onAssetCreated([documentId]);
           setShowFilePickerDialog(false);
         }}
         onCancel={() => {
@@ -84,12 +84,12 @@ export function NewDocumentDialog({ onNewDocument, onAssetCreated, onCancel }: P
   if (showFileUploadDialog) {
     return (
       <FileUploadDialog
-        onAssetCreated={(documentId) => {
-          onAssetCreated(documentId);
-          setShowFilePickerDialog(false);
-        }}
-        onCancel={() => {
-          onCancel();
+        onClose={(ids) => {
+          if (ids.length === 0) {
+            onCancel();
+          } else {
+            onAssetCreated(ids);
+          }
         }}
       />
     );
@@ -118,7 +118,7 @@ export function NewDocumentDialog({ onNewDocument, onAssetCreated, onCancel }: P
               },
             },
             {
-              name: 'Upload file',
+              name: 'Upload files',
               leadingIcon: 'upload',
               onClick: () => {
                 setShowFileUploadDialog(true);

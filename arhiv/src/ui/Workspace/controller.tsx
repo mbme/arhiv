@@ -28,6 +28,10 @@ type CardVariant =
       variant: 'document';
       documentId: DocumentId;
       forceEditor?: boolean;
+    }
+  | {
+      variant: 'documents-list';
+      documentIds: DocumentId[];
     };
 
 export type CardId = string;
@@ -93,6 +97,13 @@ export class WorkspaceController {
         documentId,
       });
     }
+  };
+
+  openDocumentsList = (documentIds: DocumentId[]) => {
+    this.open({
+      variant: 'documents-list',
+      documentIds,
+    });
   };
 
   newDocument(documentType: DocumentType, data?: DocumentData, collections?: DocumentId[]) {

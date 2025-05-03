@@ -16,6 +16,7 @@ import { WorkspaceHeader } from './WorkspaceHeader/WorkspaceHeader';
 import { ImagePasteHandler } from './ImagePasteHandler';
 import { CardContainer } from './CardContainer';
 import { useScrapedDataPasteHandler } from './useScrapedDataPasteHandler';
+import { DocumentsListCard } from './DocumentsListCard';
 
 export function Workspace() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
@@ -74,6 +75,9 @@ function renderCard(card: Card) {
 
     case 'status':
       return <StatusCard />;
+
+    case 'documents-list':
+      return <DocumentsListCard />;
   }
 
   throwBadCardVariant(card);

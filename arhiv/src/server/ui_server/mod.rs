@@ -21,7 +21,7 @@ use rs_utils::{
     get_crate_version,
     http_server::{add_no_cache_headers, fallback_route, ServerError},
     log::{self, tracing},
-    stream_to_file, AuthToken, TempFile,
+    AuthToken,
 };
 
 use crate::{
@@ -30,7 +30,7 @@ use crate::{
 };
 
 use self::api_handler::handle_api_request;
-use self::assets_handler::assets_handler;
+use self::assets_handler::{assets_handler, create_asset_handler};
 use self::public_assets_handler::public_assets_handler;
 use self::scaled_image_handler::scaled_image_handler;
 use self::scaled_images_cache::ScaledImagesCache;
@@ -152,43 +152,6 @@ async fn api_handler(
     let response = handle_api_request(&ctx, request).await?;
 
     Ok(Json(response))
-}
-
-#[tracing::instrument(skip(ctx, request), level = "debug")]
-async fn create_asset_handler(
-    ctx: State<ServerContext>,
-    request: Request,
-) -> Result<impl IntoResponse, ServerError> {
-    let file_name = request
-        .headers()
-        .get("X-File-Name")
-        .context("X-File-Name header is missing")?
-        .to_str()
-        .context("Failed to read X-File-Name header as a string")?
-        .to_string();
-
-    let arhiv = &ctx.arhiv;
-
-    let temp_file = TempFile::new_in_dir(arhiv.baza.get_downloads_dir(), "arhiv-asset");
-    let stream = request.into_body().into_data_stream();
-
-    stream_to_file(temp_file.open_tokio_file(0).await?, stream).await?;
-
-    let mut baza = arhiv.baza.open_mut()?;
-
-    let mut asset = baza.create_asset(&temp_file.path)?;
-    asset.data.filename = file_name;
-
-    let document = asset.into_document()?;
-    let document = baza
-        .stage_document(document, &None)
-        .context("Failed to update asset filename")?;
-
-    let asset_id = document.id.to_string();
-
-    baza.save_changes()?;
-
-    Ok(asset_id)
 }
 
 #[derive(Deserialize)]

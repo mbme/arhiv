@@ -442,3 +442,8 @@ export type ArhivUIConfig = {
   devMode: boolean;
   arhivVersion: string;
 };
+
+export type FileUploadResult = {
+  ids: DocumentId[];
+  error?: string;
+};

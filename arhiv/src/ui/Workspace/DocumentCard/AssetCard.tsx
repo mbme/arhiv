@@ -119,7 +119,12 @@ export function AssetCard({ document, isUpdating, options }: Props) {
         </div>
       )}
 
-      <DownloadLink url={getAssetUrl(document.id)} fileName={filename} title="Download file" />
+      <DownloadLink
+        url={getAssetUrl(document.id)}
+        fileName={filename}
+        title="Download file"
+        className="justify-self-end"
+      />
 
       <DocumentEditor
         key={document.updatedAt} // force form fields to use fresh values from the document after save

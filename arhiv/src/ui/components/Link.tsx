@@ -1,3 +1,4 @@
+import { cx } from 'utils';
 import { JSXChildren } from 'utils/jsx';
 import { Icon } from 'components/Icon';
 
@@ -24,8 +25,9 @@ type DownloadLinkProps = {
   url: string;
   fileName: string;
   title: string;
+  className?: string;
 };
-export function DownloadLink({ url, fileName, title }: DownloadLinkProps) {
+export function DownloadLink({ url, fileName, title, className }: DownloadLinkProps) {
   return (
     <a
       href={url}
@@ -33,7 +35,10 @@ export function DownloadLink({ url, fileName, title }: DownloadLinkProps) {
       download={fileName}
       target="_blank"
       rel="noreferrer"
-      className="flex items-center gap-2 var-active-color hover:var-active-color-hover"
+      className={cx(
+        'flex items-center gap-2 var-active-color hover:var-active-color-hover',
+        className,
+      )}
     >
       <Icon variant="download" />
 

@@ -31,6 +31,7 @@ type CardVariant =
     }
   | {
       variant: 'documents-list';
+      title: string;
       documentIds: DocumentId[];
     };
 
@@ -99,9 +100,10 @@ export class WorkspaceController {
     }
   };
 
-  openDocumentsList = (documentIds: DocumentId[]) => {
+  openDocumentsList = (title: string, documentIds: DocumentId[]) => {
     this.open({
       variant: 'documents-list',
+      title,
       documentIds,
     });
   };

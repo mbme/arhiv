@@ -19,7 +19,7 @@ export function DocumentsListCard() {
   });
 
   return (
-    <CardContainer title={`Documents list: ${documents.length} documents`}>
+    <CardContainer title={`${card.title}: ${documents.length} documents`}>
       <ol className="pl-4 pt-2 list-decimal">
         {documents.map((document) => (
           <li key={document.id} className="my-4">

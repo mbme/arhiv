@@ -88,7 +88,7 @@ export function WorkspaceHeader() {
               if (assets.length === 1) {
                 app.workspace.openDocument(assets[0]!);
               } else {
-                app.workspace.openDocumentsList(assets);
+                app.workspace.openDocumentsList('File upload results', assets);
               }
             }}
             onCancel={() => {

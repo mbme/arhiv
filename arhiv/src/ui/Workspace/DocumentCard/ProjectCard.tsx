@@ -23,7 +23,7 @@ import { Button, IconButton } from 'components/Button';
 import { Spoiler } from 'components/Spoiler';
 import { Icon } from 'components/Icon';
 import { DocumentTitle } from './DocumentTitle';
-import { CONFLICT_INDICATOR } from './ConflictIndicator';
+import { CONFLICT_INDICATOR, STAGED_INDICATOR } from './Indicators';
 
 type TaskItemProps = {
   id: DocumentId;
@@ -197,12 +197,10 @@ export function ProjectCard({
 
   return (
     <CardContainer
-      toolbarClassName={cx({
-        'bg-lime-300/30': document.isStaged,
-      })}
       leftToolbar={
         <>
           <DropdownMenu icon="dots-horizontal" align="bottom-left" options={options} />
+          {document.isStaged && STAGED_INDICATOR}
           {document.hasConflict && CONFLICT_INDICATOR}
         </>
       }

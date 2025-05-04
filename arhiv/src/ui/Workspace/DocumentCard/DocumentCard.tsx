@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { DocumentDTO } from 'dto';
-import { cx } from 'utils';
 import { useUnsavedChangesWarning } from 'utils/hooks';
 import { RPC } from 'utils/network';
 import { Button } from 'components/Button';
@@ -16,7 +15,7 @@ import { DocumentEditor } from '../DocumentEditor/DocumentEditor';
 import { useLockDocument } from './useLockDocument';
 import { LockError } from './LockError';
 import { DocumentTitle } from './DocumentTitle';
-import { CONFLICT_INDICATOR } from './ConflictIndicator';
+import { CONFLICT_INDICATOR, STAGED_INDICATOR } from './Indicators';
 
 type Props = {
   document: DocumentDTO;
@@ -44,9 +43,6 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
 
   return (
     <CardContainer
-      toolbarClassName={cx({
-        'bg-lime-300/30': document.isStaged,
-      })}
       skipBack={isDirty}
       leftToolbar={
         <>
@@ -73,6 +69,7 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
             ]}
           />
 
+          {document.isStaged && STAGED_INDICATOR}
           {document.hasConflict && CONFLICT_INDICATOR}
         </>
       }

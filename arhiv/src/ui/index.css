@@ -114,7 +114,7 @@
   }
 
   .icon {
-    @apply inline h-5 w-5;
+    @apply inline size-5;
   }
 
   .document-head {

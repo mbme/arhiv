@@ -1,9 +1,8 @@
 import { DocumentDTO } from 'dto';
-import { cx } from 'utils';
 import { CardContainer } from 'Workspace/CardContainer';
 import { ProgressLocker } from 'components/ProgressLocker';
 import { DocumentViewerHead } from './DocumentViewerHead';
-import { CONFLICT_INDICATOR } from './ConflictIndicator';
+import { CONFLICT_INDICATOR, STAGED_INDICATOR } from './Indicators';
 
 type Props = {
   document: DocumentDTO;
@@ -13,10 +12,12 @@ type Props = {
 export function ErasedDocumentCard({ document, isUpdating }: Props) {
   return (
     <CardContainer
-      toolbarClassName={cx({
-        'bg-lime-300/30': document.isStaged,
-      })}
-      leftToolbar={document.hasConflict && CONFLICT_INDICATOR}
+      leftToolbar={
+        <>
+          {document.isStaged && STAGED_INDICATOR}
+          {document.hasConflict && CONFLICT_INDICATOR}
+        </>
+      }
       title="ERASED DOCUMENT"
     >
       {isUpdating && <ProgressLocker />}

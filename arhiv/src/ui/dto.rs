@@ -118,6 +118,7 @@ pub enum APIResponse {
         collections: Vec<DocumentBackref>,
         snapshots_count: usize,
         has_conflict: bool,
+        is_staged: bool,
     },
     ParseMarkup {
         ast: Value,

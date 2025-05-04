@@ -142,6 +142,7 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
                 refs: refs.get_all_document_refs(),
                 snapshots_count,
                 has_conflict: head.is_conflict(),
+                is_staged: head.is_staged(),
             }
         }
         APIRequest::ParseMarkup { markup } => {

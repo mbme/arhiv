@@ -16,6 +16,7 @@ type CardContainerProps = {
   skipBack?: boolean;
   skipClose?: boolean;
   className?: string;
+  toolbarClassName?: string;
 };
 export function CardContainer({
   children,
@@ -26,6 +27,7 @@ export function CardContainer({
   skipBack,
   skipClose,
   className,
+  toolbarClassName,
 }: CardContainerProps) {
   const { card, controller } = useCardContext();
 
@@ -66,7 +68,7 @@ export function CardContainer({
 
   return (
     <div className="card-container flex flex-col">
-      <div className="card-toolbar">
+      <div className={cx('card-toolbar', toolbarClassName)}>
         <div className="card-toolbar-left">{leftToolbar}</div>
         <div className="card-toolbar-title">{showTitle && title}</div>
         <div className="card-toolbar-right">

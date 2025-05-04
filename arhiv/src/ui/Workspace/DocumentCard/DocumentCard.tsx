@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DocumentDTO } from 'dto';
+import { cx } from 'utils';
 import { useUnsavedChangesWarning } from 'utils/hooks';
 import { RPC } from 'utils/network';
 import { Button } from 'components/Button';
@@ -43,6 +44,9 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
 
   return (
     <CardContainer
+      toolbarClassName={cx({
+        'bg-lime-300/30': document.isStaged,
+      })}
       skipBack={isDirty}
       leftToolbar={
         <>

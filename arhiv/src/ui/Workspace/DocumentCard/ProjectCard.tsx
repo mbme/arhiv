@@ -197,6 +197,9 @@ export function ProjectCard({
 
   return (
     <CardContainer
+      toolbarClassName={cx({
+        'bg-lime-300/30': document.isStaged,
+      })}
       leftToolbar={
         <>
           <DropdownMenu icon="dots-horizontal" align="bottom-left" options={options} />

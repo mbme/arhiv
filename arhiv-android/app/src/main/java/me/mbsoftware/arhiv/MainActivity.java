@@ -325,6 +325,18 @@ public class MainActivity extends AppCompatActivity {
     updateWebViewDarkMode(newConfig);
   }
 
+  @Override
+  public void onBackPressed() {
+    if (webView.canGoBack()) {
+      webView.goBack();
+    } else {
+      new AlertDialog.Builder(this)
+        .setMessage("Are you sure you want to exit?")
+        .setPositiveButton("Yes", (d, w) -> super.onBackPressed())
+        .setNegativeButton("No", null)
+        .show();
+    }
+  }
 
   @Override
   protected void onDestroy() {

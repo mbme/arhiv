@@ -5,7 +5,7 @@ import { TASK_DOCUMENT_TYPE } from 'dto';
 import { Card, useCardContext } from 'Workspace/controller';
 import { DropdownOptions } from 'components/DropdownMenu';
 import { showToast } from 'components/Toaster';
-import { useDocumentChangeHandler } from 'Workspace/documentChangeUtils';
+import { useDocumentChange } from 'Workspace/documentChangeUtils';
 import { DocumentCard } from './DocumentCard';
 import { ErasedDocumentCard } from './ErasedDocumentCard';
 import { AssetCard } from './AssetCard';
@@ -26,22 +26,17 @@ export function DocumentCardContainer() {
   });
 
   // refresh document if referenced document changes
-  useDocumentChangeHandler((updatedDocumentsIds) => {
-    const referencedDocumentIds = new Set([
+  useDocumentChange(
+    [
       document.id,
       ...document.refs,
       ...document.backrefs.map((item) => item.id),
       ...document.collections.map((item) => item.id),
-    ]);
-
-    const someReferencedDocumentsUpdated = [...referencedDocumentIds].some((id) =>
-      updatedDocumentsIds.has(id),
-    );
-
-    if (someReferencedDocumentsUpdated) {
+    ],
+    () => {
       triggerRefresh(true);
-    }
-  });
+    },
+  );
 
   const documentActions: DropdownOptions = [
     {

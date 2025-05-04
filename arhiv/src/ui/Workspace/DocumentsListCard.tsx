@@ -5,6 +5,7 @@ import { showToast } from 'components/Toaster';
 import { Button } from 'components/Button';
 import { CardContainer } from './CardContainer';
 import { Card, useCardContext } from './controller';
+import { useDocumentChange } from './documentChangeUtils';
 
 type DocumentsListCard = Extract<Card, { variant: 'documents-list' }>;
 
@@ -13,10 +14,18 @@ export function DocumentsListCard() {
 
   const {
     value: { documents },
+    triggerRefresh,
   } = useSuspenseQuery({
     typeName: 'GetDocuments',
     ids: card.documentIds,
   });
+
+  useDocumentChange(
+    documents.map((document) => document.id),
+    () => {
+      triggerRefresh(true);
+    },
+  );
 
   return (
     <CardContainer title={`${card.title}: ${documents.length} documents`}>

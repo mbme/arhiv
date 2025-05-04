@@ -9,6 +9,7 @@ import { DateTime } from 'components/DateTime';
 import { SearchInput } from 'components/SearchInput';
 import { IconButton } from 'components/Button';
 import { DocumentIcon } from 'components/DocumentIcon';
+import { useDocumentChange } from 'Workspace/documentChangeUtils';
 import { Pagination } from './Pagination';
 import { CatalogFilter, type Filter } from './CatalogFilter';
 import { CatalogItemBadges } from './CatalogItemBadges';
@@ -56,13 +57,24 @@ export function Catalog({
 }: CatalogProps) {
   const [showSettings, setShowSettings] = useState(false);
 
-  const { value: result, isUpdating } = useSuspenseQuery({
+  const {
+    value: result,
+    isUpdating,
+    triggerRefresh,
+  } = useSuspenseQuery({
     typeName: 'ListDocuments',
     query,
     page,
     documentTypes: filter.documentTypes,
     onlyConflicts: filter.onlyConflicts ?? false,
   });
+
+  useDocumentChange(
+    result.documents.map((document) => document.id),
+    () => {
+      triggerRefresh(true);
+    },
+  );
 
   const { setRootEl } = useSelectionManager([result]);
 

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { DocumentId } from 'dto';
+import { Callback } from 'utils';
 import { useLatestRef } from 'utils/hooks';
 
 class DocumentChangeEvent extends CustomEvent<Set<DocumentId>> {
@@ -28,4 +29,14 @@ export function useDocumentChangeHandler(handler: (ids: Set<DocumentId>) => void
       document.removeEventListener(DocumentChangeEvent.EVENT_NAME, onDocumentChange);
     };
   }, [handlerRef]);
+}
+
+export function useDocumentChange(ids: DocumentId[], onChange: Callback) {
+  useDocumentChangeHandler((updatedDocumentsIds) => {
+    const someReferencedDocumentsUpdated = ids.some((id) => updatedDocumentsIds.has(id));
+
+    if (someReferencedDocumentsUpdated) {
+      onChange();
+    }
+  });
 }

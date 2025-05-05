@@ -54,7 +54,7 @@ export function OutdatedChecker() {
   }, []);
 
   const currentVersion = window.CONFIG.arhivVersion;
-  const isOutdated = latestVersion && latestVersion !== currentVersion;
+  const isOutdated = latestVersion && !currentVersion.startsWith(latestVersion);
 
   if (!isOutdated) {
     return null;

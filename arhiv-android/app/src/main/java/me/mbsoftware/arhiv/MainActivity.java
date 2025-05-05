@@ -2,6 +2,7 @@ package me.mbsoftware.arhiv;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.ClipData;
 import android.content.pm.PackageInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
@@ -65,16 +66,23 @@ public class MainActivity extends AppCompatActivity {
           return;
         }
 
-        if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-          Uri[] results = null;
-          if (result.getData().getDataString() != null) {
-            results = new Uri[]{Uri.parse(result.getData().getDataString())};
+        Uri[] results = null;
+        if (result.getResultCode() == RESULT_OK) {
+          Intent data = result.getData();
+          if (data != null) {
+            if (data.getClipData() != null) {
+              ClipData clip = data.getClipData();
+              int count = clip.getItemCount();
+              results = new Uri[count];
+              for (int i = 0; i < count; i++) {
+                results[i] = clip.getItemAt(i).getUri();
+              }
+            } else if (data.getData() != null) {
+              results = new Uri[]{data.getData()};
+            }
           }
-          filePathCallback.onReceiveValue(results);
-        } else {
-          filePathCallback.onReceiveValue(null);
         }
-
+        filePathCallback.onReceiveValue(results);
         filePathCallback = null;
       });
 
@@ -285,6 +293,7 @@ public class MainActivity extends AppCompatActivity {
         MainActivity.this.filePathCallback = filePathCallback;
 
         Intent intent = fileChooserParams.createIntent();
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 
         try {
           filePickerLauncher.launch(intent);

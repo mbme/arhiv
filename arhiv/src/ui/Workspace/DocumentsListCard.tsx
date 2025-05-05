@@ -1,5 +1,6 @@
 import { copyTextToClipbard } from 'utils';
 import { useSuspenseQuery } from 'utils/suspense';
+import { createLink, createRefUrl } from 'utils/markup';
 import { Ref } from 'components/Ref';
 import { showToast } from 'components/Toaster';
 import { Button } from 'components/Button';
@@ -37,10 +38,10 @@ export function DocumentsListCard() {
               variant="text"
               leadingIcon="clipboard"
               onClick={() => {
-                void copyTextToClipbard(document.id).then(() => {
+                void copyTextToClipbard(createLink(createRefUrl(document.id), '')).then(() => {
                   showToast({
                     level: 'info',
-                    message: 'Copied document id to clipboard!',
+                    message: 'Copied document ref to clipboard!',
                   });
                 });
               }}
@@ -56,6 +57,24 @@ export function DocumentsListCard() {
           </li>
         ))}
       </ol>
+
+      <Button
+        variant="primary"
+        onClick={() => {
+          const refList = documents
+            .map((document) => '* ' + createLink(createRefUrl(document.id), ''))
+            .join('\n');
+
+          void copyTextToClipbard(refList).then(() => {
+            showToast({
+              level: 'info',
+              message: 'Copied list of refs to clipboard!',
+            });
+          });
+        }}
+      >
+        Copy ref list
+      </Button>
     </CardContainer>
   );
 }

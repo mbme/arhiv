@@ -1,6 +1,6 @@
 use std::{io::Read, sync::LazyLock};
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{Context, Result, bail, ensure};
 use axum::{
     body::Body,
     response::{IntoResponse, Response},

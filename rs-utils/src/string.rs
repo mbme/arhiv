@@ -1,7 +1,7 @@
 use std::{borrow::Cow, collections::HashMap};
 
 use anyhow::{Context, Result};
-use rand::{distr::Alphanumeric, Rng};
+use rand::{Rng, distr::Alphanumeric};
 use serde_json::Value;
 
 #[must_use]

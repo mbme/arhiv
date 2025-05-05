@@ -1,4 +1,4 @@
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 
 use crate::{
     concat_bytes, crypto_key::SIGNATURE_SIZE, decode_url_safe_base64, new_random_crypto_byte_array,
@@ -61,7 +61,7 @@ impl AuthToken {
 mod tests {
     use anyhow::Result;
 
-    use crate::{crypto::crypto_key::CryptoKey, AuthToken};
+    use crate::{AuthToken, crypto::crypto_key::CryptoKey};
 
     #[test]
     fn test_auth_token_parse_serialize() -> Result<()> {

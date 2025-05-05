@@ -2,15 +2,15 @@ use std::{panic::AssertUnwindSafe, sync::Arc};
 
 use anyhow::Context;
 use axum::{
+    Json, Router,
     extract::{DefaultBodyLimit, Query, Request, State},
     http::{HeaderMap, StatusCode},
     middleware::{self, Next},
     response::{Html, IntoResponse, Response},
     routing::{get, post},
-    Json, Router,
 };
 use axum_extra::{
-    extract::{cookie::Cookie, CookieJar},
+    extract::{CookieJar, cookie::Cookie},
     response::JavaScript,
 };
 use serde::Deserialize;
@@ -18,15 +18,14 @@ use serde_json::Value;
 
 use baza::{BazaManager, DEV_MODE};
 use rs_utils::{
-    get_crate_version,
-    http_server::{add_no_cache_headers, fallback_route, ServerError},
+    AuthToken, get_crate_version,
+    http_server::{ServerError, add_no_cache_headers, fallback_route},
     log::{self, tracing},
-    AuthToken,
 };
 
 use crate::{
-    ui::dto::{APIRequest, ArhivUIConfig},
     Arhiv,
+    ui::dto::{APIRequest, ArhivUIConfig},
 };
 
 use self::api_handler::handle_api_request;

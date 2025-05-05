@@ -2,7 +2,7 @@ use std::io::{BufRead, Cursor, Seek};
 
 use anyhow::{Context, Result};
 use image::{DynamicImage, GenericImageView, ImageReader};
-use qrcode::{render::svg, QrCode};
+use qrcode::{QrCode, render::svg};
 
 fn open_image(img: impl BufRead + Seek) -> Result<DynamicImage> {
     ImageReader::new(img)

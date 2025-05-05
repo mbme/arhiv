@@ -5,14 +5,15 @@ use std::{
     time::Instant,
 };
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, ensure};
 
 use rs_utils::{
-    age::{read_and_decrypt_file, AgeKey, AgeReader, AgeWriter},
-    log, LockFile, SecretString,
+    LockFile, SecretString,
+    age::{AgeKey, AgeReader, AgeWriter, read_and_decrypt_file},
+    log,
 };
 
-use crate::{entities::InstanceId, Baza};
+use crate::{Baza, entities::InstanceId};
 
 use super::BazaManager;
 

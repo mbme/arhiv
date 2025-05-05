@@ -4,7 +4,7 @@ use std::{
     collections::{BTreeMap, HashSet},
 };
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, ensure};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -371,7 +371,7 @@ mod tests {
     use anyhow::Result;
     use serde_json::json;
 
-    use crate::entities::{revision::VectorClockOrder, InstanceId};
+    use crate::entities::{InstanceId, revision::VectorClockOrder};
 
     use super::{LatestRevComputer, Revision};
 

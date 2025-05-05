@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::Result;
 
-use rs_utils::{create_dir_if_not_exist, http_server::HttpServer, log, AuthToken};
+use rs_utils::{AuthToken, create_dir_if_not_exist, http_server::HttpServer, log};
 
 use self::{
     certificate::generate_ui_crypto_key, server_lock::ArhivServerLock, ui_server::build_ui_router,

@@ -1,6 +1,6 @@
 use std::{fs, time::Instant};
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 
 use crate::log;
 

@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use serde_json::{Map, Value};
 
 pub fn merge_json(o1: Value, o2: Value) -> Result<Value> {
@@ -52,13 +52,15 @@ mod tests {
             })
         );
 
-        assert!(merge_json(
-            json!({
-                "test1": 1,
-            }),
-            Value::Null,
-        )
-        .is_err());
+        assert!(
+            merge_json(
+                json!({
+                    "test1": 1,
+                }),
+                Value::Null,
+            )
+            .is_err()
+        );
 
         Ok(())
     }

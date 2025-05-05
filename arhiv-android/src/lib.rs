@@ -2,21 +2,21 @@ mod keyring;
 
 use std::{
     sync::{
-        atomic::{AtomicBool, Ordering},
         LazyLock, Mutex,
+        atomic::{AtomicBool, Ordering},
     },
     time::Duration,
 };
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, ensure};
 use jni::{
-    objects::{JClass, JObject, JString, JValue},
     JNIEnv,
+    objects::{JClass, JObject, JString, JValue},
 };
 use tokio::runtime::Runtime;
 
 use arhiv::{Arhiv, ArhivOptions, ArhivServer, ServerInfo};
-use rs_utils::{init_global_rayon_threadpool, log, SecretString};
+use rs_utils::{SecretString, init_global_rayon_threadpool, log};
 
 use self::keyring::AndroidKeyring;
 

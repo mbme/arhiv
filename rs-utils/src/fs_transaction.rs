@@ -1,6 +1,6 @@
 use std::{fs, io::Write};
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, bail, ensure};
 
 use crate::{
     ensure_file_exists, generate_alpanumeric_string, get_file_size, log, move_file,
@@ -306,7 +306,7 @@ impl Default for FsTransaction {
 
 #[cfg(test)]
 mod tests {
-    use crate::{dir_exists, TempFile};
+    use crate::{TempFile, dir_exists};
 
     use super::*;
 
@@ -337,9 +337,11 @@ mod tests {
             temp2.create_file()?;
 
             let mut fs_tx = FsTransaction::new();
-            assert!(fs_tx
-                .move_file(temp1.as_ref(), temp2.as_ref(), true)
-                .is_err());
+            assert!(
+                fs_tx
+                    .move_file(temp1.as_ref(), temp2.as_ref(), true)
+                    .is_err()
+            );
 
             assert_eq!(temp1.str_contents()?, "temp1");
             assert_eq!(temp2.str_contents()?, "");

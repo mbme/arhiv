@@ -1,6 +1,6 @@
 use std::{collections::HashSet, fmt};
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 
 use rs_utils::Timestamp;
@@ -265,7 +265,7 @@ mod tests {
     use rs_utils::Timestamp;
     use serde_json::json;
 
-    use crate::entities::{new_document, Revision};
+    use crate::entities::{Revision, new_document};
 
     use super::DocumentHead;
 

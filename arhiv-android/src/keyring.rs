@@ -1,13 +1,13 @@
 use std::sync::{Arc, RwLock};
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, ensure};
 use jni::{
-    objects::{GlobalRef, JObject, JString},
     JavaVM,
+    objects::{GlobalRef, JObject, JString},
 };
 
 use arhiv::{ArhivKeyring, Keyring};
-use rs_utils::{log, ExposeSecret, SecretString};
+use rs_utils::{ExposeSecret, SecretString, log};
 
 /// This implementation of Keyring only receives password once on init, from Android.
 /// The reason is that the biometric auth process in Android is asynchronous, so the easiest approach

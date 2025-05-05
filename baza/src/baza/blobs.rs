@@ -1,10 +1,10 @@
 use std::{
     collections::HashSet,
     fs::remove_file,
-    io::{copy, Read, Seek},
+    io::{Read, Seek, copy},
 };
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result, ensure};
 
 use rs_utils::{
     age::{AgeKey, AgeReader, AgeWriter},
@@ -148,7 +148,7 @@ pub fn write_and_encrypt_blob(file_path: &str, blob_path: &str, key: AgeKey) -> 
 mod tests {
     use std::fs;
 
-    use rs_utils::{generate_alpanumeric_string, read_all_as_string, TempFile};
+    use rs_utils::{TempFile, generate_alpanumeric_string, read_all_as_string};
 
     use crate::{baza_manager::BazaManager, entities::Id};
 

@@ -3,7 +3,7 @@ use std::{sync::Arc, time::Duration};
 use anyhow::Result;
 use tokio::{task::JoinHandle, time::interval};
 
-use rs_utils::{log, FakeTime, Timestamp};
+use rs_utils::{FakeTime, Timestamp, log};
 
 use crate::BazaManager;
 
@@ -118,7 +118,7 @@ mod tests {
     use rs_utils::TempFile;
     use tokio::time::{advance, sleep};
 
-    use crate::{entities::new_empty_document, AutoCommitService, BazaManager};
+    use crate::{AutoCommitService, BazaManager, entities::new_empty_document};
 
     #[tokio::test(flavor = "current_thread", start_paused = true)]
     async fn test_auto_commit_on_start() -> Result<()> {

@@ -4,16 +4,16 @@ mod migration;
 
 use std::sync::RwLock;
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, ensure};
 
-use rs_utils::{age::AgeKey, log, FsTransaction, LockFile, SecretString, Timestamp};
+use rs_utils::{FsTransaction, LockFile, SecretString, Timestamp, age::AgeKey, log};
 
-use crate::{schema::DataSchema, DocumentExpert};
+use crate::{DocumentExpert, schema::DataSchema};
 
 use super::{
-    baza_paths::BazaPaths,
-    baza_storage::{create_empty_storage_file, merge_storages_to_file, STORAGE_VERSION},
     BazaInfo, BazaStorage,
+    baza_paths::BazaPaths,
+    baza_storage::{STORAGE_VERSION, create_empty_storage_file, merge_storages_to_file},
 };
 
 use self::manager_state::BazaManagerState;
@@ -197,14 +197,14 @@ impl BazaManager {
 mod tests {
     use serde_json::json;
 
-    use rs_utils::{dir_exists, file_exists, TempFile};
+    use rs_utils::{TempFile, dir_exists, file_exists};
 
     use crate::{
+        BazaStorage,
         baza_manager::BazaManager,
         baza_paths::BazaPaths,
         baza_storage::BazaFileStorage,
         entities::{new_document, new_empty_document},
-        BazaStorage,
     };
 
     fn open_storage<'s>(manager: &BazaManager) -> BazaFileStorage<'s> {

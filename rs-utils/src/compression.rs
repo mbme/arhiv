@@ -1,7 +1,7 @@
 use std::io::{BufRead, BufReader, Read, Write};
 
 use anyhow::Result;
-use flate2::{bufread::GzDecoder, write::GzEncoder, Compression};
+use flate2::{Compression, bufread::GzDecoder, write::GzEncoder};
 
 use crate::age::{AgeKey, AgeReader, AgeWriter};
 
@@ -69,7 +69,7 @@ mod tests {
     use std::io::Write;
 
     use crate::{
-        age::AgeKey, generate_alpanumeric_string, read_all_as_string, AgeGzReader, AgeGzWriter,
+        AgeGzReader, AgeGzWriter, age::AgeKey, generate_alpanumeric_string, read_all_as_string,
     };
 
     use super::{create_gz_reader, create_gz_writer};

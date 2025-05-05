@@ -1,6 +1,6 @@
 use std::fmt;
 
-use anyhow::{anyhow, bail, ensure, Context, Error, Result};
+use anyhow::{Context, Error, Result, anyhow, bail, ensure};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
@@ -39,22 +39,14 @@ impl DocumentData {
     pub fn get(&self, field: &str) -> Option<&Value> {
         let value = self.0.get(field)?;
 
-        if value.is_null() {
-            None
-        } else {
-            Some(value)
-        }
+        if value.is_null() { None } else { Some(value) }
     }
 
     #[must_use]
     pub fn get_mut(&mut self, field: &str) -> Option<&mut Value> {
         let value = self.0.get_mut(field)?;
 
-        if value.is_null() {
-            None
-        } else {
-            Some(value)
-        }
+        if value.is_null() { None } else { Some(value) }
     }
 
     #[must_use]

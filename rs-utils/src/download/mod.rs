@@ -2,7 +2,7 @@ mod file_name_expert;
 
 use std::time::Duration;
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{Context, Result, bail, ensure};
 use reqwest::{Client, Response};
 use tokio::fs as tokio_fs;
 use url::Url;

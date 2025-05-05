@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt};
 
-use anyhow::{anyhow, bail, ensure, Result};
+use anyhow::{Result, anyhow, bail, ensure};
 
 use crate::{
     entities::{Document, Id},
@@ -239,9 +239,9 @@ mod tests {
     use rs_utils::TempFile;
 
     use crate::{
+        BazaManager,
         entities::new_document,
         schema::{DataDescription, DataSchema, Field, FieldType},
-        BazaManager,
     };
 
     #[test]

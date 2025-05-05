@@ -6,7 +6,7 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 use ordermap::OrderMap;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};

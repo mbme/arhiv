@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 
 use rs_utils::{is_http_url, is_image_url, parse_url, render_template_with_vars, value_as_string};
 
 use crate::{
-    entities::{Document, DocumentData, DocumentType, Id, Refs},
-    schema::{download_asset, Asset, DataSchema, Field, FieldType, ASSET_TYPE},
     BazaManager,
+    entities::{Document, DocumentData, DocumentType, Id, Refs},
+    schema::{ASSET_TYPE, Asset, DataSchema, Field, FieldType, download_asset},
 };
 
 pub struct DocumentExpert<'s> {

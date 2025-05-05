@@ -1,4 +1,4 @@
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{Context, Result, bail, ensure};
 
 use baza::{
     entities::{Document, DocumentData, DocumentType},
@@ -6,7 +6,7 @@ use baza::{
 };
 use rs_utils::{ensure_file_exists, remove_file_extension, remove_file_if_exists};
 
-use crate::{definitions::TRACK_TYPE, Arhiv};
+use crate::{Arhiv, definitions::TRACK_TYPE};
 
 impl Arhiv {
     pub fn import_document_from_file(

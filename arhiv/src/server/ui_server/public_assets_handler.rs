@@ -11,7 +11,7 @@ use rs_utils::{get_mime_from_path, http_server::ServerError};
 
 #[cfg(any(feature = "embed-public", not(debug_assertions)))]
 fn get_public_file(rel_file_path: &str) -> Option<&'static [u8]> {
-    use include_dir::{include_dir, Dir};
+    use include_dir::{Dir, include_dir};
 
     static PUBLIC_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/public");
 

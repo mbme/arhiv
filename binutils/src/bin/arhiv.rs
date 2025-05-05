@@ -4,21 +4,21 @@ use std::{
     process,
 };
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use clap::{
-    builder::PossibleValuesParser, ArgAction, CommandFactory, Parser, Subcommand, ValueHint,
+    ArgAction, CommandFactory, Parser, Subcommand, ValueHint, builder::PossibleValuesParser,
 };
-use clap_complete::{generate, Shell};
-use dialoguer::{theme::ColorfulTheme, Password};
+use clap_complete::{Shell, generate};
+use dialoguer::{Password, theme::ColorfulTheme};
 
-use arhiv::{definitions::get_standard_schema, Arhiv, ArhivOptions, ArhivServer};
+use arhiv::{Arhiv, ArhivOptions, ArhivServer, definitions::get_standard_schema};
 use baza::{
-    entities::{Document, DocumentData, DocumentLockKey, DocumentType, Id},
     BazaManager, DEV_MODE,
+    entities::{Document, DocumentData, DocumentLockKey, DocumentType, Id},
 };
 use rs_utils::{
-    ensure_file_exists, file_exists, get_crate_version, image::generate_qrcode_svg,
-    init_global_rayon_threadpool, into_absolute_path, log, shutdown_signal, SecretString,
+    SecretString, ensure_file_exists, file_exists, get_crate_version, image::generate_qrcode_svg,
+    init_global_rayon_threadpool, into_absolute_path, log, shutdown_signal,
 };
 
 #[derive(Parser, Debug)]

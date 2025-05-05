@@ -1,11 +1,11 @@
 use std::collections::HashSet;
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result, ensure};
 
 use rs_utils::merge::{merge_slices_three_way, merge_strings_three_way};
 
 use crate::{
-    entities::{parse_string_vec, Document, DocumentType},
+    entities::{Document, DocumentType, parse_string_vec},
     schema::{DataSchema, FieldType},
 };
 
@@ -210,7 +210,7 @@ impl MergeExpert {
 
 #[cfg(test)]
 mod tests {
-    use serde_json::{json, Value};
+    use serde_json::{Value, json};
 
     use crate::{
         entities::new_document,

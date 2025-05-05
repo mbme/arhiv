@@ -9,7 +9,7 @@ mod refs;
 mod revision;
 
 pub use document::Document;
-pub use document_data::{parse_string_vec, DocumentData};
+pub use document_data::{DocumentData, parse_string_vec};
 pub use document_key::DocumentKey;
 pub use document_lock::{DocumentLock, DocumentLockKey};
 pub use document_type::{DocumentType, ERASED_DOCUMENT_TYPE};

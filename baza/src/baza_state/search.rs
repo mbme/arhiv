@@ -3,16 +3,17 @@ use std::{collections::HashMap, io::Write, time::Instant};
 use anyhow::{Context, Result};
 
 use rs_utils::{
+    AgeGzReader, AgeGzWriter,
     age::AgeKey,
     create_file_reader, create_file_writer,
     full_text_search::{FTSEngine, FieldBoost},
-    log, read_all, AgeGzReader, AgeGzWriter,
+    log, read_all,
 };
 
 use crate::{
+    DocumentExpert,
     entities::{Document, Id},
     schema::DataSchema,
-    DocumentExpert,
 };
 
 const TITLE_FIELD_NAME: &str = "@title";

@@ -1,10 +1,10 @@
 use std::{fs, path::Path};
 
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 
 use rs_utils::{
-    create_dir_if_not_exist, ensure_dir_exists, file_exists, get_file_name, list_files, log,
-    Timestamp,
+    Timestamp, create_dir_if_not_exist, ensure_dir_exists, file_exists, get_file_name, list_files,
+    log,
 };
 
 use crate::BazaManager;

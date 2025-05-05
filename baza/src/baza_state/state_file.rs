@@ -4,12 +4,12 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
 use rs_utils::{
-    age::AgeKey, create_file_reader, create_file_writer, log, AgeGzReader, AgeGzWriter,
+    AgeGzReader, AgeGzWriter, age::AgeKey, create_file_reader, create_file_writer, log,
 };
 
 use crate::{
-    entities::{DocumentKey, Id, InstanceId, Refs},
     BazaInfo,
+    entities::{DocumentKey, Id, InstanceId, Refs},
 };
 
 use super::DocumentHead;

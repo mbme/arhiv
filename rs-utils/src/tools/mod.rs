@@ -1,12 +1,12 @@
 use std::process::Stdio;
 use std::time::Duration;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use reqwest::Client;
 use serde::Deserialize;
 use serde_json::Value;
 use tokio::process::{Child, Command};
-use tokio::time::{sleep, Instant};
+use tokio::time::{Instant, sleep};
 use which::which_all;
 
 use crate::{path_to_string, run_command};

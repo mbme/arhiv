@@ -1,7 +1,7 @@
 use std::convert::From;
 use std::{collections::HashSet, ops::Range};
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{Context, Result, bail, ensure};
 use pulldown_cmark::{
     Alignment, CodeBlockKind, CowStr, Event, HeadingLevel, LinkType, Options, Parser, Tag,
 };
@@ -416,7 +416,7 @@ mod tests {
 
     use crate::{
         entities::Id,
-        markup::{create_image_ref, create_ref, MarkupStr},
+        markup::{MarkupStr, create_image_ref, create_ref},
     };
 
     fn into_ast(value: &str) -> Value {

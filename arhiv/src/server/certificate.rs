@@ -1,10 +1,10 @@
 use std::{fs, io::Write};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 
 use rs_utils::{
-    crypto_key::CryptoKey, file_exists, log, must_create_file, ExposeSecret, SecretBytes,
-    SecretString, SelfSignedCertificate, Timestamp,
+    ExposeSecret, SecretBytes, SecretString, SelfSignedCertificate, Timestamp,
+    crypto_key::CryptoKey, file_exists, log, must_create_file,
 };
 
 pub fn read_or_generate_certificate(root_dir: &str) -> Result<SelfSignedCertificate> {

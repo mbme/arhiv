@@ -7,22 +7,22 @@ use std::{
 
 use anyhow::{Context, Result};
 use axum::{
-    body::{to_bytes, Body},
+    Router,
+    body::{Body, to_bytes},
     extract::Request,
-    http::{header, HeaderMap, HeaderValue, StatusCode, Uri},
+    http::{HeaderMap, HeaderValue, StatusCode, Uri, header},
     middleware::{self, Next},
     response::{IntoResponse, Response},
-    Router,
 };
 use axum_extra::headers::{self, HeaderMapExt};
 use axum_server::{
-    tls_rustls::{RustlsAcceptor, RustlsConfig},
     Handle, Server,
+    tls_rustls::{RustlsAcceptor, RustlsConfig},
 };
 use secrecy::ExposeSecret;
 use tokio::task::JoinHandle;
 
-use crate::{log, SelfSignedCertificate};
+use crate::{SelfSignedCertificate, log};
 
 pub struct ServerError(anyhow::Error);
 
@@ -193,11 +193,7 @@ impl HttpServer {
     }
 
     fn get_protocol(&self) -> &str {
-        if self.secure {
-            "https"
-        } else {
-            "http"
-        }
+        if self.secure { "https" } else { "http" }
     }
 
     pub fn get_url(&self) -> Result<reqwest::Url> {

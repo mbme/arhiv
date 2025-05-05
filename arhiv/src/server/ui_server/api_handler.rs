@@ -1,17 +1,18 @@
 use std::{cmp::Ordering, fs, path::Path};
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, bail, ensure};
 use serde::Serialize;
 
 use baza::{
+    DocumentExpert, Filter, StagingError, ValidationError,
     entities::{Document, DocumentType},
     markup::MarkupStr,
     schema::DataSchema,
-    DocumentExpert, Filter, StagingError, ValidationError,
 };
 use rs_utils::{
-    ensure_dir_exists, get_crate_version, get_symlink_target_path, image::generate_qrcode_svg,
-    is_readable, log, path_to_string, remove_file_if_exists, render_template, to_base64, Timestamp,
+    Timestamp, ensure_dir_exists, get_crate_version, get_symlink_target_path,
+    image::generate_qrcode_svg, is_readable, log, path_to_string, remove_file_if_exists,
+    render_template, to_base64,
 };
 
 use crate::ui::dto::{

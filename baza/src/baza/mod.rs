@@ -9,24 +9,24 @@ use std::{
     time::Instant,
 };
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{Context, Result, bail, ensure};
 use thiserror::Error;
 
 use rs_utils::{
-    age::AgeKey, file_exists, get_file_name, get_file_size, get_media_type, log, FsTransaction,
-    Timestamp,
+    FsTransaction, Timestamp, age::AgeKey, file_exists, get_file_name, get_file_size,
+    get_media_type, log,
 };
 
 use crate::{
+    BazaInfo, BazaState, BazaStorage, DocumentHead, Filter, ListPage, Locks,
     baza_paths::BazaPaths,
-    baza_storage::{create_container_patch, STORAGE_VERSION},
+    baza_storage::{STORAGE_VERSION, create_container_patch},
     entities::{
         Document, DocumentKey, DocumentLock, DocumentLockKey, DocumentType, Id, InstanceId,
         LatestRevComputer, Revision,
     },
     merge_expert::MergeExpert,
-    schema::{Asset, AssetData, DataSchema, ASSET_TYPE},
-    BazaInfo, BazaState, BazaStorage, DocumentHead, Filter, ListPage, Locks,
+    schema::{ASSET_TYPE, Asset, AssetData, DataSchema},
 };
 
 pub use blobs::write_and_encrypt_blob;
@@ -629,7 +629,7 @@ mod tests {
     use rs_utils::age::AgeKey;
 
     use crate::{
-        baza_storage::create_test_storage, entities::new_document, BazaState, DocumentHead,
+        BazaState, DocumentHead, baza_storage::create_test_storage, entities::new_document,
     };
 
     use super::update_state_from_storage;

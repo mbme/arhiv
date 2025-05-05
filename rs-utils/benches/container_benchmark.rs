@@ -1,11 +1,12 @@
 use std::io::{BufRead, BufReader, Cursor, Write};
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
 use rs_utils::{
+    ContainerReader, ContainerWriter,
     age::{AgeKey, AgeReader, AgeWriter},
     create_gz_reader, create_gz_writer, generate_alpanumeric_string, generate_bytes,
-    get_file_hash_sha256, ContainerReader, ContainerWriter,
+    get_file_hash_sha256,
 };
 
 fn container_write(mut writer: &mut impl Write, data: &[String]) {

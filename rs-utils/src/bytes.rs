@@ -2,7 +2,7 @@ use std::io::{self, Read, Seek, SeekFrom};
 
 use anyhow::{Context, Result};
 use data_encoding::{BASE64, BASE64URL, HEXUPPER};
-use rand::{rngs::OsRng, RngCore, TryRngCore};
+use rand::{RngCore, TryRngCore, rngs::OsRng};
 
 pub fn generate_bytes(n: usize) -> Vec<u8> {
     let mut bytes = vec![0u8; n];

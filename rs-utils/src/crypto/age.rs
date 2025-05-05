@@ -5,13 +5,14 @@ use std::{
 };
 
 use age::{
+    Decryptor, Encryptor, Identity, Recipient,
     armor::{ArmoredReader, ArmoredWriter, Format},
     scrypt,
     secrecy::{ExposeSecret, SecretString},
     stream::{StreamReader, StreamWriter},
-    x25519, Decryptor, Encryptor, Identity, Recipient,
+    x25519,
 };
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, ensure};
 
 use crate::{create_file_reader, create_file_writer, log, read_all};
 

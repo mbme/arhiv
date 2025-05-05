@@ -1,7 +1,7 @@
 use std::fmt;
 
-use anyhow::{anyhow, Context, Result};
-use serde::{de::Visitor, Deserialize, Serialize};
+use anyhow::{Context, Result, anyhow};
+use serde::{Deserialize, Serialize, de::Visitor};
 
 use crate::entities::{Document, Id, Revision};
 

@@ -104,7 +104,7 @@ impl BazaState {
 mod tests {
     use serde_json::json;
 
-    use crate::entities::{new_document, new_empty_document, DocumentType, Id};
+    use crate::entities::{DocumentType, Id, new_document, new_empty_document};
 
     use super::*;
 

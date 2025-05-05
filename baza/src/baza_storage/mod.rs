@@ -8,11 +8,11 @@ use std::{
     time::Instant,
 };
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, bail, ensure};
 
 use rs_utils::{
-    age::AgeKey, create_file_reader, create_file_writer, log, AgeGzReader, AgeGzWriter,
-    ContainerPatch, ContainerReader, ContainerWriter,
+    AgeGzReader, AgeGzWriter, ContainerPatch, ContainerReader, ContainerWriter, age::AgeKey,
+    create_file_reader, create_file_writer, log,
 };
 
 use crate::entities::{Document, DocumentKey};
@@ -409,7 +409,7 @@ mod tests {
 
     use crate::{baza_storage::create_test_storage, entities::new_document};
 
-    use super::{create_container_patch, create_storage, merge_storages, BazaInfo, BazaStorage};
+    use super::{BazaInfo, BazaStorage, create_container_patch, create_storage, merge_storages};
 
     #[test]
     fn test_storage() -> Result<()> {

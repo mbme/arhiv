@@ -5,14 +5,14 @@ use std::{
     io::{BufReader, Write},
 };
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result, ensure};
 use serde::Deserialize;
 use tokio::{sync::RwLock, time::Instant};
 
-use baza::{entities::Id, schema::ASSET_TYPE, Baza, BazaManager};
+use baza::{Baza, BazaManager, entities::Id, schema::ASSET_TYPE};
 use rs_utils::{
-    create_dir_if_not_exist, create_file_reader, create_file_writer, file_exists, format_bytes,
-    get_file_name, image::scale_image_file, list_files, log, read_all, Timestamp,
+    Timestamp, create_dir_if_not_exist, create_file_reader, create_file_writer, file_exists,
+    format_bytes, get_file_name, image::scale_image_file, list_files, log, read_all,
 };
 
 #[derive(Deserialize, Clone)]

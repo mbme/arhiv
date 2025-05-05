@@ -1,14 +1,14 @@
 use std::time::Instant;
 
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 
-use rs_utils::{age::AgeKey, file_exists, log, FsTransaction};
+use rs_utils::{FsTransaction, age::AgeKey, file_exists, log};
 
 use crate::{
+    Baza, BazaStorage,
     baza::write_and_encrypt_blob,
     baza_storage::create_container_patch,
     entities::{Document, Id, InstanceId},
-    Baza, BazaStorage,
 };
 
 use super::BazaManager;

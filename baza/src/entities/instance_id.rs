@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use serde::{Deserialize, Serialize};
 
 use rs_utils::generate_random_id;

@@ -1,6 +1,6 @@
 use std::{collections::HashMap, io::Write};
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{Context, Result, bail, ensure};
 
 use rs_utils::{
     age::{AgeKey, AgeReader, AgeWriter},

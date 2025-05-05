@@ -3,8 +3,8 @@ use std::collections::HashSet;
 use anyhow::Result;
 
 use crate::{
-    entities::{Document, DocumentKey, Id, Refs},
     DocumentExpert,
+    entities::{Document, DocumentKey, Id, Refs},
 };
 
 use super::{BazaState, DocumentHead};
@@ -90,7 +90,7 @@ impl BazaState {
 mod tests {
     use serde_json::json;
 
-    use crate::{entities::new_empty_document, BazaState};
+    use crate::{BazaState, entities::new_empty_document};
 
     #[test]
     fn test_extracts_refs_on_insert() {
@@ -154,19 +154,27 @@ mod tests {
         state.insert_snapshots(vec![doc1.clone(), doc2.clone(), doc3.clone()]);
 
         state.stage_document(doc3_1.clone(), &None).unwrap();
-        assert!(state
-            .get_document_snapshot_refs(&doc3.create_key())
-            .is_some());
-        assert!(state
-            .get_document_snapshot_refs(&doc3_1.create_key())
-            .is_some());
+        assert!(
+            state
+                .get_document_snapshot_refs(&doc3.create_key())
+                .is_some()
+        );
+        assert!(
+            state
+                .get_document_snapshot_refs(&doc3_1.create_key())
+                .is_some()
+        );
 
         state.commit().unwrap();
-        assert!(state
-            .get_document_snapshot_refs(&doc3.create_key())
-            .is_none());
-        assert!(state
-            .get_document_refs(&doc3.id)
-            .is_some_and(|refs| !refs.is_empty()));
+        assert!(
+            state
+                .get_document_snapshot_refs(&doc3.create_key())
+                .is_none()
+        );
+        assert!(
+            state
+                .get_document_refs(&doc3.id)
+                .is_some_and(|refs| !refs.is_empty())
+        );
     }
 }

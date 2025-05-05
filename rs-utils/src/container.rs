@@ -3,7 +3,7 @@ use std::{
     io::{BufRead, BufReader, Read, Write},
 };
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result, ensure};
 use ordermap::{OrderMap, OrderSet};
 use serde::{Deserialize, Serialize};
 
@@ -293,7 +293,7 @@ mod tests {
 
     use anyhow::Result;
 
-    use crate::{create_gz_reader, create_gz_writer, generate_alphanumeric_lines, ContainerWriter};
+    use crate::{ContainerWriter, create_gz_reader, create_gz_writer, generate_alphanumeric_lines};
 
     use super::{ContainerPatch, ContainerReader, LinesIndex};
 

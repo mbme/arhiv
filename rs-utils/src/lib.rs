@@ -3,7 +3,7 @@ use std::io::Write;
 use std::process;
 use std::process::{Command, Stdio};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use tokio::signal;
 
 pub use bytes::*;

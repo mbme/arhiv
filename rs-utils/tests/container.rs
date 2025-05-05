@@ -3,9 +3,9 @@ use std::io::{BufReader, Write};
 use anyhow::Result;
 
 use rs_utils::{
+    ContainerReader, ContainerWriter,
     age::{AgeKey, AgeReader, AgeWriter},
     create_gz_reader, create_gz_writer, generate_alphanumeric_lines, read_all_as_string,
-    ContainerReader, ContainerWriter,
 };
 
 #[test]

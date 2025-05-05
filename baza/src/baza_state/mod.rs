@@ -1,17 +1,17 @@
 use std::{collections::HashSet, time::Instant};
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result, ensure};
 
-use rs_utils::{age::AgeKey, log, Timestamp};
+use rs_utils::{Timestamp, age::AgeKey, log};
 
 pub use self::search::SearchEngine;
 use self::state_file::BazaStateFile;
 use crate::{
+    BazaInfo, DocumentExpert,
     entities::{
         Document, DocumentLock, DocumentLockKey, Id, InstanceId, LatestRevComputer, Revision,
     },
     schema::DataSchema,
-    BazaInfo, DocumentExpert,
 };
 
 mod document_head;
@@ -447,12 +447,12 @@ impl BazaState {
 
 #[cfg(test)]
 mod tests {
-    use rs_utils::{age::AgeKey, TempFile};
+    use rs_utils::{TempFile, age::AgeKey};
     use serde_json::json;
 
     use crate::{
-        entities::{new_document, new_empty_document, DocumentLockKey, Id, Revision},
         BazaPaths,
+        entities::{DocumentLockKey, Id, Revision, new_document, new_empty_document},
     };
 
     use super::BazaState;
@@ -538,12 +538,14 @@ mod tests {
 
         state.insert_snapshots(vec![doc1.clone()]);
 
-        assert!(state
-            .stage_document(
-                doc1.clone(),
-                &Some(DocumentLockKey::from_string("unexpected key"))
-            )
-            .is_err());
+        assert!(
+            state
+                .stage_document(
+                    doc1.clone(),
+                    &Some(DocumentLockKey::from_string("unexpected key"))
+                )
+                .is_err()
+        );
 
         state.stage_document(doc1.clone(), &None).unwrap();
 
@@ -554,12 +556,14 @@ mod tests {
             .clone();
 
         assert!(state.stage_document(doc1.clone(), &None).is_err());
-        assert!(state
-            .stage_document(
-                doc1.clone(),
-                &Some(DocumentLockKey::from_string("wrong key"))
-            )
-            .is_err());
+        assert!(
+            state
+                .stage_document(
+                    doc1.clone(),
+                    &Some(DocumentLockKey::from_string("wrong key"))
+                )
+                .is_err()
+        );
 
         state.stage_document(doc1.clone(), &Some(key)).unwrap();
 
@@ -596,9 +600,11 @@ mod tests {
         let doc1 = new_empty_document();
         assert!(!state.is_document_locked(&doc1.id));
         assert!(state.lock_document(&doc1.id, "test").is_err());
-        assert!(state
-            .unlock_document(&doc1.id, &DocumentLockKey::from_string("some key"))
-            .is_err());
+        assert!(
+            state
+                .unlock_document(&doc1.id, &DocumentLockKey::from_string("some key"))
+                .is_err()
+        );
         assert!(state.unlock_document_without_key(&doc1.id).is_err());
 
         state.stage_document(doc1.clone(), &None).unwrap();
@@ -615,9 +621,11 @@ mod tests {
         assert!(state.has_document_locks());
         assert!(state.is_document_locked(&doc1.id));
 
-        assert!(state
-            .unlock_document(&doc1.id, &DocumentLockKey::from_string("wrong"))
-            .is_err());
+        assert!(
+            state
+                .unlock_document(&doc1.id, &DocumentLockKey::from_string("wrong"))
+                .is_err()
+        );
 
         state.file.modified = false;
         state.unlock_document(&doc1.id, &key).unwrap();

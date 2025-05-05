@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use serde::Serialize;
 
 use crate::entities::{DocumentType, ERASED_DOCUMENT_TYPE};

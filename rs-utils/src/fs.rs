@@ -5,9 +5,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{Context, Result, bail, ensure};
 
-use crate::{bytes_to_hex_string, get_file_hash_sha256, get_string_hash_sha256, log, Timestamp};
+use crate::{Timestamp, bytes_to_hex_string, get_file_hash_sha256, get_string_hash_sha256, log};
 
 pub fn path_exists(path: impl AsRef<str>) -> bool {
     fs::metadata(path.as_ref()).is_ok()
@@ -480,8 +480,10 @@ mod tests {
         let result = list_files(&workspace_relpath("resources/")).unwrap();
 
         assert_eq!(result.len(), 9);
-        assert!(result
-            .iter()
-            .any(|item| item.ends_with("1382351098-0e4a0ef21c859ccc3aaddfa0ae58dc05.jpg")));
+        assert!(
+            result
+                .iter()
+                .any(|item| item.ends_with("1382351098-0e4a0ef21c859ccc3aaddfa0ae58dc05.jpg"))
+        );
     }
 }

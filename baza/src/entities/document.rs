@@ -1,11 +1,11 @@
 use std::fmt;
 
 use anyhow::{Context, Result};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use rs_utils::Timestamp;
 
-use super::{DocumentData, DocumentKey, DocumentType, Id, Revision, ERASED_DOCUMENT_TYPE};
+use super::{DocumentData, DocumentKey, DocumentType, ERASED_DOCUMENT_TYPE, Id, Revision};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 #[serde(deny_unknown_fields)]

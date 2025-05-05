@@ -72,7 +72,7 @@ impl BazaState {
                 total: filtered_documents.len(),
             })
         } else {
-            let mut items = self
+            let results = self
                 .search
                 .search(&filter.query)
                 .map(|id| {
@@ -80,16 +80,17 @@ impl BazaState {
                         .expect("Document returned by search engine must exist")
                 })
                 .filter(|doc| filter.should_show_document(doc))
-                .skip(page_start)
-                .take(PAGE_SIZE + 1)
                 .collect::<Vec<_>>();
 
-            let total = items.len();
+            let total = results.len();
 
-            let has_more = items.len() > PAGE_SIZE;
-            if has_more {
-                items.remove(PAGE_SIZE);
-            }
+            let has_more = (page_start + PAGE_SIZE) < total;
+
+            let items = results
+                .into_iter()
+                .skip(page_start)
+                .take(PAGE_SIZE)
+                .collect::<Vec<_>>();
 
             Ok(ListPage {
                 items,
@@ -174,11 +175,11 @@ mod tests {
         // Add more documents to test pagination
         state.insert_snapshots(
             (0..PAGE_SIZE)
-                .map(|_| new_empty_document().with_rev(json!({ "a": 1 })))
+                .map(|_| new_document(json!({ "test": "value" })).with_rev(json!({ "a": 1 })))
                 .collect(),
         );
 
-        // Check if pagination works
+        // Check if pagination works when no query
         {
             let filter = Filter {
                 page: 0,
@@ -192,6 +193,31 @@ mod tests {
 
             let filter = Filter {
                 page: 1,
+                ..Default::default()
+            };
+
+            let result = state.list_documents(&filter).unwrap();
+            assert_eq!(result.items.len(), 2); // Remaining documents
+            assert!(!result.has_more);
+            assert_eq!(result.total, 12);
+        }
+
+        // Check if pagination works with query
+        {
+            let filter = Filter {
+                page: 0,
+                query: "val".to_string(),
+                ..Default::default()
+            };
+
+            let result = state.list_documents(&filter).unwrap();
+            assert_eq!(result.items.len(), PAGE_SIZE);
+            assert!(result.has_more);
+            assert_eq!(result.total, 12);
+
+            let filter = Filter {
+                page: 1,
+                query: "val".to_string(),
                 ..Default::default()
             };
 

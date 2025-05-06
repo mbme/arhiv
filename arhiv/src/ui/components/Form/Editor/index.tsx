@@ -43,6 +43,42 @@ export function Editor({
   const posRef = useRef<number | undefined>(undefined);
   const theme = useSignal(app.$theme);
 
+  const setPreview = useCallback((newPreview: boolean) => {
+    // transition is needed to avoid a spinner when submitting the document
+    startTransition(() => {
+      _setPreview((oldPreview) => {
+        if (oldPreview === newPreview) {
+          return oldPreview;
+        }
+
+        const fieldEl = fieldRef.current;
+        if (!fieldEl) {
+          throw new Error('field is missing');
+        }
+
+        const viewportEl = fieldEl.closest<HTMLElement>(`.${FORM_VIEWPORT_CLASSNAME}`);
+        if (!viewportEl) {
+          throw new Error('form viewport element is missing');
+        }
+
+        if (newPreview) {
+          posRef.current = editorRef.current?.getFirstVisiblePos(viewportEl);
+          console.debug('first visible pos from editor', posRef.current);
+        } else {
+          const markupEl = markupRef.current;
+          if (!markupEl) {
+            throw new Error('markup element is missing');
+          }
+
+          posRef.current = markupEl.getFirstVisiblePos(viewportEl);
+          console.debug('first visible pos from preview', posRef.current);
+        }
+
+        return newPreview;
+      });
+    });
+  }, []);
+
   useEffect(() => {
     const fieldEl = fieldRef.current;
     if (!fieldEl) {
@@ -81,7 +117,7 @@ export function Editor({
 
       editor.destroy();
     };
-  }, []);
+  }, [setPreview]);
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -101,42 +137,6 @@ export function Editor({
       editorRef.current?.focus();
     }
   }, [preview]);
-
-  const setPreview = useCallback((newPreview: boolean) => {
-    // transition is needed to avoid a spinner when submitting the document
-    startTransition(() => {
-      _setPreview((oldPreview) => {
-        if (oldPreview === newPreview) {
-          return oldPreview;
-        }
-
-        const fieldEl = fieldRef.current;
-        if (!fieldEl) {
-          throw new Error('field is missing');
-        }
-
-        const viewportEl = fieldEl.closest<HTMLElement>(`.${FORM_VIEWPORT_CLASSNAME}`);
-        if (!viewportEl) {
-          throw new Error('form viewport element is missing');
-        }
-
-        if (newPreview) {
-          posRef.current = editorRef.current?.getFirstVisiblePos(viewportEl);
-          console.debug('first visible pos from editor', posRef.current);
-        } else {
-          const markupEl = markupRef.current;
-          if (!markupEl) {
-            throw new Error('markup element is missing');
-          }
-
-          posRef.current = markupEl.getFirstVisiblePos(viewportEl);
-          console.debug('first visible pos from preview', posRef.current);
-        }
-
-        return newPreview;
-      });
-    });
-  }, []);
 
   useEffect(() => {
     const fieldEl = fieldRef.current;

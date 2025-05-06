@@ -31,8 +31,6 @@ import { oneDark } from '@codemirror/theme-one-dark';
 const lightTheme = EditorView.theme({}, { dark: false });
 const darkTheme = oneDark;
 
-const BOTTOM_SCROLL_MARGIN_PX = 80;
-
 type Options = {
   darkMode?: boolean;
   onBlur?: () => void;
@@ -79,26 +77,6 @@ class CodemirrorEditor {
             bracketMatching(),
             rectangularSelection(),
             crosshairCursor(),
-            EditorView.scrollMargins.of(() => ({
-              bottom: BOTTOM_SCROLL_MARGIN_PX,
-            })),
-            // ensure bottom scroll margin on click
-            EditorView.domEventHandlers({
-              click(event, view) {
-                const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-                if (pos === null) {
-                  return false;
-                }
-
-                view.dispatch({
-                  effects: EditorView.scrollIntoView(pos, {
-                    yMargin: BOTTOM_SCROLL_MARGIN_PX,
-                  }),
-                });
-
-                return false;
-              },
-            }),
             this.readonlyCompartment.of(EditorState.readOnly.of(false)),
             this.editableCompartment.of(EditorView.editable.of(true)),
             this.placeholderCompartment.of(placeholder('')),

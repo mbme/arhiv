@@ -10,7 +10,7 @@
   }
 
   .card-content {
-    @apply overflow-auto custom-scrollbar px-4 pb-6;
+    @apply overflow-auto custom-scrollbar px-4;
   }
 
   .card-toolbar {

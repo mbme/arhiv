@@ -19,6 +19,11 @@
       z-index: 1;
     }
 
+    & .cm-panels.cm-panels-bottom {
+      border: 0 none;
+      @apply bg-neutral-200/70 dark:bg-neutral-800/70;
+    }
+
     &.cm-focused {
       @apply custom-focus border-transparent;
     }
@@ -58,6 +63,10 @@
   .editor-btn,
   .editor-edit-btn {
     @apply bg-indigo-100 dark:bg-indigo-900 drop-shadow-md cursor-pointer;
+  }
+
+  .editor-edit-btn {
+    @apply sticky bottom-2 sm:bottom-4 float-right mr-2 sm:mr-4 mt-1;
   }
 
   @media (hover: hover) {

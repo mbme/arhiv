@@ -8,8 +8,8 @@ import { FORM_VIEWPORT_CLASSNAME } from 'components/Form/Form';
 import { canPreview } from 'components/AssetPreview';
 import { Markup, MarkupRef } from 'components/Markup';
 import { IconButton } from 'components/Button';
+import { DocumentPicker } from 'components/DocumentPicker';
 import { CodemirrorEditor } from './CodemirrorEditor';
-import { AddRefButton } from './AddRefButton';
 
 type Props = {
   id?: string;
@@ -35,6 +35,7 @@ export function Editor({
 
   const defaultPreview = defaultValue.length > 0;
   const [preview, _setPreview] = useState(defaultPreview);
+  const [showPicker, setShowPicker] = useState(false);
 
   const fieldRef = useRef<HTMLVFormFieldElement<string> | null>(null);
   const markupRef = useRef<MarkupRef | null>(null);
@@ -52,6 +53,25 @@ export function Editor({
       onChange: () => {
         fieldEl.inputValue(editor.getValue());
       },
+      bottomPanel: (
+        <div className="flex gap-4 justify-end py-1 pr-1">
+          <IconButton
+            icon="link"
+            className="editor-btn"
+            onClick={() => {
+              setShowPicker(true);
+            }}
+          />
+
+          <IconButton
+            icon="eye"
+            className="editor-btn"
+            onClick={() => {
+              setPreview(true);
+            }}
+          />
+        </div>
+      ),
     });
 
     editorRef.current = editor;
@@ -180,36 +200,30 @@ export function Editor({
 
       {preview && <Markup ref={markupRef} markup={editorRef.current?.getValue() ?? defaultValue} />}
 
-      <div className="sticky bottom-0 float-right mr-4 mt-1 flex gap-3">
-        {!preview && (
-          <AddRefButton
-            className="editor-btn"
-            onDocumentSelected={({ id, documentType, data }) => {
-              editorRef.current?.replaceSelections((value) =>
-                createLink(createRefUrl(id), value, canPreview(documentType, data)),
-              );
-            }}
-          />
-        )}
+      {preview && (
+        <IconButton
+          icon="pencil-square"
+          className="editor-edit-btn"
+          onClick={() => {
+            setPreview(false);
+          }}
+        />
+      )}
 
-        {preview ? (
-          <IconButton
-            icon="pencil-square"
-            className="editor-edit-btn"
-            onClick={() => {
-              setPreview(false);
-            }}
-          />
-        ) : (
-          <IconButton
-            icon="eye"
-            className="editor-btn"
-            onClick={() => {
-              setPreview(true);
-            }}
-          />
-        )}
-      </div>
+      {showPicker && (
+        <DocumentPicker
+          hideOnSelect
+          onSelected={({ id, documentType, data }) => {
+            editorRef.current?.replaceSelections((value) =>
+              createLink(createRefUrl(id), value, canPreview(documentType, data)),
+            );
+            setShowPicker(false);
+          }}
+          onCancel={() => {
+            setShowPicker(false);
+          }}
+        />
+      )}
     </div>
   );
 }

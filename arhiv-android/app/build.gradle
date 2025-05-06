@@ -32,7 +32,14 @@ android {
   }
 
   buildTypes {
+    debug {
+      applicationIdSuffix ".debug"
+      versionNameSuffix "-dbg"
+      resValue "string", "app_name", "Arhiv Debug"
+    }
+
     release {
+      resValue "string", "app_name", "Arhiv"
       minifyEnabled false
       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
     }

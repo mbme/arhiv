@@ -1,11 +1,11 @@
 import { createElement, forwardRef, useImperativeHandle, useRef } from 'react';
 import { cx, Obj } from 'utils';
-import { DocumentId, MarkupElement, throwBadMarkupElement, Range } from 'dto';
+import { MarkupElement, throwBadMarkupElement, Range } from 'dto';
 import { useSuspenseQuery } from 'utils/suspense';
 import { JSXElement, JSXRef } from 'utils/jsx';
 import { Link } from 'components/Link';
 import { RefContainer } from 'components/Ref';
-import { REF_LINK_PREFIX } from 'utils/markup';
+import { tryParseRefUrl } from 'utils/markup';
 
 function extractText(children: MarkupElement[]): string {
   return children
@@ -280,8 +280,8 @@ function markupElementToJSX(el: MarkupElement, ref?: JSXRef<HTMLDivElement>): JS
     case 'Image': {
       let description = extractText(el.children);
 
-      if (el.url.startsWith(REF_LINK_PREFIX)) {
-        const id = el.url.substring(REF_LINK_PREFIX.length) as DocumentId;
+      const id = tryParseRefUrl(el.url);
+      if (id) {
         const preview = el.typeName === 'Image';
 
         if (el.link_type === 'Autolink') {

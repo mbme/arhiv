@@ -6,6 +6,16 @@ export function createRefUrl(id: DocumentId) {
   return `${REF_LINK_PREFIX}${id}`;
 }
 
+export function isRefUrl(value: string) {
+  return value.startsWith(REF_LINK_PREFIX) && value.length > REF_LINK_PREFIX.length;
+}
+
+export function tryParseRefUrl(value: string): DocumentId | undefined {
+  if (isRefUrl(value)) {
+    return value.substring(REF_LINK_PREFIX.length) as DocumentId;
+  }
+}
+
 export function createLink(url: string, description: string, preview = false) {
   if (!description && !preview) {
     return `<${url}>`;

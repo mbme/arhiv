@@ -348,9 +348,18 @@ function scrollFirstVisiblePosIntoView(markupEl: HTMLElement, pos: number) {
   let minRangeEl: HTMLElement | null = null;
   let minRangeWidth: number | null = null;
 
+  let closestRangeEl: HTMLElement | null = null;
+  let closestDistance: number | null = null;
+
   for (const el of markupEl.querySelectorAll<HTMLElement>('[data-range-start]')) {
     const rangeStart = Number.parseInt(el.dataset.rangeStart!, 10);
     const rangeEnd = Number.parseInt(el.dataset.rangeEnd!, 10);
+
+    const distance = Math.min(Math.abs(rangeStart - pos), Math.abs(rangeEnd - pos));
+    if (closestDistance === null || distance < closestDistance) {
+      closestRangeEl = el;
+      closestDistance = distance;
+    }
 
     if (pos < rangeStart || pos > rangeEnd) {
       continue;
@@ -363,13 +372,21 @@ function scrollFirstVisiblePosIntoView(markupEl: HTMLElement, pos: number) {
     }
   }
 
-  if (!minRangeEl) {
-    throw new Error(`can't find range that includes pos ${pos}`);
+  if (minRangeEl) {
+    minRangeEl.scrollIntoView({
+      block: 'start',
+    });
+    return;
   }
 
-  minRangeEl.scrollIntoView({
-    block: 'start',
-  });
+  if (closestRangeEl) {
+    closestRangeEl.scrollIntoView({
+      block: 'start',
+    });
+    return;
+  }
+
+  console.warn(`Can't find range that includes pos ${pos}`);
 }
 
 export type MarkupRef = {

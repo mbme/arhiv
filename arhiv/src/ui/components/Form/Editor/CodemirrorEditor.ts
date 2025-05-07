@@ -44,9 +44,6 @@ function createBottomPanel(content: React.ReactNode) {
       mount() {
         root.render(content);
       },
-      destroy() {
-        root.unmount();
-      },
     };
   };
 }
@@ -71,6 +68,7 @@ class CodemirrorEditor {
     initialValue: string,
     private options: Options = {},
   ) {
+    console.debug('New Codemirror instance');
     const cancelSelectionOrBlur = (view: EditorView) => {
       // cancel selection if any, otherwise blur the editor
       if (view.state.selection.ranges.some((range) => !range.empty)) {
@@ -247,6 +245,7 @@ class CodemirrorEditor {
   }
 
   destroy() {
+    console.debug('Destroying Codemirror instance');
     this.editor.destroy();
   }
 }

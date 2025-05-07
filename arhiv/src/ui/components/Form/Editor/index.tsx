@@ -85,6 +85,10 @@ export function Editor({
       throw new Error('field is missing');
     }
 
+    if (preview) {
+      return;
+    }
+
     const editor = new CodemirrorEditor(fieldEl, fieldEl.value?.toString() ?? '', {
       onChange: () => {
         fieldEl.inputValue(editor.getValue());
@@ -117,7 +121,7 @@ export function Editor({
 
       editor.destroy();
     };
-  }, [setPreview]);
+  }, [preview, setPreview]);
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -129,7 +133,7 @@ export function Editor({
     editor.setReadonly(readonly);
     editor.setPlaceholder(placeholder ?? '');
     editor.setDarkMode(theme === 'dark');
-  }, [disabled, readonly, placeholder, theme]);
+  }, [preview, disabled, readonly, placeholder, theme]);
 
   // focus editor if editing except when the preview is initially false
   useUpdateEffect(() => {

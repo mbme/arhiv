@@ -58,6 +58,10 @@
       @apply border-slate-800 dark:border-slate-100;
       border-width: 1.4px;
     }
+
+    & .cm-link {
+      @apply var-link-color no-underline;
+    }
   }
 
   .editor-btn,

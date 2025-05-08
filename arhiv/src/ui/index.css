@@ -66,6 +66,10 @@
   @apply p-2 sm:p-4 md:p-6;
 }
 
+@utility var-link-color {
+  @apply text-orange-600/70 hover:text-orange-700/100 transition-colors;
+}
+
 @utility custom-focus {
   @apply outline-hidden ring-2 ring-blue-600/75;
 }

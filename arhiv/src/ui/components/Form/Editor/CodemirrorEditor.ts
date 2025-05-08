@@ -31,11 +31,20 @@ import {
   bracketMatching,
   defaultHighlightStyle,
   syntaxHighlighting,
+  HighlightStyle,
 } from '@codemirror/language';
 import { oneDark } from '@codemirror/theme-one-dark';
+import { tags } from '@lezer/highlight';
 
 const lightTheme = EditorView.theme({}, { dark: false });
 const darkTheme = oneDark;
+
+const linkHighlight = HighlightStyle.define([
+  // link text like [foo]
+  { tag: tags.link, class: 'cm-link' },
+  // the URL in (…)
+  { tag: tags.url, class: 'cm-link' },
+]);
 
 type Options = {
   darkMode?: boolean;
@@ -103,6 +112,7 @@ class CodemirrorEditor {
             search({ top: true }),
           ],
           markdown(),
+          syntaxHighlighting(linkHighlight),
           ...(options.extensions ?? []),
         ],
       }),

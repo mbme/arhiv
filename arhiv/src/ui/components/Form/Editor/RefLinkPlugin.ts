@@ -10,6 +10,7 @@ import { EditorView } from '@codemirror/view';
 import { syntaxTree } from '@codemirror/language';
 import { Decoration, DecorationSet, WidgetType } from '@codemirror/view';
 import { tryParseRefUrl } from 'utils/markup';
+import { isErasedDocument } from 'utils/schema';
 import { DocumentId, DocumentType } from 'dto';
 import { RefsCache } from 'controller';
 import { getImageUrl, getPreviewType } from 'components/AssetPreview';
@@ -70,7 +71,9 @@ class RefLinkWidget extends WidgetType {
 
   toDOM() {
     const dom = document.createElement('span');
-    dom.className = 'var-active-color hover:var-active-color-hover cursor-default';
+    dom.className = 'font-semibold var-active-color hover:var-active-color-hover cursor-default';
+    dom.classList.toggle('line-through', isErasedDocument(this.documentType));
+    dom.classList.toggle('text-slate-700/50', isErasedDocument(this.documentType));
 
     this.updateEl(dom);
 

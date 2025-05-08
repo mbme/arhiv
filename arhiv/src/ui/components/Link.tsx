@@ -9,13 +9,7 @@ type LinkProps = {
 };
 export function Link({ url, title, children }: LinkProps) {
   return (
-    <a
-      href={url}
-      title={title ?? url}
-      target="_blank"
-      rel="noreferrer"
-      className="text-orange-600/70 hover:text-orange-700/100 transition-colors"
-    >
+    <a href={url} title={title ?? url} target="_blank" rel="noreferrer" className="var-link-color">
       {children}
     </a>
   );

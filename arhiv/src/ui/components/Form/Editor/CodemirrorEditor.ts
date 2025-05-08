@@ -230,6 +230,7 @@ class CodemirrorEditor {
   scrollToPos(pos: number) {
     this.editor.dispatch({
       effects: [EditorView.scrollIntoView(pos, { y: 'start' })],
+      selection: EditorSelection.range(pos, pos),
     });
   }
 

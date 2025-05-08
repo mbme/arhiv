@@ -8,8 +8,10 @@ use rs_utils::{Timestamp, generate_random_id};
 pub struct DocumentLockKey(String);
 
 impl DocumentLockKey {
+    pub const LENGTH: usize = 14;
+
     pub fn new_random_key() -> Self {
-        Self(generate_random_id())
+        Self(generate_random_id(DocumentLockKey::LENGTH))
     }
 
     pub fn from_string(value: impl Into<String>) -> Self {

@@ -41,8 +41,10 @@ impl AsRef<str> for InstanceId {
 }
 
 impl InstanceId {
+    pub const LENGTH: usize = 14;
+
     pub fn generate() -> Self {
-        InstanceId(generate_random_id())
+        InstanceId(generate_random_id(14))
     }
 
     pub fn is_valid_id(value: &str) -> bool {

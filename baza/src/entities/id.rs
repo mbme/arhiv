@@ -9,9 +9,11 @@ use rs_utils::generate_random_id;
 pub struct Id(String);
 
 impl Id {
+    pub const LENGTH: usize = 14;
+
     #[must_use]
     pub fn new() -> Self {
-        Id(generate_random_id())
+        Id(generate_random_id(Id::LENGTH))
     }
 }
 

@@ -1,5 +1,11 @@
 import { createRoot } from 'react-dom/client';
-import { Compartment, EditorSelection, EditorState } from '@codemirror/state';
+import {
+  Compartment,
+  EditorSelection,
+  EditorState,
+  Extension,
+  TransactionSpec,
+} from '@codemirror/state';
 import {
   drawSelection,
   EditorView,
@@ -53,6 +59,7 @@ type Options = {
   onBlur?: () => void;
   onChange?: () => void;
   bottomPanel?: React.ReactNode;
+  extensions?: Extension[];
 };
 
 class CodemirrorEditor {
@@ -115,6 +122,7 @@ class CodemirrorEditor {
           ],
           markdown(),
           options.bottomPanel ? showPanel.of(createBottomPanel(options.bottomPanel)) : [],
+          ...(options.extensions ?? []),
         ],
       }),
     });
@@ -242,6 +250,10 @@ class CodemirrorEditor {
     this.editor.dispatch({
       effects: [EditorView.scrollIntoView(pos, { y: 'start' })],
     });
+  }
+
+  dispatchTransaction(tr: TransactionSpec) {
+    this.editor.dispatch(tr);
   }
 
   destroy() {

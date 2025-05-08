@@ -1,5 +1,8 @@
 import { createContext, useContext } from 'react';
 import { effect, signal } from '@preact/signals-core';
+import { DocumentId, DocumentType } from 'dto';
+import { throttle } from 'utils';
+import { RPC } from 'utils/network';
 import { WorkspaceController } from 'Workspace/controller';
 
 type Theme = 'light' | 'dark';
@@ -12,10 +15,20 @@ prefersDarkThemeMediaQuery.addEventListener('change', (e) => {
   $prefersDarkTheme.value = e.matches ? 'dark' : 'light';
 });
 
+export type RefInfo = {
+  type: DocumentType;
+  title: string;
+};
+
+export type RefsCache = Record<DocumentId, RefInfo>;
+
 export class AppController {
   readonly workspace = new WorkspaceController();
 
   readonly $theme = signal($prefersDarkTheme.value);
+
+  readonly $refsCache = signal<RefsCache>({});
+  private refsToFetch = new Set<DocumentId>();
 
   constructor() {
     effect(() => {
@@ -27,6 +40,43 @@ export class AppController {
     const isDark = this.$theme.value === 'dark';
 
     this.$theme.value = isDark ? 'light' : 'dark';
+  }
+
+  private throttledFetchRefs = throttle(async () => {
+    if (this.refsToFetch.size === 0) {
+      return;
+    }
+
+    const ids = [...this.refsToFetch];
+
+    const result = await RPC.GetDocuments({ ids, ignoreMissing: true });
+
+    const newRefs: RefsCache = {
+      ...this.$refsCache.value,
+    };
+    for (const document of result.documents) {
+      newRefs[document.id] = {
+        type: document.documentType,
+        title: document.title,
+      };
+    }
+
+    this.refsToFetch.clear();
+    this.$refsCache.value = newRefs;
+  }, 300);
+
+  async fetchRefs(ids: DocumentId[]) {
+    if (ids.length === 0) {
+      throw new Error('ids must not be empty');
+    }
+
+    for (const id of ids) {
+      this.refsToFetch.add(id);
+    }
+
+    if (this.refsToFetch.size > 0) {
+      await this.throttledFetchRefs();
+    }
   }
 }
 

@@ -1,4 +1,5 @@
 import { startTransition, useCallback, useEffect, useRef, useState } from 'react';
+import { effect } from '@preact/signals-core';
 import { cx } from 'utils';
 import { createLink, createRefUrl } from 'utils/markup';
 import { useSignal, useUpdateEffect } from 'utils/hooks';
@@ -10,6 +11,7 @@ import { Markup, MarkupRef } from 'components/Markup';
 import { IconButton } from 'components/Button';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { CodemirrorEditor } from './CodemirrorEditor';
+import { createRefLinkPlugin, updateRefsCache } from './RefLinkPlugin';
 
 type Props = {
   id?: string;
@@ -89,6 +91,7 @@ export function Editor({
       return;
     }
 
+    const initialRefsCache = app.$refsCache.value;
     const editor = new CodemirrorEditor(fieldEl, fieldEl.value?.toString() ?? '', {
       onChange: () => {
         fieldEl.inputValue(editor.getValue());
@@ -112,16 +115,31 @@ export function Editor({
           />
         </div>
       ),
+      extensions: [
+        createRefLinkPlugin(initialRefsCache, (newRefs) => {
+          void app.fetchRefs(newRefs);
+        }),
+      ],
+    });
+
+    const disposeEffect = effect(() => {
+      const newValue = app.$refsCache.value;
+
+      if (newValue !== initialRefsCache) {
+        editor.dispatchTransaction(updateRefsCache(newValue));
+      }
     });
 
     editorRef.current = editor;
 
     return () => {
+      disposeEffect();
+
       editorRef.current = null;
 
       editor.destroy();
     };
-  }, [preview, setPreview]);
+  }, [preview, setPreview, app]);
 
   useEffect(() => {
     const editor = editorRef.current;

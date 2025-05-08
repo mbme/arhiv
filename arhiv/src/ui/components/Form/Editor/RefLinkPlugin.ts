@@ -38,14 +38,16 @@ const refsCacheField = StateField.define<RefsCache>({
 class RefLinkWidget extends WidgetType {
   constructor(
     readonly id: DocumentId,
-    readonly type: DocumentType,
+    readonly documentType: DocumentType,
     readonly title: string,
   ) {
     super();
   }
 
   override eq(other: RefLinkWidget): boolean {
-    return this.id === other.id && this.type === other.type && this.title === other.title;
+    return (
+      this.id === other.id && this.documentType === other.documentType && this.title === other.title
+    );
   }
 
   override updateDOM(dom: HTMLElement): boolean {
@@ -54,7 +56,7 @@ class RefLinkWidget extends WidgetType {
   }
 
   private updateEl(el: HTMLElement) {
-    el.textContent = `${this.type}:${this.title}`;
+    el.textContent = `${this.documentType}:${this.title}`;
     el.title = this.id;
   }
 
@@ -131,7 +133,7 @@ export function createRefLinkPlugin(
 
                 if (refInfo) {
                   const decoration = Decoration.replace({
-                    widget: new RefLinkWidget(id, refInfo.type, refInfo.title),
+                    widget: new RefLinkWidget(id, refInfo.documentType, refInfo.title),
                   });
 
                   widgets.push(decoration.range(urlNode.from, urlNode.to));

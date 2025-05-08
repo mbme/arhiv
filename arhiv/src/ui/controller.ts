@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import { effect, signal } from '@preact/signals-core';
-import { DocumentId, DocumentType } from 'dto';
+import { DocumentData, DocumentId, DocumentType } from 'dto';
 import { throttle } from 'utils';
 import { RPC } from 'utils/network';
 import { WorkspaceController } from 'Workspace/controller';
@@ -16,8 +16,9 @@ prefersDarkThemeMediaQuery.addEventListener('change', (e) => {
 });
 
 export type RefInfo = {
-  type: DocumentType;
+  documentType: DocumentType;
   title: string;
+  data: DocumentData;
 };
 
 export type RefsCache = Record<DocumentId, RefInfo>;
@@ -56,8 +57,9 @@ export class AppController {
     };
     for (const document of result.documents) {
       newRefs[document.id] = {
-        type: document.documentType,
+        documentType: document.documentType,
         title: document.title,
+        data: document.data,
       };
     }
 

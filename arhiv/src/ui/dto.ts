@@ -12,6 +12,7 @@ export type APIRequest =
   | {
       typeName: 'GetDocuments';
       ids: DocumentId[];
+      ignoreMissing?: boolean;
     }
   | {
       typeName: 'GetStatus';

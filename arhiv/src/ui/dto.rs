@@ -19,8 +19,10 @@ pub enum APIRequest {
         page: u8,
         only_conflicts: bool,
     },
+    #[serde(rename_all = "camelCase")]
     GetDocuments {
         ids: Vec<Id>,
+        ignore_missing: Option<bool>,
     },
     GetStatus {},
     GetDocument {

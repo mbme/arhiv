@@ -71,15 +71,26 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
                 total: page.total,
             }
         }
-        APIRequest::GetDocuments { ids } => {
+        APIRequest::GetDocuments {
+            ids,
+            ignore_missing,
+        } => {
+            let ignore_missing = ignore_missing.unwrap_or_default();
+
             let baza = arhiv.baza.open()?;
 
             let schema = arhiv.baza.get_schema();
 
-            let documents = ids
-                .iter()
-                .map(|id| baza.must_get_document(id))
-                .collect::<Result<Vec<_>>>()?;
+            let mut documents = Vec::with_capacity(ids.len());
+            for id in &ids {
+                let head = baza.get_document(id);
+
+                if let Some(head) = head {
+                    documents.push(head.get_single_document());
+                } else if !ignore_missing {
+                    bail!("Can't find document {id}");
+                }
+            }
 
             APIResponse::GetDocuments {
                 documents: documents_into_results(documents, schema)?,

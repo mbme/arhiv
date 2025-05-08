@@ -3,7 +3,7 @@ import { DocumentId } from 'dto';
 import { Callback } from 'utils';
 import { useLatestRef } from 'utils/hooks';
 
-class DocumentChangeEvent extends CustomEvent<Set<DocumentId>> {
+export class DocumentChangeEvent extends CustomEvent<Set<DocumentId>> {
   public static EVENT_NAME = 'documentChangeEvent';
 
   constructor(ids: Set<DocumentId>) {

@@ -5,6 +5,7 @@ import { throttle } from 'utils';
 import { RPC } from 'utils/network';
 import { useSignal } from 'utils/hooks';
 import { WorkspaceController } from 'Workspace/controller';
+import { DocumentChangeEvent } from 'Workspace/documentChangeUtils';
 
 type Theme = 'light' | 'dark';
 
@@ -35,6 +36,14 @@ export class AppController {
   constructor() {
     effect(() => {
       this.$theme.value = $prefersDarkTheme.value;
+    });
+
+    document.addEventListener(DocumentChangeEvent.EVENT_NAME, (e) => {
+      const ids = (e as DocumentChangeEvent).detail;
+
+      // re-fetch updated documents
+      const cachedIds = [...ids].filter((id) => this.$refsCache.peek()[id]);
+      void this.fetchRefs(cachedIds);
     });
   }
 

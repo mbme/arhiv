@@ -67,11 +67,9 @@ export function AssetPreview({ assetId, data }: AssetPreviewProps) {
       );
     }
 
-    const compressedImage = getScaledImageUrl(assetId, 600, 500);
-
     return (
       <SuspenseImage
-        src={size < 1_000_000 ? assetUrl : compressedImage}
+        src={getImageUrl(assetId, size)}
         alt=""
         className="max-h-96 mx-auto"
         onClick={() => {
@@ -88,12 +86,34 @@ export function AssetPreview({ assetId, data }: AssetPreviewProps) {
   return null;
 }
 
-export function canPreview(documentType: DocumentType, data: DocumentData): boolean {
+export function getImageUrl(assetId: DocumentId, size: number): string {
+  const assetUrl = getAssetUrl(assetId);
+  const compressedImage = getScaledImageUrl(assetId, 600, 500);
+
+  return size < 1_000_000 ? assetUrl : compressedImage;
+}
+
+export function getPreviewType(
+  documentType: DocumentType,
+  data: DocumentData,
+): 'image' | 'audio' | null {
   if (!isAsset(documentType)) {
-    return false;
+    return null;
   }
 
   const mediaType = data['media_type'] as string;
 
-  return isImage(mediaType) || isAudio(mediaType);
+  if (isImage(mediaType)) {
+    return 'image';
+  }
+
+  if (isAudio(mediaType)) {
+    return 'audio';
+  }
+
+  return null;
+}
+
+export function canPreview(documentType: DocumentType, data: DocumentData): boolean {
+  return getPreviewType(documentType, data) !== null;
 }

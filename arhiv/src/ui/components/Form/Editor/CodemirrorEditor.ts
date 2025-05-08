@@ -1,4 +1,3 @@
-import { createRoot } from 'react-dom/client';
 import {
   Compartment,
   EditorSelection,
@@ -16,8 +15,6 @@ import {
   rectangularSelection,
   crosshairCursor,
   ViewUpdate,
-  Panel,
-  showPanel,
 } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import {
@@ -40,25 +37,10 @@ import { oneDark } from '@codemirror/theme-one-dark';
 const lightTheme = EditorView.theme({}, { dark: false });
 const darkTheme = oneDark;
 
-function createBottomPanel(content: React.ReactNode) {
-  return (_view: EditorView): Panel => {
-    const dom = document.createElement('div');
-    const root = createRoot(dom);
-
-    return {
-      dom,
-      mount() {
-        root.render(content);
-      },
-    };
-  };
-}
-
 type Options = {
   darkMode?: boolean;
   onBlur?: () => void;
   onChange?: () => void;
-  bottomPanel?: React.ReactNode;
   extensions?: Extension[];
 };
 
@@ -121,7 +103,6 @@ class CodemirrorEditor {
             search({ top: true }),
           ],
           markdown(),
-          options.bottomPanel ? showPanel.of(createBottomPanel(options.bottomPanel)) : [],
           ...(options.extensions ?? []),
         ],
       }),

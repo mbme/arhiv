@@ -1,4 +1,5 @@
 import { startTransition, useCallback, useEffect, useRef, useState } from 'react';
+import { createRoot } from 'react-dom/client';
 import { effect } from '@preact/signals-core';
 import { cx } from 'utils';
 import { createLink, createRefUrl } from 'utils/markup';
@@ -12,6 +13,7 @@ import { IconButton } from 'components/Button';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { CodemirrorEditor } from './CodemirrorEditor';
 import { createRefLinkPlugin, updateRefsCache } from './RefLinkPlugin';
+import { createBottomPanel } from './BottomPlanelPlugin';
 
 type Props = {
   id?: string;
@@ -91,31 +93,35 @@ export function Editor({
       return;
     }
 
+    const bottomPanelEl = document.createElement('div');
+    const bottomPanelRoot = createRoot(bottomPanelEl);
+    bottomPanelRoot.render(
+      <div className="flex gap-4 justify-end py-1 pr-1">
+        <IconButton
+          icon="link"
+          className="editor-btn"
+          onClick={() => {
+            setShowPicker(true);
+          }}
+        />
+
+        <IconButton
+          icon="eye"
+          className="editor-btn"
+          onClick={() => {
+            setPreview(true);
+          }}
+        />
+      </div>,
+    );
+
     const initialRefsCache = app.$refsCache.value;
     const editor = new CodemirrorEditor(fieldEl, fieldEl.value?.toString() ?? '', {
       onChange: () => {
         fieldEl.inputValue(editor.getValue());
       },
-      bottomPanel: (
-        <div className="flex gap-4 justify-end py-1 pr-1">
-          <IconButton
-            icon="link"
-            className="editor-btn"
-            onClick={() => {
-              setShowPicker(true);
-            }}
-          />
-
-          <IconButton
-            icon="eye"
-            className="editor-btn"
-            onClick={() => {
-              setPreview(true);
-            }}
-          />
-        </div>
-      ),
       extensions: [
+        createBottomPanel(bottomPanelEl),
         createRefLinkPlugin(initialRefsCache, (newRefs) => {
           void app.fetchRefs(newRefs);
         }),

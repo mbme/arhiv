@@ -254,6 +254,7 @@ pub struct ArhivUIConfig<'a> {
     pub arhiv_locked: bool,
     pub dev_mode: bool,
     pub arhiv_version: &'a str,
+    pub document_id_length: usize,
 }
 
 #[derive(Serialize)]

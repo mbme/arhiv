@@ -443,6 +443,7 @@ export type ArhivUIConfig = {
   arhivLocked: boolean;
   devMode: boolean;
   arhivVersion: string;
+  documentIdLength: number;
 };
 
 export type FileUploadResult = {

@@ -16,7 +16,7 @@ use axum_extra::{
 use serde::Deserialize;
 use serde_json::Value;
 
-use baza::{BazaManager, DEV_MODE};
+use baza::{BazaManager, DEV_MODE, entities::Id};
 use rs_utils::{
     AuthToken, get_crate_version,
     http_server::{ServerError, add_no_cache_headers, fallback_route},
@@ -97,6 +97,7 @@ async fn config_handler(ctx: State<ServerContext>) -> Result<impl IntoResponse, 
         arhiv_locked: arhiv.baza.is_locked(),
         dev_mode: DEV_MODE,
         arhiv_version: get_crate_version(),
+        document_id_length: Id::LENGTH,
     })
     .context("Failed to serialize ArhivUI config")?;
 

@@ -7,7 +7,10 @@ export function createRefUrl(id: DocumentId) {
 }
 
 export function isRefUrl(value: string) {
-  return value.startsWith(REF_LINK_PREFIX) && value.length > REF_LINK_PREFIX.length;
+  return (
+    value.startsWith(REF_LINK_PREFIX) &&
+    value.length === window.CONFIG.documentIdLength + REF_LINK_PREFIX.length
+  );
 }
 
 export function tryParseRefUrl(value: string): DocumentId | undefined {

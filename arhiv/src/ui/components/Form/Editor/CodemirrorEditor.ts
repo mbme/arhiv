@@ -94,6 +94,7 @@ class CodemirrorEditor {
             bracketMatching(),
             rectangularSelection(),
             crosshairCursor(),
+            EditorView.scrollMargins.of(() => ({ top: 50, bottom: 120 })),
             this.readonlyCompartment.of(EditorState.readOnly.of(false)),
             this.editableCompartment.of(EditorView.editable.of(true)),
             this.placeholderCompartment.of(placeholder('')),

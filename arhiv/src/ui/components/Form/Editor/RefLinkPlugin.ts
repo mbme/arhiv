@@ -1,7 +1,14 @@
-import { Extension, Range, StateEffect, StateField, TransactionSpec } from '@codemirror/state';
-import { EditorView, ViewUpdate } from '@codemirror/view';
+import {
+  EditorState,
+  Extension,
+  Range,
+  StateEffect,
+  StateField,
+  TransactionSpec,
+} from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
 import { syntaxTree } from '@codemirror/language';
-import { Decoration, DecorationSet, ViewPlugin, WidgetType } from '@codemirror/view';
+import { Decoration, DecorationSet, WidgetType } from '@codemirror/view';
 import { tryParseRefUrl } from 'utils/markup';
 import { DocumentId, DocumentType } from 'dto';
 import { RefsCache } from 'controller';
@@ -70,96 +77,80 @@ class RefLinkWidget extends WidgetType {
   }
 }
 
+function buildPreviews(state: EditorState, onNewRefs: (newRefs: DocumentId[]) => void) {
+  const doc = state.doc;
+  const refsCache = state.field(refsCacheField);
+
+  const widgets: Range<Decoration>[] = [];
+  const newRefs = new Set<DocumentId>();
+
+  syntaxTree(state).iterate({
+    enter: (cursor) => {
+      const t = cursor.type.name;
+
+      if (t === 'Link' || t === 'Image' || t === 'Autolink') {
+        const urlNode = cursor.node.getChild('URL');
+        if (!urlNode) {
+          return;
+        }
+
+        const url = doc.sliceString(urlNode.from, urlNode.to);
+
+        const id = tryParseRefUrl(url);
+        if (!id) {
+          return;
+        }
+
+        const refInfo = refsCache[id];
+
+        if (refInfo) {
+          const decoration = Decoration.replace({
+            widget: new RefLinkWidget(id, refInfo.documentType, refInfo.title),
+          });
+          widgets.push(decoration.range(urlNode.from, urlNode.to));
+        } else {
+          newRefs.add(id);
+        }
+      }
+    },
+  });
+
+  // notify if there are new refs
+  if (newRefs.size > 0) {
+    onNewRefs([...newRefs]);
+  }
+
+  return widgets.length > 0 ? Decoration.set(widgets) : Decoration.none;
+}
+
+const createRefPreviewsField = (onNewRefs: (newRefs: DocumentId[]) => void) =>
+  StateField.define<DecorationSet>({
+    create(state) {
+      return buildPreviews(state, onNewRefs);
+    },
+
+    update(previews, update) {
+      const refsCacheUpdated =
+        update.startState.field(refsCacheField) !== update.state.field(refsCacheField);
+
+      const syntaxTreeChanged = syntaxTree(update.startState) !== syntaxTree(update.state);
+
+      if (update.docChanged || refsCacheUpdated || syntaxTreeChanged) {
+        return buildPreviews(update.state, onNewRefs);
+      }
+
+      return previews;
+    },
+
+    provide: (field) => EditorView.decorations.from(field),
+  });
+
 export function createRefLinkPlugin(
   initialRefsCache: RefsCache,
   onNewRefs: (newRefs: DocumentId[]) => void,
 ): Extension {
-  const refLinkPlugin = ViewPlugin.fromClass(
-    class RefLinkPlugin {
-      refsCache: RefsCache;
-      decorations: DecorationSet = Decoration.set([]);
-
-      constructor(view: EditorView) {
-        this.refsCache = view.state.field(refsCacheField);
-        this.buildDecorations(view);
-      }
-
-      update(update: ViewUpdate) {
-        const updateRefsCache = update.state.field(refsCacheField);
-
-        const refsCacheUpdated = this.refsCache !== updateRefsCache;
-
-        if (refsCacheUpdated) {
-          this.refsCache = updateRefsCache;
-        }
-
-        if (
-          update.docChanged ||
-          update.viewportChanged ||
-          refsCacheUpdated ||
-          syntaxTree(update.startState) != syntaxTree(update.state)
-        ) {
-          this.buildDecorations(update.view);
-        }
-      }
-
-      buildDecorations(view: EditorView) {
-        const doc = view.state.doc;
-
-        const widgets: Range<Decoration>[] = [];
-        const newRefs = new Set<DocumentId>();
-
-        for (const { from, to } of view.visibleRanges) {
-          syntaxTree(view.state).iterate({
-            from,
-            to,
-            enter: (cursor) => {
-              const t = cursor.type.name;
-
-              if (t == 'Link' || t == 'Image' || t == 'Autolink') {
-                const urlNode = cursor.node.getChild('URL');
-                if (!urlNode) {
-                  return;
-                }
-
-                const url = doc.sliceString(urlNode.from, urlNode.to);
-
-                const id = tryParseRefUrl(url);
-                if (!id) {
-                  return;
-                }
-
-                const refInfo = this.refsCache[id];
-
-                if (refInfo) {
-                  const decoration = Decoration.replace({
-                    widget: new RefLinkWidget(id, refInfo.documentType, refInfo.title),
-                  });
-
-                  widgets.push(decoration.range(urlNode.from, urlNode.to));
-                } else {
-                  newRefs.add(id);
-                }
-              }
-            },
-          });
-        }
-
-        // notify if there are new refs
-        if (newRefs.size > 0) {
-          onNewRefs([...newRefs]);
-        }
-
-        this.decorations = Decoration.set(widgets);
-      }
-    },
-    {
-      decorations: (v) => v.decorations,
-    },
-  );
-
   return [
     refsCacheField.init(() => initialRefsCache), //
-    refLinkPlugin,
+    createRefPreviewsField(onNewRefs),
   ];
 }

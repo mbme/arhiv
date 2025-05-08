@@ -12,6 +12,7 @@ import { Decoration, DecorationSet, WidgetType } from '@codemirror/view';
 import { tryParseRefUrl } from 'utils/markup';
 import { DocumentId, DocumentType } from 'dto';
 import { RefsCache } from 'controller';
+import { getImageUrl, getPreviewType } from 'components/AssetPreview';
 
 // effect to update refs cache state field
 const setRefsCache = StateEffect.define<RefsCache>();
@@ -77,6 +78,41 @@ class RefLinkWidget extends WidgetType {
   }
 }
 
+// widget that displays referenced assets' image
+class RefImageWidget extends WidgetType {
+  constructor(
+    readonly id: DocumentId,
+    readonly size: number,
+  ) {
+    super();
+  }
+
+  override eq(other: RefImageWidget): boolean {
+    return this.id === other.id && this.size === other.size;
+  }
+
+  override updateDOM(dom: HTMLImageElement, view: EditorView): boolean {
+    this.updateEl(dom, view);
+    return true;
+  }
+
+  private updateEl(el: HTMLImageElement, view: EditorView) {
+    el.src = getImageUrl(this.id, this.size);
+    el.onload = () => {
+      view.requestMeasure();
+    };
+  }
+
+  toDOM(view: EditorView) {
+    const dom = document.createElement('img');
+    dom.className = 'block h-64 mx-auto';
+
+    this.updateEl(dom, view);
+
+    return dom;
+  }
+}
+
 function buildPreviews(state: EditorState, onNewRefs: (newRefs: DocumentId[]) => void) {
   const doc = state.doc;
   const refsCache = state.field(refsCacheField);
@@ -104,10 +140,23 @@ function buildPreviews(state: EditorState, onNewRefs: (newRefs: DocumentId[]) =>
         const refInfo = refsCache[id];
 
         if (refInfo) {
-          const decoration = Decoration.replace({
+          const refDecoration = Decoration.replace({
             widget: new RefLinkWidget(id, refInfo.documentType, refInfo.title),
           });
-          widgets.push(decoration.range(urlNode.from, urlNode.to));
+          widgets.push(refDecoration.range(urlNode.from, urlNode.to));
+
+          const isImageTag = t === 'Image';
+          const isImageAsset = getPreviewType(refInfo.documentType, refInfo.data);
+
+          if (isImageTag && isImageAsset) {
+            const size = refInfo.data['size'] as number;
+            const refImageDecoration = Decoration.widget({
+              widget: new RefImageWidget(id, size),
+              side: -1,
+              block: true,
+            }).range(cursor.node.to); // insert *after* the markdown link
+            widgets.push(refImageDecoration);
+          }
         } else {
           newRefs.add(id);
         }

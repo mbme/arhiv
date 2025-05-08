@@ -1,11 +1,13 @@
 import { createElement, forwardRef, useImperativeHandle, useRef } from 'react';
 import { cx, Obj } from 'utils';
-import { MarkupElement, throwBadMarkupElement, Range } from 'dto';
 import { useSuspenseQuery } from 'utils/suspense';
 import { JSXElement, JSXRef } from 'utils/jsx';
-import { Link } from 'components/Link';
-import { RefContainer } from 'components/Ref';
 import { tryParseRefUrl } from 'utils/markup';
+import { MarkupElement, throwBadMarkupElement, Range, DocumentId } from 'dto';
+import { useCachedRef } from 'controller';
+import { Link } from 'components/Link';
+import { Ref } from 'components/Ref';
+import { AssetPreviewBlock, canPreview } from 'components/AssetPreview';
 
 function extractText(children: MarkupElement[]): string {
   return children
@@ -387,6 +389,28 @@ function scrollFirstVisiblePosIntoView(markupEl: HTMLElement, pos: number) {
   }
 
   console.warn(`Can't find range that includes pos ${pos}`);
+}
+
+type RefContainerProps = {
+  id: DocumentId;
+  description?: string;
+  assetPreview?: boolean;
+};
+function RefContainer({ id, description, assetPreview }: RefContainerProps) {
+  const result = useCachedRef(id);
+
+  if (assetPreview && canPreview(result.documentType, result.data)) {
+    return <AssetPreviewBlock documentId={id} data={result.data} description={description} />;
+  }
+
+  return (
+    <Ref
+      documentId={id}
+      documentType={result.documentType}
+      documentTitle={result.title}
+      description={description}
+    />
+  );
 }
 
 export type MarkupRef = {

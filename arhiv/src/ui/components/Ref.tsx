@@ -3,35 +3,11 @@ import { DocumentId, DocumentType } from 'dto';
 import { cx } from 'utils';
 import { getDocumentUrl } from 'utils/network';
 import { formatDocumentType, isErasedDocument } from 'utils/schema';
-import { useCachedRef } from 'controller';
-import { AssetPreviewBlock, canPreview } from 'components/AssetPreview';
 import { DocumentIcon } from './DocumentIcon';
 
 export const RefClickHandlerContext = createContext((documentId: DocumentId) => {
   console.log('Ref clicked:', documentId);
 });
-
-type RefContainerProps = {
-  id: DocumentId;
-  description?: string;
-  assetPreview?: boolean;
-};
-export function RefContainer({ id, description, assetPreview }: RefContainerProps) {
-  const result = useCachedRef(id);
-
-  if (assetPreview && canPreview(result.documentType, result.data)) {
-    return <AssetPreviewBlock documentId={id} data={result.data} description={description} />;
-  }
-
-  return (
-    <Ref
-      documentId={id}
-      documentType={result.documentType}
-      documentTitle={result.title}
-      description={description}
-    />
-  );
-}
 
 type RefProps = {
   documentId: DocumentId;

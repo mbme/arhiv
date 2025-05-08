@@ -3,6 +3,7 @@ import { effect, signal } from '@preact/signals-core';
 import { DocumentData, DocumentId, DocumentType } from 'dto';
 import { throttle } from 'utils';
 import { RPC } from 'utils/network';
+import { useSignal } from 'utils/hooks';
 import { WorkspaceController } from 'Workspace/controller';
 
 type Theme = 'light' | 'dark';
@@ -88,4 +89,18 @@ const AppControllerContext = createContext(appController);
 
 export function useAppController() {
   return useContext(AppControllerContext);
+}
+
+export function useCachedRef(id: DocumentId): RefInfo {
+  const app = useAppController();
+
+  const refsCache = useSignal(app.$refsCache);
+  const info = refsCache[id];
+
+  if (!info) {
+    // eslint-disable-next-line @typescript-eslint/only-throw-error
+    throw app.fetchRefs([id]);
+  }
+
+  return info;
 }

@@ -3,7 +3,7 @@ import { DocumentId, DocumentType } from 'dto';
 import { cx } from 'utils';
 import { getDocumentUrl } from 'utils/network';
 import { formatDocumentType, isErasedDocument } from 'utils/schema';
-import { useSuspenseQuery } from 'utils/suspense';
+import { useCachedRef } from 'controller';
 import { AssetPreviewBlock, canPreview } from 'components/AssetPreview';
 import { DocumentIcon } from './DocumentIcon';
 
@@ -17,17 +17,15 @@ type RefContainerProps = {
   assetPreview?: boolean;
 };
 export function RefContainer({ id, description, assetPreview }: RefContainerProps) {
-  const { value: result } = useSuspenseQuery({ typeName: 'GetDocument', id });
+  const result = useCachedRef(id);
 
   if (assetPreview && canPreview(result.documentType, result.data)) {
-    return (
-      <AssetPreviewBlock documentId={result.id} data={result.data} description={description} />
-    );
+    return <AssetPreviewBlock documentId={id} data={result.data} description={description} />;
   }
 
   return (
     <Ref
-      documentId={result.id}
+      documentId={id}
       documentType={result.documentType}
       documentTitle={result.title}
       description={description}

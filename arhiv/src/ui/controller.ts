@@ -78,10 +78,6 @@ export class AppController {
   }, 300);
 
   async fetchRefs(ids: DocumentId[]) {
-    if (ids.length === 0) {
-      throw new Error('ids must not be empty');
-    }
-
     for (const id of ids) {
       this.refsToFetch.add(id);
     }

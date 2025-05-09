@@ -86,7 +86,8 @@ export function DocumentEditor({
     >
       <PreventImplicitSubmissionOnEnter />
 
-      <label className={cx('inline-block', showCollectionPicker || 'invisible')}>
+      <label className={cx('inline-block mb-6', showCollectionPicker || 'invisible')}>
+        {hasCollections && <h1 className="section-heading">Collections:</h1>}
         {showCollectionPicker && (
           <CollectionPicker
             collectionTypes={collectionTypes}

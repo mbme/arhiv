@@ -45,7 +45,7 @@ export const Spoiler = forwardRef<HTMLDetailsElement, Props>(function Spoiler(
       <summary className="cursor-pointer flex flex-row items-center gap-3 var-bg-tertiary-color px-2 py-2 rounded-xs">
         <Icon
           variant="chevron-up"
-          className={cx('text-slate-500', isOpen ? 'rotate-180 transform' : '')}
+          className={cx('text-slate-500', isOpen ? '' : 'rotate-180 transform')}
         />
 
         {heading}

@@ -85,7 +85,7 @@ impl SearchEngine {
         fields.insert(ID_FIELD_NAME, &document.id);
 
         let mut boost_fields = HashMap::new();
-        boost_fields.insert(TITLE_FIELD_NAME, FieldBoost::new(1.5)?);
+        boost_fields.insert(TITLE_FIELD_NAME, FieldBoost::new(1.9)?);
         boost_fields.insert(ID_FIELD_NAME, FieldBoost::new(2.0)?);
 
         for field in self.schema.iter_fields(&document.document_type)? {

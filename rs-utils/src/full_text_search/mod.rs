@@ -167,8 +167,16 @@ impl FTSEngine {
                     return Some((term.as_str(), 1.0));
                 }
 
-                // if query consists of single char, we need only complete matches
-                if query_term.len() == 1 {
+                // match prefixes
+                if term.starts_with(query_term) {
+                    return Some((
+                        term.as_str(),
+                        (query_term.len() as f64 / term.len() as f64).min(0.5),
+                    ));
+                }
+
+                // we need only complete prefix matches for short queries
+                if query_term.len() <= 3 {
                     return None;
                 }
 
@@ -180,14 +188,6 @@ impl FTSEngine {
                 // ensure query term isn't too long to match this term
                 if query_term.len() > term.len() + 1 {
                     return None;
-                }
-
-                // match prefixes
-                if term.starts_with(query_term) {
-                    return Some((
-                        term.as_str(),
-                        (query_term.len() as f64 / term.len() as f64).min(0.5),
-                    ));
                 }
 
                 if query_term.len() < term.len() {

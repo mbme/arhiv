@@ -108,7 +108,7 @@ class RefImageWidget extends WidgetType {
 
   toDOM(view: EditorView) {
     const dom = document.createElement('img');
-    dom.className = 'block h-64 mx-auto';
+    dom.className = 'block h-64 w-auto max-w-full mx-auto object-contain';
 
     this.updateEl(dom, view);
 

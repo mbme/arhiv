@@ -8,6 +8,7 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.net.http.SslCertificate;
 import android.net.http.SslError;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
@@ -28,6 +29,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.webkit.WebSettingsCompat;
+import androidx.webkit.WebViewFeature;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -393,14 +396,37 @@ public class MainActivity extends AppCompatActivity {
     cookieManager.setCookie(serverInfo.uiUrl, "AuthToken=" + serverInfo.authToken + "; Secure; HttpOnly");
   }
 
+  /** @noinspection deprecation*/
   private void updateWebViewDarkMode(@NonNull Configuration config) {
     boolean isNight = (config.uiMode & Configuration.UI_MODE_NIGHT_MASK)
       == Configuration.UI_MODE_NIGHT_YES;
     Log.i(TAG, "Android is in " + (isNight ? "dark mode" : "light mode"));
 
-    webView.getSettings().setForceDark(
-      isNight ? WebSettings.FORCE_DARK_ON : WebSettings.FORCE_DARK_OFF
-    );
+
+    WebSettings settings = webView.getSettings();
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      // disable any fallback algorithmic darkening, call:
+      if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
+        WebSettingsCompat.setAlgorithmicDarkeningAllowed(
+          settings,
+          false
+        );
+      }
+    } else {
+      if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
+        // turn force-dark on (so your CSS media‐queries get flipped)
+        WebSettingsCompat.setForceDark(webView.getSettings(), WebSettingsCompat.FORCE_DARK_ON);
+      }
+
+      if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)) {
+        // but only apply “web theme” dark styles—not UA auto-darkening
+        WebSettingsCompat.setForceDarkStrategy(
+          webView.getSettings(),
+          WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY
+        );
+      }
+    }
   }
 
   @Override

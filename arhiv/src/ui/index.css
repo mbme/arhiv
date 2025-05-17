@@ -12,6 +12,15 @@
 /* Apply dark theme styles when there's .dark class in html tree */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ---------------------------- */
+/* Wrap anything in @media (hover: hover) { … } */
+/* ---------------------------- */
+@custom-variant hoverable {
+  @media (hover: hover) {
+    @slot;
+  }
+}
+
 @theme {
   --breakpoint-xs: 21rem;
 }
@@ -102,15 +111,6 @@
 
 @utility break-anywhere {
   overflow-wrap: anywhere;
-}
-
-/* ---------------------------- */
-/* Wrap anything in @media (hover: hover) { … } */
-/* ---------------------------- */
-@custom-variant hoverable {
-  @media (hover: hover) {
-    @slot;
-  }
 }
 
 @layer components {

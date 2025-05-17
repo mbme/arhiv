@@ -6,7 +6,7 @@ import { useKeydown, useSignal } from 'utils/hooks';
 import { RPC } from 'utils/network';
 import { useAppController } from 'controller';
 import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
-import { Button, IconButton } from 'components/Button';
+import { Button } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { NewDocumentDialog } from './NewDocumentDialog';
@@ -47,14 +47,6 @@ export function WorkspaceHeader() {
   return (
     <SuspenseCacheProvider cacheId="workspace-header">
       <nav className="fixed inset-x-0 top-0 z-20 var-bg-secondary-color xs:px-4 flex flex-row gap-4 xs:gap-8">
-        <IconButton
-          icon="circle-half"
-          title="Toggle light/dark theme"
-          onClick={() => {
-            app.toggleTheme();
-          }}
-        />
-
         <OutdatedChecker />
 
         <div className="mr-auto" />
@@ -155,6 +147,16 @@ export function WorkspaceHeader() {
                 app.workspace.reload();
               },
             },
+
+            {
+              text: 'Toggle light/dark theme',
+              icon: 'circle-half',
+
+              onClick: () => {
+                app.toggleTheme();
+              },
+            },
+
             {
               text: 'Status',
               icon: 'info',

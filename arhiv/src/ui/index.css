@@ -104,6 +104,15 @@
   overflow-wrap: anywhere;
 }
 
+/* ---------------------------- */
+/* Wrap anything in @media (hover: hover) { … } */
+/* ---------------------------- */
+@custom-variant hoverable {
+  @media (hover: hover) {
+    @slot;
+  }
+}
+
 @layer components {
   .heading-1 {
     @apply text-xl font-bold tracking-tight var-text-heading-color;

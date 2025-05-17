@@ -27,7 +27,7 @@ export function AssetPreviewBlock({ documentId, data, description }: AssetPrevie
           onClick={() => {
             refClickHandler(documentId);
           }}
-          className="ml-auto text-sm  transition invisible opacity-0 group-hover:visible group-hover:opacity-100"
+          className="ml-auto text-sm transition hoverable:invisible hoverable:opacity-0 group-hover:visible group-hover:opacity-100"
           trailingIcon="link-arrow"
           size="sm"
         >

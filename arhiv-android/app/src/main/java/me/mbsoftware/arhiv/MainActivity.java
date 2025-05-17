@@ -1,8 +1,8 @@
 package me.mbsoftware.arhiv;
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
 import android.content.ClipData;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.SslErrorHandler;
+import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -28,9 +29,22 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Objects;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 public class MainActivity extends AppCompatActivity {
   private static final String TAG = "MainActivity";
@@ -39,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
 
   private ValueCallback<Uri[]> filePathCallback;
   private ActivityResultLauncher<Intent> filePickerLauncher;
+  private ActivityResultLauncher<Intent> downloadFileLocationPicker;
+  private DownloadRequest pendingDownload;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -86,6 +102,18 @@ public class MainActivity extends AppCompatActivity {
         filePathCallback = null;
       });
 
+    downloadFileLocationPicker = registerForActivityResult(
+      new ActivityResultContracts.StartActivityForResult(),
+      result -> {
+        if (result.getResultCode() == RESULT_OK && pendingDownload != null) {
+          assert result.getData() != null;
+          Uri dest = result.getData().getData();
+          if (dest != null) {
+            pendingDownload.performDownloadToUri(this, dest);
+          }
+          pendingDownload = null;
+        }
+      });
     ensureIsExternalStorageManager();
   }
 
@@ -241,6 +269,31 @@ public class MainActivity extends AppCompatActivity {
     webView.getSettings().setDomStorageEnabled(true);
     webView.getSettings().setAllowFileAccess(false);
 
+    X509TrustManager trustManager;
+    SSLSocketFactory sslSocketFactory;
+    try {
+      trustManager = trustManagerForCertificates(serverInfo.certificate);
+      SSLContext sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(null, new TrustManager[]{trustManager}, null);
+      sslSocketFactory = sslContext.getSocketFactory();
+    } catch (GeneralSecurityException e) {
+      throw new RuntimeException(e);
+    }
+    webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
+      String filename = URLUtil.guessFileName(url, contentDisposition, mimeType);
+      // ask the user where to save
+      pendingDownload = new DownloadRequest(
+        url, userAgent, CookieManager.getInstance().getCookie(url),
+        filename, mimeType, sslSocketFactory, trustManager
+      );
+      Intent chooser = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+      chooser.addCategory(Intent.CATEGORY_OPENABLE);
+      chooser.setType(mimeType);
+      chooser.putExtra(Intent.EXTRA_TITLE, filename);
+      downloadFileLocationPicker.launch(chooser);
+    });
+
+
     webView.setWebViewClient(new WebViewClient() {
       @SuppressLint("WebViewClientOnReceivedSslError")
       @Override
@@ -305,6 +358,31 @@ public class MainActivity extends AppCompatActivity {
         return true;
       }
     });
+  }
+
+  private static X509TrustManager trustManagerForCertificates(byte[] certificate) throws GeneralSecurityException {
+    // Build a KeyStore containing certificate
+    CertificateFactory cf = CertificateFactory.getInstance("X.509");
+    Certificate ca;
+    try (InputStream is = new ByteArrayInputStream(certificate)) {
+      ca = cf.generateCertificate(is);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+    try {
+      ks.load(null, null);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    ks.setCertificateEntry("ca", ca);
+
+    // Create a TrustManager that trusts just that CA
+    TrustManagerFactory tmf = TrustManagerFactory.getInstance(
+      TrustManagerFactory.getDefaultAlgorithm());
+    tmf.init(ks);
+
+    return (X509TrustManager) tmf.getTrustManagers()[0];
   }
 
   private void updateWebViewAuthToken(ServerInfo serverInfo) {

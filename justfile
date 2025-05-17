@@ -106,7 +106,12 @@ _prepare_to_building_android_libs: _prod-npm-build
 
 build-android-libs: _prepare_to_building_android_libs
   cd arhiv-android; \
-  cargo ndk -t x86_64 -t arm64-v8a --platform {{android_platform_version}} -o ./app/src/main/jniLibs build --release
+  cargo ndk \
+  -t arm64-v8a \
+  --platform {{android_platform_version}} \
+  -o ./app/src/main/jniLibs \
+  build \
+  --release
 
 prod-build-android-libs: _prepare_to_building_android_libs
   cd arhiv-android; \

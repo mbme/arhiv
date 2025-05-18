@@ -8,7 +8,6 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.net.http.SslCertificate;
 import android.net.http.SslError;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
@@ -405,27 +404,25 @@ public class MainActivity extends AppCompatActivity {
 
     WebSettings settings = webView.getSettings();
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      // disable any fallback algorithmic darkening, call:
-      if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
-        WebSettingsCompat.setAlgorithmicDarkeningAllowed(
-          settings,
-          false
-        );
-      }
-    } else {
-      if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
-        // turn force-dark on (so your CSS media‐queries get flipped)
-        WebSettingsCompat.setForceDark(webView.getSettings(), WebSettingsCompat.FORCE_DARK_ON);
-      }
+    // turn force-dark on (so CSS media‐queries get flipped)
+    if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
+      WebSettingsCompat.setForceDark(settings,  isNight ? WebSettingsCompat.FORCE_DARK_ON : WebSettingsCompat.FORCE_DARK_OFF);
+    }
 
-      if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)) {
-        // but only apply “web theme” dark styles—not UA auto-darkening
-        WebSettingsCompat.setForceDarkStrategy(
-          webView.getSettings(),
-          WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY
-        );
-      }
+    // only apply “web theme” dark styles—not UA auto-darkening
+    if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)) {
+      WebSettingsCompat.setForceDarkStrategy(
+        settings,
+        WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY
+      );
+    }
+
+    // disable any fallback algorithmic darkening
+    if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
+      WebSettingsCompat.setAlgorithmicDarkeningAllowed(
+        settings,
+        false
+      );
     }
   }
 

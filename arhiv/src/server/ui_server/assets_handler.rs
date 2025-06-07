@@ -13,12 +13,7 @@ use axum_extra::{
 };
 
 use baza::entities::Id;
-use rs_utils::{
-    TempFile, create_body_from_reader,
-    http_server::ServerError,
-    log::{self, tracing},
-    stream_to_file,
-};
+use rs_utils::{TempFile, create_body_from_reader, http_server::ServerError, log, stream_to_file};
 
 use crate::{Arhiv, ui::dto::FileUploadResult};
 

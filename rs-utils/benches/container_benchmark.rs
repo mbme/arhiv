@@ -1,6 +1,9 @@
-use std::io::{BufRead, BufReader, Cursor, Write};
+use std::{
+    hint::black_box,
+    io::{BufRead, BufReader, Cursor, Write},
+};
 
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
 
 use rs_utils::{
     ContainerReader, ContainerWriter,

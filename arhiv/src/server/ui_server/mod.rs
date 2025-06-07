@@ -20,7 +20,7 @@ use baza::{BazaManager, DEV_MODE, entities::Id};
 use rs_utils::{
     AuthToken, get_crate_version,
     http_server::{ServerError, add_no_cache_headers, fallback_route},
-    log::{self, tracing},
+    log,
 };
 
 use crate::{

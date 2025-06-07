@@ -8,7 +8,6 @@ use tracing_subscriber::{
     util::SubscriberInitExt,
 };
 
-pub use tracing;
 pub use tracing::{Level, debug, error, info, trace, warn};
 
 const DEFAULT_LOG_LEVELS: &str =

@@ -8,7 +8,7 @@ arch=(x86_64)
 license=(MIT)
 depends=(dbus)
 optdepends=(
-    'electron34: to run Arhiv desktop app'
+    'electron38: to run Arhiv desktop app'
 )
 makedepends=(git cargo lld nodejs npm)
 options=(!buildflags !debug) # some of the build flags seem to break linking with native libs sqlite & libwebp

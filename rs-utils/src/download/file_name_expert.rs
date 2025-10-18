@@ -28,10 +28,10 @@ impl DownloadFileNameExpert<'_> {
         }
 
         // guess extension from the Content-Type header
-        if let Some(content_type) = self.content_type {
-            if let Some(extension) = get_extension_for_mime_string(&content_type) {
-                return Ok(format!("{constructed_name}.{extension}"));
-            }
+        if let Some(content_type) = self.content_type
+            && let Some(extension) = get_extension_for_mime_string(&content_type)
+        {
+            return Ok(format!("{constructed_name}.{extension}"));
         }
 
         // guess extension from the file data

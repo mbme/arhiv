@@ -254,7 +254,7 @@ impl Baza {
         self.state.iter_documents()
     }
 
-    pub fn list_documents(&self, filter: &Filter) -> Result<ListPage> {
+    pub fn list_documents(&self, filter: &Filter) -> Result<ListPage<'_>> {
         let start_time = Instant::now();
 
         let result = self.state.list_documents(filter);

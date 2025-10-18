@@ -278,10 +278,10 @@ impl FsTransaction {
 
     pub fn commit(&mut self) -> Result<()> {
         for op in &self.ops {
-            if let FsOperation::Backup { dest, .. } = op {
-                if let Err(err) = fs::remove_file(dest) {
-                    log::error!("Failed to remove Backup {} : {}", dest, err);
-                }
+            if let FsOperation::Backup { dest, .. } = op
+                && let Err(err) = fs::remove_file(dest)
+            {
+                log::error!("Failed to remove Backup {} : {}", dest, err);
             }
         }
 

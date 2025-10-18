@@ -101,7 +101,7 @@ pub fn generate_random_id(len: usize) -> String {
     nanoid::nanoid!(len, &chars)
 }
 
-pub fn value_as_string(value: Option<&Value>) -> Cow<str> {
+pub fn value_as_string(value: Option<&Value>) -> Cow<'_, str> {
     if let Some(value) = value {
         if let Some(str) = value.as_str() {
             Cow::Borrowed(str)

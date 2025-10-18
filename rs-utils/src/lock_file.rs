@@ -53,10 +53,10 @@ impl Drop for LockFile {
     fn drop(&mut self) {
         self.lock.unlock().expect("must unlock");
 
-        if self.cleanup {
-            if let Err(err) = fs::remove_file(&self.file_path) {
-                log::warn!("Failed to remove Lock file {}: {}", self.file_path, err);
-            }
+        if self.cleanup
+            && let Err(err) = fs::remove_file(&self.file_path)
+        {
+            log::warn!("Failed to remove Lock file {}: {}", self.file_path, err);
         }
     }
 }

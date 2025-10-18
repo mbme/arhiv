@@ -50,7 +50,7 @@ pub struct ListPage<'d> {
 const PAGE_SIZE: usize = 10;
 
 impl BazaState {
-    pub fn list_documents(&self, filter: &Filter) -> Result<ListPage> {
+    pub fn list_documents(&self, filter: &Filter) -> Result<ListPage<'_>> {
         let page_start = (filter.page as usize) * PAGE_SIZE;
 
         if filter.query.trim().is_empty() {

@@ -345,7 +345,7 @@ impl FTSEngine {
             .collect()
     }
 
-    pub fn get_stats(&self) -> FTSStats {
+    pub fn get_stats(&self) -> FTSStats<'_> {
         let terms_count = self.terms_index.len();
         let docs_count = self.doc_term_count.len();
 

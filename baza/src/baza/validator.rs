@@ -147,16 +147,16 @@ impl Baza {
             bail!("unknown document ref '{}'", id);
         };
 
-        if let Some(document_types) = expected_document_types {
-            if !document_types.is_empty() {
-                ensure!(
-                    document_types.contains(&document.document_type.as_ref()),
-                    "document '{}' expected to be '{}' but has type '{}'",
-                    id,
-                    document_types.join(", "),
-                    document.document_type,
-                );
-            }
+        if let Some(document_types) = expected_document_types
+            && !document_types.is_empty()
+        {
+            ensure!(
+                document_types.contains(&document.document_type.as_ref()),
+                "document '{}' expected to be '{}' but has type '{}'",
+                id,
+                document_types.join(", "),
+                document.document_type,
+            );
         }
 
         Ok(())

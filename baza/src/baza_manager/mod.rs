@@ -176,7 +176,7 @@ impl BazaManager {
         &self.schema
     }
 
-    pub fn get_document_expert(&self) -> DocumentExpert {
+    pub fn get_document_expert(&self) -> DocumentExpert<'_> {
         DocumentExpert::new(&self.schema)
     }
 

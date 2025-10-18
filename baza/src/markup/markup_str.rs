@@ -16,7 +16,7 @@ pub struct MarkupStr<'a>(CowStr<'a>);
 
 impl MarkupStr<'_> {
     #[must_use]
-    pub fn parse(&self) -> Parser {
+    pub fn parse(&self) -> Parser<'_> {
         let mut options = Options::empty();
         options.insert(Options::ENABLE_STRIKETHROUGH);
         options.insert(Options::ENABLE_TABLES);
@@ -33,10 +33,9 @@ impl MarkupStr<'_> {
         for event in parser {
             if let Event::Start(Tag::Link { ref dest_url, .. })
             | Event::Start(Tag::Image { ref dest_url, .. }) = event
+                && let Some(id) = extract_id(dest_url)
             {
-                if let Some(id) = extract_id(dest_url) {
-                    refs.insert(id);
-                }
+                refs.insert(id);
             }
         }
 

@@ -16,7 +16,7 @@ anyhow.workspace = true
 
 clap = { version = "4", features = ["derive", "env"] }
 clap_complete = "4.0"
-dialoguer = { version = "0.11", default-features = false, features = ["password"] }
+dialoguer = { version = "0.12", default-features = false, features = ["password"] }
 
 serde_json.workspace = true
 

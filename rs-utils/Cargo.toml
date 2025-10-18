@@ -46,7 +46,7 @@ secrecy = { version = "0.10", features = ["serde"]} # replace secrets in memory 
 
 age = { version = "0.11", features = ["armor"] } # file encryption format
 
-rcgen = "0.13" # generate self-signed certificates
+rcgen = "0.14" # generate self-signed certificates
 pem = "*" # serialize TLS private key & certificate into PEM file
 
 data-encoding = "2" # base64, hex encodings
@@ -73,4 +73,4 @@ deunicode = "1.6" # turn translate unicode strings and emojis into ASCII
 tracing-android = "0.2" # tracing compatibility layer for android
 
 [dev-dependencies]
-criterion = "0.6"
+criterion = "0.7"

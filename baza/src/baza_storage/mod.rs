@@ -1,3 +1,4 @@
+mod container_draft;
 mod documents_index;
 
 use std::{
@@ -19,6 +20,7 @@ use crate::entities::{Document, DocumentKey};
 
 use super::BazaInfo;
 
+pub use container_draft::ContainerDraft;
 pub use documents_index::DocumentsIndex;
 
 type LinesIter<'i> = Box<dyn Iterator<Item = Result<(String, String)>> + 'i>;
@@ -233,34 +235,19 @@ pub fn create_container_patch<'d>(
 pub fn create_storage(
     writer: impl Write,
     key: AgeKey,
-    info: &BazaInfo,
+    info: BazaInfo,
     new_documents: &[Document],
 ) -> Result<()> {
-    let agegz_writer = AgeGzWriter::new(writer, key)?;
-    let mut container_writer = ContainerWriter::new(agegz_writer);
-
-    let index =
-        DocumentsIndex::from_document_keys(new_documents.iter().map(DocumentKey::for_document));
-
-    container_writer.write_index(&index)?;
-
-    // first line is BazaInfo
-    let info = serde_json::to_string(info)?;
-    container_writer.write_line(&info)?;
+    let mut draft = ContainerDraft::new(writer, key, info, new_documents.len());
 
     for document in new_documents {
-        let value = serde_json::to_string(document)?;
-        container_writer.write_line(&value)?;
+        draft.push_document(document)?;
     }
 
-    let agegz_writer = container_writer.finish()?;
-
-    agegz_writer.finish()?;
-
-    Ok(())
+    draft.finish()
 }
 
-pub fn create_empty_storage_file(file: &str, key: AgeKey, info: &BazaInfo) -> Result<()> {
+pub fn create_empty_storage_file(file: &str, key: AgeKey, info: BazaInfo) -> Result<()> {
     let mut storage_writer = create_file_writer(file, false)?;
     create_storage(&mut storage_writer, key, info, &[])?;
 
@@ -279,7 +266,7 @@ pub fn create_test_storage<'k>(
     let info = BazaInfo::new_test_info();
 
     let mut data = Cursor::new(Vec::<u8>::new());
-    create_storage(&mut data, key.clone(), &info, new_documents).unwrap();
+    create_storage(&mut data, key.clone(), info, new_documents).unwrap();
     data.set_position(0);
 
     BazaStorage::read(data, key).unwrap()
@@ -340,17 +327,14 @@ pub fn merge_storages(mut storages: Vec<BazaStorage<impl Read>>, writer: impl Wr
         })
         .collect::<Result<Vec<_>>>()?;
 
-    // build index
-    let index_keys = keys_per_storage.iter().flat_map(|(_s, keys)| keys.iter());
-    let index = DocumentsIndex::from_document_keys_refs(index_keys);
-
-    let key = &keys_per_storage[0].0.key;
-    let info = &keys_per_storage[0].0.info;
-    let agegz_writer = AgeGzWriter::new(writer, key.clone())?;
-    let mut container_writer = ContainerWriter::new(agegz_writer);
-
-    container_writer.write_index(&index)?;
-    container_writer.write_line(&serde_json::to_string(&info)?)?;
+    let key = keys_per_storage[0].0.key.clone();
+    let info = keys_per_storage[0]
+        .0
+        .info
+        .clone()
+        .context("storage info must be available")?;
+    let total_records = keys_per_storage.iter().map(|(_, keys)| keys.len()).sum();
+    let mut draft = ContainerDraft::new(writer, key, info, total_records);
 
     // write lines
     for (storage, mut keys) in keys_per_storage {
@@ -359,7 +343,7 @@ pub fn merge_storages(mut storages: Vec<BazaStorage<impl Read>>, writer: impl Wr
                 let (line_key, line) = line?;
 
                 if key == &line_key {
-                    container_writer.write_line(&line)?;
+                    draft.push_serialized(line_key, line)?;
                     keys.pop_front();
                 }
             } else {
@@ -375,10 +359,7 @@ pub fn merge_storages(mut storages: Vec<BazaStorage<impl Read>>, writer: impl Wr
         }
     }
 
-    let agegz_writer = container_writer.finish()?;
-    agegz_writer.finish()?;
-
-    Ok(())
+    draft.finish()
 }
 
 pub fn merge_storages_to_file(storages: Vec<BazaStorage<impl Read>>, file: &str) -> Result<()> {
@@ -419,7 +400,7 @@ mod tests {
         let key = AgeKey::generate_age_x25519_key();
         let info = BazaInfo::new_test_info();
         let mut docs1 = vec![new_document(json!({ "test": "a" })).with_rev(json!({ "1": 1 }))];
-        create_storage(&mut data, key.clone(), &info, &docs1)?;
+        create_storage(&mut data, key.clone(), info.clone(), &docs1)?;
 
         data.set_position(0);
 

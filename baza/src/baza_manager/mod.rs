@@ -141,7 +141,7 @@ impl BazaManager {
             data_version: self.schema.get_latest_data_version(),
             storage_version: STORAGE_VERSION,
         };
-        create_empty_storage_file(&self.paths.storage_main_db_file, key.clone(), &info)?;
+        create_empty_storage_file(&self.paths.storage_main_db_file, key.clone(), info)?;
 
         state.unlock(key);
 

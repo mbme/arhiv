@@ -143,7 +143,13 @@ impl Baza {
         use crate::baza_storage::create_storage;
 
         let mut storage_writer = create_file_writer(file_path, false).unwrap();
-        create_storage(&mut storage_writer, self.key.clone(), self.get_info(), docs).unwrap();
+        create_storage(
+            &mut storage_writer,
+            self.key.clone(),
+            self.get_info().clone(),
+            docs,
+        )
+        .unwrap();
     }
 
     pub fn get_info(&self) -> &BazaInfo {

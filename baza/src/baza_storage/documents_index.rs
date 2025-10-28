@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{cmp::Ordering, fmt};
 
 use anyhow::{Context, Result, bail};
 use ordermap::OrderSet;
@@ -57,6 +57,15 @@ impl DocumentsIndex {
 
     pub fn append_keys(&mut self, more_keys: Vec<DocumentKey>) {
         self.0.extend(more_keys);
+    }
+
+    pub fn sort_by_document_key(&mut self) {
+        self.0.sort_by(
+            |left, right| match left.id.as_ref().cmp(right.id.as_ref()) {
+                Ordering::Equal => left.rev.cmp(&right.rev),
+                other => other,
+            },
+        );
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &DocumentKey> {

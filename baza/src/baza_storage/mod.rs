@@ -238,7 +238,12 @@ pub fn create_storage(
     info: BazaInfo,
     new_documents: &[Document],
 ) -> Result<()> {
-    let mut draft = ContainerDraft::new(writer, key, info, new_documents.len());
+    let index_keys = new_documents
+        .iter()
+        .map(DocumentKey::for_document)
+        .collect::<Vec<_>>();
+    let index = DocumentsIndex::from_document_keys(index_keys)?;
+    let mut draft = ContainerDraft::new(writer, key, &info, index)?;
 
     for document in new_documents {
         draft.push_document(document)?;
@@ -333,8 +338,12 @@ pub fn merge_storages(mut storages: Vec<BazaStorage<impl Read>>, writer: impl Wr
         .info
         .clone()
         .context("storage info must be available")?;
-    let total_records = keys_per_storage.iter().map(|(_, keys)| keys.len()).sum();
-    let mut draft = ContainerDraft::new(writer, key, info, total_records);
+    let ordered_keys = keys_per_storage
+        .iter()
+        .flat_map(|(_, keys)| keys.iter().cloned())
+        .collect::<Vec<_>>();
+    let index = DocumentsIndex::from_document_keys(ordered_keys)?;
+    let mut draft = ContainerDraft::new(writer, key, &info, index)?;
 
     // write lines
     for (storage, mut keys) in keys_per_storage {

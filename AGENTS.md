@@ -32,3 +32,10 @@ History favors short imperative summaries (`bump deps`, `fix theme toggle`). Kee
 
 ## Security & Configuration Tips
 Use OS keyrings via the `keyring` crate for secrets; never hardcode credentials. For local runs, default `DEV_ARHIV_ROOT=~/temp/arhiv`, `SERVER_PORT=8443`, and override via env vars per shell. Preserve `RUST_LOG` granularity (`debug,h2=info,…`) when debugging to avoid noisy traces in committed configs.
+
+## Baza Container Format
+- Containers are Age-encrypted, gzip-compressed streams; `AgeGzReader`/`AgeGzWriter` wrap the underlying IO so payloads are unreadable at rest and compact on disk.
+- The first line is a JSON `LinesIndex` array whose entries mirror file order; slot `0` is always `"info"` for the storage metadata record, followed by serialized `DocumentKey` strings (`"{id} {rev}"`) for every document.
+- Each subsequent line is UTF-8 JSON matching the index entry at the same position: the `"info"` row stores `BazaInfo`, and document rows hold the serialized `Document`.
+- Writers must emit lines in index order; the current `ContainerDraft` streams to `ContainerWriter` and relies on a pre-built `DocumentsIndex` so even large merges avoid buffering the entire dataset.
+- Reads use `ContainerReader` to replay the index and stream lines lazily, enabling patching and filtering without loading the whole container into memory.

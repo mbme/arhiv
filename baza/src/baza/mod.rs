@@ -658,7 +658,7 @@ mod tests {
 
         let mut storage = create_test_storage(
             key.clone(),
-            &vec![
+            &[
                 doc_a.clone(),
                 doc_a1.clone(),
                 doc_a2.clone(),

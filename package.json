@@ -9,7 +9,8 @@
   "private": true,
   "workspaces": ["arhiv", "arhiv-desktop"],
   "scripts": {
-    "check": "npm run compiler-errors --workspaces && npm run check-fmt --workspaces && npm run lint --workspaces && npm run test --workspaces"
+    "check": "npm run compiler-errors --workspaces && npm run check-fmt --workspaces && npm run lint --workspaces && npm run test --workspaces && npm run check-android-config",
+    "check-android-config": "node --import tsx scripts/check-android-config.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",

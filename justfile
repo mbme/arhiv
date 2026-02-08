@@ -87,6 +87,7 @@ cargo-install: _prod-npm-build
   cargo install --path binutils --bin arhiv --features production-mode
 
 check-rs:
+  cargo fmt --check
   cargo clippy --all-targets --all-features -- -D warnings
   cargo test
 

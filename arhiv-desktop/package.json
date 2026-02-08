@@ -12,7 +12,7 @@
     "lint": "eslint --cache src/",
     "fmt": "prettier --write src/",
     "check-fmt": "prettier --check src/",
-    "test": ""
+    "test": "node --import tsx scripts/check-server-info-contract.ts"
   },
   "author": "mbme",
   "license": "ISC",

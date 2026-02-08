@@ -7,7 +7,7 @@
   "main": "",
   "type": "module",
   "scripts": {
-    "compiler-errors": "tsc --noEmit --project tsconfig.json",
+    "compiler-errors": "tsc --noEmit --project tsconfig.json && npm run check-dto-sync",
     "clean": "rm -f public/*.js* public/*.css*",
     "build:js": "node build.ts",
     "build:css": "tailwindcss -i src/ui/index.css -o public/index.css",
@@ -20,7 +20,8 @@
     "lint": "eslint --cache src/",
     "test": "node --import tsx --test 'src/ui/**/*.test.ts' 'src/ui/**/*.test.tsx' --test-reporter spec",
     "fmt": "prettier --write src/",
-    "check-fmt": "prettier --check src/"
+    "check-fmt": "prettier --check src/",
+    "check-dto-sync": "node --import tsx scripts/check-dto-sync.ts"
   },
   "dependencies": {
     "@codemirror/lang-markdown": "^6.0.0",

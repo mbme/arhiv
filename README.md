@@ -32,6 +32,18 @@ You should export backup copies of your key using Arhiv CLI or UI.
 When using Syncthing to synchronize Arhiv storage across devices, you should turn off the file versioning (it seems to be turned on by default on Android).
 That way, if you'll modify Arhiv on both devices simultaneously, Syncthing will keep both storage file versions, and Arhiv will merge them after restart.
 
+# Specification docs
+- `docs/arhiv-encrypted-file-format.md`: canonical on-disk encrypted format, container/index invariants, and compatibility boundaries.
+- `docs/storage-schema-contract-spec.md`: document-type/field schema contract, runtime validation behavior, and `data_version` migration triggers.
+- `docs/storage-migration-playbook.md`: operational migration procedure, rollback rules, and non-negotiable migration invariants.
+- `docs/crypto-key-lifecycle-threat-model.md`: key hierarchy, lifecycle operations, recoverability constraints, and security assumptions.
+- `docs/merge-conflicts-spec.md`: cross-device conflict detection/resolution semantics and idempotency guarantees.
+- `docs/auth-session-trust-chain-spec.md`: auth token/session model plus desktop/android certificate trust-chain contract.
+- `docs/api-dto-contract-spec.md`: Rust/TypeScript DTO and `/ui/api` request/response compatibility contract.
+- `docs/launcher-server-runtime-protocol-spec.md`: launcher-to-server startup protocol (`--json`, `@@SERVER_INFO`), lock/port/shutdown semantics.
+- `docs/backup-restore-durability-spec.md`: backup/restore scope, safety guarantees, and corruption handling expectations.
+- `docs/platform-security-boundaries-spec.md`: desktop/android/server trust boundaries, secret handling surfaces, and non-goals.
+
 # Arhiv CLI installation
 
 You can download CLI & Android app builds from [Github Releases](https://github.com/mbme/arhiv/releases).

@@ -7,6 +7,18 @@
 - Data model/persistence is in `baza/`; cross-cutting crypto/container/fs/http utilities are in `rs-utils/`.
 - Platform wrappers: Electron (`arhiv-desktop/`) and Android Java + JNI (`arhiv-android/`).
 
+## Specification docs
+- `docs/arhiv-encrypted-file-format.md`: canonical on-disk encrypted format, container/index invariants, and compatibility boundaries.
+- `docs/storage-schema-contract-spec.md`: document-type/field schema contract, runtime validation behavior, and `data_version` migration triggers.
+- `docs/storage-migration-playbook.md`: operational migration procedure, rollback rules, and non-negotiable migration invariants.
+- `docs/crypto-key-lifecycle-threat-model.md`: key hierarchy, lifecycle operations, recoverability constraints, and security assumptions.
+- `docs/merge-conflicts-spec.md`: cross-device conflict detection/resolution semantics and idempotency guarantees.
+- `docs/auth-session-trust-chain-spec.md`: auth token/session model plus desktop/android certificate trust-chain contract.
+- `docs/api-dto-contract-spec.md`: Rust/TypeScript DTO and `/ui/api` request/response compatibility contract.
+- `docs/launcher-server-runtime-protocol-spec.md`: launcher-to-server startup protocol (`--json`, `@@SERVER_INFO`), lock/port/shutdown semantics.
+- `docs/backup-restore-durability-spec.md`: backup/restore scope, safety guarantees, and corruption handling expectations.
+- `docs/platform-security-boundaries-spec.md`: desktop/android/server trust boundaries, secret handling surfaces, and non-goals.
+
 ## Authoritative directory map
 - `.github/actions/setup/action.yml`: shared CI setup (Rust toolchain, Node 23.7, `npm ci`, system packages).
 - `.github/workflows/check.yml`: CI checks on `master` push/PR.

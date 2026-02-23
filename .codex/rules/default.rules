@@ -1,0 +1,1 @@
+prefix_rule(pattern=["just", "check-rs"], decision="allow")

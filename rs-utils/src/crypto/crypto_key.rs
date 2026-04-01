@@ -1,6 +1,6 @@
 use anyhow::{Result, anyhow, ensure};
 use hkdf::Hkdf;
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use secrecy::{ExposeSecret, SecretString};
 use sha2::{Digest, Sha256};
 

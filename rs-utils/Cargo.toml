@@ -27,7 +27,7 @@ serde_json.workspace = true
 
 axum.workspace = true
 axum-extra.workspace = true
-axum-server = { version= "0.7", features = ["tls-rustls-no-provider"]}
+axum-server = { version= "0.8", features = ["tls-rustls-no-provider"]}
 
 bytes.workspace = true
 rand.workspace = true
@@ -39,9 +39,9 @@ time = { version = "0.3", features = ["formatting", "serde", "local-offset"] }
 reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls-webpki-roots"] }
 
 scrypt = { version = "0.11", default-features = false } # derive secure cryptographic key from password & salt
-sha2 = "0.10" # popular crypto hash
-hmac = "0.12" # generic HMAC implementation
-hkdf = "0.12" # generic HKDF implementation
+sha2 = "0.11" # popular crypto hash
+hmac = "0.13" # generic HMAC implementation
+hkdf = "0.13" # generic HKDF implementation
 secrecy = { version = "0.10", features = ["serde"]} # replace secrets in memory with 0s after use
 
 age = { version = "0.11", features = ["armor"] } # file encryption format
@@ -73,4 +73,4 @@ deunicode = "1.6" # turn translate unicode strings and emojis into ASCII
 tracing-android = "0.2" # tracing compatibility layer for android
 
 [dev-dependencies]
-criterion = "0.7"
+criterion = "0.8"

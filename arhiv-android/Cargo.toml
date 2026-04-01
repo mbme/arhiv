@@ -17,7 +17,7 @@ production-mode = ["arhiv/production-mode"]
 [dependencies]
 anyhow.workspace = true
 tokio.workspace = true
-jni = "0.21"
+jni = "0.22"
 
 arhiv = { path = "../arhiv", features = ["embed-public"] }
 rs-utils = { path = "../rs-utils" }

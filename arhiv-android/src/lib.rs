@@ -10,7 +10,7 @@ use std::{
 
 use anyhow::{Context, Result, anyhow, ensure};
 use jni::{
-    JNIEnv,
+    EnvUnowned, jni_sig, jni_str,
     objects::{JClass, JObject, JString, JValue},
 };
 use tokio::runtime::Runtime;
@@ -80,7 +80,7 @@ fn stop_server() -> Result<()> {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _class: JClass,
     app_files_dir: JString,
     external_storage_dir: JString,
@@ -88,109 +88,97 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
     password: JString,
     android_controller: JObject, // AndroidController
 ) -> JObject<'local> {
-    // the function might be called multiple times, if android app was unloaded in background
-    if LOG_INITIALIZED.load(Ordering::SeqCst) {
-        log::info!("Logger already initialized");
-    } else {
-        log::setup_android_logger("me.mbsoftware.arhiv");
-        log::setup_panic_hook();
-        LOG_INITIALIZED.store(true, Ordering::SeqCst);
+    let outcome = env.with_env(|env| -> jni::errors::Result<JObject<'local>> {
+        // the function might be called multiple times, if android app was unloaded in background
+        if LOG_INITIALIZED.load(Ordering::SeqCst) {
+            log::info!("Logger already initialized");
+        } else {
+            log::setup_android_logger("me.mbsoftware.arhiv");
+            log::setup_panic_hook();
+            LOG_INITIALIZED.store(true, Ordering::SeqCst);
 
-        log::debug!("Initialized logger and panic hook");
-    }
+            log::debug!("Initialized logger and panic hook");
+        }
 
-    let app_files_dir: String = env
-        .get_string(&app_files_dir)
-        .expect("Must read JNI string app_files_dir")
-        .into();
-    log::debug!("Files dir: {app_files_dir}");
+        let app_files_dir: String = app_files_dir.to_string();
+        log::debug!("Files dir: {app_files_dir}");
 
-    let external_storage_dir: String = env
-        .get_string(&external_storage_dir)
-        .expect("Must read JNI string external_storage_dir")
-        .into();
-    log::debug!("Storage dir: {external_storage_dir}");
+        let external_storage_dir: String = external_storage_dir.to_string();
+        log::debug!("Storage dir: {external_storage_dir}");
 
-    let downloads_dir: String = env
-        .get_string(&downloads_dir)
-        .expect("Must read JNI string downloads_dir")
-        .into();
-    log::debug!("Donwloads dir: {downloads_dir}");
+        let downloads_dir: String = downloads_dir.to_string();
+        log::debug!("Donwloads dir: {downloads_dir}");
 
-    let password: Option<SecretString> = if password.as_raw().is_null() {
-        log::debug!("No password");
-        None
-    } else {
-        log::debug!("Got password");
-        let password: String = env
-            .get_string(&password)
-            .expect("Must read JNI string password")
-            .into();
+        let password: Option<SecretString> = if password.as_raw().is_null() {
+            log::debug!("No password");
+            None
+        } else {
+            log::debug!("Got password");
+            let password: String = password.to_string();
 
-        Some(password.into())
-    };
+            Some(password.into())
+        };
 
-    let android_controller = env
-        .new_global_ref(android_controller)
-        .expect("Must turn AndroidController instance into global ref");
-    let jvm = env.get_java_vm().expect("Can't get reference to JVM");
-    let options = ArhivOptions {
-        storage_dir: format!("{external_storage_dir}/Arhiv"),
-        state_dir: app_files_dir,
-        downloads_dir,
-        file_browser_root_dir: external_storage_dir,
-        keyring: AndroidKeyring::new_arhiv_keyring(password, android_controller, jvm),
-    };
+        let android_controller = env
+            .new_global_ref(android_controller)
+            .expect("Must turn AndroidController instance into global ref");
+        let jvm = env.get_java_vm().expect("Can't get reference to JVM");
+        let options = ArhivOptions {
+            storage_dir: format!("{external_storage_dir}/Arhiv"),
+            state_dir: app_files_dir,
+            downloads_dir,
+            file_browser_root_dir: external_storage_dir,
+            keyring: AndroidKeyring::new_arhiv_keyring(password, android_controller, jvm),
+        };
 
-    let server_info = start_server(options, ArhivServer::DEFAULT_PORT).expect("must start server");
+        let server_info =
+            start_server(options, ArhivServer::DEFAULT_PORT).expect("must start server");
 
-    // Create an instance of me.mbsoftware.arhiv.ServerInfo using JNI
-    let server_info_class = env
-        .find_class("me/mbsoftware/arhiv/ServerInfo")
-        .expect("Couldn't find ServerInfo class");
-    let server_info_object = env
-        .alloc_object(&server_info_class)
-        .expect("Couldn't allocate ServerInfo object");
+        // Create an instance of me.mbsoftware.arhiv.ServerInfo using JNI
+        let server_info_class = env
+            .find_class(jni_str!("me/mbsoftware/arhiv/ServerInfo"))
+            .expect("Couldn't find ServerInfo class");
+        let server_info_object = env
+            .alloc_object(&server_info_class)
+            .expect("Couldn't allocate ServerInfo object");
 
-    // Set ServerInfo.uiUrl field on the Java object
-    let ui_url_field = env
-        .get_field_id(&server_info_class, "uiUrl", "Ljava/lang/String;")
-        .expect("Couldn't find object field String uiUrl");
-    let ui_url = env
-        .new_string(server_info.ui_url)
-        .expect("Couldn't create java String!");
-    env.set_field_unchecked(&server_info_object, ui_url_field, JValue::from(&ui_url))
+        let ui_url = env
+            .new_string(server_info.ui_url)
+            .expect("Couldn't create java String!");
+        env.set_field(
+            &server_info_object,
+            jni_str!("uiUrl"),
+            jni_sig!("Ljava/lang/String;"),
+            JValue::from(&ui_url),
+        )
         .expect("Couldn't set field String uiUrl");
 
-    // Set ServerInfo.authToken field on the Java object
-    let auth_token_field = env
-        .get_field_id(&server_info_class, "authToken", "Ljava/lang/String;")
-        .expect("Couldn't find object field String authToken");
-    let auth_token = env
-        .new_string(server_info.auth_token)
-        .expect("Couldn't create java String!");
-    env.set_field_unchecked(
-        &server_info_object,
-        auth_token_field,
-        JValue::from(&auth_token),
-    )
-    .expect("Couldn't set field String authToken");
+        let auth_token = env
+            .new_string(server_info.auth_token)
+            .expect("Couldn't create java String!");
+        env.set_field(
+            &server_info_object,
+            jni_str!("authToken"),
+            jni_sig!("Ljava/lang/String;"),
+            JValue::from(&auth_token),
+        )
+        .expect("Couldn't set field String authToken");
 
-    // Set ServerInfo.certificate field on the Java object
-    let certificate_field = env
-        .get_field_id(&server_info_class, "certificate", "[B") // byte[] in Java
-        .expect("Couldn't find object field byte[] certificate");
-    let certificate = env
-        .byte_array_from_slice(&server_info.certificate)
-        .expect("Couldn't create java byte[]!");
-    env.set_field_unchecked(
-        &server_info_object,
-        certificate_field,
-        JValue::from(&certificate),
-    )
-    .expect("Couldn't set field byte[] certificate");
+        let certificate = env
+            .byte_array_from_slice(&server_info.certificate)
+            .expect("Couldn't create java byte[]!");
+        env.set_field(
+            &server_info_object,
+            jni_str!("certificate"),
+            jni_sig!("[B"),
+            JValue::from(&certificate),
+        )
+        .expect("Couldn't set field byte[] certificate");
 
-    server_info_object
+        Ok(server_info_object)
+    });
+
+    outcome.resolve::<jni::errors::ThrowRuntimeExAndDefault>()
 }
 
 #[unsafe(no_mangle)]

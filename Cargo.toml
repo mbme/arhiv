@@ -42,9 +42,9 @@ tracing = "0.1"
 
 rustls = { version = "*" }
 axum = { version = "0.8", features = ["tracing", "tokio", "http1", "multipart"] }
-axum-extra = { version = "0.10", features = ["typed-header", "cookie"]}
+axum-extra = { version = "0.12", features = ["typed-header", "cookie"]}
 ordermap = { version = "1.0", features = ["serde"] } # hashmap & hashset that preserve insertion order
-rand = "0.9"
+rand = "0.10"
 bytes = "1"
 
 rayon = "1.8" # thread pool for executing CPU-heavy tasks, e.g. scaling images

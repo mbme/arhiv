@@ -2,8 +2,8 @@ use std::sync::{Arc, RwLock};
 
 use anyhow::{Context, Result, anyhow, ensure};
 use jni::{
-    JavaVM,
-    objects::{GlobalRef, JObject, JString},
+    JavaVM, jni_sig, jni_str,
+    objects::{Global, JObject, JValue},
 };
 
 use arhiv::{ArhivKeyring, Keyring};
@@ -16,14 +16,14 @@ use rs_utils::{ExposeSecret, SecretString, log};
 /// but doesn't wait for results. So the password may not actually be saved, even if the method call didn't fail.
 pub struct AndroidKeyring {
     password: RwLock<Option<SecretString>>,
-    android_controller: GlobalRef, // instance of AndroidController
+    android_controller: Global<JObject<'static>>, // instance of AndroidController
     jvm: JavaVM,
 }
 
 impl AndroidKeyring {
     pub fn new_arhiv_keyring(
         password: Option<SecretString>,
-        android_controller: GlobalRef,
+        android_controller: Global<JObject<'static>>,
         jvm: JavaVM,
     ) -> ArhivKeyring {
         let keyring = AndroidKeyring {
@@ -67,30 +67,29 @@ impl Keyring for AndroidKeyring {
             .write()
             .map_err(|err| anyhow!("Failed to acquire write lock for the password: {err}"))?;
 
-        let _guard = self
-            .jvm
-            .attach_current_thread()
-            .context("Failed to attach current thread to JavaVM");
+        self.jvm
+            .attach_current_thread(|env| -> Result<()> {
+                let null_password = JObject::null();
+                let password_jstring = value.as_ref().map(|p| {
+                    env.new_string(p.expose_secret())
+                        .expect("Couldn't create java String")
+                });
+                let password_arg = match password_jstring.as_ref() {
+                    Some(password_jstring) => JValue::from(password_jstring),
+                    None => JValue::from(&null_password),
+                };
 
-        let mut env = self
-            .jvm
-            .get_env()
-            .expect("Current thread must be attached to JavaVM to get JNIEnv");
+                env.call_method(
+                    &self.android_controller,
+                    jni_str!("savePassword"),
+                    jni_sig!("(Ljava/lang/String;)V"),
+                    &[password_arg],
+                )
+                .context("Failed to call AndroidController.savePassword()")?;
 
-        let password_jstring: JString = match value {
-            Some(ref p) => env
-                .new_string(p.expose_secret())
-                .expect("Couldn't create java String"),
-            None => JObject::null().into(),
-        };
-
-        env.call_method(
-            &self.android_controller,
-            "savePassword",
-            "(Ljava/lang/String;)V",
-            &[(&password_jstring).into()],
-        )
-        .context("Failed to call AndroidController.savePassword()")?;
+                Ok(())
+            })
+            .context("Failed to attach current thread to JavaVM")?;
 
         *password_guard = value;
 

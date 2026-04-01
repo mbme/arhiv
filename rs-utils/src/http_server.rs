@@ -99,7 +99,7 @@ pub async fn fallback_route(uri: Uri) -> (StatusCode, String) {
 pub struct HttpServer {
     address: SocketAddr,
     join_handle: JoinHandle<Result<()>>,
-    server_handle: Handle,
+    server_handle: Handle<SocketAddr>,
     secure: bool,
 }
 

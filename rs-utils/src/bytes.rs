@@ -2,7 +2,7 @@ use std::io::{self, Read, Seek, SeekFrom};
 
 use anyhow::{Context, Result};
 use data_encoding::{BASE64, BASE64URL, HEXUPPER};
-use rand::{RngCore, TryRngCore, rngs::OsRng};
+use rand::{Rng, TryRng, rngs::SysRng};
 
 pub fn generate_bytes(n: usize) -> Vec<u8> {
     let mut bytes = vec![0u8; n];
@@ -18,9 +18,9 @@ pub fn generate_bytes(n: usize) -> Vec<u8> {
 pub fn new_random_crypto_byte_array<const SIZE: usize>() -> [u8; SIZE] {
     let mut bytes = [0u8; SIZE];
 
-    OsRng
+    SysRng
         .try_fill_bytes(&mut bytes)
-        .expect("OsRng must fill bytes slice");
+        .expect("SysRng must fill bytes slice");
 
     bytes
 }
@@ -209,7 +209,7 @@ impl<const SIZE: usize, R: Read + Seek> Seek for ReaderWithHeader<SIZE, R> {
 mod tests {
     use std::io::{Cursor, SeekFrom};
 
-    use rand::RngCore;
+    use rand::Rng;
 
     use super::*;
 

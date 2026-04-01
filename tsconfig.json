@@ -2,11 +2,12 @@
   "compilerOptions": {
     "incremental": true,
     "esModuleInterop": true,
-    "lib": ["es2019", "dom", "dom.iterable"],
-    "moduleResolution": "node",
+    "types": ["node"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "module": "ESNext",
-    "target": "es2019",
+    "target": "ES2023",
 
     "sourceMap": true,
 
@@ -15,7 +16,6 @@
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
 
-    "downlevelIteration": true,
     "noImplicitReturns": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

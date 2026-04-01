@@ -228,7 +228,9 @@ export function useUnsavedChangesWarning(warn: boolean) {
     window.addEventListener('beforeunload', onBeforeUnload, { capture: true });
 
     return () => {
-      window.removeEventListener('beforeunload', onBeforeUnload, { capture: true });
+      window.removeEventListener('beforeunload', onBeforeUnload, {
+        capture: true,
+      });
     };
   }, [warn]);
 }

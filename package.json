@@ -12,7 +12,11 @@
     "arhiv-desktop"
   ],
   "scripts": {
-    "check": "npm run compiler-errors --workspaces && npm run check-fmt --workspaces && npm run lint --workspaces && npm run test --workspaces && npm run check-android-config",
+    "check": "npm run compiler-errors --workspaces && npm run fmt:check:root && npm run check-fmt --workspaces && npm run lint --workspaces && npm run test --workspaces && npm run check-android-config",
+    "fmt": "npm run fmt:root && npm run fmt --workspaces",
+    "fmt:check": "npm run fmt:check:root && npm run check-fmt --workspaces",
+    "fmt:root": "oxfmt eslint.config.js scripts/",
+    "fmt:check:root": "oxfmt --check eslint.config.js scripts/",
     "check-android-config": "node --import tsx scripts/check-android-config.ts"
   },
   "devDependencies": {
@@ -20,11 +24,10 @@
     "@types/eslint__js": "^8.42.3",
     "@types/node": "^25.5.0",
     "eslint": "^9.20.0",
-    "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.1.0",
     "globals": "^17.4.0",
-    "prettier": "^3.0.0",
+    "oxfmt": "^0.43.0",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.58.0"
   }

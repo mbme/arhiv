@@ -3,7 +3,6 @@ import pluginJs from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import pluginReact from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
-import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default tseslint.config([
   { files: ['**/*.{js,ts,jsx,tsx}', 'eslint.config.js'] },
@@ -29,7 +28,7 @@ export default tseslint.config([
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'error',
-        { 'argsIgnorePattern': '^_', 'caughtErrorsIgnorePattern': '^_' },
+        { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
       ],
       '@typescript-eslint/no-non-null-assertion': 0,
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
@@ -51,5 +50,4 @@ export default tseslint.config([
     },
     rules: { ...reactHooks.configs.recommended.rules },
   },
-  eslintConfigPrettier,
 ]);

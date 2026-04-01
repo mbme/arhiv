@@ -61,7 +61,10 @@ export function NewDocumentCard() {
           }
 
           controller.unlockCard(card.id);
-          controller.replace(card.id, { variant: 'document', documentId: submitResult.id! });
+          controller.replace(card.id, {
+            variant: 'document',
+            documentId: submitResult.id!,
+          });
         }}
       />
     </CardContainer>

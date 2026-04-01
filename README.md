@@ -90,7 +90,7 @@ Cross-platform CLI app. Uses system keyring to store password.
 # Web UI app
 * `TypeScript` for type checking
 * `ESLint` for linting
-* `Prettier` for code formatting
+* `Oxfmt` for code formatting
 * `React.js` for rendering
 * `TailwindCSS` for styling
 * `esbuild` for bundling the app

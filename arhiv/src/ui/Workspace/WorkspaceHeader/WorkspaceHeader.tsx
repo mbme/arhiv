@@ -123,7 +123,12 @@ export function WorkspaceHeader() {
             }}
             onConvertToCard={({ query, page, documentTypes }) => {
               app.workspace.hideSearchDialog();
-              app.workspace.open({ variant: 'catalog', query, page, documentTypes });
+              app.workspace.open({
+                variant: 'catalog',
+                query,
+                page,
+                documentTypes,
+              });
             }}
             initialQuery={initialSearchQuery}
           />

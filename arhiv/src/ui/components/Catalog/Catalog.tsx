@@ -167,7 +167,11 @@ export function Catalog({
             title="Convert to card"
             disabled={query.trim().length === 0}
             onClick={() => {
-              onConvertToCard({ query, page, documentTypes: filter.documentTypes });
+              onConvertToCard({
+                query,
+                page,
+                documentTypes: filter.documentTypes,
+              });
             }}
           />
         )}

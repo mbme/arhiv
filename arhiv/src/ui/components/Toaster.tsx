@@ -11,7 +11,11 @@ type ToastOptions = {
   timeoutMs?: number;
 };
 
-type Toast = ToastOptions & { id: number; createdAtMs: number; timeoutMs: number };
+type Toast = ToastOptions & {
+  id: number;
+  createdAtMs: number;
+  timeoutMs: number;
+};
 let toastId = 0;
 
 class ToastEvent extends CustomEvent<ToastOptions> {

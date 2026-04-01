@@ -66,11 +66,7 @@ function extractRustVariants(source: string, enumName: string): Set<string> {
   return variants;
 }
 
-function extractTsTypeBlock(
-  source: string,
-  typeName: string,
-  nextTypeName: string,
-): string {
+function extractTsTypeBlock(source: string, typeName: string, nextTypeName: string): string {
   const start = source.indexOf(`export type ${typeName} =`);
   if (start < 0) {
     throw new Error(`Missing TypeScript type: ${typeName}`);
@@ -78,19 +74,13 @@ function extractTsTypeBlock(
 
   const end = source.indexOf(`export type ${nextTypeName} =`, start + 1);
   if (end < 0) {
-    throw new Error(
-      `Missing TypeScript type boundary: ${typeName} -> ${nextTypeName}`,
-    );
+    throw new Error(`Missing TypeScript type boundary: ${typeName} -> ${nextTypeName}`);
   }
 
   return source.slice(start, end);
 }
 
-function extractTsTypeNames(
-  source: string,
-  typeName: string,
-  nextTypeName: string,
-): Set<string> {
+function extractTsTypeNames(source: string, typeName: string, nextTypeName: string): Set<string> {
   const block = extractTsTypeBlock(source, typeName, nextTypeName);
   const variants = new Set<string>();
   const regex = /typeName:\s*'([^']+)'/g;

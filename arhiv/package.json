@@ -19,8 +19,8 @@
     "prod:build": "npm run prod:build:js && npm run prod:build:css",
     "lint": "eslint --cache src/",
     "test": "node --import tsx --test 'src/ui/**/*.test.ts' 'src/ui/**/*.test.tsx' --test-reporter spec",
-    "fmt": "prettier --write src/",
-    "check-fmt": "prettier --check src/",
+    "fmt": "oxfmt build.ts scripts/ src/",
+    "check-fmt": "oxfmt --check build.ts scripts/ src/",
     "check-dto-sync": "node --import tsx scripts/check-dto-sync.ts"
   },
   "dependencies": {

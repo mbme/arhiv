@@ -202,7 +202,9 @@ class CodemirrorEditor {
             insert: newValue,
           },
           range: EditorSelection.range(range.from + newValue.length, range.from + newValue.length),
-          effects: EditorView.scrollIntoView(range.from + newValue.length, { y: 'center' }),
+          effects: EditorView.scrollIntoView(range.from + newValue.length, {
+            y: 'center',
+          }),
         };
       }),
     );

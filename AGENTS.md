@@ -69,7 +69,7 @@
 
 ## Tests and quality gates
 - Rust: `cargo clippy --all-targets --all-features -- -D warnings` and `cargo test` (`just check-rs`).
-- TS: root `npm run check` runs `compiler-errors`, `check-fmt`, `lint`, `test` across workspaces (`package.json`).
+- TS: root `npm run check` runs workspace typechecks/lint/tests plus root `npm run fmt:check` and `npm run check-android-config` (`package.json`).
 - Frontend tests are in `arhiv/src/ui/**/*.test.ts` and `arhiv/src/ui/**/*.test.tsx`; command is the `test` script in `arhiv/package.json`.
 - Rust tests are mostly inline `#[cfg(test)]` module tests across `baza/src/` and `rs-utils/src/`, plus integration tests in `rs-utils/tests/container.rs`.
 - Desktop test script exists but is empty (`arhiv-desktop/package.json` -> `"test": ""`); desktop runtime test coverage in CI is effectively unknown.

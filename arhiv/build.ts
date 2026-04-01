@@ -7,7 +7,7 @@ const watch = process.argv.includes('--watch');
 
 const options: BuildOptions = {
   entryPoints: {
-    'index': './src/ui/index.tsx',
+    index: './src/ui/index.tsx',
   },
   outdir: './public',
 

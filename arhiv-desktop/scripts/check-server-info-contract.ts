@@ -24,17 +24,13 @@ const marker = '@@SERVER_INFO:';
 
 const rustHasMarker = rustCli.includes(`"${marker} {}"`);
 if (!rustHasMarker) {
-  console.error(
-    `Missing expected marker emission in ${path.relative(repoRoot, rustCliPath)}`,
-  );
+  console.error(`Missing expected marker emission in ${path.relative(repoRoot, rustCliPath)}`);
   process.exit(1);
 }
 
 const desktopReadsMarker = desktop.includes(`line.startsWith('${marker}')`);
 if (!desktopReadsMarker) {
-  console.error(
-    `Missing expected marker parser in ${path.relative(process.cwd(), desktopPath)}`,
-  );
+  console.error(`Missing expected marker parser in ${path.relative(process.cwd(), desktopPath)}`);
   process.exit(1);
 }
 

@@ -1,7 +1,7 @@
 import { useRef } from 'react';
-import { EMPTY_DATA } from 'dto';
-import { RPC } from 'utils/network';
-import { Button } from 'components/Button';
+import { EMPTY_DATA } from '../dto';
+import { RPC } from '../utils/network';
+import { Button } from '../components/Button';
 import { Card, useCardContext } from './controller';
 import { CardContainer } from './CardContainer';
 import { DocumentEditor } from './DocumentEditor/DocumentEditor';

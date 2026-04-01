@@ -1,6 +1,6 @@
-import { Callback, cx, formatBytes } from 'utils';
-import { DirEntry } from 'dto';
-import { Icon } from 'components/Icon';
+import { Callback, cx, formatBytes } from '../../utils/index';
+import { DirEntry } from '../../dto';
+import { Icon } from '../Icon';
 
 type Props = {
   entry: DirEntry;

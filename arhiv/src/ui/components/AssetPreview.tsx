@@ -1,13 +1,13 @@
 import { useContext, useState } from 'react';
-import { DocumentData, DocumentId, DocumentType } from 'dto';
-import { isAsset } from 'utils/schema';
-import { isAudio, isImage } from 'utils';
-import { getAssetUrl, getScaledImageUrl } from 'utils/network';
-import { Button } from 'components/Button';
-import { AudioPlayer } from 'components/AudioPlayer/AudioPlayer';
-import { SuspenseImage } from 'components/SuspenseImage';
-import { RefClickHandlerContext } from 'components/Ref';
-import { Dialog } from 'components/Dialog';
+import { DocumentData, DocumentId, DocumentType } from '../dto';
+import { isAsset } from '../utils/schema';
+import { isAudio, isImage } from '../utils/index';
+import { getAssetUrl, getScaledImageUrl } from '../utils/network';
+import { Button } from './Button';
+import { AudioPlayer } from './AudioPlayer/AudioPlayer';
+import { SuspenseImage } from './SuspenseImage';
+import { RefClickHandlerContext } from './Ref';
+import { Dialog } from './Dialog';
 
 type AssetPreviewBlockProps = {
   documentId: DocumentId;

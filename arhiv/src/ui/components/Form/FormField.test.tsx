@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 
-import 'utils/test-env-setup';
+import '../../utils/test-env-setup';
 
 import { afterEach, describe, it } from 'node:test';
 import assert from 'node:assert';
 import { render, cleanup, waitFor } from '@testing-library/react';
-import { formDataToObject } from 'utils';
+import { formDataToObject } from '../../utils/index';
 import { FormField, HTMLVFormFieldElement } from './FormField';
 
 afterEach(cleanup);

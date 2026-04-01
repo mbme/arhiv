@@ -1,5 +1,5 @@
-import { ArhivUIConfig } from 'dto';
-import { AppController } from 'controller';
+import { ArhivUIConfig } from './dto';
+import { AppController } from './controller';
 
 declare global {
   interface Window {

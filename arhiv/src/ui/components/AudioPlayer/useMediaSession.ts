@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Callback } from 'utils';
+import { Callback } from '../../utils/index';
 
 const getMediaSession = () => {
   // WebView on Android doesn't support media session

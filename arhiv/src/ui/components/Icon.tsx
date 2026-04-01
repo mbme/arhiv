@@ -1,4 +1,4 @@
-import { cx } from 'utils';
+import { cx } from '../utils/index';
 
 // https://heroicons.com/
 // https://pictogrammers.com/library/mdi/

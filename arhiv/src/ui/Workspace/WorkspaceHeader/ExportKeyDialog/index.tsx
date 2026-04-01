@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog } from 'components/Dialog';
+import { Dialog } from '../../../components/Dialog';
 import { ExportedKey, ExportKeyForm } from './ExportKeyForm';
 import { ExportKeyView } from './ExportKeyView';
 

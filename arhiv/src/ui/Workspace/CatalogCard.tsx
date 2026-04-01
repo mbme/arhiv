@@ -1,5 +1,5 @@
-import { NOTE_DOCUMENT_TYPE } from 'dto';
-import { Catalog } from 'components/Catalog/Catalog';
+import { NOTE_DOCUMENT_TYPE } from '../dto';
+import { Catalog } from '../components/Catalog/Catalog';
 import { Card, useCardContext } from './controller';
 import { CardContainer } from './CardContainer';
 

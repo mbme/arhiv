@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Callback, formatBytes } from 'utils';
-import { RPC } from 'utils/network';
-import { useQuery } from 'utils/hooks';
-import { Form } from 'components/Form/Form';
-import { Textarea } from 'components/Form/Textarea';
-import { Button } from 'components/Button';
-import { ErrorMessage } from 'components/ErrorMessage';
-import { FileInput } from 'components/FileInput';
+import { Callback, formatBytes } from '../utils/index';
+import { RPC } from '../utils/network';
+import { useQuery } from '../utils/hooks';
+import { Form } from '../components/Form/Form';
+import { Textarea } from '../components/Form/Textarea';
+import { Button } from '../components/Button';
+import { ErrorMessage } from '../components/ErrorMessage';
+import { FileInput } from '../components/FileInput';
 import { LoginContainer } from './LoginContainer';
 
 interface Props {

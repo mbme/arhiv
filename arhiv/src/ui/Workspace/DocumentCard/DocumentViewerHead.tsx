@@ -1,9 +1,9 @@
-import { DocumentBackref, DocumentType, DocumentId } from 'dto';
-import { cx } from 'utils';
-import { formatDocumentType } from 'utils/schema';
-import { Ref } from 'components/Ref';
-import { DateTime } from 'components/DateTime';
-import { Spoiler } from 'components/Spoiler';
+import { DocumentBackref, DocumentType, DocumentId } from '../../dto';
+import { cx } from '../../utils/index';
+import { formatDocumentType } from '../../utils/schema';
+import { Ref } from '../../components/Ref';
+import { DateTime } from '../../components/DateTime';
+import { Spoiler } from '../../components/Spoiler';
 
 type DocumentViewerHeadProps = {
   id?: DocumentId;

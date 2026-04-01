@@ -1,10 +1,10 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
-import { cx } from 'utils';
-import { JSXChildren } from 'utils/jsx';
-import { useScrollHandler, useScrollRestoration } from 'utils/hooks';
-import { IconButton } from 'components/Button';
-import { Icon } from 'components/Icon';
-import { FORM_VIEWPORT_CLASSNAME } from 'components/Form/Form';
+import { cx } from '../utils/index';
+import { JSXChildren } from '../utils/jsx';
+import { useScrollHandler, useScrollRestoration } from '../utils/hooks';
+import { IconButton } from '../components/Button';
+import { Icon } from '../components/Icon';
+import { FORM_VIEWPORT_CLASSNAME } from '../components/Form/Form';
 import { useCardContext } from './controller';
 
 type CardContainerProps = {

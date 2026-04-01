@@ -1,5 +1,5 @@
 import { useLayoutEffect, useState } from 'react';
-import { cx, isImage } from 'utils';
+import { cx, isImage } from '../utils/index';
 
 type Props = {
   file: File;

@@ -1,8 +1,8 @@
-import { copyTextToClipbard } from 'utils';
-import { useBlobUrl } from 'utils/hooks';
-import { DownloadLink } from 'components/Link';
-import { Button } from 'components/Button';
-import { showToast } from 'components/Toaster';
+import { copyTextToClipbard } from '../../../utils/index';
+import { useBlobUrl } from '../../../utils/hooks';
+import { DownloadLink } from '../../../components/Link';
+import { Button } from '../../../components/Button';
+import { showToast } from '../../../components/Toaster';
 import { ExportedKey } from './ExportKeyForm';
 
 interface Props {

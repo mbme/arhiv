@@ -1,6 +1,6 @@
-import { cx } from 'utils';
-import { JSXChildren } from 'utils/jsx';
-import { Icon } from 'components/Icon';
+import { cx } from '../utils/index';
+import { JSXChildren } from '../utils/jsx';
+import { Icon } from './Icon';
 
 type LinkProps = {
   url: string;

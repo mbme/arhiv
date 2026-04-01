@@ -5,9 +5,9 @@ import {
   DocumentType,
   FILM_DOCUMENT_TYPE,
   GAME_DOCUMENT_TYPE,
-} from 'dto';
-import { useClipboardPasteHandler } from 'utils/hooks';
-import { showToast } from 'components/Toaster';
+} from '../dto';
+import { useClipboardPasteHandler } from '../utils/hooks';
+import { showToast } from '../components/Toaster';
 
 const SCRAPE_RESULTS_TYPE = 'scrape-results-container';
 

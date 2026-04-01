@@ -1,4 +1,4 @@
-import { DocumentId } from 'dto';
+import { DocumentId } from '../dto';
 
 export const REF_LINK_PREFIX = 'ref:';
 

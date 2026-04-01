@@ -1,11 +1,11 @@
 import { createContext, useContext } from 'react';
 import { effect, signal } from '@preact/signals-core';
-import { DocumentData, DocumentId, DocumentType } from 'dto';
-import { throttle } from 'utils';
-import { RPC } from 'utils/network';
-import { useSignal } from 'utils/hooks';
-import { WorkspaceController } from 'Workspace/controller';
-import { DocumentChangeEvent } from 'Workspace/documentChangeUtils';
+import { DocumentData, DocumentId, DocumentType } from './dto';
+import { throttle } from './utils/index';
+import { RPC } from './utils/network';
+import { useSignal } from './utils/hooks';
+import { WorkspaceController } from './Workspace/controller';
+import { DocumentChangeEvent } from './Workspace/documentChangeUtils';
 
 type Theme = 'light' | 'dark';
 

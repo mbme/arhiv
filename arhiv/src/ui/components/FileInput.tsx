@@ -1,5 +1,5 @@
-import { cx } from 'utils';
-import { ButtonVariant, getButtonVariantClasses } from 'components/Button';
+import { cx } from '../utils/index';
+import { ButtonVariant, getButtonVariantClasses } from './Button';
 
 type Props = {
   label: string;

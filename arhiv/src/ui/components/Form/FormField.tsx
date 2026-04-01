@@ -1,9 +1,9 @@
 import 'element-internals-polyfill';
 import React, { useEffect, useRef } from 'react';
 import deepEqual from 'deep-eql';
-import { JSONValue } from 'utils';
-import { useLatestRef } from 'utils/hooks';
-import { JSXChildren, JSXRef, mergeRefs } from 'utils/jsx';
+import { JSONValue } from '../../utils/index';
+import { useLatestRef } from '../../utils/hooks';
+import { JSXChildren, JSXRef, mergeRefs } from '../../utils/jsx';
 
 // This is a helper component that allows to build custom form fields, with validation!
 export class HTMLVFormFieldElement<V extends JSONValue> extends HTMLElement {

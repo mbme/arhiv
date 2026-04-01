@@ -1,12 +1,12 @@
 import { useRef } from 'react';
-import { DocumentId, DocumentType } from 'dto';
-import { Callback } from 'utils';
-import { useQuery } from 'utils/hooks';
-import { RPC } from 'utils/network';
-import { Button } from 'components/Button';
-import { Dialog } from 'components/Dialog';
-import { QueryError } from 'components/QueryError';
-import { dispatchDocumentChangeEvent } from 'Workspace/documentChangeUtils';
+import { DocumentId, DocumentType } from '../../dto';
+import { Callback } from '../../utils/index';
+import { useQuery } from '../../utils/hooks';
+import { RPC } from '../../utils/network';
+import { Button } from '../../components/Button';
+import { Dialog } from '../../components/Dialog';
+import { QueryError } from '../../components/QueryError';
+import { dispatchDocumentChangeEvent } from '../documentChangeUtils';
 
 type EraseDocumentButtonProps = {
   documentId: DocumentId;

@@ -1,4 +1,4 @@
-import { Callback, cx } from 'utils';
+import { Callback, cx } from '../utils/index';
 
 type Props = {
   label: string;

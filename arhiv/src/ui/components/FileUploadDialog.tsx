@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { DocumentId } from 'dto';
-import { Callback, formatBytes, newId, withoutItems } from 'utils';
-import { useQuery } from 'utils/hooks';
-import { uploadFile } from 'utils/network';
-import { Dialog } from 'components/Dialog';
-import { Button, IconButton } from 'components/Button';
-import { QueryError } from 'components/QueryError';
-import { ImageFilePreview } from 'components/ImageFilePreview';
-import { FileInput } from 'components/FileInput';
+import { DocumentId } from '../dto';
+import { Callback, formatBytes, newId, withoutItems } from '../utils/index';
+import { useQuery } from '../utils/hooks';
+import { uploadFile } from '../utils/network';
+import { Dialog } from './Dialog';
+import { Button, IconButton } from './Button';
+import { QueryError } from './QueryError';
+import { ImageFilePreview } from './ImageFilePreview';
+import { FileInput } from './FileInput';
 
 type FileExt = File & { id: string };
 

@@ -1,20 +1,20 @@
 import { useRef, useState } from 'react';
 import { shallowEqualArrays } from 'shallow-equal';
-import { cx, JSONObj } from 'utils';
+import { cx, JSONObj } from '../../utils/index';
 import {
   DocumentData,
   DocumentFieldErrors,
   DocumentId,
   DocumentType,
   SaveDocumentErrors,
-} from 'dto';
-import { getCollectionTypesForDocument, getDataDescription } from 'utils/schema';
-import { JSXRef, mergeRefs } from 'utils/jsx';
-import { useUpdateEffect } from 'utils/hooks';
-import { CollectionPicker } from 'components/CollectionPicker';
-import { Form, markFormDirty } from 'components/Form/Form';
-import { PreventImplicitSubmissionOnEnter } from 'components/Form/PreventImplicitSubmissionOnEnter';
-import { ErrorMessage } from 'components/ErrorMessage';
+} from '../../dto';
+import { getCollectionTypesForDocument, getDataDescription } from '../../utils/schema';
+import { JSXRef, mergeRefs } from '../../utils/jsx';
+import { useUpdateEffect } from '../../utils/hooks';
+import { CollectionPicker } from '../../components/CollectionPicker';
+import { Form, markFormDirty } from '../../components/Form/Form';
+import { PreventImplicitSubmissionOnEnter } from '../../components/Form/PreventImplicitSubmissionOnEnter';
+import { ErrorMessage } from '../../components/ErrorMessage';
 import { DocumentField } from './DocumentField';
 
 type DocumentEditorFormProps = {

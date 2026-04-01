@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
-import { JSONObj } from 'utils';
-import { RPC } from 'utils/network';
-import { Form } from 'components/Form/Form';
-import { Button } from 'components/Button';
-import { ErrorMessage } from 'components/ErrorMessage';
+import { JSONObj } from '../utils/index';
+import { RPC } from '../utils/network';
+import { Form } from '../components/Form/Form';
+import { Button } from '../components/Button';
+import { ErrorMessage } from '../components/ErrorMessage';
 import { LoginContainer } from './LoginContainer';
 
 export function CreateArhiv() {

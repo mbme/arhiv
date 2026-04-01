@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { DocumentId, DocumentLockKey } from 'dto';
-import { useSessionState } from 'utils/hooks';
-import { RPC } from 'utils/network';
+import { DocumentId, DocumentLockKey } from '../../dto';
+import { useSessionState } from '../../utils/hooks';
+import { RPC } from '../../utils/network';
 
 export function useLockDocument(id: DocumentId, lock: boolean) {
   const [lockKey, setLockKey] = useSessionState<DocumentLockKey | null>(

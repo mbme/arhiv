@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Callback } from 'utils';
+import { Callback } from '../../utils/index';
 
 function autoGrowTextarea(textarea: HTMLTextAreaElement): Callback {
   // preserve height between updates

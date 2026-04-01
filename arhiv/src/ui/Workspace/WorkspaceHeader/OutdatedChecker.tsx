@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { effect, signal } from '@preact/signals-core';
-import { useSignal } from 'utils/hooks';
-import { storage } from 'utils/storage';
-import { IconButton } from 'components/Button';
-import { showToast } from 'components/Toaster';
+import { useSignal } from '../../utils/hooks';
+import { storage } from '../../utils/storage';
+import { IconButton } from '../../components/Button';
+import { showToast } from '../../components/Toaster';
 
 const KEY = 'LATEST_ARHIV_VERSION';
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments

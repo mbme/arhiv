@@ -1,4 +1,4 @@
-import { JSONValue } from 'utils';
+import { JSONValue } from './index';
 
 interface Storage {
   getValue<T extends JSONValue>(key: string, defaultValue: T): T;

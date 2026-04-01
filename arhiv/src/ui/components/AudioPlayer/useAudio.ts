@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Callback } from 'utils';
+import { Callback } from '../../utils/index';
 
 export type AudioPlayerState = 'initial' | 'ready' | 'playing' | 'paused';
 

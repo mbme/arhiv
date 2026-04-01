@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { DocumentId, FileEntry } from 'dto';
-import { FilePicker } from 'components/FilePicker/FilePicker';
-import { FilePickerConfirmationDialog } from 'components/FilePicker/FilePickerConfirmationDialog';
-import { Dialog } from 'components/Dialog';
+import { DocumentId, FileEntry } from '../../dto';
+import { FilePicker } from './FilePicker';
+import { FilePickerConfirmationDialog } from './FilePickerConfirmationDialog';
+import { Dialog } from '../Dialog';
 
 type Props = {
   onAssetCreated: (id: DocumentId) => void;

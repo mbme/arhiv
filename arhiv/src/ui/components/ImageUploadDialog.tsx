@@ -1,11 +1,11 @@
-import { DocumentId } from 'dto';
-import { Callback, formatBytes } from 'utils';
-import { useQuery } from 'utils/hooks';
-import { uploadFile } from 'utils/network';
-import { Dialog } from 'components/Dialog';
-import { Button } from 'components/Button';
-import { QueryError } from 'components/QueryError';
-import { ImageFilePreview } from 'components/ImageFilePreview';
+import { DocumentId } from '../dto';
+import { Callback, formatBytes } from '../utils/index';
+import { useQuery } from '../utils/hooks';
+import { uploadFile } from '../utils/network';
+import { Dialog } from './Dialog';
+import { Button } from './Button';
+import { QueryError } from './QueryError';
+import { ImageFilePreview } from './ImageFilePreview';
 
 type Props = {
   file: File;

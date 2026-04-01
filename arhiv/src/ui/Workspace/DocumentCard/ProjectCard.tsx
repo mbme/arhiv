@@ -9,19 +9,19 @@ import {
   ProjectData,
   TaskData,
   TaskStatus,
-} from 'dto';
-import { Callback, cx, toSorted } from 'utils';
-import { useShallowMemo } from 'utils/hooks';
-import { useSuspenseQuery } from 'utils/suspense';
-import { RPC } from 'utils/network';
-import { CardContainer } from 'Workspace/CardContainer';
-import { useCardContext } from 'Workspace/controller';
-import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';
-import { ProgressLocker } from 'components/ProgressLocker';
-import { Markup } from 'components/Markup';
-import { Button, IconButton } from 'components/Button';
-import { Spoiler } from 'components/Spoiler';
-import { Icon } from 'components/Icon';
+} from '../../dto';
+import { Callback, cx, toSorted } from '../../utils/index';
+import { useShallowMemo } from '../../utils/hooks';
+import { useSuspenseQuery } from '../../utils/suspense';
+import { RPC } from '../../utils/network';
+import { CardContainer } from '../CardContainer';
+import { useCardContext } from '../controller';
+import { DropdownMenu, DropdownOptions } from '../../components/DropdownMenu';
+import { ProgressLocker } from '../../components/ProgressLocker';
+import { Markup } from '../../components/Markup';
+import { Button, IconButton } from '../../components/Button';
+import { Spoiler } from '../../components/Spoiler';
+import { Icon } from '../../components/Icon';
 import { DocumentTitle } from './DocumentTitle';
 import { CONFLICT_INDICATOR, STAGED_INDICATOR } from './Indicators';
 

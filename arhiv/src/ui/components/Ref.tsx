@@ -1,8 +1,8 @@
 import { createContext, useContext } from 'react';
-import { DocumentId, DocumentType } from 'dto';
-import { cx } from 'utils';
-import { getDocumentUrl } from 'utils/network';
-import { formatDocumentType, isErasedDocument } from 'utils/schema';
+import { DocumentId, DocumentType } from '../dto';
+import { cx } from '../utils/index';
+import { getDocumentUrl } from '../utils/network';
+import { formatDocumentType, isErasedDocument } from '../utils/schema';
 import { DocumentIcon } from './DocumentIcon';
 
 export const RefClickHandlerContext = createContext((documentId: DocumentId) => {

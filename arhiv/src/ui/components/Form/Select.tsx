@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { cx, setElementAttribute } from 'utils';
+import { cx, setElementAttribute } from '../../utils/index';
 
 type Props = {
   id?: string;

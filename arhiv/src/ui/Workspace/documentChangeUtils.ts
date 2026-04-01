@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { DocumentId } from 'dto';
-import { Callback } from 'utils';
-import { useLatestRef } from 'utils/hooks';
+import { DocumentId } from '../dto';
+import { Callback } from '../utils/index';
+import { useLatestRef } from '../utils/hooks';
 
 export class DocumentChangeEvent extends CustomEvent<Set<DocumentId>> {
   public static EVENT_NAME = 'documentChangeEvent';

@@ -1,9 +1,9 @@
-import { copyTextToClipbard } from 'utils';
-import { useSuspenseQuery } from 'utils/suspense';
-import { createLink, createRefUrl } from 'utils/markup';
-import { Ref } from 'components/Ref';
-import { showToast } from 'components/Toaster';
-import { Button } from 'components/Button';
+import { copyTextToClipbard } from '../utils/index';
+import { useSuspenseQuery } from '../utils/suspense';
+import { createLink, createRefUrl } from '../utils/markup';
+import { Ref } from '../components/Ref';
+import { showToast } from '../components/Toaster';
+import { Button } from '../components/Button';
 import { CardContainer } from './CardContainer';
 import { Card, useCardContext } from './controller';
 import { useDocumentChange } from './documentChangeUtils';

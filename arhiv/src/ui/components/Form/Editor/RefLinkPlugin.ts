@@ -9,11 +9,11 @@ import {
 import { EditorView } from '@codemirror/view';
 import { syntaxTree } from '@codemirror/language';
 import { Decoration, DecorationSet, WidgetType } from '@codemirror/view';
-import { tryParseRefUrl } from 'utils/markup';
-import { isErasedDocument } from 'utils/schema';
-import { DocumentId, DocumentType } from 'dto';
-import { RefsCache } from 'controller';
-import { getImageUrl, getPreviewType } from 'components/AssetPreview';
+import { tryParseRefUrl } from '../../../utils/markup';
+import { isErasedDocument } from '../../../utils/schema';
+import { DocumentId, DocumentType } from '../../../dto';
+import { RefsCache } from '../../../controller';
+import { getImageUrl, getPreviewType } from '../../AssetPreview';
 
 // effect to update refs cache state field
 const setRefsCache = StateEffect.define<RefsCache>();

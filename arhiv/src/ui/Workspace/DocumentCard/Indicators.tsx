@@ -1,4 +1,4 @@
-import { Icon } from 'components/Icon';
+import { Icon } from '../../components/Icon';
 
 export const CONFLICT_INDICATOR = (
   <span title="This document has conflict">

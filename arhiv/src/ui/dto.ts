@@ -1,5 +1,5 @@
-import { JSONObj, NominalType, Obj } from 'utils';
-import { DataSchema } from 'utils/schema';
+import { JSONObj, NominalType, Obj } from './utils/index';
+import { DataSchema } from './utils/schema';
 
 export type APIRequest =
   | {

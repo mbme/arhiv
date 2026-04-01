@@ -1,7 +1,7 @@
 import { forwardRef, useRef } from 'react';
-import { Callback, cx, px } from 'utils';
-import { JSXChildren } from 'utils/jsx';
-import { Icon, IconVariant } from 'components/Icon';
+import { Callback, cx, px } from '../utils/index';
+import { JSXChildren } from '../utils/jsx';
+import { Icon, IconVariant } from './Icon';
 
 export type ButtonVariant = 'simple' | 'primary' | 'text';
 

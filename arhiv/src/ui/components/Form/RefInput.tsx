@@ -1,14 +1,14 @@
 import { useRef, useState } from 'react';
-import { cx, NominalType } from 'utils';
-import { useSuspenseQuery } from 'utils/suspense';
-import { ASSET_DOCUMENT_TYPE, DocumentId, DocumentType } from 'dto';
-import { Ref as RefComponent } from 'components/Ref';
-import { DocumentPicker } from 'components/DocumentPicker';
-import { Link } from 'components/Link';
-import { Button, IconButton } from 'components/Button';
-import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
-import { AssetPreviewBlock, canPreview } from 'components/AssetPreview';
-import { AssetUrlDialog } from 'components/AssetUrlDialog';
+import { cx, NominalType } from '../../utils/index';
+import { useSuspenseQuery } from '../../utils/suspense';
+import { ASSET_DOCUMENT_TYPE, DocumentId, DocumentType } from '../../dto';
+import { Ref as RefComponent } from '../Ref';
+import { DocumentPicker } from '../DocumentPicker';
+import { Link } from '../Link';
+import { Button, IconButton } from '../Button';
+import { HTMLVFormFieldElement, FormField } from './FormField';
+import { AssetPreviewBlock, canPreview } from '../AssetPreview';
+import { AssetUrlDialog } from '../AssetUrlDialog';
 
 type AssetUrl = NominalType<string, 'AssetUrl'>;
 

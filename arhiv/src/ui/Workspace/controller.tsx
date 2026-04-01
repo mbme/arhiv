@@ -1,11 +1,11 @@
 import { useEffect, createContext, useContext, startTransition } from 'react';
 import { effect, signal } from '@preact/signals-core';
-import { newId } from 'utils';
-import { DocumentData, DocumentId, DocumentType } from 'dto';
-import { JSXChildren } from 'utils/jsx';
-import { useShallowMemo } from 'utils/hooks';
-import { storage } from 'utils/storage';
-import { useAppController } from 'controller';
+import { newId } from '../utils/index';
+import { DocumentData, DocumentId, DocumentType } from '../dto';
+import { JSXChildren } from '../utils/jsx';
+import { useShallowMemo } from '../utils/hooks';
+import { storage } from '../utils/storage';
+import { useAppController } from '../controller';
 
 type CardVariant =
   | {

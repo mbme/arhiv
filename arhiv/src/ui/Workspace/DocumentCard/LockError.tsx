@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { DocumentId, DocumentType } from 'dto';
-import { Callback } from 'utils';
-import { useQuery } from 'utils/hooks';
-import { RPC } from 'utils/network';
-import { Button } from 'components/Button';
-import { QueryError } from 'components/QueryError';
-import { Dialog } from 'components/Dialog';
-import { showToast } from 'components/Toaster';
+import { DocumentId, DocumentType } from '../../dto';
+import { Callback } from '../../utils/index';
+import { useQuery } from '../../utils/hooks';
+import { RPC } from '../../utils/network';
+import { Button } from '../../components/Button';
+import { QueryError } from '../../components/QueryError';
+import { Dialog } from '../../components/Dialog';
+import { showToast } from '../../components/Toaster';
 
 type Props = {
   documentId: DocumentId;

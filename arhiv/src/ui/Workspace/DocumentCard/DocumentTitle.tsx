@@ -1,5 +1,5 @@
-import { DocumentType } from 'dto';
-import { DocumentIcon } from 'components/DocumentIcon';
+import { DocumentType } from '../../dto';
+import { DocumentIcon } from '../../components/DocumentIcon';
 
 type Props = {
   documentType: DocumentType;

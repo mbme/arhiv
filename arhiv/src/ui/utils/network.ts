@@ -1,4 +1,4 @@
-import { APIRequest, APIResponse, DocumentId, FileUploadResult } from 'dto';
+import { APIRequest, APIResponse, DocumentId, FileUploadResult } from '../dto';
 import { ensure, Obj } from './index';
 
 const SECRET_PLACEHOLDER = '{ SECRET }';

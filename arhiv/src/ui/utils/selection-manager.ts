@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { effect, signal } from '@preact/signals-core';
-import { Inputs, useKeydown } from 'utils/hooks';
+import { Inputs, useKeydown } from './hooks';
 
 const SELECTABLE_ELEMENT_SELECTOR = '.sm-selectable';
 

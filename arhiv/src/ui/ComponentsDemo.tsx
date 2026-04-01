@@ -5,26 +5,26 @@ import {
   DocumentType,
   ERASED_DOCUMENT_TYPE,
   NOTE_DOCUMENT_TYPE,
-} from 'dto';
-import { setQueryParam, JSONObj } from 'utils';
-import { useScrollRestoration, useSessionState } from 'utils/hooks';
-import { JSXChildren } from 'utils/jsx';
-import { Button, IconButton } from 'components/Button';
-import { DateTime } from 'components/DateTime';
-import { Dialog } from 'components/Dialog';
-import { Badge } from 'components/Badge';
-import { Form } from 'components/Form/Form';
-import { Checkbox } from 'components/Form/Checkbox';
-import { Select } from 'components/Form/Select';
-import { Editor } from 'components/Form/Editor';
-import { RefInput } from 'components/Form/RefInput';
-import { Icon, ICON_VARIANTS } from 'components/Icon';
-import { Link } from 'components/Link';
-import { QueryError } from 'components/QueryError';
-import { Ref } from 'components/Ref';
-import { Spoiler } from 'components/Spoiler';
-import { showToast } from 'components/Toaster';
-import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
+} from './dto';
+import { setQueryParam, JSONObj } from './utils/index';
+import { useScrollRestoration, useSessionState } from './utils/hooks';
+import { JSXChildren } from './utils/jsx';
+import { Button, IconButton } from './components/Button';
+import { DateTime } from './components/DateTime';
+import { Dialog } from './components/Dialog';
+import { Badge } from './components/Badge';
+import { Form } from './components/Form/Form';
+import { Checkbox } from './components/Form/Checkbox';
+import { Select } from './components/Form/Select';
+import { Editor } from './components/Form/Editor/index';
+import { RefInput } from './components/Form/RefInput';
+import { Icon, ICON_VARIANTS } from './components/Icon';
+import { Link } from './components/Link';
+import { QueryError } from './components/QueryError';
+import { Ref } from './components/Ref';
+import { Spoiler } from './components/Spoiler';
+import { showToast } from './components/Toaster';
+import { SuspenseCacheProvider } from './components/SuspenseCacheProvider';
 
 export function ComponentsDemo() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);

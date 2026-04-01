@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { ensure } from 'utils';
-import { DocumentId, DocumentType } from 'dto';
-import { useSuspenseQuery } from 'utils/suspense';
-import { DocumentPicker } from 'components/DocumentPicker';
-import { Button, IconButton } from 'components/Button';
-import { Ref } from 'components/Ref';
+import { ensure } from '../utils/index';
+import { DocumentId, DocumentType } from '../dto';
+import { useSuspenseQuery } from '../utils/suspense';
+import { DocumentPicker } from './DocumentPicker';
+import { Button, IconButton } from './Button';
+import { Ref } from './Ref';
 
 type Props = {
   ids: DocumentId[];

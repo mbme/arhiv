@@ -1,7 +1,7 @@
 import { DialogPanel, DialogTitle, Dialog as HeadlessDialog } from '@headlessui/react';
-import { Callback, cx } from 'utils';
-import { JSXChildren, JSXRef } from 'utils/jsx';
-import { IconButton } from 'components/Button';
+import { Callback, cx } from '../utils/index';
+import { JSXChildren, JSXRef } from '../utils/jsx';
+import { IconButton } from './Button';
 
 type DialogProps = {
   innerRef?: JSXRef<HTMLDivElement>;

@@ -1,7 +1,7 @@
 import { forwardRef, useState } from 'react';
-import { cx } from 'utils';
-import { storage } from 'utils/storage';
-import { JSXChildren, JSXElement } from 'utils/jsx';
+import { cx } from '../utils/index';
+import { storage } from '../utils/storage';
+import { JSXChildren, JSXElement } from '../utils/jsx';
 import { Icon } from './Icon';
 
 type Props = {

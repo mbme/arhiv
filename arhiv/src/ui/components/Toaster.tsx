@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { cx } from 'utils';
-import { IconButton } from 'components/Button';
+import { cx } from '../utils/index';
+import { IconButton } from './Button';
 
 const DEFAULT_TOAST_TIMEOUT_MS = 5000;
 

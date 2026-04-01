@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { effect } from '@preact/signals-core';
-import { storage } from 'utils/storage';
-import { appController } from 'controller';
-import { ComponentsDemo } from 'ComponentsDemo';
-import { Workspace } from 'Workspace/Workspace';
-import { CreateArhiv } from 'Login/CreateArhiv';
-import { UnlockArhiv } from 'Login/UnlockArhiv';
-import { ImportArhivKey } from 'Login/ImportArhivKey';
-import { Button } from 'components/Button';
-import { QueryError } from 'components/QueryError';
-import { ErrorBoundary } from 'components/ErrorBoundary';
-import { showToast, Toaster } from 'components/Toaster';
+import { storage } from './utils/storage';
+import { appController } from './controller';
+import { ComponentsDemo } from './ComponentsDemo';
+import { Workspace } from './Workspace/Workspace';
+import { CreateArhiv } from './Login/CreateArhiv';
+import { UnlockArhiv } from './Login/UnlockArhiv';
+import { ImportArhivKey } from './Login/ImportArhivKey';
+import { Button } from './components/Button';
+import { QueryError } from './components/QueryError';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { showToast, Toaster } from './components/Toaster';
 
 window.APP = appController;
 

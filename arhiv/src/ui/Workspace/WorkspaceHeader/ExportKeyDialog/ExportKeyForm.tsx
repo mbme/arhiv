@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { JSONObj } from 'utils';
-import { RPC } from 'utils/network';
-import { Form } from 'components/Form/Form';
-import { ErrorMessage } from 'components/ErrorMessage';
-import { Button } from 'components/Button';
+import { JSONObj } from '../../../utils/index';
+import { RPC } from '../../../utils/network';
+import { Form } from '../../../components/Form/Form';
+import { ErrorMessage } from '../../../components/ErrorMessage';
+import { Button } from '../../../components/Button';
 
 export interface ExportedKey {
   key: string;

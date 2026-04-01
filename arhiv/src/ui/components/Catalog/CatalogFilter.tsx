@@ -1,9 +1,9 @@
-import { DocumentType, ERASED_DOCUMENT_TYPE } from 'dto';
-import { cx, withItems, withoutItems } from 'utils';
-import { ALL_DOCUMENT_TYPES, getDocumentTypes, isErasedDocument } from 'utils/schema';
-import { Badge } from 'components/Badge';
-import { Button } from 'components/Button';
-import { Checkbox } from 'components/Form/Checkbox';
+import { DocumentType, ERASED_DOCUMENT_TYPE } from '../../dto';
+import { cx, withItems, withoutItems } from '../../utils/index';
+import { ALL_DOCUMENT_TYPES, getDocumentTypes, isErasedDocument } from '../../utils/schema';
+import { Badge } from '../Badge';
+import { Button } from '../Button';
+import { Checkbox } from '../Form/Checkbox';
 
 export interface Filter {
   documentTypes: DocumentType[];

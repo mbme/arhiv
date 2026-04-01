@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { DocumentId } from 'dto';
-import { useClipboardPasteHandler } from 'utils/hooks';
-import { ImageUploadDialog } from 'components/ImageUploadDialog';
+import { DocumentId } from '../dto';
+import { useClipboardPasteHandler } from '../utils/hooks';
+import { ImageUploadDialog } from '../components/ImageUploadDialog';
 
 type Props = {
   onSuccess: (documentId: DocumentId) => void;

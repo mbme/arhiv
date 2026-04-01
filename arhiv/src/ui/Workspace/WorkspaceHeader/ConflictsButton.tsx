@@ -1,8 +1,8 @@
-import { Callback } from 'utils';
-import { useQuery } from 'utils/hooks';
-import { RPC } from 'utils/network';
-import { Button } from 'components/Button';
-import { useDocumentChangeHandler } from 'Workspace/documentChangeUtils';
+import { Callback } from '../../utils/index';
+import { useQuery } from '../../utils/hooks';
+import { RPC } from '../../utils/network';
+import { Button } from '../../components/Button';
+import { useDocumentChangeHandler } from '../documentChangeUtils';
 
 type Props = {
   onClick: Callback;

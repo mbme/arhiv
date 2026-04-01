@@ -1,7 +1,7 @@
-import { useQuery } from 'utils/hooks';
-import { RPC } from 'utils/network';
-import { Icon } from 'components/Icon';
-import { QueryError } from 'components/QueryError';
+import { useQuery } from '../utils/hooks';
+import { RPC } from '../utils/network';
+import { Icon } from '../components/Icon';
+import { QueryError } from '../components/QueryError';
 import { CardContainer } from './CardContainer';
 
 export function StatusCard() {

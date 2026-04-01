@@ -1,13 +1,13 @@
 import { createElement, forwardRef, useImperativeHandle, useRef } from 'react';
-import { cx, Obj } from 'utils';
-import { useSuspenseQuery } from 'utils/suspense';
-import { JSXElement, JSXRef } from 'utils/jsx';
-import { tryParseRefUrl } from 'utils/markup';
-import { MarkupElement, throwBadMarkupElement, Range, DocumentId } from 'dto';
-import { useCachedRef } from 'controller';
-import { Link } from 'components/Link';
-import { Ref } from 'components/Ref';
-import { AssetPreviewBlock, canPreview } from 'components/AssetPreview';
+import { cx, Obj } from '../utils/index';
+import { useSuspenseQuery } from '../utils/suspense';
+import { JSXElement, JSXRef } from '../utils/jsx';
+import { tryParseRefUrl } from '../utils/markup';
+import { MarkupElement, throwBadMarkupElement, Range, DocumentId } from '../dto';
+import { useCachedRef } from '../controller';
+import { Link } from './Link';
+import { Ref } from './Ref';
+import { AssetPreviewBlock, canPreview } from './AssetPreview';
 
 function extractText(children: MarkupElement[]): string {
   return children

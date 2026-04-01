@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { cx } from 'utils';
-import { useDebouncedCallback } from 'utils/hooks';
-import { Icon } from 'components/Icon';
+import { cx } from '../utils/index';
+import { useDebouncedCallback } from '../utils/hooks';
+import { Icon } from './Icon';
 
 type SearchInputProps = {
   autofocus?: boolean;

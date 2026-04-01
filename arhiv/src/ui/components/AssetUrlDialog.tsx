@@ -1,6 +1,6 @@
-import { Dialog } from 'components/Dialog';
-import { Button } from 'components/Button';
-import { Form } from 'components/Form/Form';
+import { Dialog } from './Dialog';
+import { Button } from './Button';
+import { Form } from './Form/Form';
 
 type Props = {
   onConfirm: (url: string) => void;

@@ -1,4 +1,4 @@
-import { JSXChildren } from 'utils/jsx';
+import { JSXChildren } from '../utils/jsx';
 
 interface Props {
   heading: string;

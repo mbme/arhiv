@@ -7,8 +7,8 @@ import {
   GAME_DOCUMENT_TYPE,
   TASK_DOCUMENT_TYPE,
   PROJECT_DOCUMENT_TYPE,
-} from 'dto';
-import { JSXChildren } from 'utils/jsx';
+} from '../../dto';
+import { JSXChildren } from '../../utils/jsx';
 
 type CatalogItemBadgeProps = {
   children?: JSXChildren;

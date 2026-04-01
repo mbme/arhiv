@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { Callback, fuzzySearch } from 'utils';
-import { getDocumentTypes, isErasedDocument } from 'utils/schema';
-import { useSelectionManager } from 'utils/selection-manager';
-import { DocumentId, DocumentType } from 'dto';
-import { Dialog } from 'components/Dialog';
-import { Button } from 'components/Button';
-import { IconVariant } from 'components/Icon';
-import { SearchInput } from 'components/SearchInput';
-import { FilePickerDialog } from 'components/FilePicker/FilePickerDialog';
-import { FileUploadDialog } from 'components/FileUploadDialog';
+import { Callback, fuzzySearch } from '../../utils/index';
+import { getDocumentTypes, isErasedDocument } from '../../utils/schema';
+import { useSelectionManager } from '../../utils/selection-manager';
+import { DocumentId, DocumentType } from '../../dto';
+import { Dialog } from '../../components/Dialog';
+import { Button } from '../../components/Button';
+import { IconVariant } from '../../components/Icon';
+import { SearchInput } from '../../components/SearchInput';
+import { FilePickerDialog } from '../../components/FilePicker/FilePickerDialog';
+import { FileUploadDialog } from '../../components/FileUploadDialog';
 
 type Item = {
   name: string;

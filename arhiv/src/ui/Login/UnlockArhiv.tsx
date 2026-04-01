@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useQuery } from 'utils/hooks';
-import { RPC } from 'utils/network';
-import { Button } from 'components/Button';
-import { ErrorMessage } from 'components/ErrorMessage';
-import { Icon } from 'components/Icon';
-import { Form } from 'components/Form/Form';
+import { useQuery } from '../utils/hooks';
+import { RPC } from '../utils/network';
+import { Button } from '../components/Button';
+import { ErrorMessage } from '../components/ErrorMessage';
+import { Icon } from '../components/Icon';
+import { Form } from '../components/Form/Form';
 import { LoginContainer } from './LoginContainer';
 import { ImportArhivKey } from './ImportArhivKey';
 

@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from '@headlessui/react';
-import { Callback, cx } from 'utils';
+import { Callback, cx } from '../utils/index';
 import { Icon, IconVariant } from './Icon';
 import { IconButton } from './Button';
 

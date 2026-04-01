@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from 'react';
-import { Callback, cx } from 'utils';
-import { useSuspenseImage } from 'utils/suspense';
+import { Callback, cx } from '../utils/index';
+import { useSuspenseImage } from '../utils/suspense';
 
 type Props = {
   src: string;

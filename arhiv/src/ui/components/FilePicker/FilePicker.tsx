@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { FileEntry } from 'dto';
-import { useQuery } from 'utils/hooks';
-import { RPC } from 'utils/network';
-import { Icon } from 'components/Icon';
-import { QueryError } from 'components/QueryError';
+import { FileEntry } from '../../dto';
+import { useQuery } from '../../utils/hooks';
+import { RPC } from '../../utils/network';
+import { Icon } from '../Icon';
+import { QueryError } from '../QueryError';
 import { FilePickerEntry } from './FilePickerEntry';
 import { FilePickerHead } from './FilePickerHead';
 

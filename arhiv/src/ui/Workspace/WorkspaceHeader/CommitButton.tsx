@@ -1,8 +1,8 @@
-import { useQuery } from 'utils/hooks';
-import { RPC } from 'utils/network';
-import { Button } from 'components/Button';
-import { showToast } from 'components/Toaster';
-import { dispatchDocumentChangeEvent } from 'Workspace/documentChangeUtils';
+import { useQuery } from '../../utils/hooks';
+import { RPC } from '../../utils/network';
+import { Button } from '../../components/Button';
+import { showToast } from '../../components/Toaster';
+import { dispatchDocumentChangeEvent } from '../documentChangeUtils';
 
 interface CommitButtonProps {
   disabled?: boolean;

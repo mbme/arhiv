@@ -3,7 +3,7 @@ import {
   DocumentType,
   ERASED_DOCUMENT_TYPE,
   PROJECT_DOCUMENT_TYPE,
-} from 'dto';
+} from '../dto';
 import { EmptyObj } from './index';
 
 export type DataSchema = {

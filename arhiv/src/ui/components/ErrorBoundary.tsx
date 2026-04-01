@@ -1,5 +1,5 @@
 import { Component } from 'react';
-import { JSXChildren, JSXElement } from 'utils/jsx';
+import { JSXChildren, JSXElement } from '../utils/jsx';
 
 export type ErrorRenderer = (error: unknown) => JSXElement;
 

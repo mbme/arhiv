@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
-import { DocumentType } from 'dto';
-import { Dialog } from 'components/Dialog';
-import { Catalog, CatalogInfo, DocumentInfo, Filter } from 'components/Catalog/Catalog';
+import { DocumentType } from '../dto';
+import { Dialog } from './Dialog';
+import { Catalog, CatalogInfo, DocumentInfo, Filter } from './Catalog/Catalog';
 
 export { DocumentInfo };
 

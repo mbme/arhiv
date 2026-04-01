@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { JSXChildren } from 'utils/jsx';
-import { createSuspenseCache, SuspenseCacheContext } from 'utils/suspense';
+import { JSXChildren } from '../utils/jsx';
+import { createSuspenseCache, SuspenseCacheContext } from '../utils/suspense';
 
 type CardCache = ReturnType<typeof createSuspenseCache>;
 const CACHES = new Map<string, CardCache>();

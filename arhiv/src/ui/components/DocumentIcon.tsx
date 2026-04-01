@@ -9,9 +9,9 @@ import {
   CONTACT_DOCUMENT_TYPE,
   FILM_DOCUMENT_TYPE,
   TRACK_DOCUMENT_TYPE,
-} from 'dto';
-import { Icon, IconVariant } from 'components/Icon';
-import { isCollection } from 'utils/schema';
+} from '../dto';
+import { Icon, IconVariant } from './Icon';
+import { isCollection } from '../utils/schema';
 
 type Props = {
   documentType: DocumentType;

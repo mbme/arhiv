@@ -1,11 +1,11 @@
 import { useEffect, useId, useRef } from 'react';
-import { cx, JSONValue } from 'utils';
-import { DataDescriptionField, FieldType } from 'utils/schema';
-import { Checkbox } from 'components/Form/Checkbox';
-import { Select } from 'components/Form/Select';
-import { Editor } from 'components/Form/Editor';
-import { Ref, RefInput } from 'components/Form/RefInput';
-import { ErrorMessage } from 'components/ErrorMessage';
+import { cx, JSONValue } from '../../utils/index';
+import { DataDescriptionField, FieldType } from '../../utils/schema';
+import { Checkbox } from '../../components/Form/Checkbox';
+import { Select } from '../../components/Form/Select';
+import { Editor } from '../../components/Form/Editor/index';
+import { Ref, RefInput } from '../../components/Form/RefInput';
+import { ErrorMessage } from '../../components/ErrorMessage';
 
 type ValueEditorProps = {
   id: string;

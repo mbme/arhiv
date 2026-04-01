@@ -1,6 +1,6 @@
-import { DocumentDTO } from 'dto';
-import { CardContainer } from 'Workspace/CardContainer';
-import { ProgressLocker } from 'components/ProgressLocker';
+import { DocumentDTO } from '../../dto';
+import { CardContainer } from '../CardContainer';
+import { ProgressLocker } from '../../components/ProgressLocker';
 import { DocumentViewerHead } from './DocumentViewerHead';
 import { CONFLICT_INDICATOR, STAGED_INDICATOR } from './Indicators';
 

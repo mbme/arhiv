@@ -6,12 +6,14 @@ import { IconButton } from 'components/Button';
 import { showToast } from 'components/Toaster';
 
 const KEY = 'LATEST_ARHIV_VERSION';
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
 const $latestVersion = signal(storage.getValue<string>(KEY, ''));
 effect(() => {
   storage.setValue(KEY, $latestVersion.value);
 });
 
 const LAST_CHECK_KEY = 'LATEST_ARHIV_VERSION_LAST_CHECK';
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
 const $lastCheck = signal(storage.getValue<string>(LAST_CHECK_KEY, '0'));
 effect(() => {
   storage.setValue(LAST_CHECK_KEY, $lastCheck.value);

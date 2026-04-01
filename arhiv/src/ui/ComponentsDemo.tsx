@@ -335,8 +335,11 @@ function DialogExample({ buttonText, children, alarming, buttons }: DialogExampl
 }
 
 function FormControlsDemo() {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
   const [disabled, setDisabled] = useSessionState<boolean>('demo-form-disabled', false);
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
   const [readonly, setReadonly] = useSessionState<boolean>('demo-form-readonly', false);
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
   const [required, setRequired] = useSessionState<boolean>('demo-form-required', false);
 
   const [data, setData] = useState('');

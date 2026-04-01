@@ -7,7 +7,10 @@
   "author": "mbme",
   "license": "MIT",
   "private": true,
-  "workspaces": ["arhiv", "arhiv-desktop"],
+  "workspaces": [
+    "arhiv",
+    "arhiv-desktop"
+  ],
   "scripts": {
     "check": "npm run compiler-errors --workspaces && npm run check-fmt --workspaces && npm run lint --workspaces && npm run test --workspaces && npm run check-android-config",
     "check-android-config": "node --import tsx scripts/check-android-config.ts"
@@ -15,14 +18,14 @@
   "devDependencies": {
     "@eslint/js": "^9.20.0",
     "@types/eslint__js": "^8.42.3",
-    "@types/node": "^24.8.0",
+    "@types/node": "^25.5.0",
     "eslint": "^9.20.0",
     "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.1.0",
-    "globals": "^16.0.0",
+    "globals": "^17.4.0",
     "prettier": "^3.0.0",
     "typescript": "~5.9.0",
-    "typescript-eslint": "^8.24.0"
+    "typescript-eslint": "^8.58.0"
   }
 }

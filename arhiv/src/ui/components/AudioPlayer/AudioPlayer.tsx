@@ -78,7 +78,7 @@ export function AudioPlayer({
     console.info('player: seeking to', seekTime);
 
     // https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/fastSeek
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    // oxlint-disable-next-line typescript/no-unnecessary-condition
     if (audio.fastSeek) {
       audio.fastSeek(seekTime);
     } else {

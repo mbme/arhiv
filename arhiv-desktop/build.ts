@@ -1,5 +1,3 @@
-/* eslint-env node */
-
 import esbuild from 'esbuild';
 import fs from 'node:fs/promises';
 

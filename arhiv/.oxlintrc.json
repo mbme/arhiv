@@ -1,0 +1,22 @@
+{
+  "$schema": "../node_modules/oxlint/configuration_schema.json",
+  "extends": ["../.oxlintrc.shared.json"],
+  "settings": {
+    "react": {
+      "version": "18.3.1"
+    }
+  },
+  "env": {
+    "builtin": true,
+    "browser": true
+  },
+  "ignorePatterns": ["./public/"],
+  "overrides": [
+    {
+      "files": ["build.ts", "scripts/**/*.ts"],
+      "env": {
+        "node": true
+      }
+    }
+  ]
+}

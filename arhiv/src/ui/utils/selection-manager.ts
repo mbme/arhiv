@@ -133,7 +133,7 @@ export function useSelectionManager(deps: Inputs = []) {
     if (selectionManager.hasRootEl()) {
       selectionManager.activateItem(0);
     }
-  }, [selectionManager, ...deps]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectionManager, ...deps]); // oxlint-disable-line react/exhaustive-deps
 
   useKeydown(rootEl, (e) => {
     const handled = selectionManager.handleKey(e.code);

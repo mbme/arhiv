@@ -89,7 +89,7 @@ Cross-platform CLI app. Uses system keyring to store password.
 
 # Web UI app
 * `TypeScript` for type checking
-* `ESLint` for linting
+* `Oxlint` for linting
 * `Oxfmt` for code formatting
 * `React.js` for rendering
 * `TailwindCSS` for styling

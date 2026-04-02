@@ -130,7 +130,7 @@ export function useUpdateEffect(effect: EffectCallback, deps: Inputs) {
     }
 
     return effect();
-  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
+  }, deps); // oxlint-disable-line react/exhaustive-deps
 }
 
 export function useTimeout(cb: Callback, timeoutMs: number, enabled: boolean): void {
@@ -153,7 +153,7 @@ export function useTimeout(cb: Callback, timeoutMs: number, enabled: boolean): v
 }
 
 // TODO get rid of any
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// oxlint-disable-next-line typescript/no-explicit-any
 export function useDebouncedCallback<Args extends any[]>(
   callback: (...args: Args) => void,
   waitFor: number,
@@ -221,7 +221,7 @@ export function useUnsavedChangesWarning(warn: boolean) {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
 
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
+      // oxlint-disable-next-line typescript/no-deprecated
       return (event.returnValue = 'Page has unsaved changes. Are you sure you want to exit?');
     };
 

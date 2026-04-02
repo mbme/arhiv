@@ -3,7 +3,6 @@ node_modules/
 dist/
 pkg/
 .log/
-.eslintcache
 *.tsbuildinfo
 cargo-timing*
 .aider*

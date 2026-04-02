@@ -1,5 +1,3 @@
-/* eslint-env node */
-
 import esbuild, { type BuildOptions } from 'esbuild';
 
 const isProduction = process.env.NODE_ENV === 'production';

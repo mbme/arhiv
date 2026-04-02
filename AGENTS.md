@@ -50,6 +50,9 @@
 - `cargo run -p binutils --bin arhiv server` (`README.md`).
 - `npm run build --workspace arhiv` (`README.md`, `justfile`).
 - `npm run check` (`package.json`, `justfile`).
+- `npm run lint:root` (`package.json`).
+- `npm run lint --workspace arhiv` (`arhiv/package.json`).
+- `npm run lint --workspace arhiv-desktop` (`arhiv-desktop/package.json`).
 - `just check-rs` (`.github/workflows/check.yml`).
 - `just check-ts` (`.github/workflows/check.yml`).
 - `just prod-build` (`.github/workflows/release.yml`).
@@ -69,7 +72,7 @@
 
 ## Tests and quality gates
 - Rust: `cargo clippy --all-targets --all-features -- -D warnings` and `cargo test` (`just check-rs`).
-- TS: root `npm run check` runs workspace typechecks/lint/tests plus root `npm run fmt:check` and `npm run check-android-config` (`package.json`).
+- TS: root `npm run check` runs workspace typechecks/Oxlint/tests plus root `npm run fmt:check`, root `npm run lint:root`, and `npm run check-android-config` (`package.json`).
 - Frontend tests are in `arhiv/src/ui/**/*.test.ts` and `arhiv/src/ui/**/*.test.tsx`; command is the `test` script in `arhiv/package.json`.
 - Rust tests are mostly inline `#[cfg(test)]` module tests across `baza/src/` and `rs-utils/src/`, plus integration tests in `rs-utils/tests/container.rs`.
 - Desktop test script exists but is empty (`arhiv-desktop/package.json` -> `"test": ""`); desktop runtime test coverage in CI is effectively unknown.

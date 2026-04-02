@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
+/* oxlint-disable typescript/no-floating-promises */
 
 import './test-env-setup';
 

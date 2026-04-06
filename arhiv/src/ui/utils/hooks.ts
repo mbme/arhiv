@@ -1,5 +1,13 @@
-import { EffectCallback, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Signal, effect } from '@preact/signals-core';
+import {
+  EffectCallback,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
+import { ReadonlySignal } from '@preact/signals-core';
 import { shallowEqual } from 'shallow-equal';
 import { Callback, debounce, JSONValue, throttle } from './index';
 import { storage } from './storage';
@@ -347,22 +355,15 @@ export function useKeydown(
   }, [el, onKeyDownRef]);
 }
 
-export function useSignal<T>(signal: Signal<T>): T {
-  const [value, setValue] = useState(signal.value);
-
-  useEffect(() => {
-    setValue(signal.value);
-
-    const unsub = effect(() => {
-      setValue(signal.value);
-    });
-
-    return () => {
-      unsub();
-    };
-  }, [signal]);
-
-  return value;
+export function useSignal<T>(signal: ReadonlySignal<T>): T {
+  return useSyncExternalStore(
+    (onStoreChange) =>
+      signal.subscribe(() => {
+        onStoreChange();
+      }),
+    () => signal.value,
+    () => signal.peek(),
+  );
 }
 
 export function useClipboardPasteHandler(handler: (data: DataTransfer) => Promise<void> | void) {

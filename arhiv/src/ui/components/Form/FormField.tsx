@@ -77,9 +77,15 @@ export class HTMLVFormFieldElement<V extends JSONValue> extends HTMLElement {
   get disabled() {
     return this.hasAttribute('disabled');
   }
+  set disabled(value: boolean) {
+    this.toggleAttribute('disabled', value);
+  }
 
   get required() {
     return this.hasAttribute('required');
+  }
+  set required(value: boolean) {
+    this.toggleAttribute('required', value);
   }
 
   get value(): V | null {
@@ -110,6 +116,13 @@ export class HTMLVFormFieldElement<V extends JSONValue> extends HTMLElement {
 
   get name() {
     return this.getAttribute('name');
+  }
+  set name(value: string | null) {
+    if (value === null) {
+      this.removeAttribute('name');
+    } else {
+      this.setAttribute('name', value);
+    }
   }
 
   get validity() {

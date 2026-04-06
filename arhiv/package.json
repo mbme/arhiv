@@ -34,8 +34,8 @@
     "codemirror": "^6.0.1",
     "deep-eql": "^5.0.2",
     "element-internals-polyfill": "^3.0.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "shallow-equal": "^3.1.0"
   },
   "devDependencies": {
@@ -43,8 +43,8 @@
     "@testing-library/dom": "^10.1.0",
     "@testing-library/react": "^16.0.0",
     "@types/deep-eql": "^4.0.2",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "esbuild": "^0.28.0",
     "global-jsdom": "^29.0.0",
     "jsdom": "^29.0.1",

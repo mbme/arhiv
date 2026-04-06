@@ -1,12 +1,4 @@
-import {
-  MutableRefObject,
-  EffectCallback,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { EffectCallback, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Signal, effect } from '@preact/signals-core';
 import { shallowEqual } from 'shallow-equal';
 import { Callback, debounce, JSONValue, throttle } from './index';
@@ -114,7 +106,7 @@ export function useQuery<TResult>(
   };
 }
 
-export function useLatestRef<T>(value: T): MutableRefObject<T> {
+export function useLatestRef<T>(value: T): { current: T } {
   const valueRef = useRef(value);
   valueRef.current = value;
 

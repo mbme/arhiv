@@ -1,7 +1,9 @@
-import { MutableRefObject, ReactElement, ReactNode, Ref, RefCallback } from 'react';
+import { ReactElement, ReactNode, Ref, RefCallback } from 'react';
 
 export type JSXChildren = ReactNode;
-export type JSXRef<T> = RefCallback<T> | MutableRefObject<T | null>;
+type WritableRef<T> = { current: T | null };
+
+export type JSXRef<T> = RefCallback<T> | WritableRef<T>;
 export type JSXElement = ReactElement | null;
 
 export function setJSXRef<T>(ref: JSXRef<T> | null, value: T | null) {

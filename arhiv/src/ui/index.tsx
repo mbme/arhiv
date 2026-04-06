@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { effect } from '@preact/signals-core';
 import { storage } from './utils/storage';
-import { appController } from './controller';
+import { appController, Theme } from './controller';
+import { useSignal } from './utils/hooks';
 import { ComponentsDemo } from './ComponentsDemo';
 import { Workspace } from './Workspace/Workspace';
 import { CreateArhiv } from './Login/CreateArhiv';
@@ -15,9 +15,9 @@ import { showToast, Toaster } from './components/Toaster';
 
 window.APP = appController;
 
-effect(() => {
-  document.documentElement.classList.toggle('dark', appController.$theme.value === 'dark');
-});
+function applyTheme(theme: Theme) {
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+}
 
 const renderError = (error: unknown) => (
   <>
@@ -56,6 +56,7 @@ function renderView() {
 
 function App() {
   const [view, setView] = useState(renderView);
+  const theme = useSignal(appController.$theme);
 
   useEffect(() => {
     const onPopState = () => {
@@ -96,6 +97,10 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
+
   return (
     <ErrorBoundary renderError={renderError}>
       {view}
@@ -109,6 +114,8 @@ const rootEl = document.querySelector('main');
 if (!rootEl) {
   throw new Error('render root not found');
 }
+
+applyTheme(appController.$theme.peek());
 
 const root = createRoot(rootEl);
 root.render(<App />);

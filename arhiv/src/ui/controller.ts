@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { effect, signal } from '@preact/signals-core';
+import { signal } from '@preact/signals-core';
 import { DocumentData, DocumentId, DocumentType } from './dto';
 import { throttle } from './utils/index';
 import { RPC } from './utils/network';
@@ -7,15 +7,10 @@ import { useSignal } from './utils/hooks';
 import { WorkspaceController } from './Workspace/controller';
 import { DocumentChangeEvent } from './Workspace/documentChangeUtils';
 
-type Theme = 'light' | 'dark';
+export type Theme = 'light' | 'dark';
 
 const prefersDarkThemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-const $prefersDarkTheme = signal<Theme>(prefersDarkThemeMediaQuery.matches ? 'dark' : 'light');
-
-prefersDarkThemeMediaQuery.addEventListener('change', (e) => {
-  $prefersDarkTheme.value = e.matches ? 'dark' : 'light';
-});
+const getPreferredTheme = (): Theme => (prefersDarkThemeMediaQuery.matches ? 'dark' : 'light');
 
 export type RefInfo = {
   documentType: DocumentType;
@@ -28,14 +23,14 @@ export type RefsCache = Record<DocumentId, RefInfo>;
 export class AppController {
   readonly workspace = new WorkspaceController();
 
-  readonly $theme = signal($prefersDarkTheme.value);
+  readonly $theme = signal<Theme>(getPreferredTheme());
 
   readonly $refsCache = signal<RefsCache>({});
   private refsToFetch = new Set<DocumentId>();
 
   constructor() {
-    effect(() => {
-      this.$theme.value = $prefersDarkTheme.value;
+    prefersDarkThemeMediaQuery.addEventListener('change', (e) => {
+      this.$theme.value = e.matches ? 'dark' : 'light';
     });
 
     document.addEventListener(DocumentChangeEvent.EVENT_NAME, (e) => {

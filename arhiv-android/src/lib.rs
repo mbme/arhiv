@@ -16,7 +16,7 @@ use jni::{
 use tokio::runtime::Runtime;
 
 use arhiv::{Arhiv, ArhivOptions, ArhivServer, ServerInfo};
-use rs_utils::{SecretString, init_global_rayon_threadpool, log};
+use baza_common::{SecretString, init_global_rayon_threadpool, log};
 
 use self::keyring::AndroidKeyring;
 
@@ -193,7 +193,7 @@ mod tests {
     use std::thread;
 
     use arhiv::{ArhivKeyring, ArhivOptions};
-    use rs_utils::TempFile;
+    use baza_common::TempFile;
 
     use crate::{start_server, stop_server};
 

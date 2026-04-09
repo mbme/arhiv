@@ -11,10 +11,9 @@ use std::{
 
 use anyhow::{Context, Result, anyhow, bail, ensure};
 
-use rs_utils::{
-    AgeGzReader, AgeGzWriter, ContainerPatch, ContainerReader, ContainerWriter, age::AgeKey,
-    create_file_reader, create_file_writer, log,
-};
+use baza_common::{create_file_reader, create_file_writer, log};
+use baza_storage::crypto::age::AgeKey;
+use baza_storage::{AgeGzReader, AgeGzWriter, ContainerPatch, ContainerReader, ContainerWriter};
 
 use crate::entities::{Document, DocumentKey};
 
@@ -394,7 +393,7 @@ mod tests {
 
     use anyhow::Result;
 
-    use rs_utils::age::AgeKey;
+    use baza_storage::crypto::age::AgeKey;
     use serde_json::json;
 
     use crate::{baza_storage::create_test_storage, entities::new_document};

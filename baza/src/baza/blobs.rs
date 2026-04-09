@@ -6,10 +6,8 @@ use std::{
 
 use anyhow::{Context, Result, ensure};
 
-use rs_utils::{
-    age::{AgeKey, AgeReader, AgeWriter},
-    create_file_reader, create_file_writer, file_exists, log,
-};
+use baza_common::{create_file_reader, create_file_writer, file_exists, log};
+use baza_storage::crypto::age::{AgeKey, AgeReader, AgeWriter};
 
 use crate::{
     entities::{Document, Id},
@@ -148,7 +146,7 @@ pub fn write_and_encrypt_blob(file_path: &str, blob_path: &str, key: AgeKey) -> 
 mod tests {
     use std::fs;
 
-    use rs_utils::{TempFile, generate_alpanumeric_string, read_all_as_string};
+    use baza_common::{TempFile, generate_alpanumeric_string, read_all_as_string};
 
     use crate::{baza_manager::BazaManager, entities::Id};
 

@@ -14,7 +14,7 @@ use tokio::{
 use tokio_util::codec::{BytesCodec, FramedRead};
 use url::Url;
 
-use crate::{is_image_path, reader_to_stream};
+use baza_common::{is_image_path, reader_to_stream};
 
 pub fn parse_url(url: &str) -> Result<Url> {
     Url::parse(url).context("Failed to parse url")
@@ -232,7 +232,7 @@ mod tests {
 
     use axum::body::to_bytes;
 
-    use crate::workspace_relpath;
+    use baza_common::workspace_relpath;
 
     use super::*;
 

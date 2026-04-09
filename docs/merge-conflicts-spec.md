@@ -21,7 +21,7 @@ Primary code:
 - `baza/src/baza_state/document_head.rs`
 - `baza/src/baza/mod.rs`
 - `baza/src/merge_expert.rs`
-- `rs-utils/src/merge.rs`
+- `baza/src/merge.rs`
 
 ## 2. Conflict Detection Model
 
@@ -127,7 +127,7 @@ No conflict markers are emitted. Overlaps are synthesized into a single value by
 
 Code:
 - `baza/src/merge_expert.rs`
-- `rs-utils/src/merge.rs`
+- `baza/src/merge.rs`
 
 ## 6. Conflict Lifecycle
 

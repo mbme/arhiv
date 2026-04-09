@@ -14,9 +14,7 @@ use age::{
 };
 use anyhow::{Context, Result, anyhow, ensure};
 
-use crate::{create_file_reader, create_file_writer, log, read_all};
-
-use super::SecretBytes;
+use baza_common::{SecretBytes, create_file_reader, create_file_writer, log, read_all};
 
 #[derive(Clone)]
 pub enum AgeKey {
@@ -246,7 +244,7 @@ pub fn encrypt_and_write<W: Write>(
 mod tests {
     use std::io::Cursor;
 
-    use crate::{generate_alpanumeric_string, read_all_as_string};
+    use baza_common::{generate_alpanumeric_string, read_all_as_string};
 
     use super::*;
 

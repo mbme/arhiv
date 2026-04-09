@@ -20,4 +20,4 @@ tokio.workspace = true
 jni = "0.22"
 
 arhiv = { path = "../arhiv", features = ["embed-public"] }
-rs-utils = { path = "../rs-utils" }
+baza-common = { path = "../baza-common" }

@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use rs_utils::{Timestamp, generate_random_id};
+use baza_common::{Timestamp, generate_random_id};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct DocumentLockKey(String);

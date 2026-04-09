@@ -6,7 +6,8 @@ use std::sync::RwLock;
 
 use anyhow::{Context, Result, anyhow, ensure};
 
-use rs_utils::{FsTransaction, LockFile, SecretString, Timestamp, age::AgeKey, log};
+use baza_common::{FsTransaction, LockFile, SecretString, Timestamp, log};
+use baza_storage::crypto::age::AgeKey;
 
 use crate::{DocumentExpert, schema::DataSchema};
 
@@ -197,7 +198,7 @@ impl BazaManager {
 mod tests {
     use serde_json::json;
 
-    use rs_utils::{TempFile, dir_exists, file_exists};
+    use baza_common::{TempFile, dir_exists, file_exists};
 
     use crate::{
         BazaStorage,

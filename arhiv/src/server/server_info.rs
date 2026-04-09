@@ -1,7 +1,7 @@
 use anyhow::Result;
 use serde::Serialize;
 
-use rs_utils::SelfSignedCertificate;
+use super::SelfSignedCertificate;
 
 use super::server_lock::ArhivServerLock;
 use super::ui_server::{HEALTH_PATH, UI_BASE_PATH};

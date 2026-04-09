@@ -3,7 +3,7 @@ use std::{sync::Arc, time::Duration};
 use anyhow::Result;
 use tokio::{task::JoinHandle, time::interval};
 
-use rs_utils::{FakeTime, Timestamp, log};
+use baza_common::{FakeTime, Timestamp, log};
 
 use crate::BazaManager;
 
@@ -115,7 +115,7 @@ mod tests {
     use std::{sync::Arc, time::Duration};
 
     use anyhow::Result;
-    use rs_utils::TempFile;
+    use baza_common::TempFile;
     use tokio::time::{advance, sleep};
 
     use crate::{AutoCommitService, BazaManager, entities::new_empty_document};

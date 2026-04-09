@@ -2,7 +2,8 @@ use std::{cmp::Ordering, collections::HashMap, io::Write};
 
 use anyhow::{Result, anyhow, bail, ensure};
 
-use rs_utils::{AgeGzWriter, ContainerWriter, age::AgeKey};
+use baza_storage::crypto::age::AgeKey;
+use baza_storage::{AgeGzWriter, ContainerWriter};
 
 use crate::entities::{Document, DocumentKey};
 
@@ -117,7 +118,8 @@ mod tests {
     use std::io::Cursor;
 
     use anyhow::Result;
-    use rs_utils::{AgeGzReader, ContainerReader, age::AgeKey};
+    use baza_storage::crypto::age::AgeKey;
+    use baza_storage::{AgeGzReader, ContainerReader};
     use serde_json::json;
 
     use crate::entities::{Document, DocumentKey, Id, new_document};

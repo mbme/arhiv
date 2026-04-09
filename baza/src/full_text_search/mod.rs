@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use strsim::damerau_levenshtein;
 use tokenizer::tokenize_with_offsets;
 
-use crate::log;
+use baza_common::log;
 
 use self::document_scorer::DocumentScorer;
 

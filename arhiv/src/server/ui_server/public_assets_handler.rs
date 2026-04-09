@@ -7,7 +7,8 @@ use axum::{
 };
 use axum_extra::headers::{self, HeaderMapExt};
 
-use rs_utils::{get_mime_from_path, http_server::ServerError};
+use crate::server::http_server::ServerError;
+use baza_common::get_mime_from_path;
 
 #[cfg(any(feature = "embed-public", not(debug_assertions)))]
 fn get_public_file(rel_file_path: &str) -> Option<&'static [u8]> {

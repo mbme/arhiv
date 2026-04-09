@@ -116,7 +116,7 @@ UI capture boundary:
 - `arhiv/src/arhiv/keyring.rs`
 - `arhiv/src/arhiv/mod.rs`
 - `arhiv/src/server/certificate.rs`
-- `rs-utils/src/http_server.rs`
+- `arhiv/src/support/http_server.rs`
 - `arhiv-android/app/src/main/AndroidManifest.xml`
 - `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/MainActivity.java`
 - `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/Keyring.java`

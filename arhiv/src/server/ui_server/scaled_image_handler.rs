@@ -7,8 +7,8 @@ use axum::{
 };
 use axum_extra::headers::{self, HeaderMapExt};
 
+use crate::server::http_server::ServerError;
 use baza::entities::Id;
-use rs_utils::http_server::ServerError;
 
 use super::{ServerContext, scaled_images_cache::ImageParams};
 

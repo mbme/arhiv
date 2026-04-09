@@ -94,7 +94,7 @@ Android cookie setup:
 - `arhiv/src/server/mod.rs`
 - `arhiv/src/server/certificate.rs`
 - `arhiv/src/server/server_info.rs`
-- `rs-utils/src/crypto/auth_token.rs`
+- `arhiv/src/support/auth_token.rs`
 - `arhiv-desktop/src/arhiv.ts`
 - `arhiv-desktop/src/index.ts`
 - `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/MainActivity.java`

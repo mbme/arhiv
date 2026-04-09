@@ -7,7 +7,7 @@ use baza::{
     entities::{DocumentData, DocumentLockKey, Id},
     schema::DataSchema,
 };
-use rs_utils::{SecretString, Timestamp};
+use baza_common::{SecretString, Timestamp};
 
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields, tag = "typeName")]

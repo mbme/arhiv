@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::Result;
 
-use rs_utils::{AuthToken, create_dir_if_not_exist, http_server::HttpServer, log};
+use baza_common::{create_dir_if_not_exist, log};
 
 use self::{
     certificate::generate_ui_crypto_key, server_lock::ArhivServerLock, ui_server::build_ui_router,
@@ -12,14 +12,23 @@ use crate::{Arhiv, ArhivOptions};
 use self::certificate::read_or_generate_certificate;
 pub use self::server_info::ServerInfo;
 
-mod certificate;
+pub mod auth_token;
+pub mod certificate;
+pub mod http;
+pub mod http_server;
+pub mod media;
 mod server_info;
 mod server_lock;
 mod ui_server;
 
+pub use auth_token::AuthToken;
+pub use certificate::SelfSignedCertificate;
+pub use http::create_body_from_reader;
+pub use http_server::HttpServer;
+
 pub struct ArhivServer {
     pub arhiv: Arc<Arhiv>,
-    server: HttpServer,
+    server: http_server::HttpServer,
     _lock: ArhivServerLock,
     server_info: ServerInfo,
 }
@@ -45,11 +54,12 @@ impl ArhivServer {
         let certificate = read_or_generate_certificate(arhiv.baza.get_state_dir())?;
 
         let ui_hmac = generate_ui_crypto_key(certificate.private_key_der.clone());
-        let auth_token = AuthToken::generate(&ui_hmac);
+        let auth_token = auth_token::AuthToken::generate(&ui_hmac);
         let auth_token_string = auth_token.serialize();
         let router = build_ui_router(auth_token, arhiv.clone());
 
-        let server = HttpServer::new_https(server_port, router, certificate.clone()).await?;
+        let server =
+            http_server::HttpServer::new_https(server_port, router, certificate.clone()).await?;
 
         let actual_server_port = server.get_address().port();
         lock.write_server_info(actual_server_port)?;

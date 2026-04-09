@@ -7,11 +7,8 @@ use std::{
 
 use anyhow::{Context, Result, anyhow, ensure};
 
-use rs_utils::{
-    LockFile, SecretString,
-    age::{AgeKey, AgeReader, AgeWriter, read_and_decrypt_file},
-    log,
-};
+use baza_common::{LockFile, SecretString, log};
+use baza_storage::crypto::age::{AgeKey, AgeReader, AgeWriter, read_and_decrypt_file};
 
 use crate::{Baza, entities::InstanceId};
 

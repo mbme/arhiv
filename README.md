@@ -147,3 +147,15 @@ keyPassword=YOUR_KEY_PASS
 
 # Scraper
 Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbme/scraper) userscript or bookmarklet.
+
+
+# TODO
+* fix horizontal (not) scrolling 
+* refactor: split into subcrates; rename subcrates; arhiv-bin shouldn't probably access baza directly
+* move Download from baza into arhiv
+* decrease decryption time
+* better diff/merge
+* optimize storage compression (snapshot order)
+* better search - vector search?
+* network p2p sync (use iroh)
+* remote backup without 3rd party tools

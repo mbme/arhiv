@@ -2,10 +2,8 @@ use std::{collections::HashMap, io::Write};
 
 use anyhow::{Context, Result, bail, ensure};
 
-use rs_utils::{
-    age::{AgeKey, AgeReader, AgeWriter},
-    create_file_reader, create_file_writer, log, read_all,
-};
+use baza_common::{create_file_reader, create_file_writer, log, read_all};
+use baza_storage::crypto::age::{AgeKey, AgeReader, AgeWriter};
 
 use crate::entities::{DocumentLock, DocumentLockKey, Id};
 

@@ -1,7 +1,8 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize, Serializer};
 
-use rs_utils::{Download, ExposeSecret, SecretString};
+use crate::download::Download;
+use baza_common::{ExposeSecret, SecretString};
 
 use crate::{
     BazaManager,

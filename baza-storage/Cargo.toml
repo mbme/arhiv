@@ -1,0 +1,27 @@
+[package]
+name = "baza-storage"
+version = "0.0.0"
+edition = "2024"
+authors = ["mbme"]
+publish = false
+
+[[bench]]
+name = "container_benchmark"
+harness = false
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+ordermap.workspace = true
+
+baza-common = { path = "../baza-common" }
+
+flate2 = "1"
+age = { version = "0.11", features = ["armor"] }
+
+[dev-dependencies]
+criterion = "0.8"

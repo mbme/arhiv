@@ -3,7 +3,7 @@ use std::fmt::Display;
 use anyhow::{Result, bail};
 use serde::{Deserialize, Serialize};
 
-use rs_utils::generate_random_id;
+use baza_common::generate_random_id;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct InstanceId(String);

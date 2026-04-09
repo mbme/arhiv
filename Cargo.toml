@@ -20,10 +20,11 @@ panic = "unwind"
 [workspace]
 resolver = "3"
 members = [
+  "baza-common",
+  "baza-storage",
   "baza",
   "arhiv",
   "binutils",
-  "rs-utils",
   "arhiv-android"
 ]
 [workspace.lints.clippy]

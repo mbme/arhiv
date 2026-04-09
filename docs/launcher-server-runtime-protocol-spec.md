@@ -115,8 +115,8 @@ Android path:
 - `arhiv/src/server/mod.rs`
 - `arhiv/src/server/server_info.rs`
 - `arhiv/src/server/server_lock.rs`
-- `rs-utils/src/lock_file.rs`
-- `rs-utils/src/http_server.rs`
+- `baza-common/src/lock_file.rs`
+- `arhiv/src/support/http_server.rs`
 - `arhiv-desktop/src/arhiv.ts`
 - `arhiv-desktop/src/index.ts`
 - `arhiv-android/src/lib.rs`

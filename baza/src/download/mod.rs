@@ -7,13 +7,16 @@ use reqwest::{Client, Response};
 use tokio::fs as tokio_fs;
 use url::Url;
 
+use baza_common::{
+    ensure_dir_exists, file_exists, get_file_size, get_string_hash_sha256, log,
+    remove_file_if_exists, stream_to_file,
+};
+
 use crate::{
     download::file_name_expert::DownloadFileNameExpert,
-    ensure_dir_exists, file_exists, get_file_size, get_string_hash_sha256,
     http::{
         parse_content_disposition_header, parse_content_range_header, parse_content_type_header,
     },
-    log, remove_file_if_exists, stream_to_file,
 };
 
 pub struct DownloadResult {

@@ -3,7 +3,7 @@ use std::{collections::HashSet, fmt};
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 
-use rs_utils::Timestamp;
+use baza_common::Timestamp;
 
 use crate::entities::{Document, DocumentType, Id, Revision};
 
@@ -262,7 +262,7 @@ impl fmt::Display for DocumentHead {
 
 #[cfg(test)]
 mod tests {
-    use rs_utils::Timestamp;
+    use baza_common::Timestamp;
     use serde_json::json;
 
     use crate::entities::{Revision, new_document};

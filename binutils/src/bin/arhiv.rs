@@ -11,14 +11,17 @@ use clap::{
 use clap_complete::{Shell, generate};
 use dialoguer::{Password, theme::ColorfulTheme};
 
-use arhiv::{Arhiv, ArhivOptions, ArhivServer, definitions::get_standard_schema};
+use arhiv::{
+    Arhiv, ArhivOptions, ArhivServer, definitions::get_standard_schema,
+    server::media::generate_qrcode_svg,
+};
 use baza::{
     BazaManager, DEV_MODE,
     entities::{Document, DocumentData, DocumentLockKey, DocumentType, Id},
 };
-use rs_utils::{
-    SecretString, ensure_file_exists, file_exists, get_crate_version, image::generate_qrcode_svg,
-    init_global_rayon_threadpool, into_absolute_path, log, shutdown_signal,
+use baza_common::{
+    SecretString, ensure_file_exists, file_exists, get_crate_version, init_global_rayon_threadpool,
+    into_absolute_path, log, shutdown_signal,
 };
 
 #[derive(Parser, Debug)]

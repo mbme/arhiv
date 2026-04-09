@@ -222,9 +222,9 @@ State/search/locks failures:
 ## 14. Source of Truth (Code References)
 
 Primary implementation files:
-- `rs-utils/src/crypto/age.rs`
-- `rs-utils/src/compression.rs`
-- `rs-utils/src/container.rs`
+- `baza-storage/src/crypto/age.rs`
+- `baza-storage/src/compression.rs`
+- `baza-storage/src/container.rs`
 - `baza/src/baza_storage/mod.rs`
 - `baza/src/baza_storage/container_draft.rs`
 - `baza/src/baza_storage/documents_index.rs`
@@ -304,7 +304,7 @@ Important limitation:
 - rollback is best-effort, not a hard atomic commit protocol across all touched files/directories.
 
 Code:
-- `rs-utils/src/fs_transaction.rs`
+- `baza-common/src/fs_transaction.rs`
 - `baza/src/baza_manager/mod.rs`
 - `baza/src/baza_manager/keys.rs`
 

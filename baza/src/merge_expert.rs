@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use anyhow::{Context, Result, ensure};
 
-use rs_utils::merge::{merge_slices_three_way, merge_strings_three_way};
+use crate::merge::{merge_slices_three_way, merge_strings_three_way};
 
 use crate::{
     entities::{Document, DocumentType, parse_string_vec},

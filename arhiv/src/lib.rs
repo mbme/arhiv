@@ -1,6 +1,6 @@
 mod arhiv;
 pub mod definitions;
-mod server;
+pub mod server;
 mod ui;
 
 pub use arhiv::{Arhiv, ArhivKeyring, ArhivOptions, Keyring, Status};

@@ -5,12 +5,9 @@ use std::{
 
 use criterion::{Criterion, criterion_group, criterion_main};
 
-use rs_utils::{
-    ContainerReader, ContainerWriter,
-    age::{AgeKey, AgeReader, AgeWriter},
-    create_gz_reader, create_gz_writer, generate_alpanumeric_string, generate_bytes,
-    get_file_hash_sha256,
-};
+use baza_common::{generate_alpanumeric_string, generate_bytes, get_file_hash_sha256};
+use baza_storage::crypto::age::{AgeKey, AgeReader, AgeWriter};
+use baza_storage::{ContainerReader, ContainerWriter, create_gz_reader, create_gz_writer};
 
 fn container_write(mut writer: &mut impl Write, data: &[String]) {
     let index = (0..data.len())

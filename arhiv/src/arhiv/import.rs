@@ -4,7 +4,7 @@ use baza::{
     entities::{Document, DocumentData, DocumentType},
     schema::ASSET_TYPE,
 };
-use rs_utils::{ensure_file_exists, remove_file_extension, remove_file_if_exists};
+use baza_common::{ensure_file_exists, remove_file_extension, remove_file_if_exists};
 
 use crate::{Arhiv, definitions::TRACK_TYPE};
 

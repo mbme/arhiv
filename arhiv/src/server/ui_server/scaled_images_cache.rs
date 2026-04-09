@@ -9,10 +9,11 @@ use anyhow::{Context, Result, ensure};
 use serde::Deserialize;
 use tokio::{sync::RwLock, time::Instant};
 
+use crate::server::media::scale_image_file;
 use baza::{Baza, BazaManager, entities::Id, schema::ASSET_TYPE};
-use rs_utils::{
+use baza_common::{
     Timestamp, create_dir_if_not_exist, create_file_reader, create_file_writer, file_exists,
-    format_bytes, get_file_name, image::scale_image_file, list_files, log, read_all,
+    format_bytes, get_file_name, list_files, log, read_all,
 };
 
 #[derive(Deserialize, Clone)]

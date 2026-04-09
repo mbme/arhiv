@@ -2,7 +2,8 @@ use std::{collections::HashSet, time::Instant};
 
 use anyhow::{Context, Result, ensure};
 
-use rs_utils::{Timestamp, age::AgeKey, log};
+use baza_common::{Timestamp, log};
+use baza_storage::crypto::age::AgeKey;
 
 pub use self::search::SearchEngine;
 use self::state_file::BazaStateFile;
@@ -447,7 +448,8 @@ impl BazaState {
 
 #[cfg(test)]
 mod tests {
-    use rs_utils::{TempFile, age::AgeKey};
+    use baza_common::TempFile;
+    use baza_storage::crypto::age::AgeKey;
     use serde_json::json;
 
     use crate::{

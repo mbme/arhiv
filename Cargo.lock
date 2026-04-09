@@ -192,16 +192,27 @@ dependencies = [
  "anyhow",
  "axum",
  "axum-extra",
+ "axum-server",
  "baza",
+ "baza-common",
+ "baza-storage",
  "futures",
+ "image",
  "include_dir",
  "keyring",
+ "pem",
+ "qrcode",
  "rayon",
- "rs-utils",
+ "rcgen",
+ "regex",
+ "reqwest",
  "serde",
  "serde_json",
+ "sha2 0.11.0",
  "tokio",
+ "tokio-util",
  "tracing",
+ "url",
 ]
 
 [[package]]
@@ -210,8 +221,8 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "arhiv",
+ "baza-common",
  "jni",
- "rs-utils",
  "tokio",
 ]
 
@@ -529,15 +540,74 @@ name = "baza"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "baza-common",
+ "baza-storage",
+ "charabia",
+ "deunicode",
  "insta",
  "ordermap",
  "postcard",
  "pulldown-cmark",
- "rs-utils",
+ "rayon",
+ "regex",
+ "reqwest",
  "serde",
  "serde_json",
+ "similar",
+ "strsim",
  "thiserror 2.0.18",
  "tokio",
+ "url",
+]
+
+[[package]]
+name = "baza-common"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "async-stream",
+ "bytes",
+ "data-encoding",
+ "fslock",
+ "futures",
+ "hkdf 0.13.0",
+ "hmac 0.13.0",
+ "infer",
+ "mime_guess",
+ "nanoid",
+ "rand 0.10.0",
+ "rayon",
+ "regex",
+ "reqwest",
+ "scrypt",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "sha2 0.11.0",
+ "shellexpand",
+ "subst",
+ "time",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-android",
+ "tracing-subscriber",
+ "url",
+ "which",
+]
+
+[[package]]
+name = "baza-storage"
+version = "0.0.0"
+dependencies = [
+ "age",
+ "anyhow",
+ "baza-common",
+ "criterion",
+ "flate2",
+ "ordermap",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -553,10 +623,10 @@ dependencies = [
  "anyhow",
  "arhiv",
  "baza",
+ "baza-common",
  "clap",
  "clap_complete",
  "dialoguer",
- "rs-utils",
  "serde_json",
  "tokio",
 ]
@@ -1632,9 +1702,9 @@ dependencies = [
 
 [[package]]
 name = "gif"
-version = "0.14.1"
+version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5df2ba84018d80c213569363bdcd0c64e6933c67fe4c1d60ecf822971a3c35e"
+checksum = "ee8cfcc411d9adbbaba82fb72661cc1bcca13e8bba98b364e62b2dba8f960159"
 dependencies = [
  "color_quant",
  "weezl",
@@ -3296,57 +3366,6 @@ dependencies = [
  "libc",
  "untrusted",
  "windows-sys 0.52.0",
-]
-
-[[package]]
-name = "rs-utils"
-version = "0.0.0"
-dependencies = [
- "age",
- "anyhow",
- "async-stream",
- "axum",
- "axum-extra",
- "axum-server",
- "bytes",
- "charabia",
- "criterion",
- "data-encoding",
- "deunicode",
- "flate2",
- "fslock",
- "futures",
- "hkdf 0.13.0",
- "hmac 0.13.0",
- "image",
- "infer",
- "mime_guess",
- "nanoid",
- "ordermap",
- "pem",
- "qrcode",
- "rand 0.10.0",
- "rayon",
- "rcgen",
- "regex",
- "reqwest",
- "scrypt",
- "secrecy",
- "serde",
- "serde_json",
- "sha2 0.11.0",
- "shellexpand",
- "similar",
- "strsim",
- "subst",
- "time",
- "tokio",
- "tokio-util",
- "tracing",
- "tracing-android",
- "tracing-subscriber",
- "url",
- "which",
 ]
 
 [[package]]

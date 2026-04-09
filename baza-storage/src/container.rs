@@ -7,7 +7,7 @@ use anyhow::{Context, Result, ensure};
 use ordermap::{OrderMap, OrderSet};
 use serde::{Deserialize, Serialize};
 
-use crate::{TakeExactly, ZipLongest};
+use baza_common::{TakeExactly, ZipLongest};
 
 pub type ContainerPatch = OrderMap<String, Option<String>>;
 
@@ -293,7 +293,8 @@ mod tests {
 
     use anyhow::Result;
 
-    use crate::{ContainerWriter, create_gz_reader, create_gz_writer, generate_alphanumeric_lines};
+    use crate::{ContainerWriter, create_gz_reader, create_gz_writer};
+    use baza_common::generate_alphanumeric_lines;
 
     use super::{ContainerPatch, ContainerReader, LinesIndex};
 

@@ -7,14 +7,9 @@ use anyhow::{Context, Result, bail};
 use tokio::signal;
 
 pub use bytes::*;
-pub use compression::*;
-pub use container::*;
-pub use crypto::*;
-pub use download::*;
 pub use fs::*;
 pub use fs_temp::*;
 pub use fs_transaction::FsTransaction;
-pub use http::*;
 pub use iter::*;
 pub use json::*;
 pub use lock_file::*;
@@ -23,24 +18,19 @@ pub use string::*;
 pub use time::*;
 pub use tools::*;
 
-mod algorithms;
+pub use crypto::hash::*;
+pub use crypto::key::*;
+pub use crypto::secret::*;
+
 mod bytes;
-mod compression;
-mod container;
-mod crypto;
-mod download;
+pub mod crypto;
 mod fs;
 mod fs_temp;
 mod fs_transaction;
-pub mod full_text_search;
-mod http;
-pub mod http_server;
-pub mod image;
 mod iter;
 mod json;
 mod lock_file;
 pub mod log;
-pub mod merge;
 mod streams;
 mod string;
 mod time;
@@ -77,7 +67,7 @@ pub fn run_js_script(script: impl AsRef<str>, args: Vec<&str>) -> Result<String>
     let script = script.as_ref();
 
     let mut child = Command::new("node")
-        .arg("-") // read script from stdin
+        .arg("-")
         .args(args)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -94,17 +84,14 @@ pub fn run_js_script(script: impl AsRef<str>, args: Vec<&str>) -> Result<String>
 
     if output.status.success() {
         let output_str = String::from_utf8(output.stdout)?;
-
         Ok(output_str)
     } else {
         let err_str = String::from_utf8(output.stderr)?;
-
         log::error!(
             "failed to run js script: exit code {}\n{}",
             output.status,
             err_str
         );
-
         bail!("failed to run js script: exit code {}", output.status)
     }
 }
@@ -159,15 +146,9 @@ pub async fn shutdown_signal() {
     let interrupt = std::future::pending::<()>();
 
     tokio::select! {
-        _ = ctrl_c => {
-            log::info!("Signals: got Ctrl-C");
-        },
-        _ = terminate => {
-            log::info!("Signals: got SIGTERM");
-        },
-        _ = interrupt => {
-            log::info!("Signals: got SIGINT");
-        },
+        _ = ctrl_c => log::info!("Signals: got Ctrl-C"),
+        _ = terminate => log::info!("Signals: got SIGTERM"),
+        _ = interrupt => log::info!("Signals: got SIGINT"),
     }
 }
 

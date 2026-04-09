@@ -1,11 +1,8 @@
 use anyhow::{Context, Result};
 
-use rs_utils::{
-    ExposeSecret, FsTransaction, LockFile, SecretString,
-    age::{
-        AgeKey, encrypt_and_write, encrypt_and_write_file, read_and_decrypt, read_and_decrypt_file,
-    },
-    log,
+use baza_common::{ExposeSecret, FsTransaction, LockFile, SecretString, log};
+use baza_storage::crypto::age::{
+    AgeKey, encrypt_and_write, encrypt_and_write_file, read_and_decrypt, read_and_decrypt_file,
 };
 
 use crate::BazaStorage;
@@ -169,7 +166,7 @@ impl BazaManager {
 
 #[cfg(test)]
 mod tests {
-    use rs_utils::TempFile;
+    use baza_common::TempFile;
 
     use crate::{baza_manager::BazaManager, baza_paths::BazaPaths};
 

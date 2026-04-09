@@ -236,7 +236,7 @@ impl Baza {
 mod tests {
     use serde_json::json;
 
-    use rs_utils::TempFile;
+    use baza_common::TempFile;
 
     use crate::{
         BazaManager,

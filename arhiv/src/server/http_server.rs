@@ -19,10 +19,10 @@ use axum_server::{
     Handle, Server,
     tls_rustls::{RustlsAcceptor, RustlsConfig},
 };
-use secrecy::ExposeSecret;
+use baza_common::{ExposeSecret, log};
 use tokio::task::JoinHandle;
 
-use crate::{SelfSignedCertificate, log};
+use crate::server::SelfSignedCertificate;
 
 pub struct ServerError(anyhow::Error);
 

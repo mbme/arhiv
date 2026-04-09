@@ -2,7 +2,7 @@ use std::fs;
 
 use anyhow::{Context, Result};
 
-use rs_utils::{LockFile, log};
+use baza_common::{LockFile, log};
 
 pub struct ArhivServerLock {
     lock_file: String,

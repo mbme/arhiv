@@ -151,4 +151,4 @@ Until a dedicated migrator is introduced:
 - `baza/src/baza_manager/migration.rs`
 - `baza/src/baza/mod.rs`
 - `baza/src/backup.rs`
-- `rs-utils/src/fs_transaction.rs`
+- `baza-common/src/fs_transaction.rs`

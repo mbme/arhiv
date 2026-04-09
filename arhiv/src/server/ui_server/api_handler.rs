@@ -3,16 +3,16 @@ use std::{cmp::Ordering, fs, path::Path};
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use serde::Serialize;
 
+use crate::server::media::generate_qrcode_svg;
 use baza::{
     DocumentExpert, Filter, StagingError, ValidationError,
     entities::{Document, DocumentType},
     markup::MarkupStr,
     schema::DataSchema,
 };
-use rs_utils::{
-    Timestamp, ensure_dir_exists, get_crate_version, get_symlink_target_path,
-    image::generate_qrcode_svg, is_readable, log, path_to_string, remove_file_if_exists,
-    render_template, to_base64,
+use baza_common::{
+    Timestamp, ensure_dir_exists, get_crate_version, get_symlink_target_path, is_readable, log,
+    path_to_string, remove_file_if_exists, render_template, to_base64,
 };
 
 use crate::ui::dto::{

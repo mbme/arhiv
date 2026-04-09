@@ -5,7 +5,7 @@ use anyhow::{Context, Result};
 use keyring::{Entry, Error};
 
 use baza::DEV_MODE;
-use rs_utils::{ExposeSecret, SecretString, log};
+use baza_common::{ExposeSecret, SecretString, log};
 
 pub trait Keyring {
     fn get_string(&self, name: &str) -> Result<Option<SecretString>>;

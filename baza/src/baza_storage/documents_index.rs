@@ -3,7 +3,7 @@ use std::{cmp::Ordering, fmt};
 use anyhow::{Context, Result, bail};
 use ordermap::OrderSet;
 
-use rs_utils::LinesIndex;
+use baza_storage::LinesIndex;
 
 use super::DocumentKey;
 

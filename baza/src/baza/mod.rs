@@ -12,10 +12,10 @@ use std::{
 use anyhow::{Context, Result, bail, ensure};
 use thiserror::Error;
 
-use rs_utils::{
-    FsTransaction, Timestamp, age::AgeKey, file_exists, get_file_name, get_file_size,
-    get_media_type, log,
+use baza_common::{
+    FsTransaction, Timestamp, file_exists, get_file_name, get_file_size, get_media_type, log,
 };
+use baza_storage::crypto::age::AgeKey;
 
 use crate::{
     BazaInfo, BazaState, BazaStorage, DocumentHead, Filter, ListPage, Locks,
@@ -138,7 +138,7 @@ impl Baza {
 
     #[cfg(test)]
     pub fn create_storage_file(&self, file_path: &str, docs: &[Document]) {
-        use rs_utils::create_file_writer;
+        use baza_common::create_file_writer;
 
         use crate::baza_storage::create_storage;
 
@@ -632,7 +632,7 @@ fn update_state_from_storage<R: Read>(
 mod tests {
     use serde_json::json;
 
-    use rs_utils::age::AgeKey;
+    use baza_storage::crypto::age::AgeKey;
 
     use crate::{
         BazaState, DocumentHead, baza_storage::create_test_storage, entities::new_document,

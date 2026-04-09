@@ -2,13 +2,10 @@ use std::{collections::HashMap, io::Write, time::Instant};
 
 use anyhow::{Context, Result};
 
-use rs_utils::{
-    AgeGzReader, AgeGzWriter,
-    age::AgeKey,
-    create_file_reader, create_file_writer,
-    full_text_search::{FTSEngine, FieldBoost},
-    log, read_all,
-};
+use crate::full_text_search::{FTSEngine, FieldBoost};
+use baza_common::{create_file_reader, create_file_writer, log, read_all};
+use baza_storage::crypto::age::AgeKey;
+use baza_storage::{AgeGzReader, AgeGzWriter};
 
 use crate::{
     DocumentExpert,

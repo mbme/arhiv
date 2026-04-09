@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use anyhow::{Result, ensure};
 
-use rs_utils::{
+use baza_common::{
     Timestamp, create_dir_if_not_exist, ensure_dir_exists, file_exists, get_file_name, list_files,
     log,
 };

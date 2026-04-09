@@ -7,7 +7,7 @@ use jni::{
 };
 
 use arhiv::{ArhivKeyring, Keyring};
-use rs_utils::{ExposeSecret, SecretString, log};
+use baza_common::{ExposeSecret, SecretString, log};
 
 /// This implementation of Keyring only receives password once on init, from Android.
 /// The reason is that the biometric auth process in Android is asynchronous, so the easiest approach

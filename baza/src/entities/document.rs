@@ -3,7 +3,7 @@ use std::fmt;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
-use rs_utils::Timestamp;
+use baza_common::Timestamp;
 
 use super::{DocumentData, DocumentKey, DocumentType, ERASED_DOCUMENT_TYPE, Id, Revision};
 

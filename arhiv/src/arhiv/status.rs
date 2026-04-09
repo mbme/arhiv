@@ -6,7 +6,7 @@ use serde::Serialize;
 use baza::{
     AutoCommitService, BLOBSCount, Baza, DEV_MODE, DocumentsCount, Locks, entities::Revision,
 };
-use rs_utils::{Timestamp, get_crate_version, log};
+use baza_common::{Timestamp, get_crate_version, log};
 
 use crate::ServerInfo;
 

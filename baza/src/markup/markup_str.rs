@@ -7,7 +7,7 @@ use pulldown_cmark::{
 };
 use serde::Serialize;
 
-use rs_utils::create_byte_pos_to_char_pos_map;
+use baza_common::create_byte_pos_to_char_pos_map;
 
 use super::utils::extract_id;
 use crate::entities::*;

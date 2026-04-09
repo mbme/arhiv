@@ -17,7 +17,8 @@ embed-public = []
 
 [dependencies]
 baza = { path = "../baza" }
-rs-utils = { path = "../rs-utils" }
+baza-common = { path = "../baza-common" }
+baza-storage = { path = "../baza-storage" }
 
 anyhow.workspace = true
 tracing.workspace = true
@@ -27,9 +28,11 @@ serde_json.workspace = true
 
 futures.workspace = true
 tokio.workspace = true
+tokio-util.workspace = true
 
 axum.workspace = true
 axum-extra.workspace = true
+axum-server = { version= "0.8", features = ["tls-rustls-no-provider"]}
 
 include_dir = "0.7" # embed files into binary
 
@@ -37,3 +40,11 @@ include_dir = "0.7" # embed files into binary
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
 
 rayon.workspace = true
+regex = "1.5.4"
+url = "2.2.2"
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls-webpki-roots"] }
+sha2 = "0.11"
+rcgen = "0.14"
+pem = "*"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "webp"]}
+qrcode = "0.14"

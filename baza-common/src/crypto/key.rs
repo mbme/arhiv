@@ -1,10 +1,9 @@
 use anyhow::{Result, anyhow, ensure};
 use hkdf::Hkdf;
 use hmac::{Hmac, KeyInit, Mac};
-use secrecy::{ExposeSecret, SecretString};
 use sha2::{Digest, Sha256};
 
-use super::SecretByteArray;
+use crate::{ExposeSecret, SecretByteArray, SecretString};
 
 type HmacSha256 = Hmac<Sha256>;
 type HkdfSha256 = Hkdf<Sha256>;
@@ -47,9 +46,7 @@ impl CryptoKey {
         );
 
         let mut hasher = Sha256::new();
-
         hasher.update(salt_material);
-
         let hash = hasher.finalize();
 
         Ok(Salt::new(hash.into()))
@@ -91,7 +88,6 @@ impl CryptoKey {
             crypto_material.len()
         );
 
-        // HKDF: derive subkey using crypto hash of the cryptographic key material & salt
         let hkdf = HkdfSha256::new(Some(salt.expose_secret()), crypto_material);
         let mut key = [0u8; KEY_SIZE];
         hkdf.expand(&[], &mut key)
@@ -119,7 +115,6 @@ impl CryptoKey {
         mac.update(msg);
 
         let result = mac.finalize();
-
         result.into_bytes().into()
     }
 
@@ -128,7 +123,6 @@ impl CryptoKey {
             .expect("HMAC can take key of any size");
 
         mac.update(msg);
-
         mac.verify_slice(tag).is_ok()
     }
 }

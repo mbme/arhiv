@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt::Display};
 
 use anyhow::Result;
 
-use rs_utils::{
+use baza_common::{
     Timestamp, create_dir_if_not_exist, dir_exists, file_exists, fuzzy_match,
     get_file_modification_time, get_file_name, list_files,
 };

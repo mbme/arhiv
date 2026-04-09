@@ -3,7 +3,7 @@ use std::io::{BufRead, BufReader, Read, Write};
 use anyhow::Result;
 use flate2::{Compression, bufread::GzDecoder, write::GzEncoder};
 
-use crate::age::{AgeKey, AgeReader, AgeWriter};
+use crate::crypto::age::{AgeKey, AgeReader, AgeWriter};
 
 pub fn create_gz_reader<R: BufRead>(reader: R) -> GzDecoder<R> {
     GzDecoder::new(reader)
@@ -68,9 +68,9 @@ impl<W: Write> Write for AgeGzWriter<W> {
 mod tests {
     use std::io::Write;
 
-    use crate::{
-        AgeGzReader, AgeGzWriter, age::AgeKey, generate_alpanumeric_string, read_all_as_string,
-    };
+    use crate::crypto::age::AgeKey;
+    use crate::{AgeGzReader, AgeGzWriter};
+    use baza_common::{generate_alpanumeric_string, read_all_as_string};
 
     use super::{create_gz_reader, create_gz_writer};
 

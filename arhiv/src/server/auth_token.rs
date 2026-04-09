@@ -1,11 +1,9 @@
 use anyhow::{Result, ensure};
 
-use crate::{
-    concat_bytes, crypto_key::SIGNATURE_SIZE, decode_url_safe_base64, new_random_crypto_byte_array,
-    to_url_safe_base64,
+use baza_common::{
+    CryptoKey, SIGNATURE_SIZE, Signature, concat_bytes, decode_url_safe_base64,
+    new_random_crypto_byte_array, to_url_safe_base64,
 };
-
-use super::crypto_key::{CryptoKey, Signature};
 
 const TOKEN_LEN: usize = 6;
 
@@ -61,7 +59,8 @@ impl AuthToken {
 mod tests {
     use anyhow::Result;
 
-    use crate::{AuthToken, crypto::crypto_key::CryptoKey};
+    use crate::server::AuthToken;
+    use baza_common::CryptoKey;
 
     #[test]
     fn test_auth_token_parse_serialize() -> Result<()> {

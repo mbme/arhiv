@@ -158,8 +158,8 @@ Security boundary statement:
 
 ## 9. Source of Truth (Code References)
 
-- `rs-utils/src/crypto/age.rs`
-- `rs-utils/src/crypto/secret.rs`
+- `baza-storage/src/crypto/age.rs`
+- `baza-common/src/crypto/secret.rs`
 - `baza/src/baza_manager/keys.rs`
 - `baza/src/baza_manager/manager_state.rs`
 - `baza/src/baza_manager/mod.rs`

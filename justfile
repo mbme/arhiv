@@ -2,7 +2,7 @@
 
 home := env("HOME")
 root := home + "/temp/arhiv"
-debug_log_level := "debug,h2=info,rustls=info,i18n_embed=warn,rs_utils::http_server=info,hyper=info,axum::rejection=trace,keyring=info"
+debug_log_level := "debug,h2=info,rustls=info,i18n_embed=warn,arhiv::support::http_server=info,hyper=info,axum::rejection=trace,keyring=info"
 
 # WARN: the --platform MUST match minSdk from build.gradle
 android_platform_version := "30"
@@ -96,6 +96,10 @@ check-ts:
 
 check: check-rs check-ts
 
+fmt:
+  cargo fmt
+  npm run fmt
+
 clean-all:
   cargo clean
   cargo clean --release
@@ -138,7 +142,7 @@ install-prod-android-app:
 # ----------------------------------------------------
 
 bench *PARAMS:
-  cd rs-utils; cargo bench -- {{PARAMS}}
+  cd baza-storage; cargo bench -- {{PARAMS}}
 
 profile-benchmark:
   cargo flamegraph --dev --root --bench container_benchmark -- --bench

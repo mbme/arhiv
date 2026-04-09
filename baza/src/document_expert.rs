@@ -2,7 +2,8 @@ use std::collections::HashMap;
 
 use anyhow::{Context, Result, anyhow, bail};
 
-use rs_utils::{is_http_url, is_image_url, parse_url, render_template_with_vars, value_as_string};
+use crate::http::{is_http_url, is_image_url, parse_url};
+use baza_common::{render_template_with_vars, value_as_string};
 
 use crate::{
     BazaManager,

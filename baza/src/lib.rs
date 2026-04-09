@@ -1,3 +1,4 @@
+mod algorithms;
 mod auto_commit_service;
 mod backup;
 mod baza;
@@ -7,8 +8,12 @@ mod baza_paths;
 mod baza_state;
 mod baza_storage;
 mod document_expert;
+pub mod download;
 pub mod entities;
+pub mod full_text_search;
+mod http;
 pub mod markup;
+pub mod merge;
 mod merge_expert;
 pub mod schema;
 

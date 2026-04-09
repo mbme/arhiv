@@ -1,0 +1,42 @@
+[package]
+name = "baza-common"
+version = "0.0.0"
+edition = "2024"
+authors = ["mbme"]
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+futures.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+bytes.workspace = true
+rand.workspace = true
+rayon.workspace = true
+
+secrecy = { version = "0.10", features = ["serde"] }
+sha2 = "0.11"
+hkdf = "0.13"
+hmac = "0.13"
+scrypt = { version = "0.11", default-features = false }
+time = { version = "0.3", features = ["formatting", "parsing", "macros", "serde", "local-offset"] }
+data-encoding = "2"
+infer = "0.19"
+mime_guess = "2"
+regex = "1.5.4"
+url = "2.2.2"
+shellexpand = "3.0.0"
+nanoid = "0.4.0"
+fslock = "0.2"
+async-stream = "0.3"
+subst = "0.3"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "local-time"] }
+tracing-android = "0.2"
+which = "8"
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls-webpki-roots"] }

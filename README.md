@@ -151,7 +151,7 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 
 # TODO
 * fix horizontal (not) scrolling 
-* refactor: split into subcrates; rename subcrates; arhiv-bin shouldn't probably access baza directly
+* refactor: arhiv-cli shouldn't probably access baza directly
 * move Download from baza into arhiv
 * decrease decryption time
 * better diff/merge

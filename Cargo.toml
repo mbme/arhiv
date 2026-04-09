@@ -24,7 +24,7 @@ members = [
   "baza-storage",
   "baza",
   "arhiv",
-  "binutils",
+  "arhiv-cli",
   "arhiv-android"
 ]
 [workspace.lints.clippy]

@@ -288,7 +288,7 @@ Durability/copy semantics:
 
 Code:
 - `baza/src/backup.rs`
-- `binutils/src/bin/arhiv.rs`
+- `arhiv-cli/src/bin/arhiv.rs`
 
 ## 17. File Mutation Safety and Rollback Mechanics
 

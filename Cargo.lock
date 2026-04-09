@@ -227,6 +227,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "arhiv-cli"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "arhiv",
+ "baza",
+ "baza-common",
+ "clap",
+ "clap_complete",
+ "dialoguer",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "asn1-rs"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -615,21 +630,6 @@ name = "bech32"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d86b93f97252c47b41663388e6d155714a9d0c398b99f1005cbc5f978b29f445"
-
-[[package]]
-name = "binutils"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "arhiv",
- "baza",
- "baza-common",
- "clap",
- "clap_complete",
- "dialoguer",
- "serde_json",
- "tokio",
-]
 
 [[package]]
 name = "bitflags"

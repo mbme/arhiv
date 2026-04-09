@@ -7,14 +7,14 @@ import process from 'node:process';
  * Guard the desktop startup contract for server bootstrapping.
  *
  * How:
- * 1) Verify the CLI (`binutils/src/bin/arhiv.rs`) emits the exact
+ * 1) Verify the CLI (`arhiv-cli/src/bin/arhiv.rs`) emits the exact
  *    `@@SERVER_INFO:` marker before JSON payload.
  * 2) Verify desktop parser (`src/arhiv.ts`) looks for the same marker.
  * 3) Verify desktop parser slices payload using marker length.
  * Any mismatch means desktop can fail to discover server metadata at startup.
  */
 const repoRoot = path.resolve(process.cwd(), '..');
-const rustCliPath = path.join(repoRoot, 'binutils', 'src', 'bin', 'arhiv.rs');
+const rustCliPath = path.join(repoRoot, 'arhiv-cli', 'src', 'bin', 'arhiv.rs');
 const desktopPath = path.join(process.cwd(), 'src', 'arhiv.ts');
 
 const rustCli = fs.readFileSync(rustCliPath, 'utf8');

@@ -138,7 +138,7 @@ These are product/engineering gaps, not hidden behavior.
 
 ## 10. Source of Truth (Code References)
 
-- `binutils/src/bin/arhiv.rs`
+- `arhiv-cli/src/bin/arhiv.rs`
 - `baza/src/backup.rs`
 - `baza/src/baza_manager/manager_state.rs`
 - `baza/src/baza/mod.rs`

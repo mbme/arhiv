@@ -111,7 +111,7 @@ Android path:
 
 ## 9. Source of Truth (Code References)
 
-- `binutils/src/bin/arhiv.rs`
+- `arhiv-cli/src/bin/arhiv.rs`
 - `arhiv/src/server/mod.rs`
 - `arhiv/src/server/server_info.rs`
 - `arhiv/src/server/server_lock.rs`

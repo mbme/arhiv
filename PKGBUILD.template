@@ -53,7 +53,7 @@ package() {
   install -Dm 644 "arhiv-desktop/dist/index.cjs" "$pkgdir/usr/share/arhiv-desktop/dist/index.cjs"
   install -Dm 644 "arhiv-desktop/electron-package.json" "$pkgdir/usr/share/arhiv-desktop/package.json"
 
-  install -Dm 644 "binutils/resources/v.arhiv.ui.desktop" "${pkgdir}/usr/share/applications/v.arhiv.ui.desktop"
+  install -Dm 644 "arhiv-cli/resources/v.arhiv.ui.desktop" "${pkgdir}/usr/share/applications/v.arhiv.ui.desktop"
 
   mkdir -p "target/completions"
   "target/release/arhiv" generate-completions bash > "target/completions/arhiv.bash"

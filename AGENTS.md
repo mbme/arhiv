@@ -2,7 +2,7 @@
 
 ## One-minute overview
 - `arhiv` is a local-first encrypted personal database for structured records and files (`README.md`).
-- Core runtime is the Rust CLI binary at `binutils/src/bin/arhiv.rs`; it can initialize storage, manage keys/passwords, and run the HTTPS UI server.
+- Core runtime is the Rust CLI binary at `arhiv-cli/src/bin/arhiv.rs`; it can initialize storage, manage keys/passwords, and run the HTTPS UI server.
 - The UI server is in `arhiv/src/server/` (Axum + Rustls) and serves the React UI from `arhiv/public/` in debug or embedded assets in release (`arhiv/src/server/ui_server/public_assets_handler.rs`).
 - Data model/persistence is in `baza/`; cross-cutting shared basics live in `baza-common/`, storage substrate in `baza-storage/`, and app runtime support in `arhiv/src/support/`.
 - Platform wrappers: Electron (`arhiv-desktop/`) and Android Java + JNI (`arhiv-android/`).
@@ -24,14 +24,14 @@
 - `.github/workflows/check.yml`: CI checks on `master` push/PR.
 - `.github/workflows/release.yml`: tag-triggered Linux/Windows CLI + Android APK build and GitHub release publish.
 - `.cargo/config.toml`: linker/rustflags (`lld`, native CPU on Linux, static CRT on Windows GNU).
-- `Cargo.toml`: Rust workspace members: `baza-common`, `baza-storage`, `baza`, `arhiv`, `binutils`, `arhiv-android`.
+- `Cargo.toml`: Rust workspace members: `baza-common`, `baza-storage`, `baza`, `arhiv`, `arhiv-cli`, `arhiv-android`.
 - `package.json`: npm workspaces: `arhiv`, `arhiv-desktop`.
 - `justfile`: canonical task entrypoints for dev/build/check/release.
 - `baza/src/`: encrypted storage/state management, schema, merge, search state, backup.
 - `arhiv/src/arhiv/`: app lifecycle, keyring integration, import/status.
 - `arhiv/src/server/`: HTTPS server, lockfile, certificate handling, HTTP API/UI routes.
 - `arhiv/src/ui/`: React/TypeScript UI, DTOs (`dto.ts`) mirrored with Rust DTOs (`dto.rs`).
-- `binutils/src/bin/arhiv.rs`: CLI entrypoint and subcommands.
+- `arhiv-cli/src/bin/arhiv.rs`: CLI entrypoint and subcommands.
 - `baza-common/src/`: shared low-level helpers; `baza-storage/src/`: encrypted storage substrate; `arhiv/src/support/`: app/runtime support.
 - `arhiv-desktop/src/index.ts`: Electron entrypoint; starts CLI server and opens window.
 - `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/MainActivity.java`: Android app entrypoint and WebView host.
@@ -39,15 +39,15 @@
 - `resources/`: sample/static assets; exact runtime role is unknown.
 
 ## Entry points and execution surfaces
-- CLI binary: `binutils/src/bin/arhiv.rs` (`fn main()` with `clap` subcommands).
-- Server runtime: CLI subcommand `Server` in `binutils/src/bin/arhiv.rs`, implemented by `ArhivServer::start` in `arhiv/src/server/mod.rs`.
+- CLI binary: `arhiv-cli/src/bin/arhiv.rs` (`fn main()` with `clap` subcommands).
+- Server runtime: CLI subcommand `Server` in `arhiv-cli/src/bin/arhiv.rs`, implemented by `ArhivServer::start` in `arhiv/src/server/mod.rs`.
 - Desktop runtime: `arhiv-desktop/src/index.ts` -> `startServer()` in `arhiv-desktop/src/arhiv.ts` -> spawns `arhiv server --json`.
 - Android runtime: `MainActivity` calls `ArhivServer.startServer(...)` (`arhiv-android/app/src/main/java/me/mbsoftware/arhiv/ArhivServer.java`) -> JNI exports in `arhiv-android/src/lib.rs`.
 - Library crates: `baza-common/src/lib.rs`, `baza-storage/src/lib.rs`, `baza/src/lib.rs`, `arhiv/src/lib.rs`.
 
 ## Run/build/test/lint commands (verbatim)
 - `npm install` (`README.md`).
-- `cargo run -p binutils --bin arhiv server` (`README.md`).
+- `cargo run -p arhiv-cli --bin arhiv server` (`README.md`).
 - `npm run build --workspace arhiv` (`README.md`, `justfile`).
 - `npm run check` (`package.json`, `justfile`).
 - `npm run lint:root` (`package.json`).
@@ -79,8 +79,8 @@
 
 ## Required env vars and config files
 - `DEV_ARHIV_ROOT`: required in dev mode (`arhiv/src/arhiv/mod.rs`), used by `run` and `desktop` recipes in `justfile`.
-- `SERVER_PORT`: CLI server arg env fallback (`binutils/src/bin/arhiv.rs`).
-- `BROWSER`: required when running server with `--browser` (`binutils/src/bin/arhiv.rs`).
+- `SERVER_PORT`: CLI server arg env fallback (`arhiv-cli/src/bin/arhiv.rs`).
+- `BROWSER`: required when running server with `--browser` (`arhiv-cli/src/bin/arhiv.rs`).
 - `RUST_LOG`: consumed by tracing env filter (`baza-common/src/log.rs`), set in `run`/`desktop` recipes in `justfile`.
 - `ARHIV_VERSION`: compile-time version (`baza-common/src/lib.rs`), injected in production build recipes (`justfile`) and Android Gradle.
 - `ARHIV_BIN`: required for Electron dev mode (`arhiv-desktop/src/arhiv.ts`), set by the `desktop` recipe in `justfile`.

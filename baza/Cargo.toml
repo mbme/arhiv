@@ -30,7 +30,7 @@ postcard = { version = "1",  default-features = false, features = ["use-std"] }
 ordermap.workspace = true
 
 thiserror = "2" # macro for better errors
-reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls-webpki-roots"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "stream", "rustls"] }
 url = "2.2.2"
 similar = { version = "3.1", features = ["unicode"] }
 strsim = "0.11"

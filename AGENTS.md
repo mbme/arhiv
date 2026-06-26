@@ -113,6 +113,7 @@
 - Keep Android `minSdk` in `arhiv-android/app/build.gradle` aligned with `android_platform_version` in `justfile` (explicit warning in both).
 - Preserve single-instance lock semantics (`arhiv/src/server/server_lock.rs`) when touching server startup/port discovery.
 - Be careful changing certificate generation/trust flow; both desktop and Android pin/verify server cert material.
+- Keep Electron runtime versions aligned across dev and Arch packaging: update `arhiv-desktop/package.json`/`package-lock.json`, `PKGBUILD.template`, and `arhiv-desktop/arhiv-desktop` together because the Arch desktop package runs a pinned system Electron executable rather than npm's bundled Electron.
 
 ## Non-obvious design decisions / gotchas
 - Debug vs release static assets differ: filesystem reads in debug, embedded assets in release (`arhiv/src/server/ui_server/public_assets_handler.rs`).

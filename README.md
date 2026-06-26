@@ -150,12 +150,15 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 
 
 # TODO
+* tests for time.rs before update
+* decrease decryption time
 * fix horizontal (not) scrolling 
+* better search - vector search?
+* better diff/merge
+* network p2p sync (use iroh), relays
+
+* single folder mode? keep state in "syncable dir"?
 * refactor: arhiv-cli shouldn't probably access baza directly
 * move Download from baza into arhiv
-* decrease decryption time
-* better diff/merge
 * optimize storage compression (snapshot order)
-* better search - vector search?
-* network p2p sync (use iroh)
-* remote backup without 3rd party tools
+* remote backup without 3rd party tools - separate "backup manager"?

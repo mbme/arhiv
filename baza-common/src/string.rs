@@ -91,14 +91,34 @@ pub fn create_byte_pos_to_char_pos_map(value: &str) -> HashMap<usize, usize> {
     map
 }
 
-pub fn generate_random_id(len: usize) -> String {
-    // TODO make const fn
-    let chars: Vec<char> = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-        .chars()
-        .collect();
+const RANDOM_ID_ALPHABET: &[u8; 62] =
+    b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-    // see https://zelark.github.io/nano-id-cc/
-    nanoid::nanoid!(len, &chars)
+/// Generates an unbiased random ID from the exact 62-character alphanumeric alphabet.
+///
+/// The alphabet order is stable and intentionally matches the previous `nanoid` usage:
+/// `0-9`, then `A-Z`, then `a-z`. Because 62 is not a power of two, using
+/// `random_byte % 62` would make some characters more likely than others. This uses the
+/// NanoID-style mask-and-reject approach instead: mask a random byte into the next
+/// power-of-two range (`0..64`) and discard values outside the alphabet (`62` and `63`).
+///
+/// Panics when `len` is zero because callers use IDs as non-empty keys.
+pub fn generate_random_id(len: usize) -> String {
+    assert!(len > 0, "random ID length must be greater than zero");
+
+    let mut rng = rand::rng();
+    let mut id = String::with_capacity(len);
+    let mask = RANDOM_ID_ALPHABET.len().next_power_of_two() - 1;
+
+    while id.len() < len {
+        let index = rng.random::<u8>() as usize & mask;
+
+        if let Some(&byte) = RANDOM_ID_ALPHABET.get(index) {
+            id.push(byte as char);
+        }
+    }
+
+    id
 }
 
 pub fn value_as_string(value: Option<&Value>) -> Cow<'_, str> {
@@ -174,5 +194,25 @@ mod tests {
             assert_eq!(*map.get(&6).unwrap(), 3);
             assert_eq!(*map.get(&8).unwrap(), 4);
         }
+    }
+
+    #[test]
+    fn test_generate_random_id_returns_requested_length() {
+        assert_eq!(generate_random_id(1).len(), 1);
+        assert_eq!(generate_random_id(14).len(), 14);
+        assert_eq!(generate_random_id(32).len(), 32);
+    }
+
+    #[test]
+    #[should_panic(expected = "random ID length must be greater than zero")]
+    fn test_generate_random_id_rejects_zero_length() {
+        generate_random_id(0);
+    }
+
+    #[test]
+    fn test_generate_random_id_uses_exact_alphanumeric_alphabet() {
+        let id = generate_random_id(1024);
+
+        assert!(id.bytes().all(|byte| RANDOM_ID_ALPHABET.contains(&byte)));
     }
 }

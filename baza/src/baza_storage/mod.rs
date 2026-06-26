@@ -301,7 +301,7 @@ pub fn merge_storages(mut storages: Vec<BazaStorage<impl Read>>, writer: impl Wr
         let (left, right) = keys_per_storage.split_at_mut(i);
 
         // sort by the number of unique keys, descending
-        right.sort_by(|s1, s2| s2.1.len().cmp(&s1.1.len()));
+        right.sort_by_key(|(_, keys)| std::cmp::Reverse(keys.len()));
 
         if let Some((_, l_keys)) = left.last() {
             for (_, r_keys) in right {

@@ -33,7 +33,7 @@ impl Timestamp {
     }
 
     pub fn format_time(&self, fmt: &str) -> Result<String> {
-        let format = format_description::parse(fmt)
+        let format = format_description::parse_borrowed::<3>(fmt)
             .context(anyhow!("Failed to parse format description {fmt}"))?;
 
         self.0
@@ -143,5 +143,107 @@ impl Default for ScheduledTask {
 impl Drop for ScheduledTask {
     fn drop(&mut self) {
         self.cancel();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn timestamp(iso_str: &str) -> Timestamp {
+        Timestamp::parse_iso8601_time(iso_str).unwrap()
+    }
+
+    #[test]
+    fn format_time_uses_time_format_description() {
+        let ts = timestamp("2023-10-23T11:23:39Z");
+
+        assert_eq!(
+            ts.format_time(
+                "[year]-[month]-[day] [hour]:[minute]:[second] [offset_hour sign:mandatory]"
+            )
+            .unwrap(),
+            "2023-10-23 11:23:39 +00"
+        );
+    }
+
+    #[test]
+    fn format_time_preserves_timestamp_offset() {
+        let ts = timestamp("2023-10-23T11:23:39+03:30");
+
+        assert_eq!(
+            ts.format_time("[hour]:[minute] [offset_hour sign:mandatory]:[offset_minute]")
+                .unwrap(),
+            "11:23 +03:30"
+        );
+    }
+
+    #[test]
+    fn format_time_reports_invalid_format_descriptions() {
+        let err = timestamp("2023-10-23T11:23:39Z")
+            .format_time("[unknown component]")
+            .unwrap_err();
+
+        assert!(
+            err.to_string()
+                .contains("Failed to parse format description [unknown component]"),
+            "unexpected error: {err:?}"
+        );
+    }
+
+    #[test]
+    fn default_date_time_format_matches_documented_layout() {
+        let ts = timestamp("2023-10-23T11:23:39Z");
+
+        assert_eq!(ts.default_date_time_format(), "Mon Oct 23 11:23:39 2023");
+    }
+
+    #[test]
+    fn default_date_time_format_space_pads_single_digit_days() {
+        let ts = timestamp("2023-02-05T01:02:03Z");
+
+        assert_eq!(ts.default_date_time_format(), "Sun Feb  5 01:02:03 2023");
+    }
+
+    #[test]
+    fn parse_iso8601_time_accepts_rfc3339_offsets() {
+        let ts = Timestamp::parse_iso8601_time("2023-10-23T11:23:39+03:30").unwrap();
+
+        assert_eq!(
+            ts.format_time("[year]-[month]-[day]T[hour]:[minute]:[second][offset_hour sign:mandatory]:[offset_minute]")
+                .unwrap(),
+            "2023-10-23T11:23:39+03:30"
+        );
+    }
+
+    #[test]
+    fn parse_iso8601_time_rejects_non_rfc3339_values() {
+        let err = Timestamp::parse_iso8601_time("Mon Oct 23 11:23:39 2023").unwrap_err();
+
+        assert!(
+            err.to_string()
+                .contains("Failed to parse time string as ISO8601"),
+            "unexpected error: {err:?}"
+        );
+    }
+
+    #[test]
+    fn timestamp_arithmetic_round_trips_std_duration() {
+        let start = timestamp("2023-10-23T11:23:39Z");
+        let end = start + Duration::from_secs(90);
+
+        assert_eq!(end - start, time::Duration::seconds(90));
+        assert_eq!(
+            end.format_time("[hour]:[minute]:[second]").unwrap(),
+            "11:25:09"
+        );
+    }
+
+    #[test]
+    fn display_uses_offset_date_time_representation() {
+        assert_eq!(
+            timestamp("2023-10-23T11:23:39+03:30").to_string(),
+            "2023-10-23 11:23:39.0 +03:30:00"
+        );
     }
 }

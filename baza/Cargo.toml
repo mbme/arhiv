@@ -32,7 +32,7 @@ ordermap.workspace = true
 thiserror = "2" # macro for better errors
 reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls-webpki-roots"] }
 url = "2.2.2"
-similar = { version = "2.7", features = ["unicode"] }
+similar = { version = "3.1", features = ["unicode"] }
 strsim = "0.11"
 charabia = { version = "0.9", default-features = false }
 deunicode = "1.6"

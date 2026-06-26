@@ -1,7 +1,7 @@
 use core::fmt;
 use std::time::Duration;
 
-use similar::{Algorithm, ChangeTag, TextDiff};
+use similar::{Algorithm, DiffOp, DiffTag, DiffableStr, TextDiff};
 
 const DEFAULT_MERGE_TIMEOUT: Duration = Duration::from_secs(10);
 
@@ -10,18 +10,6 @@ enum Change<'s> {
     Equal { value: &'s str },
     Delete { value: &'s str },
     Insert { value: &'s str },
-}
-
-impl<'s> From<similar::Change<&'s str>> for Change<'s> {
-    fn from(change: similar::Change<&'s str>) -> Self {
-        let value = *change.value_ref();
-
-        match change.tag() {
-            ChangeTag::Equal => Change::Equal { value },
-            ChangeTag::Delete => Change::Delete { value },
-            ChangeTag::Insert => Change::Insert { value },
-        }
-    }
 }
 
 impl fmt::Display for Change<'_> {
@@ -33,10 +21,66 @@ impl fmt::Display for Change<'_> {
         }
     }
 }
+
 impl fmt::Debug for Change<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "{}", &self)
     }
+}
+
+fn collect_changes_from_ops<'s>(
+    ops: &[DiffOp],
+    left: &[&'s str],
+    right: &[&'s str],
+) -> Vec<Change<'s>> {
+    let mut changes = Vec::new();
+
+    for op in ops {
+        let (tag, left_range, right_range) = op.as_tag_tuple();
+
+        match tag {
+            DiffTag::Equal => {
+                changes.extend(
+                    left[left_range]
+                        .iter()
+                        .copied()
+                        .map(|value| Change::Equal { value }),
+                );
+            }
+            DiffTag::Delete => {
+                changes.extend(
+                    left[left_range]
+                        .iter()
+                        .copied()
+                        .map(|value| Change::Delete { value }),
+                );
+            }
+            DiffTag::Insert => {
+                changes.extend(
+                    right[right_range]
+                        .iter()
+                        .copied()
+                        .map(|value| Change::Insert { value }),
+                );
+            }
+            DiffTag::Replace => {
+                changes.extend(
+                    left[left_range]
+                        .iter()
+                        .copied()
+                        .map(|value| Change::Delete { value }),
+                );
+                changes.extend(
+                    right[right_range]
+                        .iter()
+                        .copied()
+                        .map(|value| Change::Insert { value }),
+                );
+            }
+        }
+    }
+
+    changes
 }
 
 trait Merger<'s> {
@@ -232,12 +276,15 @@ impl Merger<'_> for TextMerger {
 }
 
 fn get_word_diff<'s>(left: &'s str, right: &'s str) -> Vec<Change<'s>> {
+    let left_tokens = left.tokenize_unicode_words();
+    let right_tokens = right.tokenize_unicode_words();
+
     let diff = TextDiff::configure()
         .algorithm(Algorithm::Patience)
         .timeout(DEFAULT_MERGE_TIMEOUT)
-        .diff_unicode_words(left, right);
+        .diff_slices(&left_tokens, &right_tokens);
 
-    diff.iter_all_changes().map(From::from).collect()
+    collect_changes_from_ops(diff.ops(), &left_tokens, &right_tokens)
 }
 
 fn should_add_whitespace(left: &str, right: &str) -> bool {
@@ -296,7 +343,7 @@ fn get_slice_diff<'s>(left: &[&'s str], right: &[&'s str]) -> Vec<Change<'s>> {
         .timeout(DEFAULT_MERGE_TIMEOUT)
         .diff_slices(left, right);
 
-    diff.iter_all_changes().map(From::from).collect()
+    collect_changes_from_ops(diff.ops(), left, right)
 }
 
 pub fn merge_slices_three_way<'s>(
@@ -429,6 +476,24 @@ mod tests {
             merge_strings_three_way("", "Hello universe", "Hello universe and more"),
             "Hello universe and more"
         );
+
+        // identical multi-token edits are not duplicated
+        assert_eq!(
+            merge_strings_three_way("a b c", "a x y c", "a x y c"),
+            "a x y c"
+        );
+
+        // conflicting multi-token replacements preserve current ordering
+        assert_eq!(
+            merge_strings_three_way("a b c", "a x y c", "a p q c"),
+            "a x y p q c"
+        );
+
+        // unicode word tokenization and punctuation boundaries
+        assert_eq!(
+            merge_strings_three_way("café test", "café good test", "café test ✅"),
+            "café good test ✅"
+        );
     }
 
     #[test]
@@ -521,6 +586,16 @@ mod tests {
                 &["The", "slow", "brown", "quick"],
             ),
             &["The", "slow", "brown", "quick"]
+        );
+
+        // conflicting multi-token replacements preserve current ordering
+        assert_eq!(
+            merge_slices_three_way(
+                &["a", "b", "c"],
+                &["a", "x", "y", "c"],
+                &["a", "p", "q", "c"],
+            ),
+            &["a", "x", "y", "p", "q", "c"]
         );
     }
 }

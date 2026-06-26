@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::{fmt::Display, time::Instant};
 
 use anyhow::{Context, Result};
-use keyring::{Entry, Error};
+use keyring_core::{CredentialStore, Entry, Error};
 
 use baza::DEV_MODE;
 use baza_common::{ExposeSecret, SecretString, log};
@@ -26,8 +26,8 @@ impl Keyring for NoopKeyring {
     }
 }
 
-/// Keyring implementation that relies on system keyring.
-/// Works on Windows, Linux, Mac & iOS.
+/// Keyring implementation that relies on the system keyring.
+/// Works on Windows, Linux, and macOS.
 pub struct SystemKeyring {
     service: String,
 }
@@ -39,8 +39,53 @@ impl SystemKeyring {
         }
     }
 
-    fn new_entry(&self, name: &str) -> Entry {
-        Entry::new(&self.service, name).expect("Failed to create keyring Entry")
+    fn new_entry(&self, name: &str) -> Result<Entry> {
+        let store = create_credential_store()?;
+
+        store
+            .build(&self.service, name, None)
+            .context("Failed to create keyring Entry")
+    }
+}
+
+fn create_credential_store() -> Result<Arc<CredentialStore>> {
+    #[cfg(target_os = "macos")]
+    {
+        let store: Arc<CredentialStore> = apple_native_keyring_store::keychain::Store::new()
+            .context("Failed to create macOS Keychain credential store")?;
+
+        Ok(store)
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        let store: Arc<CredentialStore> = windows_native_keyring_store::Store::new()
+            .context("Failed to create Windows credential store")?;
+
+        Ok(store)
+    }
+
+    #[cfg(all(
+        unix,
+        not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+    ))]
+    {
+        let store: Arc<CredentialStore> = zbus_secret_service_keyring_store::Store::new()
+            .context("Failed to create Secret Service credential store")?;
+
+        Ok(store)
+    }
+
+    #[cfg(not(any(
+        target_os = "macos",
+        target_os = "windows",
+        all(
+            unix,
+            not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+        )
+    )))]
+    {
+        anyhow::bail!("System keyring is unsupported on this platform")
     }
 }
 
@@ -56,7 +101,7 @@ impl Keyring for SystemKeyring {
 
         let start_time = Instant::now();
 
-        let entry = self.new_entry(name);
+        let entry = self.new_entry(name)?;
 
         let value = match entry.get_password() {
             Ok(value) => value,
@@ -83,7 +128,7 @@ impl Keyring for SystemKeyring {
         if let Some(value) = value {
             log::info!("{self}: Saving {name}");
 
-            let entry = self.new_entry(name);
+            let entry = self.new_entry(name)?;
 
             entry
                 .set_password(value.expose_secret())
@@ -91,7 +136,7 @@ impl Keyring for SystemKeyring {
         } else {
             log::info!("{self}: Erasing {name}");
 
-            let entry = self.new_entry(name);
+            let entry = self.new_entry(name)?;
 
             match entry.delete_credential() {
                 Ok(_) => {}

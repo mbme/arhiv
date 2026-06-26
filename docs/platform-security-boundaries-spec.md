@@ -41,7 +41,7 @@ Boundary implication:
 
 ## 2.4 Desktop secrets at rest
 
-- Password persistence uses system keyring through Rust `keyring` crate (`ArhivKeyring::new_system_keyring`).
+- Password persistence uses system keyring through Rust `keyring-core` with OS-specific credential stores (`ArhivKeyring::new_system_keyring`).
 - DEV and PROD keyring service names differ (`Arhiv-dev` vs `Arhiv`).
 
 ## 3. Android Boundary

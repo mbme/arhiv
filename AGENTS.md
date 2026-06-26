@@ -1,128 +1,68 @@
 # Arhiv Agent Guide
 
-## One-minute overview
-- `arhiv` is a local-first encrypted personal database for structured records and files (`README.md`).
-- Core runtime is the Rust CLI binary at `arhiv-cli/src/bin/arhiv.rs`; it can initialize storage, manage keys/passwords, and run the HTTPS UI server.
-- The UI server is in `arhiv/src/server/` (Axum + Rustls) and serves the React UI from `arhiv/public/` in debug or embedded assets in release (`arhiv/src/server/ui_server/public_assets_handler.rs`).
-- Data model/persistence is in `baza/`; cross-cutting shared basics live in `baza-common/`, storage substrate in `baza-storage/`, and app runtime support in `arhiv/src/support/`.
-- Platform wrappers: Electron (`arhiv-desktop/`) and Android Java + JNI (`arhiv-android/`).
+## What this repo is
+- `arhiv` is a local-first encrypted personal database for structured records and files.
+- Runtime surfaces: Rust CLI/server, React UI, Electron desktop wrapper, and Android Java/JNI wrapper.
+- Core ownership boundaries:
+  - `baza/`: encrypted data model, persistence, schema, merge, search, backup.
+  - `baza-storage/`: encrypted storage substrate/container mechanics.
+  - `baza-common/`: shared low-level helpers.
+  - `arhiv/src/server/`: HTTPS API/UI server, auth/session/cert handling, lockfile/runtime protocol.
+  - `arhiv/src/ui/`: React UI and API DTOs.
+  - `arhiv-cli/`, `arhiv-desktop/`, `arhiv-android/`: platform entrypoints.
 
-## Specification docs
-- `docs/arhiv-encrypted-file-format.md`: canonical on-disk encrypted format, container/index invariants, and compatibility boundaries.
-- `docs/storage-schema-contract-spec.md`: document-type/field schema contract, runtime validation behavior, and `data_version` migration triggers.
-- `docs/storage-migration-playbook.md`: operational migration procedure, rollback rules, and non-negotiable migration invariants.
-- `docs/crypto-key-lifecycle-threat-model.md`: key hierarchy, lifecycle operations, recoverability constraints, and security assumptions.
-- `docs/merge-conflicts-spec.md`: cross-device conflict detection/resolution semantics and idempotency guarantees.
-- `docs/auth-session-trust-chain-spec.md`: auth token/session model plus desktop/android certificate trust-chain contract.
-- `docs/api-dto-contract-spec.md`: Rust/TypeScript DTO and `/ui/api` request/response compatibility contract.
-- `docs/launcher-server-runtime-protocol-spec.md`: launcher-to-server startup protocol (`--json`, `@@SERVER_INFO`), lock/port/shutdown semantics.
-- `docs/backup-restore-durability-spec.md`: backup/restore scope, safety guarantees, and corruption handling expectations.
-- `docs/platform-security-boundaries-spec.md`: desktop/android/server trust boundaries, secret handling surfaces, and non-goals.
+## Canonical specs
+Read the relevant spec before changing behavior in that area:
+- Storage format/container/index semantics: `docs/arhiv-encrypted-file-format.md`.
+- Schema/data-version contract: `docs/storage-schema-contract-spec.md`.
+- Storage migrations/rollback rules: `docs/storage-migration-playbook.md`.
+- Key hierarchy/lifecycle/recoverability: `docs/crypto-key-lifecycle-threat-model.md`.
+- Cross-device conflict semantics: `docs/merge-conflicts-spec.md`.
+- Auth/session/certificate trust chain: `docs/auth-session-trust-chain-spec.md`.
+- Rust/TypeScript API DTO compatibility: `docs/api-dto-contract-spec.md`.
+- Launcher/server startup protocol: `docs/launcher-server-runtime-protocol-spec.md`.
+- Backup/restore safety guarantees: `docs/backup-restore-durability-spec.md`.
+- Platform trust boundaries: `docs/platform-security-boundaries-spec.md`.
 
-## Authoritative directory map
-- `.github/actions/setup/action.yml`: shared CI setup (Rust toolchain, Node 23.7, `npm ci`, system packages).
-- `.github/workflows/check.yml`: CI checks on `master` push/PR.
-- `.github/workflows/release.yml`: tag-triggered Linux/Windows CLI + Android APK build and GitHub release publish.
-- `.cargo/config.toml`: linker/rustflags (`lld`, native CPU on Linux, static CRT on Windows GNU).
-- `Cargo.toml`: Rust workspace members: `baza-common`, `baza-storage`, `baza`, `arhiv`, `arhiv-cli`, `arhiv-android`.
-- `package.json`: npm workspaces: `arhiv`, `arhiv-desktop`.
-- `justfile`: canonical task entrypoints for dev/build/check/release.
-- `baza/src/`: encrypted storage/state management, schema, merge, search state, backup.
-- `arhiv/src/arhiv/`: app lifecycle, keyring integration, import/status.
-- `arhiv/src/server/`: HTTPS server, lockfile, certificate handling, HTTP API/UI routes.
-- `arhiv/src/ui/`: React/TypeScript UI, DTOs (`dto.ts`) mirrored with Rust DTOs (`dto.rs`).
-- `arhiv-cli/src/bin/arhiv.rs`: CLI entrypoint and subcommands.
-- `baza-common/src/`: shared low-level helpers; `baza-storage/src/`: encrypted storage substrate; `arhiv/src/support/`: app/runtime support.
-- `arhiv-desktop/src/index.ts`: Electron entrypoint; starts CLI server and opens window.
-- `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/MainActivity.java`: Android app entrypoint and WebView host.
-- `arhiv-android/src/lib.rs`: Rust JNI bridge (`Java_me_mbsoftware_arhiv_ArhivServer_*`).
-- `resources/`: sample/static assets; exact runtime role is unknown.
-
-## Entry points and execution surfaces
-- CLI binary: `arhiv-cli/src/bin/arhiv.rs` (`fn main()` with `clap` subcommands).
-- Server runtime: CLI subcommand `Server` in `arhiv-cli/src/bin/arhiv.rs`, implemented by `ArhivServer::start` in `arhiv/src/server/mod.rs`.
-- Desktop runtime: `arhiv-desktop/src/index.ts` -> `startServer()` in `arhiv-desktop/src/arhiv.ts` -> spawns `arhiv server --json`.
-- Android runtime: `MainActivity` calls `ArhivServer.startServer(...)` (`arhiv-android/app/src/main/java/me/mbsoftware/arhiv/ArhivServer.java`) -> JNI exports in `arhiv-android/src/lib.rs`.
-- Library crates: `baza-common/src/lib.rs`, `baza-storage/src/lib.rs`, `baza/src/lib.rs`, `arhiv/src/lib.rs`.
-
-## Run/build/test/lint commands (verbatim)
-- `npm install` (`README.md`).
-- `cargo run -p arhiv-cli --bin arhiv server` (`README.md`).
-- `npm run build --workspace arhiv` (`README.md`, `justfile`).
-- `npm run check` (`package.json`, `justfile`).
-- `npm run lint:root` (`package.json`).
-- `npm run lint --workspace arhiv` (`arhiv/package.json`).
-- `npm run lint --workspace arhiv-desktop` (`arhiv-desktop/package.json`).
-- `just check-rs` (`.github/workflows/check.yml`).
-- `just check-ts` (`.github/workflows/check.yml`).
-- `just prod-build` (`.github/workflows/release.yml`).
-- `just prod-build-windows` (`README.md`, `.github/workflows/release.yml`).
-- `just prod-build-android-libs` (`.github/workflows/release.yml`).
-- `just prod-build-android-app` (`README.md`, `.github/workflows/release.yml`).
-- `just cargo-install` (`README.md`).
-- `just arch-install` (`README.md`).
-- `cargo clippy --all-targets --all-features -- -D warnings` (`justfile`).
-- `cargo test` (`justfile`).
-- `cd arhiv-android; ./gradlew assembleDebug` (`justfile`).
-- `./gradlew assembleRelease --no-daemon` (`justfile`).
-- `cd arhiv-android; ./gradlew installDebug` (`justfile`).
-- `adb install -r arhiv.apk` (`justfile`).
-- `cargo ndk -t arm64-v8a --platform {{android_platform_version}} -o ./app/src/main/jniLibs build --frozen --release --features production-mode` (`justfile`).
-- Additional run/build targets exist in `justfile`: `run`, `desktop`, `check`, `build-android-libs`, `prod-build-desktop`, `install-android-app`, `install-prod-android-app`.
-
-## Tests and quality gates
-- Rust: `cargo clippy --all-targets --all-features -- -D warnings` and `cargo test` (`just check-rs`).
-- TS: root `npm run check` runs workspace typechecks/Oxlint/tests plus root `npm run fmt:check`, root `npm run lint:root`, and `npm run check-android-config` (`package.json`).
-- Frontend tests are in `arhiv/src/ui/**/*.test.ts` and `arhiv/src/ui/**/*.test.tsx`; command is the `test` script in `arhiv/package.json`.
-- Rust tests are mostly inline `#[cfg(test)]` module tests across `baza/src/` plus integration tests in `baza-storage/tests/container.rs`.
-- Desktop test script exists but is empty (`arhiv-desktop/package.json` -> `"test": ""`); desktop runtime test coverage in CI is effectively unknown.
-
-## Required env vars and config files
-- `DEV_ARHIV_ROOT`: required in dev mode (`arhiv/src/arhiv/mod.rs`), used by `run` and `desktop` recipes in `justfile`.
-- `SERVER_PORT`: CLI server arg env fallback (`arhiv-cli/src/bin/arhiv.rs`).
-- `BROWSER`: required when running server with `--browser` (`arhiv-cli/src/bin/arhiv.rs`).
-- `RUST_LOG`: consumed by tracing env filter (`baza-common/src/log.rs`), set in `run`/`desktop` recipes in `justfile`.
-- `ARHIV_VERSION`: compile-time version (`baza-common/src/lib.rs`), injected in production build recipes (`justfile`) and Android Gradle.
-- `ARHIV_BIN`: required for Electron dev mode (`arhiv-desktop/src/arhiv.ts`), set by the `desktop` recipe in `justfile`.
-- `NODE_ENV`: controls JS bundling mode in `arhiv/build.ts` and `arhiv-desktop/build.ts`.
-- Android release config file: `arhiv-android/keystore.properties` is required by `arhiv-android/app/build.gradle`.
-- Android env vars in Gradle: `VERSION_CODE`, `ARHIV_VERSION` (`arhiv-android/app/build.gradle`).
-
-## CI/CD and release flow
-- Check pipeline: `.github/workflows/check.yml` runs `just check-rs` and `just check-ts`.
-- Release pipeline: `.github/workflows/release.yml` runs on tags and manual dispatch; builds Linux CLI, Windows CLI, Android libs/APK, then publishes artifacts with `ncipollo/release-action`.
-- Release workflow dependencies include cargo target installs, `cargo-ndk`, Android SDK, JDK 17, and signing secrets (`RELEASE_KEYSTORE_BASE64`, `KEY_STORE_PASS`, `KEY_ALIAS`, `KEY_PASS`).
-
-## External integrations
-- OS keyring integration in Rust (`keyring` crate) via `arhiv/src/arhiv/keyring.rs` and CLI flows.
-- Android secure storage via KeyStore + BiometricPrompt in `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/Keyring.java`.
-- Scraper integration via npm dependency `github:mbme/scraper#semver:v2.11.0` (`arhiv/package.json`).
-- Optional sync tools mentioned in docs (Syncthing/Drive/Dropbox) are user-level operational choices (`README.md`), not runtime service dependencies.
-
-## High-risk/sensitive areas
-- Crypto primitives and key handling: `baza-common/src/crypto/`, `baza-storage/src/crypto/`, `arhiv/src/support/crypto_key.rs`, `baza/src/baza_manager/keys.rs`.
-- Storage container format and patch/merge logic: `baza-storage/src/container.rs`, `baza/src/baza_storage/`, `baza/src/merge.rs`.
-- Server auth/cookie and HTTPS certificate trust path: `arhiv/src/server/`, `arhiv/src/server/ui_server/mod.rs`, `arhiv-desktop/src/index.ts`, Android `MainActivity.java`.
-- Migration helpers marked dangerous: `baza/src/baza_manager/migration.rs` (`dangerously_*` methods).
-- Android broad storage permission and custom network security config: `arhiv-android/app/src/main/AndroidManifest.xml`, `arhiv-android/app/src/main/res/xml/network_security_config.xml`.
-
-## Change-safety rules inferred from codebase
+## Safety invariants
 - Keep API DTO shapes synchronized between `arhiv/src/ui/dto.rs` and `arhiv/src/ui/dto.ts`.
-- Do not change container/index semantics (`info` first line, key order, patch behavior) without coordinated storage migration updates (`baza/src/baza_storage/`, `baza-storage/src/container.rs`).
-- Preserve server info contract (`@@SERVER_INFO:` JSON marker on stderr) used by desktop startup (`arhiv-desktop/src/arhiv.ts`).
-- Keep Android `minSdk` in `arhiv-android/app/build.gradle` aligned with `android_platform_version` in `justfile` (explicit warning in both).
-- Preserve single-instance lock semantics (`arhiv/src/server/server_lock.rs`) when touching server startup/port discovery.
-- Be careful changing certificate generation/trust flow; both desktop and Android pin/verify server cert material.
-- Keep Electron runtime versions aligned across dev and Arch packaging: update `arhiv-desktop/package.json`/`package-lock.json`, `PKGBUILD.template`, and `arhiv-desktop/arhiv-desktop` together because the Arch desktop package runs a pinned system Electron executable rather than npm's bundled Electron.
+- Do not change storage container/index semantics (`info` first line, key order, patch behavior) without coordinated storage migration work.
+- Preserve the launcher protocol: desktop startup depends on `arhiv server --json` and the `@@SERVER_INFO:` JSON marker on stderr.
+- Preserve server single-instance lock and port-discovery semantics in `arhiv/src/server/server_lock.rs` and adjacent startup code.
+- Treat certificate generation/trust flow as security-sensitive; desktop and Android verify/pin server cert material.
+- Keep Android `minSdk` in `arhiv-android/app/build.gradle` aligned with `android_platform_version` in `justfile`.
+- Keep Electron runtime versions aligned across dev and Arch packaging: `arhiv-desktop/package.json`, `package-lock.json`, `PKGBUILD.template`, and `arhiv-desktop/arhiv-desktop` must move together.
 
-## Non-obvious design decisions / gotchas
-- Debug vs release static assets differ: filesystem reads in debug, embedded assets in release (`arhiv/src/server/ui_server/public_assets_handler.rs`).
-- Server binds `0.0.0.0` internally (`arhiv/src/support/http_server.rs`) but emits localhost URLs in `ServerInfo` (`arhiv/src/server/server_info.rs`).
-- Baza storage file matching intentionally accepts sync-conflict filename variants (`baza/src/baza_paths.rs::is_baza_file`).
-- Android app requires WebView major version >= 111 (`MainActivity.ensureMinWebViewVersion`).
-- Desktop packaging wrapper script is Linux/Arch-specific (`arhiv-desktop/arhiv-desktop`); non-Arch packaging flow is unknown.
+## High-risk areas
+- Crypto/key handling: `baza-common/src/crypto/`, `baza-storage/src/crypto/`, `arhiv/src/support/crypto_key.rs`, `baza/src/baza_manager/keys.rs`.
+- Storage container and patch/merge logic: `baza-storage/src/container.rs`, `baza/src/baza_storage/`, `baza/src/merge.rs`.
+- Auth, cookies, HTTPS, certificates, and launcher trust path: `arhiv/src/server/`, `arhiv-desktop/src/`, `arhiv-android/` WebView/JNI startup code.
+- Dangerous migration helpers: `baza/src/baza_manager/migration.rs` methods prefixed with `dangerously_`.
+- Android storage/network security configuration: `arhiv-android/app/src/main/AndroidManifest.xml`, `arhiv-android/app/src/main/res/xml/network_security_config.xml`.
 
-## Unknowns
-- Dedicated production deployment topology (beyond CLI/Desktop/Android local runtime) is unknown.
-- Formal storage schema migration policy for breaking format changes is unknown.
-- Desktop automated test strategy beyond lint/typecheck is unknown.
+## Before changing X, read Y
+- Storage format, encryption, container ordering, or file matching -> encrypted file format spec + migration playbook.
+- Document schema, fields, validation, or `data_version` -> storage schema contract + migration playbook.
+- API request/response shape -> API DTO contract + both Rust/TS DTO files.
+- Server startup, lockfile, port selection, JSON output, desktop launch -> launcher/server runtime protocol spec.
+- Login/session/token/cookie/cert behavior -> auth-session trust-chain spec + platform security boundaries spec.
+- Backup/restore/import/status flows -> backup/restore durability spec and relevant `arhiv/src/arhiv/` code.
+- Cross-device merge/conflict behavior -> merge conflicts spec.
+- Desktop or Android platform wrapper security -> platform security boundaries spec.
+
+## Common validation commands
+Use the most targeted check first, then broaden when needed:
+- Rust: `just check-rs`.
+- TypeScript/UI/desktop/root linting: `just check-ts`.
+- Full local gate: `just check`.
+- Dev server: `just run`.
+- Electron dev runtime: `just desktop`.
+- Android/release/package commands live in `justfile`; prefer invoking recipes instead of copying long command lines.
+
+## Non-obvious gotchas
+- Debug and release UI asset serving differ: debug reads filesystem assets, release embeds assets.
+- Server binds `0.0.0.0` internally but emits localhost URLs in `ServerInfo`.
+- Baza storage file matching intentionally accepts sync-conflict filename variants.
+- Android requires WebView major version >= 111.
+- The desktop packaging wrapper is Linux/Arch-specific; non-Arch desktop packaging is not established here.
+- Desktop automated runtime test coverage is effectively unknown; do not assume lint/typecheck exercises desktop startup behavior.

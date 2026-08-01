@@ -6,11 +6,12 @@
 
   .card-container {
     @apply var-card-width min-h-[50%] max-h-full overflow-hidden shrink-0 grow-0 var-bg-color drop-shadow-sm relative transition-opacity;
-    @apply overscroll-x-contain snap-center snap-always;
+    @apply snap-center snap-always;
   }
 
   .card-content {
     @apply overflow-auto custom-scrollbar px-4;
+    overscroll-behavior-x: auto;
   }
 
   .card-toolbar {

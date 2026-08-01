@@ -152,7 +152,6 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 # TODO
 * adr decision log
 * decrease decryption time - startup is too slow
-* fix horizontal (not) scrolling 
 * integration with emacs/file system - use FUSE?
 * better search - vector search? integrate tantivy?
 * better diff/merge

@@ -145,34 +145,50 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
         let ui_url = env
             .new_string(server_info.ui_url)
             .expect("Couldn't create java String!");
-        env.set_field(
-            &server_info_object,
-            jni_str!("uiUrl"),
-            jni_sig!("Ljava/lang/String;"),
-            JValue::from(&ui_url),
-        )
+        let ui_url_field = env
+            .get_field_id(
+                &server_info_class,
+                jni_str!("uiUrl"),
+                jni_sig!("Ljava/lang/String;"),
+            )
+            .expect("Couldn't find object field String uiUrl");
+        unsafe {
+            env.set_field_unchecked(&server_info_object, ui_url_field, JValue::from(&ui_url))
+        }
         .expect("Couldn't set field String uiUrl");
 
         let auth_token = env
             .new_string(server_info.auth_token)
             .expect("Couldn't create java String!");
-        env.set_field(
-            &server_info_object,
-            jni_str!("authToken"),
-            jni_sig!("Ljava/lang/String;"),
-            JValue::from(&auth_token),
-        )
+        let auth_token_field = env
+            .get_field_id(
+                &server_info_class,
+                jni_str!("authToken"),
+                jni_sig!("Ljava/lang/String;"),
+            )
+            .expect("Couldn't find object field String authToken");
+        unsafe {
+            env.set_field_unchecked(
+                &server_info_object,
+                auth_token_field,
+                JValue::from(&auth_token),
+            )
+        }
         .expect("Couldn't set field String authToken");
 
         let certificate = env
             .byte_array_from_slice(&server_info.certificate)
             .expect("Couldn't create java byte[]!");
-        env.set_field(
-            &server_info_object,
-            jni_str!("certificate"),
-            jni_sig!("[B"),
-            JValue::from(&certificate),
-        )
+        let certificate_field = env
+            .get_field_id(&server_info_class, jni_str!("certificate"), jni_sig!("[B"))
+            .expect("Couldn't find object field byte[] certificate");
+        unsafe {
+            env.set_field_unchecked(
+                &server_info_object,
+                certificate_field,
+                JValue::from(&certificate),
+            )
+        }
         .expect("Couldn't set field byte[] certificate");
 
         Ok(server_info_object)

@@ -74,13 +74,18 @@ pub fn setup_trace_logger() {
 
 pub fn setup_panic_hook() {
     panic::set_hook(Box::new(|panic_info| {
+        let payload = if let Some(message) = panic_info.payload().downcast_ref::<String>() {
+            message.as_str()
+        } else if let Some(message) = panic_info.payload().downcast_ref::<&str>() {
+            message
+        } else {
+            "non-string panic payload"
+        };
+
         if let Some(location) = panic_info.location() {
             error!(
                 "Panic occurred: {} at {}:{}",
-                panic_info
-                    .payload()
-                    .downcast_ref::<&str>()
-                    .unwrap_or(&"Unknown"),
+                payload,
                 location.file(),
                 location.line(),
             );

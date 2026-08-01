@@ -113,6 +113,8 @@ Needs `MANAGE_EXTERNAL_STORAGE` permission to read/write files in user directory
 * Android Studio; use it to install Android SDK & NDK
 * Android SDK & NDK
 * JDK - `jdk-openjdk`
+* generate keystore
+* create `arhiv-android/keystore.properties`
 * `cargo-ndk` to build Android JNI library
 * Add rust targets for Android cross-compilation (the `x86_64-linux-android` i.e. for Android Studio emulator):
 ```
@@ -155,6 +157,7 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 # TODO
 * adr decision log
 * decrease decryption time - startup is too slow
+  * keep unlocked?
 * integration with emacs/file system - use FUSE?
 * better search - vector search? integrate tantivy?
 * better diff/merge

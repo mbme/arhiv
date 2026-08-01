@@ -82,7 +82,10 @@ Using makepkg: `just arch-install`. It also installs `arhiv-desktop` GUI.
 * `ARHIV_VERSION` - env variable to be set on compile time that contains current Arhiv version
 
 ## Release process
-* `just bump-version` - increment major version, create & push git tag
+* Releases use plain numeric Git tags. Run `just bump-version` to create and push the next tag.
+* A pushed tag runs the GitHub release workflow. It publishes the Linux CLI binary, Windows CLI binary, and signed Android APK to GitHub Releases.
+* Android releases are distributed as APKs for sideloading; there is no Play Store publishing process.
+* The Electron desktop app is not published by the release workflow. On Arch Linux, `just arch-install` builds and installs the package locally, including `arhiv-desktop`.
 
 # CLI app
 Cross-platform CLI app. Uses system keyring to store password.

@@ -73,5 +73,5 @@ jobs:
       - name: Publish to GitHub Release
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ github.ref_name }} # e.g. "v1.2.3"
+          tag: ${{ github.ref_name }} # e.g. "42"
           artifacts: './arhiv.apk,target/release/arhiv,target/x86_64-pc-windows-gnu/release/arhiv.exe'

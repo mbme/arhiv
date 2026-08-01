@@ -150,15 +150,25 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 
 
 # TODO
-* tests for time.rs before update
-* decrease decryption time
+* adr decision log
+* decrease decryption time - startup is too slow
 * fix horizontal (not) scrolling 
-* better search - vector search?
+* integration with emacs/file system - use FUSE?
+* better search - vector search? integrate tantivy?
 * better diff/merge
 * network p2p sync (use iroh), relays
+* note that i prefer pure rust libraries without c/c++ code / native libs
 
+* як це розкладаєтьс на "базові" компоненти? і інтегрується із рештою екосистеми?
+  * формат даних (encrypted compressed jsonl)
+  * проста база даних із схемою, гілками і мерджем, eventual consistency & conflict resolution
+  * p2p sync 
+  * arhiv app
+  * storage/(read/write APIs i.e. FS) for other apps
+* UI: i don't like switching between edit/preview modes in the editor
 * single folder mode? keep state in "syncable dir"?
 * refactor: arhiv-cli shouldn't probably access baza directly
 * move Download from baza into arhiv
 * optimize storage compression (snapshot order)
 * remote backup without 3rd party tools - separate "backup manager"?
+* mark notes stale/irrelevant/archived

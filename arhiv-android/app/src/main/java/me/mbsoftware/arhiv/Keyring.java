@@ -4,6 +4,7 @@ import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyPermanentlyInvalidatedException;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
 import android.util.Log;
@@ -39,12 +40,6 @@ public class Keyring {
     return keyguardManager != null && keyguardManager.isDeviceSecure();
   }
 
-  public static boolean isBiometricAvailable(Context context) {
-    BiometricManager biometricManager = BiometricManager.from(context);
-    return biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)
-      == BiometricManager.BIOMETRIC_SUCCESS;
-  }
-
   public static void generateKey() throws Exception {
     if (keyExists()) return; // Prevent key regeneration
 
@@ -65,8 +60,7 @@ public class Keyring {
   }
 
   public static void saveStorageKey(FragmentActivity context, String storageKey) throws Exception {
-    Cipher cipher = getCipher();
-    cipher.init(Cipher.ENCRYPT_MODE, getSecretKey());
+    Cipher cipher = getEncryptionCipher();
 
     BiometricPrompt biometricPrompt = new BiometricPrompt(
       context,
@@ -116,7 +110,7 @@ public class Keyring {
     biometricPrompt.authenticate(promptInfo, new BiometricPrompt.CryptoObject(cipher));
   }
 
-  public static void loadStorageKey(FragmentActivity context, LoadPasswordCallback callback) {
+  public static void loadStorageKey(FragmentActivity context, LoadStorageKeyCallback callback) {
     SharedPreferences prefs = context.getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE);
     String encryptedStorageKey = prefs.getString(STORAGE_KEY, null);
     if (encryptedStorageKey == null) {
@@ -127,13 +121,16 @@ public class Keyring {
     Cipher cipher;
     try {
       byte[] combined = Base64.decode(encryptedStorageKey, Base64.DEFAULT);
+      if (combined.length <= GCM_IV_LENGTH) {
+        throw new IllegalArgumentException("Encrypted storage key is too short");
+      }
       byte[] iv = Arrays.copyOfRange(combined, 0, GCM_IV_LENGTH);
 
       cipher = getCipher();
       cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), new GCMParameterSpec(GCM_TAG_LENGTH, iv));
     } catch (Exception e) {
       Log.e(TAG, "Load storage key: failed to build cipher for decryption", e);
-      callback.onError("Failed to build cipher for decryption: " + e);
+      callback.onRecoveryRequired();
       return;
     }
 
@@ -143,7 +140,7 @@ public class Keyring {
       new BiometricPrompt.AuthenticationCallback() {
         @Override
         public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
-          callback.onError("Authentication error: " + errorCode + " " + errString);
+          callback.onAuthenticationError(errorCode, errString);
         }
 
         @Override
@@ -160,14 +157,13 @@ public class Keyring {
             callback.onSuccess(new String(decryptedData, StandardCharsets.UTF_8));
           } catch (Exception e) {
             Log.e(TAG, "Load storage key: failed to decrypt", e);
-            callback.onError("Failed to decrypt: " + e);
+            callback.onRecoveryRequired();
           }
         }
 
         @Override
         public void onAuthenticationFailed() {
-          Log.e(TAG, "Load password: authentication failed");
-          callback.onError("Authentication failed");
+          Log.i(TAG, "Load storage key: biometric not recognized");
         }
       }
     );
@@ -205,5 +201,27 @@ public class Keyring {
     return Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/"
       + KeyProperties.BLOCK_MODE_GCM + "/"
       + KeyProperties.ENCRYPTION_PADDING_NONE);
+  }
+
+  private static Cipher getEncryptionCipher() throws Exception {
+    Cipher cipher = getCipher();
+    try {
+      cipher.init(Cipher.ENCRYPT_MODE, getSecretKey());
+      return cipher;
+    } catch (KeyPermanentlyInvalidatedException e) {
+      Log.w(TAG, "Save storage key: replacing permanently invalidated KeyStore key", e);
+      deleteKey();
+      generateKey();
+
+      cipher = getCipher();
+      cipher.init(Cipher.ENCRYPT_MODE, getSecretKey());
+      return cipher;
+    }
+  }
+
+  private static void deleteKey() throws Exception {
+    KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+    keyStore.load(null);
+    keyStore.deleteEntry(KEYSTORE_ALIAS);
   }
 }

@@ -66,7 +66,16 @@ Boundary implication:
 - Serialized x25519 storage master key is encrypted with an AES-GCM key from AndroidKeyStore.
 - Keystore key requires biometric strong or device credential authentication.
 - Encrypted payload is stored in app SharedPreferences.
-- Cached-key retrieval requires biometric/device authentication via `BiometricPrompt`.
+- Cached-key retrieval requires biometric/device authentication via `BiometricPrompt`. An
+  unrecognized biometric remains in the system prompt; it does not fall back to Arhiv password.
+- When a prompt ends, Android presents a native retry/password choice when another device-auth
+  attempt is viable. Dismissing that choice proceeds to password/import recovery. Unavailable or
+  locked-out device authentication proceeds directly to password/import recovery.
+- A permanently invalidated Keystore key or unreadable cached payload requires password/import
+  recovery. After recovery, Arhiv immediately requests device authentication to cache the storage
+  key again; permanently invalidated Keystore keys are recreated first.
+- Lock removes the cached storage key durably. Subsequent unlock requires password/import recovery;
+  biometric caching is re-established only after that successful recovery.
 - `ArhivPrefs.xml`, including the current storage-key payload and unused legacy password payload,
   is excluded from cloud backup and device transfer. Deletion uses synchronous SharedPreferences
   persistence so lock/logout fails rather than claiming success if credential removal fails.

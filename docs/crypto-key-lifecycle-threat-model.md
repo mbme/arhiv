@@ -149,6 +149,15 @@ Android:
 - Storage-key cache uses Android keystore + biometric/device-credential-gated encrypt/decrypt flow.
 - Rust side keeps an in-memory storage-key copy after init. The legacy password payload is not read
   or migrated.
+- A biometric mismatch does not leave the system authentication prompt. Prompt cancellation and
+  retryable terminal errors offer a native retry/password choice; unavailable or locked-out device
+  authentication requires password/import recovery.
+- If the Android Keystore key is permanently invalidated or its encrypted cache is unreadable,
+  password/import recovery is required. A successful recovery immediately prompts for device
+  authentication before writing the renewed cache; permanently invalidated Keystore keys are
+  recreated first.
+- `lock()` erases the Android cache. It intentionally does not retain biometric convenience across
+  a lock; the next successful password/import recovery may cache the key again.
 
 Security boundary statement:
 - Keyring/keystore are convenience and local UX mechanisms, not trust anchors that replace encryption keys or backups.

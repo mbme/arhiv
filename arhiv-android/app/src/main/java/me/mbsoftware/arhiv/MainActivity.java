@@ -28,6 +28,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.biometric.BiometricPrompt;
 import androidx.webkit.WebSettingsCompat;
 import androidx.webkit.WebViewFeature;
 
@@ -57,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
   private ActivityResultLauncher<Intent> filePickerLauncher;
   private ActivityResultLauncher<Intent> downloadFileLocationPicker;
   private DownloadRequest pendingDownload;
+  private boolean appStarted;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -202,18 +204,20 @@ public class MainActivity extends AppCompatActivity {
   private void authApp() {
     Log.i(TAG, "Authenticating");
 
-    if (!Keyring.isBiometricAvailable(this)) {
-      Log.w(TAG, "Biometric auth not available");
+    if (appStarted) {
+      Log.w(TAG, "Ignoring authentication request after app startup");
+      return;
     }
 
     try {
       Keyring.generateKey();
     } catch (Exception e) {
       Log.e(TAG, "Failed to generate KeyStore key:", e);
-      throw new SecurityException("Failed to generate KeyStore key");
+      initApp(null);
+      return;
     }
 
-    Keyring.loadStorageKey(this, new LoadPasswordCallback() {
+    Keyring.loadStorageKey(this, new LoadStorageKeyCallback() {
       @Override
       public void onSuccess(String storageKey) {
         if (storageKey == null) {
@@ -226,15 +230,62 @@ public class MainActivity extends AppCompatActivity {
       }
 
       @Override
-      public void onError(String msg) {
-        Log.e(TAG, "Authentication failed: " + msg);
+      public void onAuthenticationError(int errorCode, @NonNull CharSequence errorMessage) {
+        Log.w(TAG, "Authentication prompt ended: " + errorCode + " " + errorMessage);
+        if (canRetryDeviceAuthentication(errorCode)) {
+          showAuthenticationFallback(true);
+        } else {
+          showAuthenticationFallback(false);
+        }
+      }
+
+      @Override
+      public void onRecoveryRequired() {
+        Log.w(TAG, "Cached storage key requires password or import recovery");
         initApp(null);
       }
     });
+  }
 
+  private boolean canRetryDeviceAuthentication(int errorCode) {
+    switch (errorCode) {
+      case BiometricPrompt.ERROR_HW_UNAVAILABLE:
+      case BiometricPrompt.ERROR_HW_NOT_PRESENT:
+      case BiometricPrompt.ERROR_NO_SPACE:
+      case BiometricPrompt.ERROR_NO_BIOMETRICS:
+      case BiometricPrompt.ERROR_NO_DEVICE_CREDENTIAL:
+      case BiometricPrompt.ERROR_LOCKOUT:
+      case BiometricPrompt.ERROR_LOCKOUT_PERMANENT:
+        return false;
+      default:
+        return true;
+    }
+  }
+
+  private void showAuthenticationFallback(boolean canRetry) {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this)
+      .setMessage(canRetry
+        ? "Device authentication was not completed."
+        : "Device authentication is unavailable. Use your Arhiv password or import a key.")
+      .setOnCancelListener(dialog -> initApp(null));
+
+    if (canRetry) {
+      builder.setPositiveButton("Try biometrics again", (dialog, which) -> authApp());
+      builder.setNegativeButton("Use Arhiv password", (dialog, which) -> initApp(null));
+    } else {
+      builder.setPositiveButton("Use Arhiv password", (dialog, which) -> initApp(null));
+    }
+
+    builder.show();
   }
 
   private void initApp(String storageKey) {
+    if (appStarted) {
+      Log.w(TAG, "Ignoring duplicate app startup request");
+      return;
+    }
+    appStarted = true;
+
     Log.i(TAG, "Starting Arhiv server");
 
     String downloadsPath = Objects.requireNonNull(this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)).getAbsolutePath();
@@ -437,7 +488,7 @@ public class MainActivity extends AppCompatActivity {
 
   @Override
   public void onBackPressed() {
-    if (webView.canGoBack()) {
+    if (webView != null && webView.canGoBack()) {
       webView.goBack();
     } else {
       new AlertDialog.Builder(this)
@@ -450,11 +501,11 @@ public class MainActivity extends AppCompatActivity {
 
   @Override
   protected void onDestroy() {
-    Log.i(TAG, "Stopping Arhiv server");
-
-    ArhivServer.stopServer();
-
-    Log.i(TAG, "Stopped Arhiv server");
+    if (appStarted) {
+      Log.i(TAG, "Stopping Arhiv server");
+      ArhivServer.stopServer();
+      Log.i(TAG, "Stopped Arhiv server");
+    }
 
     super.onDestroy();
   }

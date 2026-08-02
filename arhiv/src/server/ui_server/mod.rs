@@ -1,4 +1,7 @@
-use std::{panic::AssertUnwindSafe, sync::Arc};
+use std::{
+    panic::AssertUnwindSafe,
+    sync::{Arc, Mutex},
+};
 
 use anyhow::Context;
 use axum::{
@@ -6,7 +9,7 @@ use axum::{
     extract::{DefaultBodyLimit, Query, Request, State},
     http::{HeaderMap, StatusCode},
     middleware::{self, Next},
-    response::{Html, IntoResponse, Response},
+    response::{Html, IntoResponse, Redirect, Response},
     routing::{get, post},
 };
 use axum_extra::{
@@ -42,6 +45,8 @@ mod scaled_images_cache;
 
 pub const UI_BASE_PATH: &str = "/ui";
 
+pub const BROWSER_BOOTSTRAP_PATH: &str = "/auth";
+
 pub const HEALTH_PATH: &str = "/health";
 
 #[derive(Clone)]
@@ -50,7 +55,17 @@ pub struct ServerContext {
     pub img_cache: Arc<ScaledImagesCache>,
 }
 
-pub fn build_ui_router(auth_token: AuthToken, arhiv: Arc<Arhiv>) -> Router<()> {
+#[derive(Clone)]
+struct BrowserBootstrap {
+    auth_token: AuthToken,
+    token: Arc<Mutex<Option<AuthToken>>>,
+}
+
+pub fn build_ui_router(
+    auth_token: AuthToken,
+    browser_bootstrap_token: AuthToken,
+    arhiv: Arc<Arhiv>,
+) -> Router<()> {
     let img_cache_dir = format!("{}/img-cache", arhiv.baza.get_state_dir());
     let img_cache = ScaledImagesCache::new(img_cache_dir);
 
@@ -59,6 +74,7 @@ pub fn build_ui_router(auth_token: AuthToken, arhiv: Arc<Arhiv>) -> Router<()> {
         img_cache: Arc::new(img_cache),
     };
 
+    let ui_auth_token = auth_token.clone();
     let ui_router = Router::new()
         .route("/", get(index_page))
         .route("/config.js", get(config_handler))
@@ -70,16 +86,23 @@ pub fn build_ui_router(auth_token: AuthToken, arhiv: Arc<Arhiv>) -> Router<()> {
         .route("/{*fileName}", get(public_assets_handler))
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn_with_state(
-            Arc::new(auth_token),
+            Arc::new(ui_auth_token),
             client_authenticator,
         ))
         .layer(middleware::from_fn(catch_panic_middleware))
         .with_state(ctx);
 
+    let browser_bootstrap = BrowserBootstrap {
+        auth_token: auth_token.clone(),
+        token: Arc::new(Mutex::new(Some(browser_bootstrap_token))),
+    };
+
     Router::new()
         .nest(UI_BASE_PATH, ui_router)
+        .route(BROWSER_BOOTSTRAP_PATH, get(browser_bootstrap_handler))
         .route(HEALTH_PATH, get(health_handler))
         .fallback(fallback_route)
+        .with_state(browser_bootstrap)
 }
 
 #[tracing::instrument(skip(ctx), level = "debug")]
@@ -155,34 +178,17 @@ async fn api_handler(
 }
 
 #[derive(Deserialize)]
-struct AuthTokenQuery {
-    #[serde(rename = "AuthToken")]
-    auth_token: Option<String>,
+struct BrowserBootstrapQuery {
+    token: Option<String>,
 }
 
-/// Extract AuthToken either from url query param, or from the cookie
 async fn client_authenticator(
     jar: CookieJar,
-    auth_token_query: Query<AuthTokenQuery>,
     State(server_auth_token): State<Arc<AuthToken>>,
     request: Request,
     next: Next,
 ) -> Response {
-    let auth_token: Option<AuthToken> = if let Query(AuthTokenQuery {
-        auth_token: Some(auth_token),
-    }) = auth_token_query
-    {
-        match AuthToken::parse(&auth_token) {
-            Ok(auth_token) => Some(auth_token),
-            Err(err) => {
-                return (
-                    StatusCode::BAD_REQUEST,
-                    format!("Failed to parse AuthToken query param: {err}"),
-                )
-                    .into_response();
-            }
-        }
-    } else if let Some(auth_token) = jar.get("AuthToken") {
+    let auth_token: Option<AuthToken> = if let Some(auth_token) = jar.get("AuthToken") {
         match AuthToken::parse(auth_token.value()) {
             Ok(auth_token) => Some(auth_token),
             Err(err) => {
@@ -209,23 +215,67 @@ async fn client_authenticator(
         return (StatusCode::UNAUTHORIZED, "Invalid AuthToken").into_response();
     }
 
+    let mut response = next.run(request).await;
+
+    set_auth_token_cookie(response.headers_mut(), &auth_token);
+
+    response
+}
+
+async fn browser_bootstrap_handler(
+    State(browser_bootstrap): State<BrowserBootstrap>,
+    Query(BrowserBootstrapQuery { token }): Query<BrowserBootstrapQuery>,
+) -> Response {
+    let Some(token) = token else {
+        return (
+            StatusCode::UNAUTHORIZED,
+            "Browser bootstrap token is missing",
+        )
+            .into_response();
+    };
+
+    let token = match AuthToken::parse(&token) {
+        Ok(token) => token,
+        Err(_) => {
+            return (StatusCode::UNAUTHORIZED, "Invalid browser bootstrap token").into_response();
+        }
+    };
+
+    let mut expected_token = match browser_bootstrap.token.lock() {
+        Ok(token) => token,
+        Err(_) => {
+            log::error!("Browser bootstrap token lock is poisoned");
+            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        }
+    };
+
+    if expected_token.as_ref() != Some(&token) {
+        return (StatusCode::UNAUTHORIZED, "Invalid browser bootstrap token").into_response();
+    }
+
+    *expected_token = None;
+
+    let mut response = Redirect::temporary(UI_BASE_PATH).into_response();
+    set_auth_token_cookie(response.headers_mut(), &browser_bootstrap.auth_token);
+
+    response
+}
+
+fn set_auth_token_cookie(headers: &mut HeaderMap, auth_token: &AuthToken) {
     let auth_token_cookie = Cookie::build(("AuthToken", auth_token.serialize()))
-        .path("/")
+        .path(UI_BASE_PATH)
         .http_only(true)
         .secure(true)
+        .same_site(axum_extra::extract::cookie::SameSite::Strict)
         .build()
         .to_string();
 
-    let mut response = next.run(request).await;
-
-    response.headers_mut().append(
+    headers.append(
         axum::http::header::SET_COOKIE,
         auth_token_cookie
             .parse()
             .expect("Failed to convert AuthToken cookie into header value"),
     );
-
-    response
 }
 
 async fn no_cache_middleware(req: Request, next: Next) -> Response {
@@ -264,4 +314,37 @@ async fn health_handler() -> impl IntoResponse {
     add_no_cache_headers(&mut headers);
 
     (StatusCode::OK, headers)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn browser_bootstrap_token_is_single_use() {
+        let auth_token = AuthToken::generate();
+        let bootstrap_token = AuthToken::generate();
+        let browser_bootstrap = BrowserBootstrap {
+            auth_token,
+            token: Arc::new(Mutex::new(Some(bootstrap_token.clone()))),
+        };
+        let query = BrowserBootstrapQuery {
+            token: Some(bootstrap_token.serialize()),
+        };
+
+        let runtime = tokio::runtime::Runtime::new().unwrap();
+        let first_response = runtime.block_on(browser_bootstrap_handler(
+            State(browser_bootstrap.clone()),
+            Query(query),
+        ));
+        let second_response = runtime.block_on(browser_bootstrap_handler(
+            State(browser_bootstrap),
+            Query(BrowserBootstrapQuery {
+                token: Some(bootstrap_token.serialize()),
+            }),
+        ));
+
+        assert_eq!(first_response.status(), StatusCode::TEMPORARY_REDIRECT);
+        assert_eq!(second_response.status(), StatusCode::UNAUTHORIZED);
+    }
 }

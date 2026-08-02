@@ -4,25 +4,32 @@ use serde::Serialize;
 use super::SelfSignedCertificate;
 
 use super::server_lock::ArhivServerLock;
-use super::ui_server::{HEALTH_PATH, UI_BASE_PATH};
+use super::ui_server::{BROWSER_BOOTSTRAP_PATH, HEALTH_PATH, UI_BASE_PATH};
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ServerInfo {
     pub ui_url: String,
-    pub ui_url_with_auth_token: String,
+    pub browser_url: String,
     pub health_url: String,
     pub certificate: Vec<u8>,
     pub auth_token: String,
 }
 
 impl ServerInfo {
-    pub fn new(port: u16, certificate: &SelfSignedCertificate, auth_token: String) -> Self {
+    pub fn new(
+        port: u16,
+        certificate: &SelfSignedCertificate,
+        auth_token: String,
+        browser_bootstrap_token: String,
+    ) -> Self {
         let ui_url = Self::get_ui_base_url(port);
         let health_url = Self::get_health_url(port);
 
         ServerInfo {
-            ui_url_with_auth_token: format!("{ui_url}?AuthToken={auth_token}"),
+            browser_url: format!(
+                "https://localhost:{port}{BROWSER_BOOTSTRAP_PATH}?token={browser_bootstrap_token}"
+            ),
             ui_url,
             health_url,
             certificate: certificate.certificate_der.clone(),

@@ -61,8 +61,12 @@ Use the most targeted check first, then broaden when needed:
 
 ## Non-obvious gotchas
 - Debug and release UI asset serving differ: debug reads filesystem assets, release embeds assets.
-- Server binds `0.0.0.0` internally but emits localhost URLs in `ServerInfo`.
+- Server binds IPv4 loopback internally and emits localhost URLs in `ServerInfo`.
 - Baza storage file matching intentionally accepts sync-conflict filename variants.
 - Android requires WebView major version >= 111.
 - The desktop packaging wrapper is Linux/Arch-specific; non-Arch desktop packaging is not established here.
 - Desktop automated runtime test coverage is effectively unknown; do not assume lint/typecheck exercises desktop startup behavior.
+
+## Intent Ledger
+- Preserve automatic browser launch for `arhiv server --browser`; development workflows require it.
+- Reap browser child processes without coupling their lifetime to the server process.

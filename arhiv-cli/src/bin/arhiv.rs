@@ -465,7 +465,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                     env::var("BROWSER").context("Failed to read $BROWSER env variable")?;
 
                 process::Command::new(&browser)
-                    .arg(&server_info.ui_url_with_auth_token)
+                    .arg(&server_info.browser_url)
                     .stdout(process::Stdio::null())
                     .stderr(process::Stdio::null())
                     .spawn()
@@ -475,7 +475,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             }
 
             if DEV_MODE {
-                log::info!("Dev server url: {}", server_info.ui_url_with_auth_token);
+                log::info!("Dev server url: {}", server_info.browser_url);
             }
 
             shutdown_signal().await;

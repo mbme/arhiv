@@ -1,57 +1,39 @@
 use anyhow::{Result, ensure};
 
-use baza_common::{
-    CryptoKey, SIGNATURE_SIZE, Signature, concat_bytes, decode_url_safe_base64,
-    new_random_crypto_byte_array, to_url_safe_base64,
-};
+use baza_common::{decode_url_safe_base64, new_random_crypto_byte_array, to_url_safe_base64};
 
-const TOKEN_LEN: usize = 6;
+const TOKEN_LEN: usize = 32;
 
 pub type Token = [u8; TOKEN_LEN];
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct AuthToken {
     token: Token,
-    signature: Signature,
 }
 
 impl AuthToken {
-    pub fn generate(key: &CryptoKey) -> Self {
+    pub fn generate() -> Self {
         let token: Token = new_random_crypto_byte_array();
-        let signature = key.sign(&token);
 
-        Self { token, signature }
-    }
-
-    pub fn assert_is_valid(&self, key: &CryptoKey) -> Result<()> {
-        let is_valid = key.verify_signature(&self.token, &self.signature);
-
-        ensure!(is_valid, "Auth token is invalid");
-
-        Ok(())
+        Self { token }
     }
 
     pub fn serialize(&self) -> String {
-        to_url_safe_base64(&concat_bytes(&self.token, &self.signature))
+        to_url_safe_base64(&self.token)
     }
 
     pub fn parse(value: &str) -> Result<Self> {
         let data = decode_url_safe_base64(value)?;
 
-        const AUTH_TOKEN_LEN: usize = TOKEN_LEN + SIGNATURE_SIZE;
-
         ensure!(
-            data.len() == AUTH_TOKEN_LEN,
-            "Wrong AuthToken len: {} instead of {AUTH_TOKEN_LEN}",
+            data.len() == TOKEN_LEN,
+            "Wrong AuthToken len: {} instead of {TOKEN_LEN}",
             data.len()
         );
 
-        let (first, second) = data.split_at(TOKEN_LEN);
+        let token: Token = data.try_into().expect("Invalid AuthToken size");
 
-        let token: Token = first.try_into().expect("Invalid token size");
-        let signature: Signature = second.try_into().expect("Invalid signature size");
-
-        Ok(AuthToken { token, signature })
+        Ok(AuthToken { token })
     }
 }
 
@@ -60,20 +42,16 @@ mod tests {
     use anyhow::Result;
 
     use crate::server::AuthToken;
-    use baza_common::CryptoKey;
 
     #[test]
     fn test_auth_token_parse_serialize() -> Result<()> {
-        let key =
-            CryptoKey::derive_subkey([0; 32].as_slice(), CryptoKey::salt_from_data("test1234")?)?;
-
-        let token = AuthToken::generate(&key);
+        let token = AuthToken::generate();
 
         let token_str = token.serialize();
 
         let parsed_token = AuthToken::parse(&token_str).unwrap();
 
-        assert_eq!(parsed_token, token);
+        assert!(parsed_token == token);
 
         Ok(())
     }

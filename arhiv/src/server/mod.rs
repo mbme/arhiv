@@ -4,9 +4,7 @@ use anyhow::Result;
 
 use baza_common::{create_dir_if_not_exist, log};
 
-use self::{
-    certificate::generate_ui_crypto_key, server_lock::ArhivServerLock, ui_server::build_ui_router,
-};
+use self::{server_lock::ArhivServerLock, ui_server::build_ui_router};
 use crate::{Arhiv, ArhivOptions};
 
 use self::certificate::read_or_generate_certificate;
@@ -53,10 +51,11 @@ impl ArhivServer {
 
         let certificate = read_or_generate_certificate(arhiv.baza.get_state_dir())?;
 
-        let ui_hmac = generate_ui_crypto_key(certificate.private_key_der.clone());
-        let auth_token = auth_token::AuthToken::generate(&ui_hmac);
+        let auth_token = auth_token::AuthToken::generate();
         let auth_token_string = auth_token.serialize();
-        let router = build_ui_router(auth_token, arhiv.clone());
+        let browser_bootstrap_token = auth_token::AuthToken::generate();
+        let browser_bootstrap_token_string = browser_bootstrap_token.serialize();
+        let router = build_ui_router(auth_token, browser_bootstrap_token, arhiv.clone());
 
         let server =
             http_server::HttpServer::new_https(server_port, router, certificate.clone()).await?;
@@ -66,7 +65,12 @@ impl ArhivServer {
 
         log::info!("Started server on port: {actual_server_port}");
 
-        let server_info = ServerInfo::new(actual_server_port, &certificate, auth_token_string);
+        let server_info = ServerInfo::new(
+            actual_server_port,
+            &certificate,
+            auth_token_string,
+            browser_bootstrap_token_string,
+        );
 
         Ok(ArhivServer {
             arhiv,

@@ -10,7 +10,7 @@ Common model across desktop and android:
 - Arhiv server is local process, started by wrapper.
 - UI is served over local HTTPS with a self-signed certificate.
 - Client wrappers trust only the specific server certificate delivered at startup.
-- API access is gated by `AuthToken` cookie/query token.
+- API access is gated by an `AuthToken` cookie.
 
 Critical trust assumptions:
 - local host process boundary is trusted more than network perimeter.
@@ -95,7 +95,7 @@ UI capture boundary:
 
 - Server TLS private key and certificate are persisted in `<state_dir>/arhiv-server.pem`.
 - On unix, file permissions are set to `0600` when generated.
-- Server binds HTTPS socket to `0.0.0.0`, but launchers consume localhost URLs from `ServerInfo`.
+- Server binds HTTPS socket to IPv4 loopback (`127.0.0.1`), and launchers consume localhost URLs from `ServerInfo`.
 
 ## 5. Non-goals / Not guaranteed
 

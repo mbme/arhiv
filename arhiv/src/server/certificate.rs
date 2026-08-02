@@ -2,8 +2,7 @@ use std::{fs, io::Write};
 
 use anyhow::{Context, Result, anyhow};
 use baza_common::{
-    CryptoKey, ExposeSecret, SecretBytes, SecretString, Timestamp, file_exists, log,
-    must_create_file,
+    ExposeSecret, SecretBytes, SecretString, Timestamp, file_exists, log, must_create_file,
 };
 use rcgen::{CertificateParams, DistinguishedName, DnType, KeyPair};
 
@@ -112,14 +111,6 @@ pub fn read_or_generate_certificate(root_dir: &str) -> Result<SelfSignedCertific
 
         Ok(certificate)
     }
-}
-
-pub fn generate_ui_crypto_key(certificate_private_key: SecretBytes) -> CryptoKey {
-    CryptoKey::derive_subkey(
-        certificate_private_key.expose_secret(),
-        CryptoKey::salt_from_data("arhiv-server auth token").expect("Must generate salt from data"),
-    )
-    .expect("Failed to generate ui crypto key")
 }
 
 fn generate_self_signed_certificate() -> Result<SelfSignedCertificate> {

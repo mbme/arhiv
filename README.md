@@ -158,6 +158,7 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 * adr decision log
 * decrease decryption time - startup is too slow
   * keep unlocked?
+* retry biometric unlock
 * integration with emacs/file system - use FUSE?
 * better search - vector search? integrate tantivy?
 * better diff/merge

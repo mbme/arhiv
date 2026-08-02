@@ -6,7 +6,8 @@ Scope: local HTTPS UI server authentication, session propagation, and certificat
 
 ## 1. Components and Secrets
 
-- Server auth token: signed opaque token generated at server startup.
+- Server auth token: 256-bit opaque bearer token generated at server startup.
+- Browser bootstrap token: one-time 256-bit opaque token used only to establish a browser cookie session.
 - Server certificate: self-signed X.509 certificate read from or written to state dir (`arhiv-server.pem`).
 - Transport: HTTPS only for UI/API endpoints.
 
@@ -14,9 +15,8 @@ Scope: local HTTPS UI server authentication, session propagation, and certificat
 
 UI auth middleware (`client_authenticator`) enforces the following:
 
-1. Client token source preference:
-- Query param `AuthToken` (if present), otherwise
-- Cookie `AuthToken`.
+1. Client token source:
+- Cookie `AuthToken` only.
 
 2. Parsing and validation:
 - Token must parse as `AuthToken` serialized format.
@@ -26,20 +26,25 @@ UI auth middleware (`client_authenticator`) enforces the following:
 
 3. Session propagation:
 - On successful auth, server sets cookie `AuthToken=<token>` with attributes:
-  - `Path=/`
+  - `Path=/ui`
   - `HttpOnly`
   - `Secure`
+  - `SameSite=Strict`
 
 Auth token internals:
-- token payload is random bytes plus signature (`TOKEN_LEN=6` + signature bytes).
+- token payload is 32 random bytes.
 - serialized as URL-safe base64.
 
 ## 3. Token Issuance and Lifetime
 
 - Token is generated once per server start (`AuthToken::generate`).
-- Token signing key is derived from current certificate private key (`generate_ui_crypto_key`).
 - No TTL/expiration mechanism is enforced by middleware.
 - New server start implies new token.
+
+Browser bootstrap:
+- `browserUrl` contains a separate one-time token at `/auth`.
+- The endpoint accepts that token once, sets the authenticated cookie, and redirects to the clean `/ui` URL.
+- Query tokens are not accepted by protected UI/API routes.
 
 ## 4. Certificate Lifecycle
 
@@ -79,14 +84,14 @@ Android cookie setup:
 ## 7. Boundary and Assumptions
 
 - UI URLs are emitted as `https://localhost:<port>/ui`.
-- Server socket may bind wildcard address, but launcher trust contract is localhost URL + pinned certificate data.
+- Server socket binds IPv4 loopback only (`127.0.0.1`).
 - This model is local-process trust, not PKI CA trust.
 
 ## 8. Known Limitations
 
 - No token expiry/rotation within a running server process.
 - No documented multi-client session separation; all clients use same server token for that server instance.
-- No CSRF-specific mechanism beyond token cookie/query gate and localhost deployment assumptions.
+- No CSRF-specific mechanism beyond `SameSite=Strict` cookie handling and localhost deployment assumptions.
 
 ## 9. Source of Truth (Code References)
 

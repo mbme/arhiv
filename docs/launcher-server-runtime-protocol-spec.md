@@ -15,15 +15,17 @@ Scope: startup/shutdown contract between launchers (CLI/Desktop/Android) and the
 Canonical Rust struct (`serde` camelCase):
 
 - `uiUrl: string`
-- `uiUrlWithAuthToken: string`
+- `browserUrl: string`
 - `healthUrl: string`
 - `certificate: number[]` (DER bytes)
 - `authToken: string`
 
 URL construction rules:
 - `uiUrl = https://localhost:<port>/ui`
-- `uiUrlWithAuthToken = <uiUrl>?AuthToken=<authToken>`
+- `browserUrl = https://localhost:<port>/auth?token=<one-time-browser-bootstrap-token>`
 - `healthUrl = https://localhost:<port>/health`
+
+`browserUrl` is for `arhiv server --browser` only. It establishes an authenticated cookie session and redirects to the clean `uiUrl`. Desktop and Android launchers use `authToken` to set the cookie directly.
 
 Notes:
 - Desktop TypeScript `ServerInfo` currently reads a subset (`uiUrl`, `healthUrl`, `certificate`, `authToken`) and ignores extra fields.

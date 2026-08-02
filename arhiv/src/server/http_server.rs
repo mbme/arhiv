@@ -105,7 +105,7 @@ pub struct HttpServer {
 
 impl HttpServer {
     pub async fn new_http(port: u16, router: Router) -> Result<Self> {
-        let addr: SocketAddr = (std::net::Ipv4Addr::UNSPECIFIED, port).into();
+        let addr = localhost_address(port);
         let server_handle = Handle::new();
         let server = axum_server::Server::bind(addr).handle(server_handle.clone());
 
@@ -151,7 +151,7 @@ impl HttpServer {
 
         let server_handle = Handle::new();
 
-        let addr: SocketAddr = (std::net::Ipv4Addr::UNSPECIFIED, port).into();
+        let addr = localhost_address(port);
 
         let acceptor = RustlsAcceptor::new(config);
         let server = Server::bind(addr)
@@ -208,6 +208,20 @@ impl HttpServer {
         self.join_handle.await.context("failed to join")??;
 
         Ok(())
+    }
+}
+
+fn localhost_address(port: u16) -> SocketAddr {
+    (std::net::Ipv4Addr::LOCALHOST, port).into()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::localhost_address;
+
+    #[test]
+    fn server_binds_to_ipv4_loopback() {
+        assert_eq!(localhost_address(23421).to_string(), "127.0.0.1:23421");
     }
 }
 

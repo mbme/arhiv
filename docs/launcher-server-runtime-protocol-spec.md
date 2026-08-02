@@ -6,7 +6,7 @@ Scope: startup/shutdown contract between launchers (CLI/Desktop/Android) and the
 
 ## 1. Runtime Surfaces
 
-- CLI server command: `arhiv server [--json] [--port <u16>]`.
+- CLI server command: `arhiv server [--json] [--browser] [--port <u16>]`.
 - Desktop launcher: spawns CLI server process and parses server info marker from stderr.
 - Android launcher: invokes server start/stop via JNI and receives a `ServerInfo` object.
 
@@ -91,6 +91,8 @@ Android process model:
 
 CLI path:
 - server runs until shutdown signal, then `server.shutdown()` is awaited.
+- With `--browser`, CLI logs `browserUrl`, starts the browser without blocking server startup, and reaps the browser child in the background.
+- On Unix, the browser starts in its own process group so terminal signal delivery to the CLI does not terminate the browser.
 
 Desktop path:
 - desktop process owns spawned CLI child process and kills it on process exit.

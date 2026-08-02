@@ -16,6 +16,7 @@ Read the relevant spec before changing behavior in that area:
 - Storage format/container/index semantics: `docs/arhiv-encrypted-file-format.md`.
 - Schema/data-version contract: `docs/storage-schema-contract-spec.md`.
 - Storage migrations/rollback rules: `docs/storage-migration-playbook.md`.
+- System-wide security goals, attackers, and trust boundaries: `docs/system-threat-model.md`.
 - Key hierarchy/lifecycle/recoverability: `docs/crypto-key-lifecycle-threat-model.md`.
 - Cross-device conflict semantics: `docs/merge-conflicts-spec.md`.
 - Auth/session/certificate trust chain: `docs/auth-session-trust-chain-spec.md`.

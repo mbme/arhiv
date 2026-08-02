@@ -54,8 +54,12 @@ class DownloadRequest {
       try (Response resp = client.newCall(http).execute()) {
         if (!resp.isSuccessful()) throw new IOException("HTTP " + resp);
         try (OutputStream out = context.getContentResolver().openOutputStream(destUri)) {
-          assert out != null;
-          assert resp.body() != null;
+          if (out == null) {
+            throw new IOException("Could not open selected download destination");
+          }
+          if (resp.body() == null) {
+            throw new IOException("Download response has no body");
+          }
           try (BufferedSource src = resp.body().source()) {
             try (okio.BufferedSink sink = Okio.buffer(Okio.sink(out))) {
               sink.writeAll(src);

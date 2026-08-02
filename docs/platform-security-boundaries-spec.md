@@ -52,6 +52,8 @@ Boundary implication:
 - Android app starts server through JNI (`ArhivServer.startServer`).
 - Rust JNI layer stores singletons for runtime and server behind process-global mutexes.
 - Start is single-instance per app process (`Runtime already started` / `Server already started`).
+- Expected server startup failures are returned to Java and shown as a native error dialog;
+  they do not terminate the app process.
 
 Boundary implication:
 - Java/Kotlin UI and Rust server runtime share one app sandbox/process context (with JNI boundary).
@@ -85,9 +87,12 @@ Boundary implication:
 - WebView TLS errors are handled explicitly.
 - Certificate is accepted only if presented certificate DER bytes exactly match startup `serverInfo.certificate` bytes.
 - Non-matching certs are rejected.
+- Android does not permit cleartext traffic.
 
 Additional download path:
 - download helper builds OkHttp client with the same trust manager and a `localhost` hostname verifier.
+- File chooser requests are completed exactly once. Starting a replacement request cancels the prior
+  request, and activity destruction cancels any outstanding request.
 
 ## 3.5 Permissions and storage boundary
 
@@ -134,5 +139,4 @@ UI capture boundary:
 - `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/MainActivity.java`
 - `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/Keyring.java`
 - `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/DownloadRequest.java`
-- `arhiv-android/app/src/main/res/xml/network_security_config.xml`
 - `arhiv-android/src/lib.rs`

@@ -126,6 +126,10 @@ prod-build-android-libs: _prepare_to_building_android_libs
 build-android-app:
   cd arhiv-android; ./gradlew assembleDebug
 
+test-android-app:
+  cargo test -p arhiv-android
+  cd arhiv-android; ./gradlew testDebugUnitTest
+
 prod-build-android-app:
   cd arhiv-android; \
   VERSION_CODE=$(just print-version) \

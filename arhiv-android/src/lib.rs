@@ -21,6 +21,7 @@ use baza_common::{SecretString, init_global_rayon_threadpool, log};
 use self::keyring::AndroidKeyring;
 
 static LOG_INITIALIZED: AtomicBool = AtomicBool::new(false);
+static RAYON_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 static RUNTIME: LazyLock<Mutex<Option<Runtime>>> = LazyLock::new(|| Mutex::new(None));
 static ARHIV_SERVER: LazyLock<Mutex<Option<ArhivServer>>> = LazyLock::new(|| Mutex::new(None));
@@ -39,7 +40,10 @@ fn start_server(options: ArhivOptions, port: u16) -> Result<ServerInfo> {
     let worker_threads_count = Arhiv::optimal_number_of_worker_threads();
     log::debug!("Using {worker_threads_count} worker threads");
 
-    init_global_rayon_threadpool(worker_threads_count)?;
+    if !RAYON_INITIALIZED.load(Ordering::Acquire) {
+        init_global_rayon_threadpool(worker_threads_count)?;
+        RAYON_INITIALIZED.store(true, Ordering::Release);
+    }
 
     let mut builder = tokio::runtime::Builder::new_multi_thread();
     builder.worker_threads(worker_threads_count);
@@ -131,8 +135,26 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
             keyring: AndroidKeyring::new_arhiv_keyring(storage_key, android_controller, jvm),
         };
 
-        let server_info =
-            start_server(options, ArhivServer::DEFAULT_PORT).expect("must start server");
+        let start_result_class = env
+            .find_class(jni_str!("me/mbsoftware/arhiv/ServerStartResult"))
+            .expect("Couldn't find ServerStartResult class");
+
+        let server_info = match start_server(options, ArhivServer::DEFAULT_PORT) {
+            Ok(server_info) => server_info,
+            Err(error) => {
+                let error = env
+                    .new_string(format!("{error:#}"))
+                    .expect("Couldn't create server startup error String");
+                let null_server_info = JObject::null();
+                return Ok(env
+                    .new_object(
+                        &start_result_class,
+                        jni_sig!("(Lme/mbsoftware/arhiv/ServerInfo;Ljava/lang/String;)V"),
+                        &[JValue::Object(&null_server_info), JValue::Object(&error)],
+                    )
+                    .expect("Couldn't create failed ServerStartResult"));
+            }
+        };
 
         // Create an instance of me.mbsoftware.arhiv.ServerInfo using JNI
         let server_info_class = env
@@ -191,32 +213,67 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
         }
         .expect("Couldn't set field byte[] certificate");
 
-        Ok(server_info_object)
+        let null_error = JObject::null();
+        env.new_object(
+            &start_result_class,
+            jni_sig!("(Lme/mbsoftware/arhiv/ServerInfo;Ljava/lang/String;)V"),
+            &[
+                JValue::Object(&server_info_object),
+                JValue::Object(&null_error),
+            ],
+        )
     });
 
     outcome.resolve::<jni::errors::ThrowRuntimeExAndDefault>()
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_stopServer() {
-    stop_server().expect("must stop server");
-    log::info!("Stopped server");
+pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_stopServer<'local>(
+    mut env: EnvUnowned<'local>,
+    _class: JClass,
+) -> JString<'local> {
+    let outcome = env.with_env(|env| -> jni::errors::Result<JString<'local>> {
+        match stop_server() {
+            Ok(()) => {
+                log::info!("Stopped server");
+                Ok(JString::default())
+            }
+            Err(error) => env.new_string(format!("{error:#}")),
+        }
+    });
+
+    outcome.resolve::<jni::errors::ThrowRuntimeExAndDefault>()
 }
 
 #[cfg(test)]
 mod tests {
     use core::time;
-    use std::thread;
+    use std::{sync::atomic::Ordering, thread};
 
     use arhiv::{ArhivKeyring, ArhivOptions};
     use baza_common::TempFile;
 
-    use crate::{start_server, stop_server};
+    use crate::{RAYON_INITIALIZED, start_server, stop_server};
 
     #[test]
     fn test_arhiv_server_for_android() {
+        // Other Rust tests may have initialized Rayon's process-global pool before this test.
+        // The Android runtime must then use that existing pool.
+        RAYON_INITIALIZED.store(true, Ordering::Release);
+
         let temp_dir = TempFile::new_with_details("AndroidTest", "");
         temp_dir.mkdir().expect("must create temp dir");
+
+        let invalid_state_dir = format!("{temp_dir}/not-a-directory");
+        std::fs::write(&invalid_state_dir, "").expect("must create invalid state path");
+        let failed_options = ArhivOptions {
+            storage_dir: format!("{temp_dir}/storage"),
+            state_dir: invalid_state_dir,
+            downloads_dir: format!("{temp_dir}/downloads"),
+            file_browser_root_dir: temp_dir.to_string(),
+            keyring: ArhivKeyring::new_noop(),
+        };
+        assert!(start_server(failed_options, 0).is_err());
 
         let options = ArhivOptions {
             storage_dir: format!("{temp_dir}/storage"),

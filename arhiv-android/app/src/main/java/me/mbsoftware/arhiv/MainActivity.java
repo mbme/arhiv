@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
   private WebView webView;
 
-  private ValueCallback<Uri[]> filePathCallback;
+  private final FileChooserRequest fileChooserRequest = new FileChooserRequest();
   private ActivityResultLauncher<Intent> filePickerLauncher;
   private ActivityResultLauncher<Intent> downloadFileLocationPicker;
   private DownloadRequest pendingDownload;
@@ -81,11 +81,6 @@ public class MainActivity extends AppCompatActivity {
       result -> {
         Log.d(TAG, "Got result from File Picker activity: " + result.getResultCode());
 
-        if (filePathCallback == null) {
-          Log.w(TAG, "filePathCallback is null, ignoring File Picker results!");
-          return;
-        }
-
         Uri[] results = null;
         if (result.getResultCode() == RESULT_OK) {
           Intent data = result.getData();
@@ -102,20 +97,19 @@ public class MainActivity extends AppCompatActivity {
             }
           }
         }
-        filePathCallback.onReceiveValue(results);
-        filePathCallback = null;
+        fileChooserRequest.complete(results);
       });
 
     downloadFileLocationPicker = registerForActivityResult(
       new ActivityResultContracts.StartActivityForResult(),
       result -> {
-        if (result.getResultCode() == RESULT_OK && pendingDownload != null) {
-          assert result.getData() != null;
+        DownloadRequest download = pendingDownload;
+        pendingDownload = null;
+        if (result.getResultCode() == RESULT_OK && download != null && result.getData() != null) {
           Uri dest = result.getData().getData();
           if (dest != null) {
-            pendingDownload.performDownloadToUri(this, dest);
+            download.performDownloadToUri(this, dest);
           }
-          pendingDownload = null;
         }
       });
     ensureIsExternalStorageManager();
@@ -284,19 +278,24 @@ public class MainActivity extends AppCompatActivity {
       Log.w(TAG, "Ignoring duplicate app startup request");
       return;
     }
-    appStarted = true;
 
     Log.i(TAG, "Starting Arhiv server");
 
     String downloadsPath = Objects.requireNonNull(this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)).getAbsolutePath();
 
-    ServerInfo serverInfo = ArhivServer.startServer(
+    ServerStartResult startResult = ArhivServer.startServer(
       this.getFilesDir().getAbsolutePath(),
       Environment.getExternalStorageDirectory().getAbsolutePath(),
       downloadsPath,
       storageKey,
       new AndroidController(this)
     );
+    if (startResult.serverInfo == null) {
+      showServerStartFailure(startResult.error);
+      return;
+    }
+    ServerInfo serverInfo = startResult.serverInfo;
+    appStarted = true;
 
     if (webView == null) {
       Log.i(TAG, "Initializing WebView");
@@ -396,7 +395,7 @@ public class MainActivity extends AppCompatActivity {
                                        FileChooserParams fileChooserParams) {
         Log.d(TAG, "Starting File Picker activity");
 
-        MainActivity.this.filePathCallback = filePathCallback;
+        fileChooserRequest.replace(filePathCallback);
 
         Intent intent = fileChooserParams.createIntent();
         intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
@@ -405,7 +404,7 @@ public class MainActivity extends AppCompatActivity {
           filePickerLauncher.launch(intent);
         } catch (Exception e) {
           Log.e(TAG, "Failed to launch file picker:", e);
-          MainActivity.this.filePathCallback = null;
+          fileChooserRequest.complete(null);
           return false;
         }
         return true;
@@ -501,12 +500,30 @@ public class MainActivity extends AppCompatActivity {
 
   @Override
   protected void onDestroy() {
+    fileChooserRequest.complete(null);
+
     if (appStarted) {
       Log.i(TAG, "Stopping Arhiv server");
-      ArhivServer.stopServer();
-      Log.i(TAG, "Stopped Arhiv server");
+      String error = ArhivServer.stopServer();
+      if (error == null) {
+        Log.i(TAG, "Stopped Arhiv server");
+      } else {
+        Log.e(TAG, "Failed to stop Arhiv server: " + error);
+      }
     }
 
     super.onDestroy();
+  }
+
+  private void showServerStartFailure(String error) {
+    String message = error == null
+      ? "Arhiv could not start."
+      : "Arhiv could not start: " + error;
+    new AlertDialog.Builder(this)
+      .setTitle("Unable to start Arhiv")
+      .setMessage(message)
+      .setPositiveButton("Close", (dialog, which) -> finishAffinity())
+      .setCancelable(false)
+      .show();
   }
 }

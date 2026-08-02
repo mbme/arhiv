@@ -65,6 +65,11 @@ Response variants:
 - `CreateArhiv`, `LockArhiv`, `UnlockArhiv`
 - `ImportKey`, `ExportKey`, `CountConflicts`
 
+`UnlockArhiv` response:
+- `outcome: "unlocked" | "needsPassword"`
+- `needsPassword` is a normal response for a missing, unavailable, malformed, or non-matching
+  cached device key. The UI must show password/import recovery without treating it as an HTTP error.
+
 ## 5. Domain Type Mapping Notes
 
 Notable mappings:

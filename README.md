@@ -159,6 +159,7 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 * decrease decryption time - startup is too slow
   * keep unlocked?
 * retry biometric unlock
+* high value (low hanging?) things to be improved in android app?
 * integration with emacs/file system - use FUSE?
 * better search - vector search? integrate tantivy?
 * better diff/merge

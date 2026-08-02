@@ -6,7 +6,9 @@ use std::{cmp::min, sync::Arc};
 
 use anyhow::{Result, bail};
 
-use baza::{AutoCommitService, AutoCommitTask, BazaManager, BazaPaths, DEV_MODE};
+use baza::{
+    AutoCommitService, AutoCommitTask, BazaManager, BazaPaths, DEV_MODE, StorageKeyUnlockResult,
+};
 use baza_common::{
     SecretString, get_linux_data_home, get_linux_downloads_dir, get_linux_home_dir,
     into_absolute_path, log, num_cpus,
@@ -16,6 +18,12 @@ use crate::definitions::get_standard_schema;
 
 pub use self::keyring::{ArhivKeyring, Keyring};
 pub use self::status::Status;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CacheUnlockResult {
+    Unlocked,
+    NeedsPassword,
+}
 
 pub struct ArhivOptions {
     pub storage_dir: String,
@@ -121,7 +129,7 @@ impl Arhiv {
         }
 
         self.baza.create(password.clone())?;
-        self.keyring.set_password(Some(password))?;
+        self.save_unlocked_storage_key()?;
 
         Ok(())
     }
@@ -129,8 +137,8 @@ impl Arhiv {
     pub fn lock(&self) -> Result<()> {
         log::info!("Locking Arhiv");
 
+        self.keyring.set_storage_key(None)?;
         self.baza.lock()?;
-        self.keyring.set_password(None)?;
 
         Ok(())
     }
@@ -138,20 +146,28 @@ impl Arhiv {
     pub fn unlock(&self, password: SecretString) -> Result<()> {
         log::info!("Unlocking Arhiv");
 
-        self.baza.unlock(password.clone())?;
-        self.keyring.set_password(Some(password))?;
+        self.baza.unlock(password)?;
+        self.save_unlocked_storage_key()?;
 
         Ok(())
     }
 
-    pub fn unlock_using_keyring(&self) -> Result<bool> {
-        let password = self.keyring.get_password()?;
+    pub fn unlock_using_keyring(&self) -> Result<CacheUnlockResult> {
+        let storage_key = match self.keyring.get_storage_key() {
+            Ok(storage_key) => storage_key,
+            Err(err) => {
+                log::warn!("Failed to retrieve cached storage key: {err}");
+                return Ok(CacheUnlockResult::NeedsPassword);
+            }
+        };
 
-        if let Some(password) = password {
-            self.baza.unlock(password)?;
-            Ok(true)
+        if let Some(storage_key) = storage_key {
+            match self.baza.unlock_using_storage_key(storage_key)? {
+                StorageKeyUnlockResult::Unlocked => Ok(CacheUnlockResult::Unlocked),
+                StorageKeyUnlockResult::Invalid => Ok(CacheUnlockResult::NeedsPassword),
+            }
         } else {
-            Ok(false)
+            Ok(CacheUnlockResult::NeedsPassword)
         }
     }
 
@@ -165,9 +181,17 @@ impl Arhiv {
         self.baza
             .change_key_file_password(old_password, new_password.clone())?;
 
-        self.keyring.set_password(Some(new_password))?;
-
         Ok(())
+    }
+
+    pub fn import_key(&self, encrypted_key_data: String, password: SecretString) -> Result<()> {
+        self.baza.import_key(encrypted_key_data, password)?;
+        self.save_unlocked_storage_key()
+    }
+
+    fn save_unlocked_storage_key(&self) -> Result<()> {
+        self.keyring
+            .set_storage_key(Some(self.baza.get_unlocked_storage_key()?))
     }
 
     pub fn get_status(&self) -> Result<String> {
@@ -196,5 +220,57 @@ impl Arhiv {
         let num_cpus = num_cpus().ok().unwrap_or(1);
 
         min(num_cpus, 3)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::{Arc, Mutex};
+
+    use anyhow::{Result, bail};
+    use baza_common::TempFile;
+
+    use super::*;
+
+    struct TestKeyring {
+        value: Mutex<Option<SecretString>>,
+        fail_deletion: bool,
+    }
+
+    impl Keyring for TestKeyring {
+        fn get_string(&self, _name: &str) -> Result<Option<SecretString>> {
+            Ok(self.value.lock().unwrap().clone())
+        }
+
+        fn set_string(&self, _name: &str, value: Option<SecretString>) -> Result<()> {
+            if value.is_none() && self.fail_deletion {
+                bail!("simulated credential deletion failure");
+            }
+
+            *self.value.lock().unwrap() = value;
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn lock_does_not_drop_the_in_memory_key_when_cache_deletion_fails() {
+        let temp_dir = TempFile::new_with_details("arhiv", "");
+        temp_dir.mkdir().unwrap();
+
+        let keyring = ArhivKeyring::new(Arc::new(TestKeyring {
+            value: Mutex::new(None),
+            fail_deletion: true,
+        }));
+        let arhiv = Arhiv::new(ArhivOptions {
+            storage_dir: format!("{temp_dir}/storage"),
+            state_dir: format!("{temp_dir}/state"),
+            downloads_dir: format!("{temp_dir}/downloads"),
+            file_browser_root_dir: temp_dir.to_string(),
+            keyring,
+        });
+        arhiv.create("test password".into()).unwrap();
+
+        assert!(arhiv.lock().is_err());
+        assert!(arhiv.baza.is_unlocked());
     }
 }

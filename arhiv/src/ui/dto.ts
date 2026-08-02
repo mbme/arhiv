@@ -175,6 +175,7 @@ export type APIResponse =
     }
   | {
       typeName: 'UnlockArhiv';
+      outcome: 'unlocked' | 'needsPassword';
     }
   | {
       typeName: 'ImportKey';

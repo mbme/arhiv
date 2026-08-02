@@ -213,16 +213,16 @@ public class MainActivity extends AppCompatActivity {
       throw new SecurityException("Failed to generate KeyStore key");
     }
 
-    Keyring.loadPassword(this, new LoadPasswordCallback() {
+    Keyring.loadStorageKey(this, new LoadPasswordCallback() {
       @Override
-      public void onSuccess(String password) {
-        if (password == null) {
-          Log.i(TAG, "Authentication: no password");
+      public void onSuccess(String storageKey) {
+        if (storageKey == null) {
+          Log.i(TAG, "Authentication: no cached storage key");
         } else {
-          Log.i(TAG, "Authentication: decrypted password");
+          Log.i(TAG, "Authentication: decrypted cached storage key");
         }
 
-        initApp(password);
+        initApp(storageKey);
       }
 
       @Override
@@ -234,7 +234,7 @@ public class MainActivity extends AppCompatActivity {
 
   }
 
-  private void initApp(String password) {
+  private void initApp(String storageKey) {
     Log.i(TAG, "Starting Arhiv server");
 
     String downloadsPath = Objects.requireNonNull(this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)).getAbsolutePath();
@@ -243,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
       this.getFilesDir().getAbsolutePath(),
       Environment.getExternalStorageDirectory().getAbsolutePath(),
       downloadsPath,
-      password,
+      storageKey,
       new AndroidController(this)
     );
 

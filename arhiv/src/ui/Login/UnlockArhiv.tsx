@@ -14,17 +14,21 @@ export function UnlockArhiv() {
 
   const [password, setPassword] = useState<string>();
 
-  const { error, inProgress, triggerRefresh, result } = useQuery(async (abortSignal) => {
+  const { error, inProgress, triggerRefresh } = useQuery(async (abortSignal) => {
     try {
-      await RPC.UnlockArhiv({ password, $secret: true }, abortSignal);
-      location.reload();
+      const response = await RPC.UnlockArhiv({ password, $secret: true }, abortSignal);
+      if (response.outcome === 'unlocked') {
+        location.reload();
+      } else {
+        setInitialized(true);
+      }
     } catch (e) {
       setInitialized(true);
       throw e;
     }
   });
 
-  const isUnlocking = !initialized || inProgress || result;
+  const isUnlocking = !initialized || inProgress;
 
   if (importMode) {
     return (

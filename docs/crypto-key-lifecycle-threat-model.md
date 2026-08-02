@@ -46,10 +46,11 @@ Arhiv uses AGE-based encryption with three practical key layers:
 1. Decrypts `key.age` with password key.
 2. Parses decrypted x25519 storage master key.
 3. Stores key in process memory and allows storage/state access.
+4. Saves the serialized storage master key to platform-protected local credential storage when available.
 
 `lock()`:
-- Drops in-memory key/cache and clears cached opened state.
-- In desktop path, password is removed from system keyring.
+- Durably removes the platform-protected cached storage key before dropping the in-memory key/cache.
+- If credential deletion fails, lock fails and leaves the in-memory key available.
 
 ### 3.3 Change Password
 
@@ -139,12 +140,15 @@ Limitations:
 ## 7. Keyring / Platform Integration Boundaries
 
 Desktop/server:
-- Optional system keyring stores the Arhiv password for convenience.
-- `lock()` erases stored password entry; `unlock()` writes it.
+- Optional system keyring stores the serialized x25519 storage master key for convenience.
+- Missing, malformed, or non-matching cached keys require password/import recovery; storage
+  corruption and other open failures remain errors.
+- `lock()` erases the cached storage-key entry; password unlock writes it.
 
 Android:
-- Password storage uses Android keystore + biometric-gated encrypt/decrypt flow.
-- Rust side keeps an in-memory password copy after init in current integration design.
+- Storage-key cache uses Android keystore + biometric/device-credential-gated encrypt/decrypt flow.
+- Rust side keeps an in-memory storage-key copy after init. The legacy password payload is not read
+  or migrated.
 
 Security boundary statement:
 - Keyring/keystore are convenience and local UX mechanisms, not trust anchors that replace encryption keys or backups.

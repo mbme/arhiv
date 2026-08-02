@@ -8,11 +8,19 @@ use std::{
 use anyhow::{Context, Result, anyhow, ensure};
 
 use baza_common::{LockFile, SecretString, log};
-use baza_storage::crypto::age::{AgeKey, AgeReader, AgeWriter, read_and_decrypt_file};
+use baza_storage::crypto::age::{
+    AgeKey, AgeReader, AgeWriter, is_no_matching_keys_error, read_and_decrypt_file,
+};
 
 use crate::{Baza, entities::InstanceId};
 
 use super::BazaManager;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StorageKeyUnlockResult {
+    Unlocked,
+    Invalid,
+}
 
 #[derive(Default)]
 pub struct BazaManagerState {
@@ -188,6 +196,35 @@ impl BazaManager {
         log::info!("Unlocked baza in {duration:?}");
 
         Ok(())
+    }
+
+    /// Unlock using a locally cached storage key. A malformed key or a key that
+    /// cannot decrypt storage is recoverable with the password-protected key file.
+    /// Storage failures unrelated to the key remain errors.
+    pub fn unlock_using_storage_key(
+        &self,
+        serialized_key: SecretString,
+    ) -> Result<StorageKeyUnlockResult> {
+        let key = match AgeKey::from_age_x25519_key(serialized_key) {
+            Ok(key) => key,
+            Err(_) => return Ok(StorageKeyUnlockResult::Invalid),
+        };
+
+        let _lock = self.wait_for_file_lock()?;
+        let mut state = self.acquire_state_write_lock()?;
+
+        match self.assert_is_valid_key(key.clone(), &_lock) {
+            Ok(()) => {
+                state.unlock(key);
+                Ok(StorageKeyUnlockResult::Unlocked)
+            }
+            Err(err) if is_no_matching_keys_error(&err) => Ok(StorageKeyUnlockResult::Invalid),
+            Err(err) => Err(err),
+        }
+    }
+
+    pub fn get_unlocked_storage_key(&self) -> Result<SecretString> {
+        Ok(self.acquire_state_read_lock()?.get_key()?.serialize())
     }
 
     pub fn lock(&self) -> Result<()> {

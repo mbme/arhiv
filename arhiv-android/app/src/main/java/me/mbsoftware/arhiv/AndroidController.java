@@ -15,23 +15,25 @@ public class AndroidController {
     this.context = context;
   }
 
-  public void savePassword(String password) {
-    if (!Keyring.isDeviceSecure(context)) {
-      Log.w(TAG, "Can't save password: device is not secure");
+  public void saveStorageKey(String storageKey) {
+    if (storageKey == null) {
+      Log.i(TAG, "Erasing cached storage key");
+      if (!Keyring.eraseStorageKey(context)) {
+        throw new IllegalStateException("Failed to erase cached storage key");
+      }
       return;
     }
 
-    if (password == null) {
-      Log.i(TAG, "Erasing password");
-      Keyring.erasePassword(context);
+    if (!Keyring.isDeviceSecure(context)) {
+      Log.w(TAG, "Can't save storage key: device is not secure");
       return;
     }
 
     new Handler(Looper.getMainLooper()).post(() -> {
       try {
-        Keyring.savePassword(context, password);
+        Keyring.saveStorageKey(context, storageKey);
       } catch (Exception e) {
-        Log.e(TAG, "Failed to save password: ", e);
+        Log.e(TAG, "Failed to save storage key: ", e);
       }
     });
   }

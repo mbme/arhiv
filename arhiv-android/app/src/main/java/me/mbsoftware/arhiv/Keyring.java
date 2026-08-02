@@ -30,7 +30,7 @@ public class Keyring {
 
   private static final String KEYSTORE_ALIAS = "ArhivKeystore";
   private static final String SHARED_PREFS_NAME = "ArhivPrefs";
-  private static final String PASSWORD_KEY = "encrypted_password";
+  private static final String STORAGE_KEY = "encrypted_storage_key";
   private static final int GCM_IV_LENGTH = 12;
   private static final int GCM_TAG_LENGTH = 128;
 
@@ -64,7 +64,7 @@ public class Keyring {
     keyGenerator.generateKey();
   }
 
-  public static void savePassword(FragmentActivity context, String password) throws Exception {
+  public static void saveStorageKey(FragmentActivity context, String storageKey) throws Exception {
     Cipher cipher = getCipher();
     cipher.init(Cipher.ENCRYPT_MODE, getSecretKey());
 
@@ -74,7 +74,7 @@ public class Keyring {
       new BiometricPrompt.AuthenticationCallback() {
         @Override
         public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
-          Log.e(TAG, "Save password: authentication error: " + errorCode + " " + errString);
+          Log.e(TAG, "Save storage key: authentication error: " + errorCode + " " + errString);
         }
 
         @Override
@@ -84,29 +84,29 @@ public class Keyring {
             assert cipher != null;
 
             byte[] iv = cipher.getIV();
-            byte[] encrypted = cipher.doFinal(password.getBytes(StandardCharsets.UTF_8));
+            byte[] encrypted = cipher.doFinal(storageKey.getBytes(StandardCharsets.UTF_8));
 
             byte[] combined = new byte[iv.length + encrypted.length];
             System.arraycopy(iv, 0, combined, 0, iv.length);
             System.arraycopy(encrypted, 0, combined, iv.length, encrypted.length);
 
             SharedPreferences prefs = context.getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE);
-            prefs.edit().putString(PASSWORD_KEY, Base64.encodeToString(combined, Base64.DEFAULT)).apply();
+            prefs.edit().putString(STORAGE_KEY, Base64.encodeToString(combined, Base64.DEFAULT)).apply();
           } catch (Exception e) {
-            Log.e(TAG, "Save password: failed to encrypt", e);
+            Log.e(TAG, "Save storage key: failed to encrypt", e);
           }
         }
 
         @Override
         public void onAuthenticationFailed() {
-          Log.e(TAG, "Save password: authentication failed");
+          Log.e(TAG, "Save storage key: authentication failed");
         }
       }
     );
 
     BiometricPrompt.PromptInfo promptInfo = new BiometricPrompt.PromptInfo.Builder()
       .setTitle("Authentication required")
-      .setSubtitle("Unlock to save Arhiv password")
+      .setSubtitle("Unlock to save Arhiv storage key")
       .setConfirmationRequired(false)
       .setAllowedAuthenticators(
         BiometricManager.Authenticators.BIOMETRIC_STRONG |
@@ -116,23 +116,23 @@ public class Keyring {
     biometricPrompt.authenticate(promptInfo, new BiometricPrompt.CryptoObject(cipher));
   }
 
-  public static void loadPassword(FragmentActivity context, LoadPasswordCallback callback) {
+  public static void loadStorageKey(FragmentActivity context, LoadPasswordCallback callback) {
     SharedPreferences prefs = context.getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE);
-    String encryptedPassword = prefs.getString(PASSWORD_KEY, null);
-    if (encryptedPassword == null) {
+    String encryptedStorageKey = prefs.getString(STORAGE_KEY, null);
+    if (encryptedStorageKey == null) {
       callback.onSuccess(null);
       return;
     }
 
     Cipher cipher;
     try {
-      byte[] combined = Base64.decode(encryptedPassword, Base64.DEFAULT);
+      byte[] combined = Base64.decode(encryptedStorageKey, Base64.DEFAULT);
       byte[] iv = Arrays.copyOfRange(combined, 0, GCM_IV_LENGTH);
 
       cipher = getCipher();
       cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), new GCMParameterSpec(GCM_TAG_LENGTH, iv));
     } catch (Exception e) {
-      Log.e(TAG, "Load password: failed to build cipher for decryption", e);
+      Log.e(TAG, "Load storage key: failed to build cipher for decryption", e);
       callback.onError("Failed to build cipher for decryption: " + e);
       return;
     }
@@ -152,14 +152,14 @@ public class Keyring {
             Cipher cipher = Objects.requireNonNull(result.getCryptoObject()).getCipher();
             assert cipher != null;
 
-            byte[] combined = Base64.decode(encryptedPassword, Base64.DEFAULT);
+            byte[] combined = Base64.decode(encryptedStorageKey, Base64.DEFAULT);
             byte[] encrypted = Arrays.copyOfRange(combined, GCM_IV_LENGTH, combined.length);
 
             byte[] decryptedData = cipher.doFinal(encrypted);
 
             callback.onSuccess(new String(decryptedData, StandardCharsets.UTF_8));
           } catch (Exception e) {
-            Log.e(TAG, "Load password: failed to decrypt", e);
+            Log.e(TAG, "Load storage key: failed to decrypt", e);
             callback.onError("Failed to decrypt: " + e);
           }
         }
@@ -184,9 +184,9 @@ public class Keyring {
     biometricPrompt.authenticate(promptInfo, new BiometricPrompt.CryptoObject(cipher));
   }
 
-  public static void erasePassword(Context context) {
+  public static boolean eraseStorageKey(Context context) {
     SharedPreferences prefs = context.getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE);
-    prefs.edit().remove(PASSWORD_KEY).apply();
+    return prefs.edit().remove(STORAGE_KEY).commit();
   }
 
   private static SecretKey getSecretKey() throws Exception {

@@ -18,6 +18,7 @@ use super::{
 };
 
 use self::manager_state::BazaManagerState;
+pub use self::manager_state::StorageKeyUnlockResult;
 
 pub struct BazaManager {
     schema: DataSchema,
@@ -202,7 +203,7 @@ mod tests {
 
     use crate::{
         BazaStorage,
-        baza_manager::BazaManager,
+        baza_manager::{BazaManager, StorageKeyUnlockResult},
         baza_paths::BazaPaths,
         baza_storage::BazaFileStorage,
         entities::{new_document, new_empty_document},
@@ -416,5 +417,58 @@ mod tests {
             assert!(baza.has_staged_documents());
             assert!(baza.has_document_locks());
         }
+    }
+
+    #[test]
+    fn test_unlock_using_cached_storage_key() {
+        let temp_dir = TempFile::new_with_details("baza_manager", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
+        let storage_key = manager.get_unlocked_storage_key().unwrap();
+        manager.lock().unwrap();
+
+        assert_eq!(
+            manager.unlock_using_storage_key(storage_key).unwrap(),
+            StorageKeyUnlockResult::Unlocked
+        );
+        assert!(manager.is_unlocked());
+    }
+
+    #[test]
+    fn test_unlock_using_invalid_cached_storage_key() {
+        let temp_dir = TempFile::new_with_details("baza_manager", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
+        manager.lock().unwrap();
+
+        assert_eq!(
+            manager
+                .unlock_using_storage_key("not an x25519 identity".into())
+                .unwrap(),
+            StorageKeyUnlockResult::Invalid
+        );
+
+        let wrong_key = baza_storage::crypto::age::AgeKey::generate_age_x25519_key().serialize();
+        assert_eq!(
+            manager.unlock_using_storage_key(wrong_key).unwrap(),
+            StorageKeyUnlockResult::Invalid
+        );
+        assert!(manager.is_locked());
+    }
+
+    #[test]
+    fn test_cached_storage_key_does_not_hide_storage_corruption() {
+        let temp_dir = TempFile::new_with_details("baza_manager", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
+        let storage_key = manager.get_unlocked_storage_key().unwrap();
+        manager.lock().unwrap();
+        std::fs::write(&manager.paths.storage_main_db_file, b"corrupt").unwrap();
+
+        assert!(manager.unlock_using_storage_key(storage_key).is_err());
+        assert!(manager.is_locked());
     }
 }

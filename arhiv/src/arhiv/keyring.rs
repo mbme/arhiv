@@ -160,7 +160,7 @@ pub struct ArhivKeyring {
 }
 
 impl ArhivKeyring {
-    pub const PASSWORD: &str = "password";
+    pub const STORAGE_KEY: &str = "storage-key";
 
     pub fn new(keyring: Arc<dyn Keyring + Send + Sync>) -> ArhivKeyring {
         ArhivKeyring { keyring }
@@ -178,11 +178,12 @@ impl ArhivKeyring {
         })))
     }
 
-    pub fn get_password(&self) -> Result<Option<SecretString>> {
-        self.keyring.get_string(ArhivKeyring::PASSWORD)
+    pub fn get_storage_key(&self) -> Result<Option<SecretString>> {
+        self.keyring.get_string(ArhivKeyring::STORAGE_KEY)
     }
 
-    pub fn set_password(&self, password: Option<SecretString>) -> Result<()> {
-        self.keyring.set_string(ArhivKeyring::PASSWORD, password)
+    pub fn set_storage_key(&self, storage_key: Option<SecretString>) -> Result<()> {
+        self.keyring
+            .set_string(ArhivKeyring::STORAGE_KEY, storage_key)
     }
 }

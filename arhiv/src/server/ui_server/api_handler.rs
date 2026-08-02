@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, fs, path::Path};
 
-use anyhow::{Context, Result, anyhow, bail, ensure};
+use anyhow::{Context, Result, anyhow, bail};
 use serde::Serialize;
 
 use crate::server::media::generate_qrcode_svg;
@@ -15,9 +15,10 @@ use baza_common::{
     path_to_string, remove_file_if_exists, render_template, to_base64,
 };
 
+use crate::CacheUnlockResult;
 use crate::ui::dto::{
     APIRequest, APIResponse, DirEntry, DocumentBackref, GetDocumentsResult, ListDocumentsResult,
-    SaveDocumentErrors,
+    SaveDocumentErrors, UnlockArhivOutcome,
 };
 
 use super::ServerContext;
@@ -346,16 +347,21 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
             APIResponse::LockArhiv {}
         }
         APIRequest::UnlockArhiv { password } => {
-            if let Some(password) = password {
+            let outcome = if let Some(password) = password {
                 arhiv.unlock(password)?;
+                UnlockArhivOutcome::Unlocked
             } else {
-                let unlocked = arhiv.unlock_using_keyring()?;
-                ensure!(unlocked, "Failed to unlock Arhiv: no password in Keyring");
+                match arhiv.unlock_using_keyring()? {
+                    CacheUnlockResult::Unlocked => UnlockArhivOutcome::Unlocked,
+                    CacheUnlockResult::NeedsPassword => UnlockArhivOutcome::NeedsPassword,
+                }
+            };
+
+            if matches!(outcome, UnlockArhivOutcome::Unlocked) {
+                ctx.img_cache.init(&arhiv.baza).await?;
             }
 
-            ctx.img_cache.init(&arhiv.baza).await?;
-
-            APIResponse::UnlockArhiv {}
+            APIResponse::UnlockArhiv { outcome }
         }
         APIRequest::ImportKey {
             encrypted_key,
@@ -363,10 +369,9 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
         } => {
             let was_locked = arhiv.baza.is_locked();
 
-            arhiv.baza.import_key(encrypted_key, password.clone())?;
+            arhiv.import_key(encrypted_key, password)?;
 
             if was_locked {
-                arhiv.unlock(password)?;
                 ctx.img_cache.init(&arhiv.baza).await?;
             }
 

@@ -152,7 +152,10 @@ pub enum APIResponse {
     ReorderCollectionRefs {},
     CreateArhiv {},
     LockArhiv {},
-    UnlockArhiv {},
+    #[serde(rename_all = "camelCase")]
+    UnlockArhiv {
+        outcome: UnlockArhivOutcome,
+    },
     ImportKey {},
     #[serde(rename_all = "camelCase")]
     ExportKey {
@@ -164,6 +167,13 @@ pub enum APIResponse {
     CountConflicts {
         conflicts_count: usize,
     },
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum UnlockArhivOutcome {
+    Unlocked,
+    NeedsPassword,
 }
 
 #[derive(Serialize)]

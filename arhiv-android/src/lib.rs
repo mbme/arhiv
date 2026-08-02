@@ -85,7 +85,7 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
     app_files_dir: JString,
     external_storage_dir: JString,
     downloads_dir: JString,
-    password: JString,
+    storage_key: JString,
     android_controller: JObject, // AndroidController
 ) -> JObject<'local> {
     let outcome = env.with_env(|env| -> jni::errors::Result<JObject<'local>> {
@@ -109,14 +109,14 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
         let downloads_dir: String = downloads_dir.to_string();
         log::debug!("Donwloads dir: {downloads_dir}");
 
-        let password: Option<SecretString> = if password.as_raw().is_null() {
-            log::debug!("No password");
+        let storage_key: Option<SecretString> = if storage_key.as_raw().is_null() {
+            log::debug!("No cached storage key");
             None
         } else {
-            log::debug!("Got password");
-            let password: String = password.to_string();
+            log::debug!("Got cached storage key");
+            let storage_key: String = storage_key.to_string();
 
-            Some(password.into())
+            Some(storage_key.into())
         };
 
         let android_controller = env
@@ -128,7 +128,7 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer<'local>(
             state_dir: app_files_dir,
             downloads_dir,
             file_browser_root_dir: external_storage_dir,
-            keyring: AndroidKeyring::new_arhiv_keyring(password, android_controller, jvm),
+            keyring: AndroidKeyring::new_arhiv_keyring(storage_key, android_controller, jvm),
         };
 
         let server_info =

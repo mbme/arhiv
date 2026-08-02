@@ -5,7 +5,7 @@ use std::{
 };
 
 use age::{
-    Decryptor, Encryptor, Identity, Recipient,
+    DecryptError, Decryptor, Encryptor, Identity, Recipient,
     armor::{ArmoredReader, ArmoredWriter, Format},
     scrypt,
     secrecy::{ExposeSecret, SecretString},
@@ -238,6 +238,18 @@ pub fn encrypt_and_write<W: Write>(
 
     age_writer.write_all(data)?;
     age_writer.finish()
+}
+
+/// Returns whether an AGE decryption failure means the supplied identity did not
+/// match the encrypted file. Callers use this to distinguish an invalid cached
+/// key from storage corruption or I/O failures.
+pub fn is_no_matching_keys_error(err: &anyhow::Error) -> bool {
+    err.chain().any(|cause| {
+        matches!(
+            cause.downcast_ref::<DecryptError>(),
+            Some(DecryptError::NoMatchingKeys)
+        )
+    })
 }
 
 #[cfg(test)]

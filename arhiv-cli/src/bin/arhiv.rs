@@ -12,7 +12,7 @@ use clap_complete::{Shell, generate};
 use dialoguer::{Password, theme::ColorfulTheme};
 
 use arhiv::{
-    Arhiv, ArhivOptions, ArhivServer, definitions::get_standard_schema,
+    Arhiv, ArhivOptions, ArhivServer, CacheUnlockResult, definitions::get_standard_schema,
     server::media::generate_qrcode_svg,
 };
 use baza::{
@@ -41,9 +41,9 @@ struct CLIArgs {
 enum CLICommand {
     /// Initialize Arhiv instance on local machine
     Init,
-    /// Save Arhiv password into system keyring
+    /// Save an Arhiv storage key into the system keyring
     Login,
-    /// Erase Arhiv password from system keyring
+    /// Erase the cached Arhiv storage key from the system keyring
     Logout,
     /// Change Arhiv password
     ChangePassword,
@@ -195,9 +195,9 @@ fn unlock_arhiv(arhiv: &Arhiv) {
     }
 
     match arhiv.unlock_using_keyring() {
-        Ok(true) => return,
-        Ok(false) => {
-            log::debug!("Didn't find password in keyring");
+        Ok(CacheUnlockResult::Unlocked) => return,
+        Ok(CacheUnlockResult::NeedsPassword) => {
+            log::debug!("No usable cached storage key");
         }
         Err(err) => {
             log::error!("Failed to use keyring: {err}");
@@ -241,13 +241,13 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             arhiv.unlock(password)?;
 
-            println!("Saved password to keyring");
+            println!("Saved storage key to keyring");
         }
         CLICommand::Logout => {
             let arhiv = Arhiv::new_desktop();
             arhiv.lock()?;
 
-            println!("Erased password from keyring");
+            println!("Erased cached storage key from keyring");
         }
         CLICommand::ChangePassword => {
             let arhiv = Arhiv::new_desktop();
@@ -331,9 +331,9 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)?;
 
             let arhiv = Arhiv::new_desktop();
-            arhiv.baza.import_key(encrypted_key_data, password)?;
+            arhiv.import_key(encrypted_key_data, password)?;
 
-            println!("Imported key (and password) from {key_file}");
+            println!("Imported key and saved storage key to keyring from {key_file}");
         }
         CLICommand::Status => {
             let arhiv = Arhiv::new_desktop();

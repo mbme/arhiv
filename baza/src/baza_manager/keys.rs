@@ -123,7 +123,7 @@ impl BazaManager {
         Ok(is_valid)
     }
 
-    fn assert_is_valid_key(&self, key: AgeKey, _lock_file: &LockFile) -> Result<()> {
+    pub(super) fn assert_is_valid_key(&self, key: AgeKey, _lock_file: &LockFile) -> Result<()> {
         let db_path = if self.paths.storage_main_db_file_exists()? {
             self.paths.storage_main_db_file.clone()
         } else {
@@ -137,7 +137,7 @@ impl BazaManager {
 
         log::debug!("Using db file to check if key is valid: {db_path}");
 
-        BazaStorage::read_file(&self.paths.storage_main_db_file, key)?;
+        BazaStorage::read_file(&db_path, key)?;
 
         Ok(())
     }

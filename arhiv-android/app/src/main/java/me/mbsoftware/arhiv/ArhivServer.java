@@ -7,7 +7,7 @@ public class ArhivServer {
     @NonNull String appFilesDir,
     @NonNull String externalStorageDir,
     @NonNull String downloadsDir,
-    String password,
+    String storageKey,
     @NonNull AndroidController controller
   );
 

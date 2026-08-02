@@ -41,7 +41,8 @@ Boundary implication:
 
 ## 2.4 Desktop secrets at rest
 
-- Password persistence uses system keyring through Rust `keyring-core` with OS-specific credential stores (`ArhivKeyring::new_system_keyring`).
+- Serialized x25519 storage-master-key persistence uses the system keyring through Rust
+  `keyring-core` with OS-specific credential stores (`ArhivKeyring::new_system_keyring`).
 - DEV and PROD keyring service names differ (`Arhiv-dev` vs `Arhiv`).
 
 ## 3. Android Boundary
@@ -62,10 +63,13 @@ Boundary implication:
 
 ## 3.3 Android credential storage
 
-- Password is encrypted with AES-GCM key from AndroidKeyStore.
+- Serialized x25519 storage master key is encrypted with an AES-GCM key from AndroidKeyStore.
 - Keystore key requires biometric strong or device credential authentication.
 - Encrypted payload is stored in app SharedPreferences.
-- Password retrieval requires biometric/device authentication via `BiometricPrompt`.
+- Cached-key retrieval requires biometric/device authentication via `BiometricPrompt`.
+- `ArhivPrefs.xml`, including the current storage-key payload and unused legacy password payload,
+  is excluded from cloud backup and device transfer. Deletion uses synchronous SharedPreferences
+  persistence so lock/logout fails rather than claiming success if credential removal fails.
 
 ## 3.4 TLS trust and WebView boundary
 

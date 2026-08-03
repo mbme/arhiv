@@ -13,6 +13,7 @@
 
 ## Canonical specs
 Read the relevant spec before changing behavior in that area:
+- Domain concepts, relationships, and central business rules: `docs/domain-model.md`.
 - Storage format/container/index semantics: `docs/arhiv-encrypted-file-format.md`.
 - Schema/data-version contract: `docs/storage-schema-contract-spec.md`.
 - Storage migrations/rollback rules: `docs/storage-migration-playbook.md`.
@@ -42,6 +43,7 @@ Read the relevant spec before changing behavior in that area:
 - Android storage/network security configuration: `arhiv-android/app/src/main/AndroidManifest.xml`, `arhiv-android/app/src/main/res/xml/network_security_config.xml`.
 
 ## Before changing X, read Y
+- Domain concepts, relationships, or central business rules -> domain model document.
 - Storage format, encryption, container ordering, or file matching -> encrypted file format spec + migration playbook.
 - Document schema, fields, validation, or `data_version` -> storage schema contract + migration playbook.
 - API request/response shape -> API DTO contract + both Rust/TS DTO files.

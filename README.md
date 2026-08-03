@@ -33,6 +33,7 @@ When using Syncthing to synchronize Arhiv storage across devices, you should tur
 That way, if you'll modify Arhiv on both devices simultaneously, Syncthing will keep both storage file versions, and Arhiv will merge them after restart.
 
 # Specification docs
+- `docs/domain-model.md`: business concepts, relationships, and central rules for the Archive.
 - `docs/arhiv-encrypted-file-format.md`: canonical on-disk encrypted format, container/index invariants, and compatibility boundaries.
 - `docs/storage-schema-contract-spec.md`: document-type/field schema contract, runtime validation behavior, and `data_version` migration triggers.
 - `docs/storage-migration-playbook.md`: operational migration procedure, rollback rules, and non-negotiable migration invariants.
@@ -156,7 +157,6 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 
 # TODO
 * adr decision log
-* improve password input: allow to see plain text
 * integration with emacs/file system - use FUSE?
 * better search - vector search? integrate tantivy?
 * better diff/merge
@@ -176,3 +176,4 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 * optimize storage compression (snapshot order)
 * remote backup without 3rd party tools - separate "backup manager"?
 * mark notes stale/irrelevant/archived
+* UI improve password input: allow to see plain text

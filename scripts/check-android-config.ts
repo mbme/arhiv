@@ -26,7 +26,7 @@ if (!platformMatch) {
   process.exit(1);
 }
 
-const minSdkMatch = gradle.match(/^\s*minSdk\s+(\d+)/m);
+const minSdkMatch = gradle.match(/^\s*minSdk(?:\s*=\s*|\s+)(\d+)/m);
 if (!minSdkMatch) {
   console.error('Failed to read minSdk from arhiv-android/app/build.gradle');
   process.exit(1);

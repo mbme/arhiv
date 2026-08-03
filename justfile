@@ -118,6 +118,15 @@ build-android-libs: _prepare_to_building_android_libs
   build \
   --release
 
+build-android-emulator-libs: _prepare_to_building_android_libs
+  cd arhiv-android; \
+  cargo ndk \
+  -t x86_64 \
+  --platform {{android_platform_version}} \
+  -o ./app/src/main/jniLibs \
+  build \
+  --release
+
 prod-build-android-libs: _prepare_to_building_android_libs
   cd arhiv-android; \
   ARHIV_VERSION=$(just _print-long-version) \

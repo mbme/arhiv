@@ -11,23 +11,23 @@ def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
-  namespace 'me.mbsoftware.arhiv'
-  compileSdk 35
+  namespace = 'me.mbsoftware.arhiv'
+  compileSdk = 35
 
   defaultConfig {
-    applicationId 'me.mbsoftware.arhiv'
-    minSdk 30 // WARN: MUST match cargo ndk --platform flag
+    applicationId = 'me.mbsoftware.arhiv'
+    minSdk = 30 // WARN: MUST match cargo ndk --platform flag
 
     versionCode = (System.getenv("VERSION_CODE") ?: "1").toInteger()
     versionName = System.getenv("ARHIV_VERSION") ?: "dev-build"
 
     ndk {
       //noinspection ChromeOsAbiSupport
-      abiFilters 'arm64-v8a' // only build for 64-bit ARM
+      abiFilters 'arm64-v8a', 'x86_64'
     }
 
     vectorDrawables {
-      useSupportLibrary true
+      useSupportLibrary = true
     }
   }
 
@@ -60,7 +60,7 @@ android {
 
   buildTypes {
     release {
-      signingConfig signingConfigs.release
+      signingConfig = signingConfigs.release
     }
   }
 }

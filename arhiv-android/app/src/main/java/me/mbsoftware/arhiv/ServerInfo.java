@@ -1,7 +1,13 @@
 package me.mbsoftware.arhiv;
 
 public class ServerInfo {
-  public String uiUrl;
-  public String authToken;
-  public byte[] certificate;
+  public final String uiUrl;
+  public final String authToken;
+  public final byte[] certificate;
+
+  public ServerInfo(String uiUrl, String authToken, byte[] certificate) {
+    this.uiUrl = uiUrl;
+    this.authToken = authToken;
+    this.certificate = certificate;
+  }
 }

@@ -290,6 +290,10 @@ public class MainActivity extends AppCompatActivity {
       storageKey,
       new AndroidController(this)
     );
+    if (startResult == null) {
+      showServerStartFailure("Native server startup failed unexpectedly.");
+      return;
+    }
     if (startResult.serverInfo == null) {
       showServerStartFailure(startResult.error);
       return;

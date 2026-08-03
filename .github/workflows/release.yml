@@ -6,15 +6,23 @@ on:
     tags:
       - '*'
 
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  build-and-publish:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     environment:
       name: Release
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 100 # fetch last 100 commits so that git describe --tags works
           fetch-tags: true
@@ -42,26 +50,26 @@ jobs:
         run: just prod-build-android-libs
 
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5.7.0
         with:
           distribution: temurin
           java-version: '17' # Gradle plugin target
           cache: 'gradle'
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4.0.1
         with:
           packages: ''
           log-accepted-android-sdk-licenses: false
 
       - name: Decode keystore
         run: |
-          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > arhiv-android/release.keystore
+          printf '%s' "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 --decode > "$RUNNER_TEMP/arhiv-release.keystore"
 
       - name: Write keystore.properties
         run: |
           cat <<EOF > arhiv-android/keystore.properties
-          storeFile=$PWD/arhiv-android/release.keystore
+          storeFile=$RUNNER_TEMP/arhiv-release.keystore
           storePassword=${{ secrets.KEY_STORE_PASS }}
           keyAlias=${{ secrets.KEY_ALIAS }}
           keyPassword=${{ secrets.KEY_PASS }}
@@ -70,8 +78,36 @@ jobs:
       - name: Build & Sign Release APK
         run: just prod-build-android-app
 
+      - name: Remove signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/arhiv-release.keystore" arhiv-android/keystore.properties
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: release-artifacts
+          path: |
+            arhiv.apk
+            target/release/arhiv
+            target/x86_64-pc-windows-gnu/release/arhiv.exe
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v8.0.1
+        with:
+          name: release-artifacts
+          path: release-artifacts
+
       - name: Publish to GitHub Release
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@v1.21.0
         with:
           tag: ${{ github.ref_name }} # e.g. "42"
-          artifacts: './arhiv.apk,target/release/arhiv,target/x86_64-pc-windows-gnu/release/arhiv.exe'
+          artifacts: 'release-artifacts/arhiv.apk,release-artifacts/target/release/arhiv,release-artifacts/target/x86_64-pc-windows-gnu/release/arhiv.exe'

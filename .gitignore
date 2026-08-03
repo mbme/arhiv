@@ -8,6 +8,7 @@ cargo-timing*
 .aider*
 log.md
 arhiv.apk
+/release.keystore
 
 *.pkg.tar.zst
 

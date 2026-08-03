@@ -71,3 +71,4 @@ Use the most targeted check first, then broaden when needed:
 ## Intent Ledger
 - Preserve automatic browser launch for `arhiv server --browser`; development workflows require it.
 - Reap browser child processes without coupling their lifetime to the server process.
+- Use readable, exact release tags for external GitHub Actions; do not SHA-pin them because SHA pinning is unnecessary for this project.

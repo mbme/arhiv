@@ -147,6 +147,12 @@ impl Baza {
             bail!("unknown document ref '{}'", id);
         };
 
+        ensure!(
+            !document.is_erased(),
+            "referenced document '{}' is erased",
+            id,
+        );
+
         if let Some(document_types) = expected_document_types
             && !document_types.is_empty()
         {
@@ -332,5 +338,42 @@ mod tests {
             let result = baza.stage_document(document, &None);
             assert!(result.is_ok());
         }
+    }
+
+    #[test]
+    fn test_validation_rejects_erased_ref_target() {
+        let temp_dir = TempFile::new_with_details("test_baza", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = BazaManager::new_for_tests_with_schema(
+            &temp_dir.path,
+            DataSchema::new(
+                "test",
+                vec![DataDescription {
+                    document_type: "test_type",
+                    title_format: "title",
+                    fields: vec![Field {
+                        name: "ref",
+                        field_type: FieldType::Ref(&["test_type"]),
+                        mandatory: false,
+                        readonly: false,
+                    }],
+                }],
+            ),
+        );
+
+        let mut baza = manager.open_mut().unwrap();
+        let target = new_document(json!({}));
+        let target_id = target.id.clone();
+
+        baza.stage_document(target, &None).unwrap();
+        baza.commit().unwrap();
+        baza.erase_document(&target_id).unwrap();
+        baza.commit().unwrap();
+
+        let source = new_document(json!({ "ref": target_id }));
+        let result = baza.stage_document(source, &None);
+
+        assert!(result.is_err());
     }
 }

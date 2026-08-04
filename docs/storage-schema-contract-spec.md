@@ -1,6 +1,6 @@
 # Arhiv Storage Schema Contract Specification
 
-Status: implementation-aligned (current behavior)  
+Status: implementation-aligned except for the required active-target reference rule below
 Current data version: `1`
 
 ## 1. Scope
@@ -116,7 +116,11 @@ When staging (`Baza::validate_staged`), the system enforces:
 - mandatory/readonly/type/enum constraints
 3. reference checks:
 - referenced IDs must exist
+- referenced Records must be active; deleted Records cannot receive new references, collection memberships, or attachment relationships
 - referenced document type must satisfy ref type constraints when specified
+
+Current implementation gap:
+- `Baza::validate_staged` currently checks referenced ID existence and type, but does not reject an erased target. The active-target rule is required by `docs/domain-model.md` and awaits implementation.
 
 Error model:
 - field-scoped failures aggregate as `ValidationError::FieldError { field -> [errors] }`

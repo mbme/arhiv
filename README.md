@@ -33,7 +33,7 @@ When using Syncthing to synchronize Arhiv storage across devices, you should tur
 That way, if you'll modify Arhiv on both devices simultaneously, Syncthing will keep both storage file versions, and Arhiv will merge them after restart.
 
 # Specification docs
-- `docs/domain-model.md`: business concepts, relationships, and central rules for the Archive.
+- `docs/domain-model.md`: business concepts, relationships, and central rules for the Arhiv.
 - `docs/arhiv-encrypted-file-format.md`: canonical on-disk encrypted format, container/index invariants, and compatibility boundaries.
 - `docs/storage-schema-contract-spec.md`: document-type/field schema contract, runtime validation behavior, and `data_version` migration triggers.
 - `docs/storage-migration-playbook.md`: operational migration procedure, rollback rules, and non-negotiable migration invariants.

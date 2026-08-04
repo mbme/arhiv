@@ -73,7 +73,9 @@ Executed in `Baza::update_state_from_storage` via `update_state_from_storage`.
 
 If state has any staged documents, refresh exits early with no merge/import.
 
-Implication:
+Policy and implication:
+- pending changes are expected to be brief;
+- the global gate intentionally keeps their base state stable rather than importing remote snapshots while any local change is pending;
 - incoming remote snapshots are not incorporated while local staged changes exist.
 
 ### 4.2 Outdated document selection
@@ -82,6 +84,10 @@ For each document id in storage:
 - compute latest revisions (+ optional merge base)
 - skip if state already has exactly same original revision set
 - otherwise mark as outdated and load required snapshots
+
+Trust boundary:
+- synchronized snapshots are treated as valid committed Arhiv history;
+- refresh parses and merges them, but does not rerun local staging validation.
 
 ### 4.3 Conflict head construction
 
@@ -274,6 +280,7 @@ Incoming sync while local staged state exists:
 Implications:
 - eventual convergence is deferred by local staged state.
 - conflict counts/heads can lag behind storage changes until next successful refresh.
+- this is intentional because pending changes are normally brief.
 
 Code:
 - `baza/src/baza/mod.rs`

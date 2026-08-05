@@ -47,6 +47,24 @@ pub struct Baza {
     state_file_modification_time: Timestamp,
     paths: BazaPaths,
     key: AgeKey,
+    #[cfg(test)]
+    commit_test_action: Option<(CommitCheckpoint, CommitTestAction)>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum CommitCheckpoint {
+    DbBackedUp,
+    BlobsMoved,
+    DbWritten,
+    StateBackedUp,
+    StateWritten,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(not(test), allow(dead_code))]
+enum CommitTestAction {
+    Fail,
+    Abort,
 }
 
 impl Baza {
@@ -91,6 +109,8 @@ impl Baza {
             state_file_modification_time,
             paths,
             key,
+            #[cfg(test)]
+            commit_test_action: None,
         })
     }
 
@@ -116,6 +136,8 @@ impl Baza {
             state_file_modification_time,
             paths,
             key,
+            #[cfg(test)]
+            commit_test_action: None,
         })
     }
 
@@ -383,6 +405,7 @@ impl Baza {
 
         // backup db file
         let old_db_file = fs_tx.move_to_backup(self.paths.storage_main_db_file.clone())?;
+        self.run_commit_test_action(CommitCheckpoint::DbBackedUp)?;
 
         // open old db file
         let storage = BazaStorage::read_file(&old_db_file, self.key.clone())?;
@@ -415,6 +438,7 @@ impl Baza {
 
             fs_tx.move_file(state_blob_path, storage_blob_path, true)?;
         }
+        self.run_commit_test_action(CommitCheckpoint::BlobsMoved)?;
 
         // write changes to db file
         let mut patch = create_container_patch(new_snapshots.into_iter())?;
@@ -422,12 +446,15 @@ impl Baza {
             patch.insert(key, None);
         }
         storage.patch_and_save_to_file(&self.paths.storage_main_db_file, patch)?;
+        self.run_commit_test_action(CommitCheckpoint::DbWritten)?;
 
         // backup state file
         fs_tx.move_to_backup(self.paths.state_file.clone())?;
+        self.run_commit_test_action(CommitCheckpoint::StateBackedUp)?;
 
         // write changes to state file
         self.save_changes()?;
+        self.run_commit_test_action(CommitCheckpoint::StateWritten)?;
 
         fs_tx.commit()?;
         log::info!("Commit: finished");
@@ -444,6 +471,29 @@ impl Baza {
         }
 
         Ok(committed_ids)
+    }
+
+    fn run_commit_test_action(&self, checkpoint: CommitCheckpoint) -> Result<()> {
+        #[cfg(not(test))]
+        {
+            let _ = checkpoint;
+            Ok(())
+        }
+
+        #[cfg(test)]
+        {
+            let Some((expected_checkpoint, action)) = self.commit_test_action else {
+                return Ok(());
+            };
+            if expected_checkpoint != checkpoint {
+                return Ok(());
+            }
+
+            match action {
+                CommitTestAction::Fail => bail!("Test failure at commit checkpoint {checkpoint:?}"),
+                CommitTestAction::Abort => std::process::abort(),
+            }
+        }
     }
 
     /// collect keys of storage documents that are known to be erased in the state
@@ -627,6 +677,9 @@ fn update_state_from_storage<R: Read>(
 
     Ok(latest_snapshots_count)
 }
+
+#[cfg(test)]
+mod commit_tests;
 
 #[cfg(test)]
 mod tests {

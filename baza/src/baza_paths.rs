@@ -3,8 +3,8 @@ use std::{collections::HashSet, fmt::Display};
 use anyhow::Result;
 
 use baza_common::{
-    Timestamp, create_dir_if_not_exist, dir_exists, file_exists, fuzzy_match,
-    get_file_modification_time, get_file_name, list_files,
+    Timestamp, create_dir_if_not_exist, dir_exists, file_exists, get_file_modification_time,
+    get_file_name, list_files,
 };
 
 use crate::entities::Id;
@@ -93,10 +93,33 @@ impl BazaPaths {
     pub fn list_storage_db_files(&self) -> Result<Vec<String>> {
         let result = list_files(&self.storage_dir)?
             .into_iter()
-            .filter(|file| is_baza_file(file))
+            .filter(|file| is_baza_file(get_file_name(file)))
             .collect();
 
         Ok(result)
+    }
+
+    /// Lists transaction backups for the main storage database.
+    pub fn list_main_storage_db_backup_files(&self) -> Result<Vec<String>> {
+        let backup_prefix = format!("{}-", self.storage_main_db_file);
+        Ok(list_files(&self.storage_dir)?
+            .into_iter()
+            .filter(|file| file.starts_with(&backup_prefix) && file.ends_with("-backup"))
+            .collect())
+    }
+
+    /// Returns the sole transaction backup for a missing main storage database.
+    pub fn get_main_storage_db_backup_file(&self) -> Result<Option<String>> {
+        let backup_files = self.list_main_storage_db_backup_files()?;
+
+        if backup_files.len() > 1 {
+            anyhow::bail!(
+                "Can't recover main storage DB: found {} backup files",
+                backup_files.len()
+            );
+        }
+
+        Ok(backup_files.into_iter().next())
     }
 
     #[cfg(test)]
@@ -186,7 +209,8 @@ fn list_blobs_in_dir(dir: &str, trim_ext: &str) -> Result<HashSet<Id>> {
 }
 
 fn is_baza_file(file_name: &str) -> bool {
-    fuzzy_match("baza.gz.age", file_name)
+    file_name.ends_with(STORAGE_EXT)
+        || (file_name.starts_with("baza.gz.sync-conflict-") && file_name.ends_with(".age"))
 }
 
 #[test]
@@ -202,4 +226,28 @@ fn test_is_baza_file() {
         "baza.gz.sync-conflict-20250430-132940-UMKYIGZ.age"
     ));
     assert!(is_baza_file("baza.gz.sync-conflict-XXX.age"));
+
+    assert!(!is_baza_file("baza.gz.age-ABC123-backup"));
+    assert!(!is_baza_file(
+        "baza.gz.sync-conflict-20250430-132940-UMKYIGZ.age-ABC123-backup"
+    ));
+}
+
+#[test]
+fn test_list_storage_db_files_matches_sync_conflict_paths() {
+    let temp_dir = baza_common::TempFile::new_with_details("baza_paths", "");
+    temp_dir.mkdir().unwrap();
+    let paths = BazaPaths::new_for_tests(&temp_dir.path);
+    paths.ensure_dirs_exist().unwrap();
+
+    std::fs::write(
+        format!(
+            "{}/baza.gz.sync-conflict-20250430-132940-UMKYIGZ.age",
+            paths.storage_dir
+        ),
+        "",
+    )
+    .unwrap();
+
+    assert_eq!(paths.list_storage_db_files().unwrap().len(), 1);
 }

@@ -287,6 +287,12 @@ pub fn merge_storages(mut storages: Vec<BazaStorage<impl Read>>, writer: impl Wr
         .all(|w| w[0] == w[1]);
     ensure!(is_same_info, "all storages must have the same info");
 
+    let key = storages[0].key.clone();
+    let info = storages[0]
+        .info
+        .clone()
+        .context("storage info must be available")?;
+
     let mut keys_per_storage = storages
         .into_iter()
         .map(|s| {
@@ -331,12 +337,6 @@ pub fn merge_storages(mut storages: Vec<BazaStorage<impl Read>>, writer: impl Wr
         })
         .collect::<Result<Vec<_>>>()?;
 
-    let key = keys_per_storage[0].0.key.clone();
-    let info = keys_per_storage[0]
-        .0
-        .info
-        .clone()
-        .context("storage info must be available")?;
     let ordered_keys = keys_per_storage
         .iter()
         .flat_map(|(_, keys)| keys.iter().cloned())
@@ -498,5 +498,22 @@ mod tests {
         all_items.sort_by_cached_key(|item| item.id.to_string());
 
         assert_eq!(all_items, all_docs);
+    }
+
+    #[test]
+    fn test_merge_empty_storages() {
+        let key = AgeKey::generate_age_x25519_key();
+        let info = BazaInfo::new_test_info();
+        let storage1 = create_test_storage(key.clone(), &[]);
+        let storage2 = create_test_storage(key.clone(), &[]);
+
+        let mut result = Cursor::new(Vec::<u8>::new());
+        merge_storages(vec![storage1, storage2], &mut result).unwrap();
+        result.set_position(0);
+
+        let mut storage = BazaStorage::read(&mut result, key).unwrap();
+        assert_eq!(storage.index.len(), 0);
+        assert_eq!(storage.get_info().unwrap(), &info);
+        assert!(storage.get_all().unwrap().is_empty());
     }
 }

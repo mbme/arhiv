@@ -129,10 +129,13 @@ impl BazaManager {
         } else {
             let db_files = self.paths.list_storage_db_files()?;
 
-            db_files
-                .into_iter()
-                .next()
-                .context("No existing db files found")?
+            match db_files.into_iter().next() {
+                Some(db_file) => db_file,
+                None => self
+                    .paths
+                    .get_main_storage_db_backup_file()?
+                    .context("No existing db files found")?,
+            }
         };
 
         log::debug!("Using db file to check if key is valid: {db_path}");

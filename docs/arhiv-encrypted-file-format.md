@@ -317,7 +317,7 @@ Compatibility gates:
 - state refresh additionally requires `storage_info == state_info`.
 
 Migration model:
-- on open, multiple storage db files matching `baza*.gz.age` are merged into main db file by key-level union.
+- on open, multiple storage db files ending in `.gz.age`, plus Syncthing-style `baza.gz.sync-conflict-*.age` files, are merged into the main db file by key-level union. Transaction backups named `*-backup` are excluded from normal merging. If the main db file is missing, one `baza.gz.age-*-backup` transaction backup is restored first; multiple such backups fail recovery rather than being merged.
 - this merge preserves unique `(id, rev)` snapshots and is not a schema/data migration transform.
 
 Explicit non-goal in current implementation:

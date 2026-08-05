@@ -149,7 +149,9 @@ impl BazaManager {
         self.merge_storages(key)?;
 
         let mut baza = if self.paths.state_file_exists()? {
-            Baza::read(key.clone(), self.paths.clone(), self.schema.clone())?
+            let baza = Baza::read(key.clone(), self.paths.clone(), self.schema.clone())?;
+            self.remove_stale_main_storage_db_backups()?;
+            baza
         } else {
             Baza::create(
                 InstanceId::generate(),

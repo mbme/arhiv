@@ -2,11 +2,11 @@ mod keys;
 mod manager_state;
 mod migration;
 
-use std::sync::RwLock;
+use std::{fs, sync::RwLock};
 
 use anyhow::{Context, Result, anyhow, ensure};
 
-use baza_common::{FsTransaction, LockFile, SecretString, Timestamp, log};
+use baza_common::{FsTransaction, LockFile, SecretString, Timestamp, log, move_file};
 use baza_storage::crypto::age::AgeKey;
 
 use crate::{DocumentExpert, schema::DataSchema};
@@ -55,7 +55,8 @@ impl BazaManager {
             return Ok(false);
         }
 
-        let have_storage_db_files = !self.paths.list_storage_db_files()?.is_empty();
+        let have_storage_db_files = !self.paths.list_storage_db_files()?.is_empty()
+            || self.paths.get_main_storage_db_backup_file()?.is_some();
 
         Ok(have_storage_db_files)
     }
@@ -72,6 +73,8 @@ impl BazaManager {
     }
 
     fn merge_storages(&self, key: &AgeKey) -> Result<()> {
+        self.recover_main_storage_db()?;
+
         let db_files = self.paths.list_storage_db_files()?;
 
         if db_files.is_empty() {
@@ -106,6 +109,38 @@ impl BazaManager {
         merge_storages_to_file(storages, main_db_file)?;
 
         fs_tx.commit()?;
+
+        Ok(())
+    }
+
+    fn recover_main_storage_db(&self) -> Result<()> {
+        if self.paths.storage_main_db_file_exists()? {
+            return Ok(());
+        }
+
+        let Some(backup_file) = self.paths.get_main_storage_db_backup_file()? else {
+            return Ok(());
+        };
+
+        log::warn!(
+            "Recovering missing main storage DB {} from transaction backup {backup_file}",
+            self.paths.storage_main_db_file
+        );
+        move_file(&backup_file, &self.paths.storage_main_db_file)
+            .context("Failed to restore main storage DB from transaction backup")?;
+
+        Ok(())
+    }
+
+    fn remove_stale_main_storage_db_backups(&self) -> Result<()> {
+        for backup_file in self.paths.list_main_storage_db_backup_files()? {
+            log::warn!(
+                "Removing stale transaction backup {backup_file} for main storage DB {}",
+                self.paths.storage_main_db_file
+            );
+            fs::remove_file(&backup_file)
+                .context("Failed to remove stale main storage DB transaction backup")?;
+        }
 
         Ok(())
     }
@@ -197,9 +232,11 @@ impl BazaManager {
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+
     use serde_json::json;
 
-    use baza_common::{TempFile, dir_exists, file_exists};
+    use baza_common::{TempFile, dir_exists, file_exists, move_file};
 
     use crate::{
         BazaStorage,
@@ -357,6 +394,64 @@ mod tests {
 
         let storage = open_storage(&manager);
         assert_eq!(storage.index.len(), 4);
+    }
+
+    #[test]
+    fn test_recovers_main_storage_db_from_transaction_backup() {
+        let temp_dir = TempFile::new_with_details("baza_manager", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
+        let document = new_empty_document();
+        {
+            let mut baza = manager.open_mut().unwrap();
+            baza.stage_document(document.clone(), &None).unwrap();
+            baza.save_changes().unwrap();
+        }
+
+        let backup_file = format!("{}-test-backup", manager.paths.storage_main_db_file);
+        move_file(&manager.paths.storage_main_db_file, &backup_file).unwrap();
+        assert!(!file_exists(&manager.paths.storage_main_db_file).unwrap());
+
+        let recovered_manager = BazaManager::new(
+            BazaPaths::new(
+                manager.paths.storage_dir.clone(),
+                manager.paths.state_dir.clone(),
+                manager.paths.downloads_dir.clone(),
+            ),
+            manager.schema.clone(),
+        );
+        recovered_manager.unlock("test password".into()).unwrap();
+        let baza = recovered_manager.open().unwrap();
+
+        assert!(baza.get_document(&document.id).is_some());
+        assert!(baza.has_staged_documents());
+        assert!(file_exists(&recovered_manager.paths.storage_main_db_file).unwrap());
+        assert!(!file_exists(&backup_file).unwrap());
+    }
+
+    #[test]
+    fn test_keeps_transaction_backup_when_main_storage_db_is_invalid() {
+        let temp_dir = TempFile::new_with_details("baza_manager", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
+        let backup_file = format!("{}-test-backup", manager.paths.storage_main_db_file);
+        fs::copy(&manager.paths.storage_main_db_file, &backup_file).unwrap();
+        fs::write(&manager.paths.storage_main_db_file, "invalid storage").unwrap();
+
+        let recovered_manager = BazaManager::new(
+            BazaPaths::new(
+                manager.paths.storage_dir.clone(),
+                manager.paths.state_dir.clone(),
+                manager.paths.downloads_dir.clone(),
+            ),
+            manager.schema.clone(),
+        );
+        recovered_manager.unlock("test password".into()).unwrap();
+
+        assert!(recovered_manager.open().is_err());
+        assert!(file_exists(&backup_file).unwrap());
     }
 
     #[test]

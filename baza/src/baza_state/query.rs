@@ -62,14 +62,18 @@ impl BazaState {
             // sort by modification time
             filtered_documents.sort_by(|a, b| b.get_updated_at().cmp(a.get_updated_at()));
 
+            let total = filtered_documents.len();
             let page_end = page_start + PAGE_SIZE;
-            let paginated_documents =
-                &filtered_documents[page_start..filtered_documents.len().min(page_end)];
+            let paginated_documents = filtered_documents
+                .into_iter()
+                .skip(page_start)
+                .take(PAGE_SIZE)
+                .collect::<Vec<_>>();
 
             Ok(ListPage {
-                items: paginated_documents.to_vec(),
-                has_more: page_end < filtered_documents.len(),
-                total: filtered_documents.len(),
+                has_more: page_end < total,
+                total,
+                items: paginated_documents,
             })
         } else {
             let results = self
@@ -198,6 +202,16 @@ mod tests {
 
             let result = state.list_documents(&filter).unwrap();
             assert_eq!(result.items.len(), 2); // Remaining documents
+            assert!(!result.has_more);
+            assert_eq!(result.total, 12);
+
+            let filter = Filter {
+                page: 2,
+                ..Default::default()
+            };
+
+            let result = state.list_documents(&filter).unwrap();
+            assert!(result.items.is_empty());
             assert!(!result.has_more);
             assert_eq!(result.total, 12);
         }

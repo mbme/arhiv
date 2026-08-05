@@ -3,7 +3,7 @@ use std::{cmp::Ordering, fs, path::Path};
 use anyhow::{Context, Result, anyhow, bail};
 use serde::Serialize;
 
-use crate::server::media::generate_qrcode_svg;
+use crate::{assets::materialize_asset_urls, server::media::generate_qrcode_svg};
 use baza::{
     DocumentExpert, Filter, StagingError, ValidationError,
     entities::{Document, DocumentType},
@@ -182,10 +182,7 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
                 document
             };
 
-            let document_expert = arhiv.baza.get_document_expert();
-            document_expert
-                .prepare_assets(&mut document, &arhiv.baza)
-                .await?;
+            materialize_asset_urls(&arhiv.baza, &mut document).await?;
 
             let mut baza = arhiv.baza.open_mut()?;
             if let Err(err) = baza.stage_document(document, &Some(lock_key)) {
@@ -211,10 +208,7 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
             let mut document = Document::new_with_data(document_type, data);
             let id = document.id.clone();
 
-            let document_expert = arhiv.baza.get_document_expert();
-            document_expert
-                .prepare_assets(&mut document, &arhiv.baza)
-                .await?;
+            materialize_asset_urls(&arhiv.baza, &mut document).await?;
 
             let mut baza = arhiv.baza.open_mut()?;
             if let Err(err) = baza.stage_document(document, &None) {

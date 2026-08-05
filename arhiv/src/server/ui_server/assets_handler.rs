@@ -144,16 +144,12 @@ async fn upload_asset(field: Field<'_>, arhiv: &Arhiv) -> Result<Id> {
 
     let mut baza = arhiv.baza.open_mut()?;
 
-    let mut asset = baza.create_asset(&temp_file.path)?;
-    if let Some(file_name) = file_name {
-        asset.data.filename = file_name.to_string();
-    }
-
-    let document = asset.into_document()?;
-    let document = baza
-        .stage_document(document, &None)
-        .context("Failed to update asset filename")?;
-    let id = document.id.clone();
+    let asset = if let Some(file_name) = file_name {
+        baza.create_asset_with_filename(&temp_file.path, file_name)?
+    } else {
+        baza.create_asset(&temp_file.path)?
+    };
+    let id = asset.id;
 
     baza.save_changes()?;
 

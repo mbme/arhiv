@@ -1,11 +1,9 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize, Serializer};
 
-use crate::download::Download;
 use baza_common::{ExposeSecret, SecretString};
 
 use crate::{
-    BazaManager,
     entities::Document,
     schema::{Field, FieldType},
 };
@@ -77,20 +75,3 @@ impl AssetData {
 }
 
 pub type Asset = Document<AssetData>;
-
-pub async fn download_asset(url: &str, baza_manager: &BazaManager) -> Result<Asset> {
-    let download_result = Download::new_in_dir(url, baza_manager.get_downloads_dir())?
-        .start()
-        .await?;
-
-    let mut baza = baza_manager.open_mut()?;
-    let mut asset = baza.create_asset(&download_result.file_path)?;
-    asset.data.filename = download_result.original_file_name.clone();
-
-    let document = asset.into_document()?;
-    let document = baza
-        .stage_document(document, &None)
-        .context("Failed to update asset filename")?;
-
-    document.clone().convert()
-}

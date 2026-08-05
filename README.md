@@ -170,7 +170,6 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 * UI: i don't like switching between edit/preview modes in the editor
 * single folder mode? keep state in "syncable dir"?
 * refactor: arhiv-cli shouldn't probably access baza directly
-* move Download from baza into arhiv
 * optimize storage compression (snapshot order)
 * remote backup without 3rd party tools - separate "backup manager"?
 * mark notes stale/irrelevant/archived

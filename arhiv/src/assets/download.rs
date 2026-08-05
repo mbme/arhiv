@@ -1,5 +1,3 @@
-mod file_name_expert;
-
 use std::time::Duration;
 
 use anyhow::{Context, Result, bail, ensure};
@@ -13,8 +11,8 @@ use baza_common::{
 };
 
 use crate::{
-    download::file_name_expert::DownloadFileNameExpert,
-    http::{
+    assets::file_name_expert::DownloadFileNameExpert,
+    server::http::{
         parse_content_disposition_header, parse_content_range_header, parse_content_type_header,
     },
 };
@@ -67,18 +65,6 @@ impl Download {
             keep_completed_file: false,
             client,
         })
-    }
-
-    pub fn keep_download_file(&mut self, keep: bool) {
-        self.keep_download_file = keep;
-    }
-
-    pub fn keep_completed_file(&mut self, keep: bool) {
-        self.keep_completed_file = keep;
-    }
-
-    pub fn use_custom_http_client(&mut self, client: Client) {
-        self.client = client;
     }
 
     fn deduce_start_pos(&self) -> Result<u64> {

@@ -77,3 +77,10 @@ Use the most targeted check first, then broaden when needed:
 - Use readable, exact release tags for external GitHub Actions; do not SHA-pin them because SHA pinning is unnecessary for this project.
 - Add concise comments to new public methods.
 - Prefer pure-Rust libraries; avoid dependencies that require C/C++ code or native libraries unless explicitly approved.
+- Keep outbound network/download workflows in `arhiv`; `baza` owns completed local files, encrypted blob storage, schema rules, staging, and other core database behavior.
+
+# Best practices
+- Prefer positive phrasing in code comments and guidance; describe intended ownership and behavior directly rather than framing APIs by what they do not do.
+- Add high-value doc comments to new or changed public functions, methods, and types; explain ownership, invariants, boundary intent, or caller obligations rather than restating signatures.
+- Add high-value logs around meaningful workflow transitions, security- or data-sensitive decisions, and successful boundary conversions; keep pure helpers quiet and avoid noisy implementation traces.
+- Add high-value unit tests for durable rules, pure decision logic, and boundary behavior that can be tested without brittle infrastructure; prefer small focused tests over broad incidental coverage.

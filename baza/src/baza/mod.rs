@@ -332,7 +332,22 @@ impl Baza {
         self.get_blob(&asset.id, blob_key)
     }
 
+    /// Creates an encrypted asset from a local file using the source file name as display name.
     pub fn create_asset(&mut self, file_path: &str) -> Result<Asset> {
+        let filename = get_file_name(file_path).to_string();
+
+        self.create_asset_with_filename(file_path, filename)
+    }
+
+    /// Creates an encrypted asset from a local file using an application-provided display name.
+    ///
+    /// The application layer supplies names from uploads, URLs, or HTTP headers;
+    /// the storage core owns blob encryption, media metadata, and document staging.
+    pub fn create_asset_with_filename(
+        &mut self,
+        file_path: &str,
+        filename: String,
+    ) -> Result<Asset> {
         log::info!("Creating Asset from {file_path}");
 
         ensure!(
@@ -340,7 +355,6 @@ impl Baza {
             "Asset source must exist and must be a file"
         );
 
-        let filename = get_file_name(file_path).to_string();
         let media_type = get_media_type(file_path)?;
         let size = get_file_size(file_path)?;
 

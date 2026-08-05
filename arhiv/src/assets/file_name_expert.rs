@@ -5,7 +5,7 @@ use baza_common::{
     get_extension_for_mime_string, get_file_extension, infer_extension_by_file_mime_type,
 };
 
-use crate::http::extract_file_name_from_url;
+use crate::server::http::extract_file_name_from_url;
 
 #[derive(Debug)]
 pub struct DownloadFileNameExpert<'u> {

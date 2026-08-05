@@ -1,14 +1,12 @@
 use std::collections::HashMap;
 
-use anyhow::{Context, Result, anyhow, bail};
+use anyhow::{Context, Result, anyhow};
 
-use crate::http::{is_http_url, is_image_url, parse_url};
 use baza_common::{render_template_with_vars, value_as_string};
 
 use crate::{
-    BazaManager,
     entities::{Document, DocumentData, DocumentType, Id, Refs},
-    schema::{ASSET_TYPE, Asset, DataSchema, Field, FieldType, download_asset},
+    schema::{ASSET_TYPE, Asset, DataSchema, Field},
 };
 
 pub struct DocumentExpert<'s> {
@@ -85,6 +83,20 @@ impl<'s> DocumentExpert<'s> {
             .any(|field| !field.readonly);
 
         Ok(is_editable)
+    }
+
+    /// Returns schema fields whose values may be materialized into asset document refs.
+    ///
+    /// This pure schema query lets callers classify each field value as an id, a
+    /// local reference, or a remote URL handled by application-layer IO.
+    pub fn asset_ref_fields(&self, document_type: &DocumentType) -> Result<Vec<&Field>> {
+        let fields = self
+            .schema
+            .iter_fields(document_type)?
+            .filter(|field| field.could_ref_assets())
+            .collect();
+
+        Ok(fields)
     }
 
     fn find_collection_field_for(
@@ -167,88 +179,13 @@ impl<'s> DocumentExpert<'s> {
 
         Ok(())
     }
-
-    pub async fn prepare_assets(
-        &self,
-        document: &mut Document,
-        baza_manager: &BazaManager,
-    ) -> Result<()> {
-        let fields = self
-            .schema
-            .iter_fields(&document.document_type)?
-            .filter(|field| field.could_ref_assets());
-
-        for field in fields {
-            match field.field_type {
-                FieldType::Ref(_) => {
-                    let value = document.data.get_str(field.name);
-                    if let Some(value) = value {
-                        let url = if let Ok(url) = parse_url(value) {
-                            url
-                        } else {
-                            continue;
-                        };
-
-                        if !is_http_url(&url) {
-                            continue;
-                        }
-
-                        if !is_image_url(&url) {
-                            bail!("Only image asset URLs are supported, got '{value}'");
-                        }
-
-                        let asset = download_asset(value, baza_manager).await?;
-
-                        document.data.set(field.name, asset.id);
-                    }
-                }
-
-                FieldType::RefList(_) => {
-                    let mut values = document
-                        .data
-                        .get_ref_list(field.name)?
-                        .unwrap_or_default()
-                        .into_iter()
-                        .map(|value| value.to_string())
-                        .collect::<Vec<_>>();
-
-                    for value in values.iter_mut() {
-                        let url = if let Ok(url) = parse_url(value) {
-                            url
-                        } else {
-                            continue;
-                        };
-
-                        if !is_http_url(&url) {
-                            continue;
-                        }
-
-                        if !is_image_url(&url) {
-                            bail!("Only image asset URLs are supported, got '{value}'");
-                        }
-
-                        let asset = download_asset(value, baza_manager).await?;
-
-                        *value = asset.id.to_string();
-                    }
-
-                    document.data.set(field.name, values);
-                }
-                _ => {
-                    unreachable!("only ref fields might reference assets");
-                }
-            }
-        }
-
-        Ok(())
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{
         entities::{DocumentData, DocumentType},
-        schema::DataSchema,
+        schema::{ASSET_TYPE, DataDescription, DataSchema, Field, FieldType},
     };
 
     use super::DocumentExpert;
@@ -264,5 +201,56 @@ mod tests {
             .get_title(&DocumentType::new("test_type"), &data)
             .unwrap();
         assert_eq!(title, "test");
+    }
+
+    #[test]
+    fn asset_ref_fields_returns_only_fields_that_can_reference_assets() {
+        let schema = DataSchema::new(
+            "test",
+            vec![DataDescription {
+                document_type: "test_type",
+                title_format: "${title}",
+                fields: vec![
+                    Field {
+                        name: "title",
+                        field_type: FieldType::String {},
+                        mandatory: false,
+                        readonly: false,
+                    },
+                    Field {
+                        name: "cover",
+                        field_type: FieldType::Ref(&[ASSET_TYPE]),
+                        mandatory: false,
+                        readonly: false,
+                    },
+                    Field {
+                        name: "related",
+                        field_type: FieldType::Ref(&["note"]),
+                        mandatory: false,
+                        readonly: false,
+                    },
+                    Field {
+                        name: "gallery",
+                        field_type: FieldType::RefList(&[ASSET_TYPE]),
+                        mandatory: false,
+                        readonly: false,
+                    },
+                    Field {
+                        name: "mixed_refs",
+                        field_type: FieldType::RefList(&["note", ASSET_TYPE]),
+                        mandatory: false,
+                        readonly: false,
+                    },
+                ],
+            }],
+        );
+        let expert = DocumentExpert::new(&schema);
+
+        let fields = expert
+            .asset_ref_fields(&DocumentType::new("test_type"))
+            .unwrap();
+        let field_names = fields.iter().map(|field| field.name).collect::<Vec<_>>();
+
+        assert_eq!(field_names, ["cover", "gallery", "mixed_refs"]);
     }
 }

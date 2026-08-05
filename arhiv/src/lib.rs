@@ -1,4 +1,5 @@
 mod arhiv;
+mod assets;
 pub mod definitions;
 pub mod server;
 mod ui;

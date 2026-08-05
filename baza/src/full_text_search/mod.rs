@@ -11,7 +11,7 @@ use ordermap::OrderMap;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use strsim::damerau_levenshtein;
-use tokenizer::tokenize_with_offsets;
+use tokenizer::{tokenize_with_offsets, tokenize_with_positions};
 
 use baza_common::log;
 
@@ -20,6 +20,9 @@ use self::document_scorer::DocumentScorer;
 // These are common bm25 parameter values
 const B: f64 = 0.75;
 const K1: f64 = 1.2;
+
+// Bound fuzzy expansion so broad queries do not dilute ranking or scale with vocabulary size.
+const MAX_MATCHED_TERMS_PER_QUERY_TERM: usize = 32;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(transparent)]
@@ -43,7 +46,7 @@ impl FieldBoost {
 
 type FieldId = usize;
 
-// (interned) field -> offset[]
+// (interned) field -> token position[]; positions are used for proximity scoring.
 type DocumentTermMatches = HashMap<FieldId, Vec<usize>>;
 
 #[derive(Default, Serialize, Deserialize)]
@@ -51,7 +54,7 @@ pub struct FTSEngine {
     // cache field names
     fields: Vec<String>,
 
-    // term -> document_id -> field -> offset[]
+    // term -> document_id -> field -> token position[]
     terms_index: HashMap<String, HashMap<String, DocumentTermMatches>>,
 
     // document_id -> term count
@@ -83,20 +86,20 @@ impl FTSEngine {
         for (field, value) in document {
             let field = self.get_or_intern_field(field);
 
-            let field_terms = tokenize_with_offsets(value);
+            let field_terms = tokenize_with_positions(value);
             if field_terms.is_empty() {
                 continue;
             }
 
             doc_term_count += field_terms.len();
 
-            for (term, byte_offset) in field_terms {
+            for (term, token_position) in field_terms {
                 let term_matches = self.terms_index.entry(term).or_default();
 
                 let doc_term_matches = term_matches.entry(document_id.clone()).or_default();
 
                 let field_matches = doc_term_matches.entry(field).or_default();
-                field_matches.push(byte_offset);
+                field_matches.push(token_position);
             }
         }
 
@@ -163,20 +166,19 @@ impl FTSEngine {
         ((n as f64 - df as f64 + 0.5) / (df as f64 + 0.5) + 1.0).ln()
     }
 
-    fn get_fuzzy_terms(&self, query_term: &str) -> Vec<(&str, f64)> {
-        self.terms_index
+    fn get_fuzzy_terms(&self, query_term: &str) -> Vec<TermCandidate<'_>> {
+        let mut terms = self
+            .terms_index
             .par_iter()
             .filter_map(|(term, _)| {
-                // complete match
                 if query_term == term {
-                    return Some((term.as_str(), 1.0));
+                    return Some(TermCandidate::exact(term));
                 }
 
-                // match prefixes
                 if term.starts_with(query_term) {
-                    return Some((
-                        term.as_str(),
-                        (query_term.len() as f64 / term.len() as f64).min(0.5),
+                    return Some(TermCandidate::prefix(
+                        term,
+                        query_term.len() as f64 / term.len() as f64,
                     ));
                 }
 
@@ -204,7 +206,7 @@ impl FTSEngine {
                     let mut similarity = 1.0 - (0.3 * distance as f64);
                     similarity *= query_term.len() as f64 / term.len() as f64;
 
-                    Some((term, similarity))
+                    Some(TermCandidate::fuzzy(term, similarity))
                 } else {
                     let distance = damerau_levenshtein(query_term, term);
                     if distance > 2 {
@@ -213,17 +215,33 @@ impl FTSEngine {
 
                     let similarity = 1.0 - (0.4 * distance as f64);
 
-                    Some((term, similarity))
+                    Some(TermCandidate::fuzzy(term, similarity))
                 }
             })
-            .collect()
+            .collect::<Vec<_>>();
+
+        terms.par_sort_by(|a, b| {
+            f64::total_cmp(&b.score_multiplier, &a.score_multiplier)
+                .then_with(|| f64::total_cmp(&self.idf(b.term), &self.idf(a.term)))
+                .then_with(|| {
+                    a.term
+                        .len()
+                        .abs_diff(query_term.len())
+                        .cmp(&b.term.len().abs_diff(query_term.len()))
+                })
+                .then_with(|| a.term.cmp(b.term))
+        });
+        terms.truncate(MAX_MATCHED_TERMS_PER_QUERY_TERM);
+
+        terms
     }
 
     pub fn search(&self, query: &str) -> Vec<&String> {
-        let query_terms: HashSet<String> = tokenize_with_offsets(query)
+        let mut seen_query_terms = HashSet::new();
+        let query_terms = tokenize_with_offsets(query)
             .into_iter()
-            .map(|item| item.0)
-            .collect();
+            .filter_map(|(term, _)| seen_query_terms.insert(term.clone()).then_some(term))
+            .collect::<Vec<_>>();
 
         // return all the ids in case query is empty
         if query_terms.is_empty() {
@@ -233,14 +251,14 @@ impl FTSEngine {
         // pick terms that fuzzy match query terms
         // query term -> (fuzzy term, similarity)[]
         let mut all_query_terms = HashMap::new();
-        for query_term in &query_terms {
+        for (query_position, query_term) in query_terms.iter().enumerate() {
             let fuzzy_terms = self.get_fuzzy_terms(query_term);
             if fuzzy_terms.is_empty() {
                 log::debug!("Couldn't find terms for query term '{query_term}'");
                 return vec![];
             }
 
-            all_query_terms.insert(query_term, fuzzy_terms);
+            all_query_terms.insert(query_term, (query_position, fuzzy_terms));
         }
 
         log::debug!(
@@ -248,38 +266,44 @@ impl FTSEngine {
             query_terms.len(),
             all_query_terms
                 .values()
-                .map(|fuzzy_terms| fuzzy_terms.len())
+                .map(|(_, fuzzy_terms)| fuzzy_terms.len())
                 .sum::<usize>()
         );
 
         let mut scores = all_query_terms
             .into_par_iter()
-            .flat_map(|(query_term, fuzzy_terms)| {
-                fuzzy_terms
-                    .into_par_iter()
-                    .flat_map(move |(fuzzy_term, similarity)| {
-                        let idf = self.idf(fuzzy_term);
+            .flat_map(|(query_term, (query_position, fuzzy_terms))| {
+                fuzzy_terms.into_par_iter().flat_map(move |candidate| {
+                    let idf = self.idf(candidate.term);
 
-                        let doc_map = self
-                            .terms_index
-                            .get(fuzzy_term)
-                            .expect("fuzzy matched term must be indexed");
+                    let doc_map = self
+                        .terms_index
+                        .get(candidate.term)
+                        .expect("fuzzy matched term must be indexed");
 
-                        doc_map
-                            .par_iter()
-                            .map(move |(document_id, document_term_matches)| {
-                                (
-                                    query_term,
-                                    similarity,
-                                    idf,
-                                    document_id,
-                                    document_term_matches,
-                                )
-                            })
-                    })
+                    doc_map
+                        .par_iter()
+                        .map(move |(document_id, document_term_matches)| {
+                            (
+                                query_term,
+                                query_position,
+                                candidate.score_multiplier,
+                                idf,
+                                document_id,
+                                document_term_matches,
+                            )
+                        })
+                })
             })
             .map(
-                |(query_term, similarity, idf, document_id, document_term_matches)| {
+                |(
+                    query_term,
+                    query_position,
+                    similarity,
+                    idf,
+                    document_id,
+                    document_term_matches,
+                )| {
                     // Calculate BM25 score
 
                     let doc_len = *self
@@ -302,6 +326,7 @@ impl FTSEngine {
 
                     (
                         query_term,
+                        query_position,
                         document_id,
                         doc_bm25_score,
                         document_term_matches,
@@ -312,12 +337,20 @@ impl FTSEngine {
             .into_iter()
             .fold(
                 HashMap::new(),
-                |mut scores, (query_term, document_id, doc_bm25_score, document_term_matches)| {
+                |mut scores,
+                 (
+                    query_term,
+                    query_position,
+                    document_id,
+                    doc_bm25_score,
+                    document_term_matches,
+                )| {
                     let document_scorer: &mut DocumentScorer =
                         scores.entry(document_id).or_default();
 
                     document_scorer.update_term_score(
                         query_term,
+                        query_position,
                         doc_bm25_score,
                         document_term_matches,
                     );
@@ -386,6 +419,36 @@ impl FTSEngine {
     }
 }
 
+#[derive(Clone, Copy)]
+struct TermCandidate<'term> {
+    term: &'term str,
+    // Keep exact > prefix > fuzzy so approximate matches cannot outrank equally strong exact matches.
+    score_multiplier: f64,
+}
+
+impl<'term> TermCandidate<'term> {
+    fn exact(term: &'term str) -> Self {
+        Self {
+            term,
+            score_multiplier: 1.0,
+        }
+    }
+
+    fn prefix(term: &'term str, length_ratio: f64) -> Self {
+        Self {
+            term,
+            score_multiplier: 0.8 * length_ratio,
+        }
+    }
+
+    fn fuzzy(term: &'term str, similarity: f64) -> Self {
+        Self {
+            term,
+            score_multiplier: 0.6 * similarity,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct FTSStats<'fts> {
     pub top_10_terms: OrderMap<&'fts str, usize>, // term -> term_count
@@ -400,7 +463,7 @@ mod tests {
 
     use crate::full_text_search::FieldBoost;
 
-    use super::FTSEngine;
+    use super::{FTSEngine, MAX_MATCHED_TERMS_PER_QUERY_TERM};
 
     #[derive(Clone)]
     struct TestDoc {
@@ -504,6 +567,44 @@ mod tests {
         assert!(fts.search("abd").is_empty());
         assert!(fts.search("balue").is_empty());
         assert!(fts.search("catzzz").is_empty());
+    }
+
+    #[test]
+    fn test_exact_match_beats_prefix_and_fuzzy_matches() {
+        let fts = new_test_fts(&[
+            TestDoc::new(1, "alpha", "value"),
+            TestDoc::new(2, "alpha", "valuable"),
+            TestDoc::new(3, "alpha", "vlaue"),
+        ]);
+
+        let results = fts.search("value");
+
+        assert_eq!(results[0], "1");
+        assert_eq!(results.len(), 3);
+    }
+
+    #[test]
+    fn test_prefix_match_beats_fuzzy_match() {
+        let fts = new_test_fts(&[
+            TestDoc::new(1, "alpha", "value"),
+            TestDoc::new(2, "alpha", "vblu"),
+        ]);
+
+        assert_eq!(fts.search("valu"), vec!["1", "2"]);
+    }
+
+    #[test]
+    fn test_fuzzy_terms_are_capped() {
+        let mut fts = FTSEngine::new();
+
+        for index in 0..64 {
+            TestDoc::new(index, "alpha", &format!("value{index}")).insert(&mut fts);
+        }
+
+        let fuzzy_terms = fts.get_fuzzy_terms("value");
+
+        assert_eq!(fuzzy_terms.len(), MAX_MATCHED_TERMS_PER_QUERY_TERM);
+        assert_eq!(fuzzy_terms[0].term, "value0");
     }
 
     #[test]

@@ -13,9 +13,17 @@ pub fn tokenize_with_offsets(input: &str) -> Vec<(String, usize)> {
         .collect()
 }
 
+pub fn tokenize_with_positions(input: &str) -> Vec<(String, usize)> {
+    tokenize_with_offsets(input)
+        .into_iter()
+        .enumerate()
+        .map(|(position, (term, _))| (term, position))
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
-    use super::tokenize_with_offsets;
+    use super::{tokenize_with_offsets, tokenize_with_positions};
 
     #[test]
     fn test_tokenize_with_offsets() {
@@ -48,6 +56,18 @@ mod tests {
             vec![
                 ("test".to_string(), 0), //
                 ("izhak".to_string(), 9),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_tokenize_with_positions() {
+        assert_eq!(
+            tokenize_with_positions("Hello, 世界! Rust."),
+            vec![
+                ("hello".to_string(), 0),
+                ("shi jie".to_string(), 1),
+                ("rust".to_string(), 2)
             ]
         );
     }

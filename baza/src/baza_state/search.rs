@@ -17,7 +17,8 @@ use crate::{
 const TITLE_FIELD_NAME: &str = "@title";
 const ID_FIELD_NAME: &str = "@id";
 const SEARCH_INDEX_FORMAT_VERSION: u8 = 1;
-const SEARCH_ALGORITHM_VERSION: u8 = 1;
+// v2 stores token positions instead of byte offsets for proximity scoring.
+const SEARCH_ALGORITHM_VERSION: u8 = 2;
 
 #[derive(Serialize, Deserialize)]
 struct SearchIndexFile {

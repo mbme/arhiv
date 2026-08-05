@@ -469,6 +469,55 @@ mod tests {
     }
 
     #[test]
+    fn test_reindex_document_replaces_old_terms() {
+        let mut fts = FTSEngine::new();
+
+        TestDoc::new(1, "old title", "old data").insert(&mut fts);
+        TestDoc::new(1, "new title", "new data").insert(&mut fts);
+
+        assert!(fts.search("old").is_empty());
+        assert_eq!(fts.search("new"), vec!["1"]);
+    }
+
+    #[test]
+    fn test_remove_document_preserves_shared_terms_for_other_documents() {
+        let mut fts = new_test_fts(&[
+            TestDoc::new(1, "shared", "only first"),
+            TestDoc::new(2, "shared", "only second"),
+        ]);
+
+        fts.remove_document("1");
+
+        assert_eq!(fts.search("shared"), vec!["2"]);
+        assert!(fts.search("first").is_empty());
+        assert_eq!(fts.search("second"), vec!["2"]);
+    }
+
+    #[test]
+    fn test_fuzzy_matching_boundaries() {
+        let fts = new_test_fts(&[
+            TestDoc::new(1, "alpha", "abcd value"),
+            TestDoc::new(2, "beta", "cat"),
+        ]);
+
+        assert_eq!(fts.search("abc"), vec!["1"]);
+        assert!(fts.search("abd").is_empty());
+        assert!(fts.search("balue").is_empty());
+        assert!(fts.search("catzzz").is_empty());
+    }
+
+    #[test]
+    fn test_multi_term_search_requires_all_terms() {
+        let fts = new_test_fts(&[
+            TestDoc::new(1, "alpha beta", "gamma"),
+            TestDoc::new(2, "alpha", "delta"),
+        ]);
+
+        assert_eq!(fts.search("alpha gamma"), vec!["1"]);
+        assert!(fts.search("alpha missing").is_empty());
+    }
+
+    #[test]
     fn test_proximity_boost() {
         {
             let fts = new_test_fts(&[

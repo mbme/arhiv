@@ -125,3 +125,57 @@ impl SearchEngine {
         self.modified
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use crate::{
+        entities::{Id, new_document},
+        schema::DataSchema,
+    };
+
+    use super::SearchEngine;
+
+    #[test]
+    fn test_indexes_document_id_and_searchable_fields() {
+        let mut search = SearchEngine::new(DataSchema::new_test_schema());
+        let document =
+            new_document(json!({ "test": "searchable body" })).with_id(Id::from("knownsearchid"));
+
+        search.index_document(&document).unwrap();
+
+        assert_eq!(
+            search.search("knownsearchid").collect::<Vec<_>>(),
+            vec![document.id.clone()]
+        );
+        assert_eq!(
+            search.search("searchable").collect::<Vec<_>>(),
+            vec![document.id.clone()]
+        );
+    }
+
+    #[test]
+    fn test_ignores_non_searchable_ref_fields() {
+        let mut search = SearchEngine::new(DataSchema::new_test_schema());
+        let document = new_document(json!({
+            "test": "owner",
+            "ref": "referenceddoc",
+        }))
+        .with_id(Id::from("ownerdoc"));
+
+        search.index_document(&document).unwrap();
+
+        assert!(search.search("referenceddoc").next().is_none());
+    }
+
+    #[test]
+    fn test_index_document_rejects_invalid_searchable_field_type() {
+        let mut search = SearchEngine::new(DataSchema::new_test_schema());
+        let document = new_document(json!({ "test": 123 }));
+
+        let err = search.index_document(&document).unwrap_err();
+
+        assert!(err.to_string().contains("failed to extract field test"));
+    }
+}

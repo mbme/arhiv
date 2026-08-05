@@ -159,7 +159,6 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 * better search - vector search? integrate tantivy?
 * better diff/merge
 * network p2p sync (use iroh), relays
-* note that i prefer pure rust libraries without c/c++ code / native libs
 * integration with emacs/file system - use FUSE?
 
 * як це розкладаєтьс на "базові" компоненти? і інтегрується із рештою екосистеми?

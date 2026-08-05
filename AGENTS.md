@@ -52,6 +52,7 @@ Read the relevant spec before changing behavior in that area:
 - Backup/restore/import/status flows -> backup/restore durability spec and relevant `arhiv/src/arhiv/` code.
 - Cross-device merge/conflict behavior -> merge conflicts spec.
 - Desktop or Android platform wrapper security -> platform security boundaries spec.
+- Significant architecture decisions and their rationale -> `docs/architecture-decisions.md`.
 
 ## Common validation commands
 Use the most targeted check first, then broaden when needed:

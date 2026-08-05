@@ -1,4 +1,5 @@
-use anyhow::{Result, anyhow};
+use anyhow::{Context, Result, anyhow};
+use baza_common::get_string_hash_sha256;
 use serde::Serialize;
 
 use crate::entities::{DocumentType, ERASED_DOCUMENT_TYPE};
@@ -102,5 +103,36 @@ impl DataSchema {
     #[must_use]
     pub fn get_latest_data_version(&self) -> u8 {
         self.data_version
+    }
+
+    /// Returns a stable hash of the full serialized schema contract.
+    pub fn fingerprint(&self) -> Result<String> {
+        let serialized_schema =
+            serde_json::to_string(self).context("Failed to serialize schema fingerprint source")?;
+
+        Ok(get_string_hash_sha256(&serialized_schema))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::DataSchema;
+
+    #[test]
+    fn test_schema_fingerprint_is_stable() {
+        let schema = DataSchema::new_test_schema();
+
+        assert_eq!(schema.fingerprint().unwrap(), schema.fingerprint().unwrap());
+    }
+
+    #[test]
+    fn test_schema_fingerprint_changes_when_full_schema_changes() {
+        let original = DataSchema::new_test_schema();
+        let changed = DataSchema::new("changed-test-schema", vec![]);
+
+        assert_ne!(
+            original.fingerprint().unwrap(),
+            changed.fingerprint().unwrap()
+        );
     }
 }

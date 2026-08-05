@@ -1,6 +1,7 @@
 use std::{collections::HashMap, io::Write, time::Instant};
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
+use serde::{Deserialize, Serialize};
 
 use crate::full_text_search::{FTSEngine, FieldBoost};
 use baza_common::{create_file_reader, create_file_writer, log, read_all};
@@ -15,6 +16,82 @@ use crate::{
 
 const TITLE_FIELD_NAME: &str = "@title";
 const ID_FIELD_NAME: &str = "@id";
+const SEARCH_INDEX_FORMAT_VERSION: u8 = 1;
+const SEARCH_ALGORITHM_VERSION: u8 = 1;
+
+#[derive(Serialize, Deserialize)]
+struct SearchIndexFile {
+    format_version: u8,
+    search_version: u8,
+    data_version: u8,
+    schema_fingerprint: String,
+    fts: FTSEngine,
+}
+
+impl SearchIndexFile {
+    fn validate(&self, schema: &DataSchema) -> Result<()> {
+        if self.format_version != SEARCH_INDEX_FORMAT_VERSION {
+            log::info!(
+                "Search index format version mismatch: expected {}, found {}",
+                SEARCH_INDEX_FORMAT_VERSION,
+                self.format_version
+            );
+            bail!("Search index format version mismatch");
+        }
+
+        if self.search_version != SEARCH_ALGORITHM_VERSION {
+            log::info!(
+                "Search index algorithm version mismatch: expected {}, found {}",
+                SEARCH_ALGORITHM_VERSION,
+                self.search_version
+            );
+            bail!("Search index algorithm version mismatch");
+        }
+
+        let expected_data_version = schema.get_latest_data_version();
+        if self.data_version != expected_data_version {
+            log::info!(
+                "Search index data version mismatch: expected {}, found {}",
+                expected_data_version,
+                self.data_version
+            );
+            bail!("Search index data version mismatch");
+        }
+
+        let expected_schema_fingerprint = schema.fingerprint()?;
+        if self.schema_fingerprint != expected_schema_fingerprint {
+            log::info!(
+                "Search index schema fingerprint mismatch: expected {}, found {}",
+                expected_schema_fingerprint,
+                self.schema_fingerprint
+            );
+            bail!("Search index schema fingerprint mismatch");
+        }
+
+        Ok(())
+    }
+}
+
+#[derive(Serialize)]
+struct SearchIndexFileRef<'fts> {
+    format_version: u8,
+    search_version: u8,
+    data_version: u8,
+    schema_fingerprint: String,
+    fts: &'fts FTSEngine,
+}
+
+impl<'fts> SearchIndexFileRef<'fts> {
+    fn new(schema: &DataSchema, fts: &'fts FTSEngine) -> Result<Self> {
+        Ok(Self {
+            format_version: SEARCH_INDEX_FORMAT_VERSION,
+            search_version: SEARCH_ALGORITHM_VERSION,
+            data_version: schema.get_latest_data_version(),
+            schema_fingerprint: schema.fingerprint()?,
+            fts,
+        })
+    }
+}
 
 pub struct SearchEngine {
     fts: FTSEngine,
@@ -40,13 +117,22 @@ impl SearchEngine {
         let agegz_reader = AgeGzReader::new(reader, key)?;
 
         let bytes = read_all(agegz_reader)?;
-        let fts: FTSEngine = postcard::from_bytes(&bytes).context("Failed to parse FTSEngine")?;
+        let index_file: SearchIndexFile =
+            postcard::from_bytes(&bytes).context("Failed to parse SearchIndexFile")?;
+        index_file.validate(&schema)?;
 
         let duration = start_time.elapsed();
-        log::info!("Read search index from file in {:?}", duration);
+        log::info!(
+            "Read search index from file in {:?}: format_version={}, search_version={}, data_version={}, schema_fingerprint={}",
+            duration,
+            index_file.format_version,
+            index_file.search_version,
+            index_file.data_version,
+            index_file.schema_fingerprint
+        );
 
         Ok(SearchEngine {
-            fts,
+            fts: index_file.fts,
             schema,
             modified: false,
         })
@@ -60,7 +146,9 @@ impl SearchEngine {
         let writer = create_file_writer(file, true)?;
         let mut agegz_writer = AgeGzWriter::new(writer, key)?;
 
-        postcard::to_io(&self.fts, &mut agegz_writer).context("Failed to serialize FTSEngine")?;
+        let index_file = SearchIndexFileRef::new(&self.schema, &self.fts)?;
+        postcard::to_io(&index_file, &mut agegz_writer)
+            .context("Failed to serialize SearchIndexFile")?;
 
         let mut writer = agegz_writer.finish()?;
         writer.flush()?;
@@ -68,7 +156,14 @@ impl SearchEngine {
         self.modified = false;
 
         let duration = start_time.elapsed();
-        log::info!("Wrote search index to file in {:?}", duration);
+        log::info!(
+            "Wrote search index to file in {:?}: format_version={}, search_version={}, data_version={}, schema_fingerprint={}",
+            duration,
+            index_file.format_version,
+            index_file.search_version,
+            index_file.data_version,
+            index_file.schema_fingerprint
+        );
 
         Ok(())
     }
@@ -128,11 +223,13 @@ impl SearchEngine {
 
 #[cfg(test)]
 mod tests {
+    use baza_common::TempFile;
+    use baza_storage::crypto::age::AgeKey;
     use serde_json::json;
 
     use crate::{
         entities::{Id, new_document},
-        schema::DataSchema,
+        schema::{DataDescription, DataSchema},
     };
 
     use super::SearchEngine;
@@ -177,5 +274,51 @@ mod tests {
         let err = search.index_document(&document).unwrap_err();
 
         assert!(err.to_string().contains("failed to extract field test"));
+    }
+
+    #[test]
+    fn test_search_index_read_write_roundtrip() {
+        let schema = DataSchema::new_test_schema();
+        let key = AgeKey::generate_age_x25519_key();
+        let file = TempFile::new();
+        let document = new_document(json!({ "test": "roundtrip searchable" }));
+
+        let mut search = SearchEngine::new(schema.clone());
+        search.index_document(&document).unwrap();
+        search.write(&file.path, key.clone()).unwrap();
+
+        let search = SearchEngine::read(&file.path, key, schema).unwrap();
+
+        assert_eq!(
+            search.search("roundtrip").collect::<Vec<_>>(),
+            vec![document.id.clone()]
+        );
+    }
+
+    #[test]
+    fn test_search_index_read_rejects_schema_fingerprint_mismatch() {
+        let key = AgeKey::generate_age_x25519_key();
+        let file = TempFile::new();
+        let document = new_document(json!({ "test": "schema mismatch" }));
+
+        let mut search = SearchEngine::new(DataSchema::new_test_schema());
+        search.index_document(&document).unwrap();
+        search.write(&file.path, key.clone()).unwrap();
+
+        let changed_schema = DataSchema::new(
+            "test",
+            vec![DataDescription {
+                document_type: "different_type",
+                title_format: "${test}",
+                fields: vec![],
+            }],
+        );
+
+        let err = match SearchEngine::read(&file.path, key, changed_schema) {
+            Ok(_) => panic!("Search index read should reject schema fingerprint mismatch"),
+            Err(err) => err,
+        };
+
+        assert!(err.to_string().contains("schema fingerprint mismatch"));
     }
 }

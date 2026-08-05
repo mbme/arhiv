@@ -62,7 +62,9 @@ impl BazaState {
             match SearchEngine::read(&paths.state_search_index_file, key.clone(), schema.clone()) {
                 Ok(search) => search,
                 Err(err) => {
-                    log::debug!("Failed to read search index: {err}");
+                    log::info!(
+                        "Search index will be rebuilt because it could not be reused: {err:#}"
+                    );
 
                     let mut search = SearchEngine::new(schema.clone());
 

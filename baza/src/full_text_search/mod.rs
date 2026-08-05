@@ -139,6 +139,11 @@ impl FTSEngine {
     }
 
     fn update_avg_doc_term_count(&mut self) {
+        if self.doc_term_count.is_empty() {
+            self.avg_doc_len = 0.0;
+            return;
+        }
+
         self.avg_doc_len =
             self.doc_term_count.values().sum::<usize>() as f64 / self.doc_term_count.len() as f64;
     }
@@ -451,6 +456,16 @@ mod tests {
         assert_eq!(fts.search("vlaue").len(), 3);
         assert_eq!(fts.search("titl daata").len(), 3);
         assert_eq!(fts.search("tit").len(), 3);
+    }
+
+    #[test]
+    fn test_remove_last_document_resets_average_doc_length() {
+        let mut fts = new_test_fts(&[TestDoc::new(1, "title", "data")]);
+
+        fts.remove_document("1");
+
+        assert_eq!(fts.avg_doc_len, 0.0);
+        assert!(fts.search("title").is_empty());
     }
 
     #[test]

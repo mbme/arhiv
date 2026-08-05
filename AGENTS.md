@@ -25,6 +25,7 @@ Read the relevant spec before changing behavior in that area:
 - Launcher/server startup protocol: `docs/launcher-server-runtime-protocol-spec.md`.
 - Backup/restore safety guarantees: `docs/backup-restore-durability-spec.md`.
 - Platform trust boundaries: `docs/platform-security-boundaries-spec.md`.
+- Full-text search eligibility, ranking, and index compatibility: `docs/full-text-search-spec.md`.
 
 ## Safety invariants
 - Keep API DTO shapes synchronized between `arhiv/src/ui/dto.rs` and `arhiv/src/ui/dto.ts`.
@@ -51,6 +52,7 @@ Read the relevant spec before changing behavior in that area:
 - Login/session/token/cookie/cert behavior -> auth-session trust-chain spec + platform security boundaries spec.
 - Backup/restore/import/status flows -> backup/restore durability spec and relevant `arhiv/src/arhiv/` code.
 - Cross-device merge/conflict behavior -> merge conflicts spec.
+- Full-text search indexing, query matching, ranking, or persisted search index compatibility -> full-text search spec.
 - Desktop or Android platform wrapper security -> platform security boundaries spec.
 - Significant architecture decisions and their rationale -> `docs/architecture-decisions.md`.
 

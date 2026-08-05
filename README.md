@@ -44,6 +44,7 @@ That way, if you'll modify Arhiv on both devices simultaneously, Syncthing will 
 - `docs/launcher-server-runtime-protocol-spec.md`: launcher-to-server startup protocol (`--json`, `@@SERVER_INFO`), lock/port/shutdown semantics.
 - `docs/backup-restore-durability-spec.md`: backup/restore scope, safety guarantees, and corruption handling expectations.
 - `docs/platform-security-boundaries-spec.md`: desktop/android/server trust boundaries, secret handling surfaces, and non-goals.
+- `docs/full-text-search-spec.md`: full-text search indexing scope, strict AND eligibility, candidate matching, ranking, and index compatibility rules.
 
 # Arhiv CLI installation
 

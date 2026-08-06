@@ -1,7 +1,7 @@
 use std::{
     env,
     fs::{self, read_to_string},
-    process,
+    io, process,
 };
 
 use anyhow::{Context, Result, bail};
@@ -16,8 +16,9 @@ use arhiv::{
     server::media::generate_qrcode_svg,
 };
 use baza::{
-    BazaManager, DEV_MODE,
+    Baza, BazaManager, DEV_MODE, DocumentExpert, DocumentHead, Filter,
     entities::{Document, DocumentData, DocumentLockKey, DocumentType, Id},
+    schema::DataSchema,
 };
 use baza_common::{
     SecretString, ensure_file_exists, file_exists, get_crate_version, init_global_rayon_threadpool,
@@ -113,11 +114,51 @@ enum CLICommand {
     },
     /// Commit pending changes
     Commit,
+    /// List recent documents
+    List {
+        /// Restrict results to a document type. Can be used more than once.
+        #[arg(long = "type", value_parser = PossibleValuesParser::new(
+                            get_standard_schema().get_document_types(),
+                        ))]
+        document_types: Vec<String>,
+        /// Page number, starting at 0
+        #[arg(long, default_value_t = 0)]
+        page: u8,
+        /// Show only conflicted documents
+        #[arg(long, default_value_t = false)]
+        conflicts: bool,
+        /// Print machine-readable JSON
+        #[arg(long, default_value_t = false)]
+        json: bool,
+    },
+    /// Search documents
+    Search {
+        /// Full-text search query
+        #[arg(required = true, num_args = 1.., value_name = "QUERY")]
+        query: Vec<String>,
+        /// Restrict results to a document type. Can be used more than once.
+        #[arg(long = "type", value_parser = PossibleValuesParser::new(
+                            get_standard_schema().get_document_types(),
+                        ))]
+        document_types: Vec<String>,
+        /// Page number, starting at 0
+        #[arg(long, default_value_t = 0)]
+        page: u8,
+        /// Show only conflicted documents
+        #[arg(long, default_value_t = false)]
+        conflicts: bool,
+        /// Print machine-readable JSON
+        #[arg(long, default_value_t = false)]
+        json: bool,
+    },
     /// Get document by id
     Get {
         /// Id of the document
         #[arg()]
         id: Id,
+        /// Print raw document head JSON
+        #[arg(long, default_value_t = false)]
+        json: bool,
     },
     /// Add new document
     Add {
@@ -129,6 +170,40 @@ enum CLICommand {
         /// JSON object with document props
         #[arg()]
         data: String,
+    },
+    /// Replace an existing document's JSON data
+    Update {
+        /// Id of the document
+        #[arg()]
+        id: Id,
+        /// JSON object with document props
+        #[arg()]
+        data: String,
+        /// Lock key to be checked before updating a locked document
+        #[arg(long)]
+        lock_key: Option<String>,
+    },
+    /// Erase document by id
+    Erase {
+        /// Id of the document
+        #[arg()]
+        id: Id,
+    },
+    /// Print schema information
+    Schema {
+        /// Document type to describe. Prints all types when omitted.
+        #[arg(value_parser = PossibleValuesParser::new(
+                            get_standard_schema().get_document_types(),
+                        ))]
+        document_type: Option<String>,
+        /// Print machine-readable JSON
+        #[arg(long, default_value_t = false)]
+        json: bool,
+    },
+    /// Work with encrypted assets
+    Asset {
+        #[command(subcommand)]
+        command: AssetCommand,
     },
     /// Import files and create documents.
     Import {
@@ -148,6 +223,19 @@ enum CLICommand {
     GenerateCompletions {
         #[arg(value_enum)]
         shell: Shell,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+enum AssetCommand {
+    /// Decrypt an asset into a local file
+    Export {
+        /// Id of the asset document
+        #[arg()]
+        id: Id,
+        /// Output file path
+        #[arg(value_hint = ValueHint::FilePath)]
+        output_file: String,
     },
 }
 
@@ -391,15 +479,44 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 println!("Committed documents");
             }
         }
-        CLICommand::Get { id } => {
+        CLICommand::List {
+            document_types,
+            page,
+            conflicts,
+            json,
+        } => {
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
+            let filter = build_filter(document_types, String::new(), page, conflicts);
+            print_document_list(&arhiv, &filter, json)?;
+        }
+        CLICommand::Search {
+            query,
+            document_types,
+            page,
+            conflicts,
+            json,
+        } => {
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
+            let filter = build_filter(document_types, query.join(" "), page, conflicts);
+            print_document_list(&arhiv, &filter, json)?;
+        }
+        CLICommand::Get { id, json } => {
             let arhiv = Arhiv::new_desktop();
             unlock_arhiv(&arhiv);
 
             let baza = arhiv.baza.open()?;
-            let document = baza.get_document(&id);
+            let head = baza.get_document(&id);
 
-            if let Some(document) = document {
-                serde_json::to_writer_pretty(std::io::stdout(), &document)?;
+            if let Some(head) = head {
+                if json {
+                    serde_json::to_writer_pretty(std::io::stdout(), &head)?;
+                } else {
+                    print_document_details(&arhiv.baza.get_document_expert(), &baza, head)?;
+                }
             } else {
                 eprintln!("Document with id '{}' not found", &id);
                 process::exit(1);
@@ -423,6 +540,62 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             baza.save_changes()?;
 
             print_document(&document);
+        }
+        CLICommand::Update { id, data, lock_key } => {
+            let data: DocumentData =
+                serde_json::from_str(&data).context("data must be a JSON object")?;
+            let lock_key = lock_key.map(DocumentLockKey::from_string);
+
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
+            let mut document = {
+                let baza = arhiv.baza.open()?;
+                baza.must_get_document(&id)?.clone()
+            };
+            document.data = data;
+
+            let mut baza = arhiv.baza.open_mut()?;
+            let document = baza.stage_document(document, &lock_key)?.clone();
+            baza.save_changes()?;
+
+            print_document(&document);
+        }
+        CLICommand::Erase { id } => {
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
+            let mut baza = arhiv.baza.open_mut()?;
+            baza.erase_document(&id)?;
+            baza.save_changes()?;
+
+            println!("Erased document {id}");
+        }
+        CLICommand::Schema {
+            document_type,
+            json,
+        } => {
+            let arhiv = Arhiv::new_desktop();
+
+            print_schema(arhiv.baza.get_schema(), document_type, json)?;
+        }
+        CLICommand::Asset {
+            command: AssetCommand::Export { id, output_file },
+        } => {
+            if file_exists(&output_file)? {
+                bail!("Can't export asset: file {output_file} already exists");
+            }
+
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
+            let baza = arhiv.baza.open()?;
+            let mut asset_data = baza.get_asset_data(&id)?;
+            let mut output =
+                fs::File::create(&output_file).context("Failed to create output file")?;
+            io::copy(&mut asset_data, &mut output).context("Failed to write asset data")?;
+
+            println!("Exported asset {id} into {output_file}");
         }
         CLICommand::Import {
             document_type,
@@ -493,6 +666,199 @@ async fn handle_command(command: CLICommand) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn build_filter(
+    document_types: Vec<String>,
+    query: String,
+    page: u8,
+    only_conflicts: bool,
+) -> Filter {
+    Filter {
+        document_types: document_types.into_iter().map(DocumentType::new).collect(),
+        query,
+        page,
+        only_conflicts,
+    }
+}
+
+fn print_document_list(arhiv: &Arhiv, filter: &Filter, json_output: bool) -> Result<()> {
+    let document_expert = arhiv.baza.get_document_expert();
+    let baza = arhiv.baza.open()?;
+    let page = baza.list_documents(filter)?;
+
+    if json_output {
+        let documents = page
+            .items
+            .into_iter()
+            .map(|head| {
+                let document = head.get_single_document();
+                let title = document_expert.get_title(&document.document_type, &document.data)?;
+
+                Ok(serde_json::json!({
+                    "id": document.id,
+                    "documentType": document.document_type,
+                    "title": title,
+                    "updatedAt": document.updated_at,
+                    "data": document.data,
+                    "hasConflict": head.is_conflict(),
+                    "isStaged": head.is_staged(),
+                    "snapshotsCount": head.get_snapshots_count(),
+                }))
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        serde_json::to_writer_pretty(
+            std::io::stdout(),
+            &serde_json::json!({
+                "documents": documents,
+                "hasMore": page.has_more,
+                "total": page.total,
+            }),
+        )?;
+        return Ok(());
+    }
+
+    if page.total == 0 {
+        println!("No documents found");
+        return Ok(());
+    }
+
+    println!(
+        "Documents: {} total, showing {}{}",
+        page.total,
+        page.items.len(),
+        if page.has_more {
+            ", more available"
+        } else {
+            ""
+        }
+    );
+
+    for head in page.items {
+        let document = head.get_single_document();
+        let title = document_expert.get_title(&document.document_type, &document.data)?;
+
+        println!(
+            "{}  {:<12}  {}  {}{}",
+            document.id,
+            document.document_type,
+            document.updated_at.default_date_time_format(),
+            single_line(&title),
+            status_flags(head)
+        );
+    }
+
+    Ok(())
+}
+
+fn print_document_details(
+    document_expert: &DocumentExpert<'_>,
+    baza: &Baza,
+    head: &DocumentHead,
+) -> Result<()> {
+    let document = head.get_single_document();
+    let title = document_expert.get_title(&document.document_type, &document.data)?;
+    let refs = document_expert.extract_refs(&document.document_type, &document.data)?;
+    let data = serde_json::to_string_pretty(&document.data)?;
+
+    println!("Id: {}", document.id);
+    println!("Type: {}", document.document_type);
+    println!("Title: {}", title);
+    println!(
+        "Updated: {}",
+        document.updated_at.default_date_time_format()
+    );
+    println!("Staged: {}", head.is_staged());
+    println!("Conflict: {}", head.is_conflict());
+    println!("Snapshots: {}", head.get_snapshots_count());
+    println!("Refs: {}", format_ids(refs.get_all_document_refs()));
+    println!(
+        "Backrefs: {}",
+        format_ids(baza.find_document_backrefs(&document.id))
+    );
+    println!(
+        "Collections: {}",
+        format_ids(baza.find_document_collections(&document.id))
+    );
+    println!("Data:\n{data}");
+
+    Ok(())
+}
+
+fn print_schema(
+    schema: &DataSchema,
+    document_type: Option<String>,
+    json_output: bool,
+) -> Result<()> {
+    if let Some(document_type) = document_type {
+        let document_type = DocumentType::new(document_type);
+        let description = schema.get_data_description(&document_type)?;
+
+        if json_output {
+            serde_json::to_writer_pretty(std::io::stdout(), description)?;
+            return Ok(());
+        }
+
+        println!("Document type: {}", description.document_type);
+        println!("Title format: {}", description.title_format);
+        println!("Fields:");
+        for field in &description.fields {
+            println!(
+                "  {}: {:?}{}{}",
+                field.name,
+                field.field_type,
+                if field.mandatory { ", mandatory" } else { "" },
+                if field.readonly { ", readonly" } else { "" }
+            );
+        }
+
+        return Ok(());
+    }
+
+    if json_output {
+        serde_json::to_writer_pretty(std::io::stdout(), schema)?;
+        return Ok(());
+    }
+
+    println!("Document types:");
+    for document_type in schema.get_document_types() {
+        println!("  {document_type}");
+    }
+
+    Ok(())
+}
+
+fn single_line(value: &str) -> String {
+    value.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+fn status_flags(head: &DocumentHead) -> String {
+    let mut flags = Vec::new();
+
+    if head.is_staged() {
+        flags.push("staged");
+    }
+    if head.is_conflict() {
+        flags.push("conflict");
+    }
+
+    if flags.is_empty() {
+        String::new()
+    } else {
+        format!(" [{}]", flags.join(", "))
+    }
+}
+
+fn format_ids(ids: impl IntoIterator<Item = Id>) -> String {
+    let mut ids = ids.into_iter().map(|id| id.to_string()).collect::<Vec<_>>();
+    ids.sort();
+
+    if ids.is_empty() {
+        "-".to_string()
+    } else {
+        ids.join(", ")
+    }
 }
 
 fn launch_browser(browser: &str, browser_url: &str) -> Result<()> {

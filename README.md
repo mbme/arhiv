@@ -92,6 +92,14 @@ Using makepkg: `just arch-install`. It also installs `arhiv-desktop` GUI.
 # CLI app
 Cross-platform CLI app. Uses system keyring to store password.
 
+Useful document commands:
+* `arhiv list` lists recent documents; use `--type`, `--page`, `--conflicts`, or `--json` to narrow output.
+* `arhiv search <query>` searches documents with the same filtering/output options as `list`.
+* `arhiv get <id>` prints a readable document summary; add `--json` for the raw document head.
+* `arhiv add <type> <json>`, `arhiv update <id> <json>`, and `arhiv erase <id>` manage document data.
+* `arhiv schema [type]` prints available document types or a type's fields.
+* `arhiv asset export <id> <output-file>` decrypts an asset into a local file.
+
 # Web UI app
 * `TypeScript` for type checking
 * `Oxlint` for linting
@@ -161,8 +169,8 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 * better diff/merge
 * network p2p sync (use iroh), relays
 * integration with emacs/file system - use FUSE?
-* expose missing functionality in CLI (ie. search)
 * improve backup: add manifest; add integrity checks; add restore command
+* get rid of tailwind?
 
 * як це розкладаєтьс на "базові" компоненти? і інтегрується із рештою екосистеми?
   * формат даних (encrypted compressed jsonl)

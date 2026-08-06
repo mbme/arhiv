@@ -97,7 +97,9 @@ Useful document commands:
 * `arhiv search <query>` searches documents with the same filtering/output options as `list`.
 * `arhiv get <id>` prints a readable document summary; add `--json` for the raw document head.
 * `arhiv add <type> <json>`, `arhiv update <id> <json>`, and `arhiv erase <id>` manage document data.
+* `arhiv import track <file...>` imports audio files as track documents.
 * `arhiv schema [type]` prints available document types or a type's fields.
+* `arhiv asset create <file...>` creates encrypted asset documents from local files.
 * `arhiv asset export <id> <output-file>` decrypts an asset into a local file.
 
 # Web UI app

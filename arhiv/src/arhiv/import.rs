@@ -1,9 +1,6 @@
 use anyhow::{Context, Result, bail, ensure};
 
-use baza::{
-    entities::{Document, DocumentData, DocumentType},
-    schema::ASSET_TYPE,
-};
+use baza::entities::{Document, DocumentData, DocumentType};
 use baza_common::{ensure_file_exists, remove_file_extension, remove_file_if_exists};
 
 use crate::{Arhiv, definitions::TRACK_TYPE};
@@ -19,17 +16,6 @@ impl Arhiv {
 
         match document_type {
             TRACK_TYPE => self.import_track(file_path, remove_original),
-            ASSET_TYPE => {
-                let mut baza = self.baza.open_mut()?;
-                let asset = baza.create_asset(file_path)?;
-                baza.save_changes()?;
-
-                if remove_original {
-                    remove_file_if_exists(file_path)?;
-                }
-
-                asset.into_document()
-            }
             other => bail!("Don't know how to import document of type '{}'", other),
         }
     }

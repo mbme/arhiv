@@ -12,7 +12,8 @@ use clap_complete::{Shell, generate};
 use dialoguer::{Password, theme::ColorfulTheme};
 
 use arhiv::{
-    Arhiv, ArhivOptions, ArhivServer, CacheUnlockResult, definitions::get_standard_schema,
+    Arhiv, ArhivOptions, ArhivServer, CacheUnlockResult,
+    definitions::{TRACK_TYPE, get_standard_schema},
     server::media::generate_qrcode_svg,
 };
 use baza::{
@@ -22,7 +23,7 @@ use baza::{
 };
 use baza_common::{
     SecretString, ensure_file_exists, file_exists, get_crate_version, init_global_rayon_threadpool,
-    into_absolute_path, log, shutdown_signal,
+    into_absolute_path, log, remove_file_if_exists, shutdown_signal,
 };
 
 #[derive(Parser, Debug)]
@@ -207,13 +208,11 @@ enum CLICommand {
     },
     /// Import files and create documents.
     Import {
-        /// One of known document types
-        #[arg(value_parser = PossibleValuesParser::new(
-                            get_standard_schema().get_document_types(),
-                        ))]
+        /// Document type to import
+        #[arg(value_parser = PossibleValuesParser::new([TRACK_TYPE]))]
         document_type: String,
         /// Files to import
-        #[arg(num_args = 1.., value_hint = ValueHint::FilePath)]
+        #[arg(required = true, num_args = 1.., value_hint = ValueHint::FilePath)]
         file_paths: Vec<String>,
         /// Remove original files
         #[arg(short, default_value_t = false)]
@@ -228,6 +227,15 @@ enum CLICommand {
 
 #[derive(Subcommand, Debug)]
 enum AssetCommand {
+    /// Create encrypted asset documents from local files
+    Create {
+        /// Files to store as encrypted assets
+        #[arg(required = true, num_args = 1.., value_hint = ValueHint::FilePath)]
+        file_paths: Vec<String>,
+        /// Remove original files after assets are saved
+        #[arg(short, default_value_t = false)]
+        remove_original_file: bool,
+    },
     /// Decrypt an asset into a local file
     Export {
         /// Id of the asset document
@@ -578,6 +586,37 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let arhiv = Arhiv::new_desktop();
 
             print_schema(arhiv.baza.get_schema(), document_type, json)?;
+        }
+        CLICommand::Asset {
+            command:
+                AssetCommand::Create {
+                    file_paths,
+                    remove_original_file,
+                },
+        } => {
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
+            println!("Creating {} assets", file_paths.len());
+
+            for file_path in file_paths {
+                let file_path = into_absolute_path(file_path, true)
+                    .context("failed to convert path into absolute path")?;
+
+                let asset = {
+                    let mut baza = arhiv.baza.open_mut()?;
+                    let asset = baza.create_asset(&file_path)?;
+                    baza.save_changes()?;
+                    asset
+                };
+
+                if remove_original_file {
+                    remove_file_if_exists(&file_path)?;
+                }
+
+                let document = asset.into_document()?;
+                print_document(&document);
+            }
         }
         CLICommand::Asset {
             command: AssetCommand::Export { id, output_file },

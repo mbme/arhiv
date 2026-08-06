@@ -161,6 +161,8 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 * better diff/merge
 * network p2p sync (use iroh), relays
 * integration with emacs/file system - use FUSE?
+* expose missing functionality in CLI (ie. search)
+* improve backup: add manifest; add integrity checks; add restore command
 
 * як це розкладаєтьс на "базові" компоненти? і інтегрується із рештою екосистеми?
   * формат даних (encrypted compressed jsonl)

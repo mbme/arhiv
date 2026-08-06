@@ -8,6 +8,13 @@ opt-level = 3
 [profile.dev.package.flate2]
 opt-level = 3
 
+# Always max optimize scrypt so dev builds can unlock production data encrypted
+# with calibrated passphrase work factors.
+[profile.dev.package.scrypt]
+opt-level = 3
+[profile.dev.package.age]
+opt-level = 3
+
 # Always max optimize image otherwise it's VERY slow
 [profile.dev.package.image]
 opt-level = 3

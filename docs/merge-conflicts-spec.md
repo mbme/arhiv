@@ -20,8 +20,8 @@ Primary code:
 - `baza/src/entities/revision.rs`
 - `baza/src/baza_state/document_head.rs`
 - `baza/src/baza/mod.rs`
-- `baza/src/merge_expert.rs`
-- `baza/src/merge.rs`
+- `baza/src/merge/expert.rs`
+- `baza/src/merge/mod.rs`
 
 ## 2. Conflict Detection Model
 
@@ -132,8 +132,8 @@ Field strategies:
 No conflict markers are emitted. Overlaps are synthesized into a single value by algorithmic reconciliation.
 
 Code:
-- `baza/src/merge_expert.rs`
-- `baza/src/merge.rs`
+- `baza/src/merge/expert.rs`
+- `baza/src/merge/mod.rs`
 
 ## 6. Conflict Lifecycle
 

@@ -1,3 +1,9 @@
+mod document_diff;
+mod expert;
+
+pub use document_diff::{DocumentDataDiff, diff_document_data};
+pub(crate) use expert::MergeExpert;
+
 use core::fmt;
 use std::time::Duration;
 

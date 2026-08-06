@@ -24,7 +24,7 @@ use crate::{
         Document, DocumentKey, DocumentLock, DocumentLockKey, DocumentType, Id, InstanceId,
         LatestRevComputer, Revision,
     },
-    merge_expert::MergeExpert,
+    merge::MergeExpert,
     schema::{ASSET_TYPE, Asset, AssetData, DataSchema},
 };
 

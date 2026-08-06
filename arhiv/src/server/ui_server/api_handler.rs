@@ -316,11 +316,10 @@ pub async fn handle_api_request(ctx: &ServerContext, request: APIRequest) -> Res
                 bail!("Collection {collection_id} is locked")
             }
 
-            let mut collection = baza.must_get_document(&collection_id)?.clone();
-            let document = baza.must_get_document(&id)?;
             let document_expert = arhiv.baza.get_document_expert();
+            let mut collection = baza.must_get_document(&collection_id)?.clone();
 
-            document_expert.reorder_refs(&mut collection, document, new_pos)?;
+            document_expert.reorder_collection_member(&mut collection, &id, new_pos)?;
 
             baza.stage_document(collection, &None)?;
 

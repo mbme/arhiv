@@ -201,6 +201,11 @@ enum CLICommand {
         #[arg(long, default_value_t = false)]
         json: bool,
     },
+    /// Work with document collections
+    Collection {
+        #[command(subcommand)]
+        command: CollectionCommand,
+    },
     /// Work with encrypted assets
     Asset {
         #[command(subcommand)]
@@ -223,6 +228,73 @@ enum CLICommand {
         #[arg(value_enum)]
         shell: Shell,
     },
+}
+
+#[derive(Subcommand, Debug)]
+enum CollectionCommand {
+    /// List collections containing a document
+    List {
+        /// Id of the document
+        #[arg()]
+        id: Id,
+        /// Print machine-readable JSON
+        #[arg(long, default_value_t = false)]
+        json: bool,
+    },
+    /// List members of a collection
+    Members {
+        /// Id of the collection document
+        #[arg()]
+        collection_id: Id,
+        /// Print machine-readable JSON
+        #[arg(long, default_value_t = false)]
+        json: bool,
+    },
+    /// Add a document to a collection
+    Add {
+        /// Id of the collection document
+        #[arg()]
+        collection_id: Id,
+        /// Id of the document to add
+        #[arg()]
+        id: Id,
+        /// Lock key to be checked before updating a locked collection
+        #[arg(long)]
+        lock_key: Option<String>,
+    },
+    /// Remove a document from a collection
+    Remove {
+        /// Id of the collection document
+        #[arg()]
+        collection_id: Id,
+        /// Id of the document to remove
+        #[arg()]
+        id: Id,
+        /// Lock key to be checked before updating a locked collection
+        #[arg(long)]
+        lock_key: Option<String>,
+    },
+    /// Move a collection member to a new zero-based position
+    Move {
+        /// Id of the collection document
+        #[arg()]
+        collection_id: Id,
+        /// Id of the document to move
+        #[arg()]
+        id: Id,
+        /// New zero-based position
+        #[arg(long)]
+        to: usize,
+        /// Lock key to be checked before updating a locked collection
+        #[arg(long)]
+        lock_key: Option<String>,
+    },
+}
+
+enum CollectionUpdate {
+    Add,
+    Remove,
+    Move { to: usize },
 }
 
 #[derive(Subcommand, Debug)]
@@ -587,6 +659,12 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             print_schema(arhiv.baza.get_schema(), document_type, json)?;
         }
+        CLICommand::Collection { command } => {
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
+            handle_collection_command(&arhiv, command)?;
+        }
         CLICommand::Asset {
             command:
                 AssetCommand::Create {
@@ -721,6 +799,170 @@ fn build_filter(
     }
 }
 
+fn handle_collection_command(arhiv: &Arhiv, command: CollectionCommand) -> Result<()> {
+    match command {
+        CollectionCommand::List { id, json } => {
+            let document_expert = arhiv.baza.get_document_expert();
+            let baza = arhiv.baza.open()?;
+            get_document_head(&baza, &id)?;
+
+            let mut collection_ids = baza
+                .find_document_collections(&id)
+                .into_iter()
+                .collect::<Vec<_>>();
+            collection_ids.sort_by_key(|id| id.to_string());
+
+            print_documents_by_ids(
+                &document_expert,
+                &baza,
+                &collection_ids,
+                json,
+                "Collections",
+                "No collections found",
+            )?;
+        }
+        CollectionCommand::Members {
+            collection_id,
+            json,
+        } => {
+            let document_expert = arhiv.baza.get_document_expert();
+            let baza = arhiv.baza.open()?;
+            let collection = get_document_head(&baza, &collection_id)?.get_single_document();
+            let member_ids = document_expert.collection_member_ids(collection)?;
+
+            print_documents_by_ids(
+                &document_expert,
+                &baza,
+                &member_ids,
+                json,
+                "Members",
+                "No members found",
+            )?;
+        }
+        CollectionCommand::Add {
+            collection_id,
+            id,
+            lock_key,
+        } => {
+            update_collection(arhiv, &collection_id, &id, lock_key, CollectionUpdate::Add)?;
+
+            println!("Added document {id} to collection {collection_id}");
+        }
+        CollectionCommand::Remove {
+            collection_id,
+            id,
+            lock_key,
+        } => {
+            update_collection(
+                arhiv,
+                &collection_id,
+                &id,
+                lock_key,
+                CollectionUpdate::Remove,
+            )?;
+
+            println!("Removed document {id} from collection {collection_id}");
+        }
+        CollectionCommand::Move {
+            collection_id,
+            id,
+            to,
+            lock_key,
+        } => {
+            update_collection(
+                arhiv,
+                &collection_id,
+                &id,
+                lock_key,
+                CollectionUpdate::Move { to },
+            )?;
+
+            println!("Moved document {id} in collection {collection_id} to position {to}");
+        }
+    }
+
+    Ok(())
+}
+
+fn update_collection(
+    arhiv: &Arhiv,
+    collection_id: &Id,
+    id: &Id,
+    lock_key: Option<String>,
+    update: CollectionUpdate,
+) -> Result<()> {
+    let lock_key = lock_key.map(DocumentLockKey::from_string);
+    let document_expert = arhiv.baza.get_document_expert();
+    let mut baza = arhiv.baza.open_mut()?;
+    let mut collection = baza.must_get_document(collection_id)?.clone();
+
+    match update {
+        CollectionUpdate::Add => {
+            let document = baza.must_get_document(id)?.clone();
+            document_expert.add_document_to_collection(&document, &mut collection)?;
+        }
+        CollectionUpdate::Remove => {
+            document_expert.remove_member_from_collection(&mut collection, id)?;
+        }
+        CollectionUpdate::Move { to } => {
+            document_expert.reorder_collection_member(&mut collection, id, to)?;
+        }
+    }
+
+    baza.stage_document(collection, &lock_key)?;
+    baza.save_changes()?;
+
+    Ok(())
+}
+
+fn print_documents_by_ids(
+    document_expert: &DocumentExpert<'_>,
+    baza: &Baza,
+    ids: &[Id],
+    json_output: bool,
+    label: &str,
+    empty_message: &str,
+) -> Result<()> {
+    if json_output {
+        let documents = ids
+            .iter()
+            .map(|id| {
+                let head = get_document_head(baza, id)?;
+                document_summary_json(document_expert, head)
+            })
+            .collect::<Result<Vec<_>>>()?;
+        let total = documents.len();
+
+        serde_json::to_writer_pretty(
+            std::io::stdout(),
+            &serde_json::json!({
+                "documents": documents,
+                "total": total,
+            }),
+        )?;
+        return Ok(());
+    }
+
+    if ids.is_empty() {
+        println!("{empty_message}");
+        return Ok(());
+    }
+
+    println!("{label}: {}", ids.len());
+
+    for id in ids {
+        let head = get_document_head(baza, id)?;
+        print_document_row(document_expert, head)?;
+    }
+
+    Ok(())
+}
+
+fn get_document_head<'b>(baza: &'b Baza, id: &Id) -> Result<&'b DocumentHead> {
+    baza.get_document(id)
+        .with_context(|| format!("Can't find document {id}"))
+}
+
 fn print_document_list(arhiv: &Arhiv, filter: &Filter, json_output: bool) -> Result<()> {
     let document_expert = arhiv.baza.get_document_expert();
     let baza = arhiv.baza.open()?;
@@ -730,21 +972,7 @@ fn print_document_list(arhiv: &Arhiv, filter: &Filter, json_output: bool) -> Res
         let documents = page
             .items
             .into_iter()
-            .map(|head| {
-                let document = head.get_single_document();
-                let title = document_expert.get_title(&document.document_type, &document.data)?;
-
-                Ok(serde_json::json!({
-                    "id": document.id,
-                    "documentType": document.document_type,
-                    "title": title,
-                    "updatedAt": document.updated_at,
-                    "data": document.data,
-                    "hasConflict": head.is_conflict(),
-                    "isStaged": head.is_staged(),
-                    "snapshotsCount": head.get_snapshots_count(),
-                }))
-            })
+            .map(|head| document_summary_json(&document_expert, &head))
             .collect::<Result<Vec<_>>>()?;
 
         serde_json::to_writer_pretty(
@@ -775,18 +1003,43 @@ fn print_document_list(arhiv: &Arhiv, filter: &Filter, json_output: bool) -> Res
     );
 
     for head in page.items {
-        let document = head.get_single_document();
-        let title = document_expert.get_title(&document.document_type, &document.data)?;
-
-        println!(
-            "{}  {:<12}  {}  {}{}",
-            document.id,
-            document.document_type,
-            document.updated_at.default_date_time_format(),
-            single_line(&title),
-            status_flags(head)
-        );
+        print_document_row(&document_expert, &head)?;
     }
+
+    Ok(())
+}
+
+fn document_summary_json(
+    document_expert: &DocumentExpert<'_>,
+    head: &DocumentHead,
+) -> Result<serde_json::Value> {
+    let document = head.get_single_document();
+    let title = document_expert.get_title(&document.document_type, &document.data)?;
+
+    Ok(serde_json::json!({
+        "id": document.id,
+        "documentType": document.document_type,
+        "title": title,
+        "updatedAt": document.updated_at,
+        "data": document.data,
+        "hasConflict": head.is_conflict(),
+        "isStaged": head.is_staged(),
+        "snapshotsCount": head.get_snapshots_count(),
+    }))
+}
+
+fn print_document_row(document_expert: &DocumentExpert<'_>, head: &DocumentHead) -> Result<()> {
+    let document = head.get_single_document();
+    let title = document_expert.get_title(&document.document_type, &document.data)?;
+
+    println!(
+        "{}  {:<12}  {}  {}{}",
+        document.id,
+        document.document_type,
+        document.updated_at.default_date_time_format(),
+        single_line(&title),
+        status_flags(head)
+    );
 
     Ok(())
 }

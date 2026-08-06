@@ -99,6 +99,9 @@ Useful document commands:
 * `arhiv add <type> <json>`, `arhiv update <id> <json>`, and `arhiv erase <id>` manage document data.
 * `arhiv import track <file...>` imports audio files as track documents.
 * `arhiv schema [type]` prints available document types or a type's fields.
+* `arhiv collection list <id>` lists collections containing a document.
+* `arhiv collection members <collection-id>` lists ordered collection members.
+* `arhiv collection add|remove|move <collection-id> <id>` updates collection membership.
 * `arhiv asset create <file...>` creates encrypted asset documents from local files.
 * `arhiv asset export <id> <output-file>` decrypts an asset into a local file.
 

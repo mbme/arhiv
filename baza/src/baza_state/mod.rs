@@ -378,11 +378,10 @@ impl BazaState {
 
         for collection_id in &old_collections_ids {
             if !collections.contains(collection_id) {
-                let document = self.must_get_document(document_id)?;
                 let mut old_collection = self.must_get_document(collection_id)?.clone();
 
                 let document_expert = DocumentExpert::new(&self.schema);
-                document_expert.remove_document_from_collection(document, &mut old_collection)?;
+                document_expert.remove_member_from_collection(&mut old_collection, document_id)?;
 
                 self.stage_document(old_collection, &None)?;
             }

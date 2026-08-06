@@ -117,7 +117,9 @@ impl Baza {
 
             let refs = {
                 if let Some(value) = value {
-                    field.extract_refs(value)
+                    let mut refs = field.extract_refs(value);
+                    refs.extend(field.extract_collection_refs(value));
+                    refs
                 } else {
                     continue;
                 }
@@ -246,7 +248,7 @@ mod tests {
 
     use crate::{
         BazaManager,
-        entities::new_document,
+        entities::{Document, DocumentType, new_document},
         schema::{DataDescription, DataSchema, Field, FieldType},
     };
 
@@ -373,6 +375,98 @@ mod tests {
 
         let source = new_document(json!({ "ref": target_id }));
         let result = baza.stage_document(source, &None);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_validation_rejects_erased_ref_list_target() {
+        let temp_dir = TempFile::new_with_details("test_baza", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = BazaManager::new_for_tests_with_schema(
+            &temp_dir.path,
+            DataSchema::new(
+                "test",
+                vec![
+                    DataDescription {
+                        document_type: "test_type",
+                        title_format: "title",
+                        fields: vec![],
+                    },
+                    DataDescription {
+                        document_type: "tag",
+                        title_format: "title",
+                        fields: vec![Field {
+                            name: "items",
+                            field_type: FieldType::RefList(&[]),
+                            mandatory: false,
+                            readonly: false,
+                        }],
+                    },
+                ],
+            ),
+        );
+
+        let mut baza = manager.open_mut().unwrap();
+        let target = new_document(json!({}));
+        let target_id = target.id.clone();
+
+        baza.stage_document(target, &None).unwrap();
+        baza.commit().unwrap();
+        baza.erase_document(&target_id).unwrap();
+        baza.commit().unwrap();
+
+        let collection =
+            Document::new(DocumentType::new("tag")).with_data(json!({ "items": [target_id] }));
+        let result = baza.stage_document(collection, &None);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_validation_rejects_wrong_ref_list_target_type() {
+        let temp_dir = TempFile::new_with_details("test_baza", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = BazaManager::new_for_tests_with_schema(
+            &temp_dir.path,
+            DataSchema::new(
+                "test",
+                vec![
+                    DataDescription {
+                        document_type: "test_type",
+                        title_format: "title",
+                        fields: vec![],
+                    },
+                    DataDescription {
+                        document_type: "other_type",
+                        title_format: "title",
+                        fields: vec![],
+                    },
+                    DataDescription {
+                        document_type: "collection",
+                        title_format: "title",
+                        fields: vec![Field {
+                            name: "items",
+                            field_type: FieldType::RefList(&["other_type"]),
+                            mandatory: false,
+                            readonly: false,
+                        }],
+                    },
+                ],
+            ),
+        );
+
+        let mut baza = manager.open_mut().unwrap();
+        let target = new_document(json!({}));
+        let target_id = target.id.clone();
+
+        baza.stage_document(target, &None).unwrap();
+
+        let collection = Document::new(DocumentType::new("collection"))
+            .with_data(json!({ "items": [target_id] }));
+        let result = baza.stage_document(collection, &None);
 
         assert!(result.is_err());
     }

@@ -68,9 +68,17 @@ impl Baza {
         Ok(())
     }
 
-    pub(crate) fn remove_unused_storage_blobs(&mut self) -> Result<()> {
-        let committed_assets = self
-            .iter_documents()
+    fn remove_state_blob(&mut self, asset_id: &Id) -> Result<()> {
+        log::debug!("Removing state BLOB {asset_id}");
+        let file_path = self.paths.get_state_blob_path(asset_id);
+
+        remove_file(file_path)?;
+
+        Ok(())
+    }
+
+    fn collect_asset_document_ids(&self) -> HashSet<Id> {
+        self.iter_documents()
             .filter_map(|head| {
                 if *head.get_type() == ASSET_TYPE {
                     return Some(head.get_id().clone());
@@ -78,7 +86,28 @@ impl Baza {
 
                 None
             })
-            .collect::<HashSet<_>>();
+            .collect()
+    }
+
+    pub(crate) fn remove_unused_state_blobs(&mut self) -> Result<()> {
+        let live_assets = self.collect_asset_document_ids();
+        let state_blobs = self.paths.list_state_blobs()?;
+
+        let unused_state_blobs = state_blobs.difference(&live_assets).collect::<Vec<_>>();
+        if !unused_state_blobs.is_empty() {
+            log::info!("Removing {} unused state BLOBs", unused_state_blobs.len());
+
+            for blob_id in unused_state_blobs {
+                self.remove_state_blob(blob_id)
+                    .context("Failed to remove unused state BLOB")?;
+            }
+        }
+
+        Ok(())
+    }
+
+    pub(crate) fn remove_unused_storage_blobs(&mut self) -> Result<()> {
+        let committed_assets = self.collect_asset_document_ids();
         let storage_blobs = self.paths.list_storage_blobs()?;
 
         // warn about missing storage BLOBs if any
@@ -174,5 +203,74 @@ mod tests {
         let decrypted_data = read_all_as_string(baza.get_blob(&id, key.clone()).unwrap()).unwrap();
 
         assert_eq!(data, decrypted_data);
+    }
+
+    #[test]
+    fn test_reset_document_removes_unused_state_blob() {
+        let temp_dir = TempFile::new_with_details("test_baza_reset_blob", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
+        let mut baza = manager.open_mut().unwrap();
+
+        let source_file = temp_dir.new_child("asset");
+        source_file.write_str("asset data").unwrap();
+
+        let asset = baza.create_asset(&source_file.path).unwrap();
+        let blob_path = baza.paths.get_state_blob_path(&asset.id);
+        assert!(std::path::Path::new(&blob_path).exists());
+
+        baza.reset_document(&asset.id, &None).unwrap();
+        assert!(std::path::Path::new(&blob_path).exists());
+
+        baza.save_changes().unwrap();
+
+        assert!(!std::path::Path::new(&blob_path).exists());
+    }
+
+    #[test]
+    fn test_reset_all_documents_removes_unused_state_blob() {
+        let temp_dir = TempFile::new_with_details("test_baza_reset_all_blob", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
+        let mut baza = manager.open_mut().unwrap();
+
+        let source_file = temp_dir.new_child("asset");
+        source_file.write_str("asset data").unwrap();
+
+        let asset = baza.create_asset(&source_file.path).unwrap();
+        let blob_path = baza.paths.get_state_blob_path(&asset.id);
+        assert!(std::path::Path::new(&blob_path).exists());
+
+        baza.reset_all_documents().unwrap();
+        assert!(std::path::Path::new(&blob_path).exists());
+
+        baza.save_changes().unwrap();
+
+        assert!(!std::path::Path::new(&blob_path).exists());
+    }
+
+    #[test]
+    fn test_erase_staged_asset_removes_unused_state_blob() {
+        let temp_dir = TempFile::new_with_details("test_baza_erase_blob", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
+        let mut baza = manager.open_mut().unwrap();
+
+        let source_file = temp_dir.new_child("asset");
+        source_file.write_str("asset data").unwrap();
+
+        let asset = baza.create_asset(&source_file.path).unwrap();
+        let blob_path = baza.paths.get_state_blob_path(&asset.id);
+        assert!(std::path::Path::new(&blob_path).exists());
+
+        baza.erase_document(&asset.id).unwrap();
+        assert!(std::path::Path::new(&blob_path).exists());
+
+        baza.save_changes().unwrap();
+
+        assert!(!std::path::Path::new(&blob_path).exists());
     }
 }

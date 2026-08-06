@@ -96,6 +96,9 @@ Useful document commands:
 * `arhiv list` lists recent documents; use `--type`, `--page`, `--conflicts`, or `--json` to narrow output.
 * `arhiv search <query>` searches documents with the same filtering/output options as `list`.
 * `arhiv get <id>` prints a readable document summary; add `--json` for the raw document head.
+* `arhiv conflicts` lists conflicted documents, and `arhiv conflict show <id>` prints conflict branches plus any staged resolution.
+* `arhiv history <id>` lists committed snapshots, `arhiv snapshot get <id> <rev>` prints one snapshot, and `arhiv revert <id> <rev>` stages a historical snapshot as current data.
+* `arhiv reset <id>` discards a staged document change or conflict resolution; `arhiv reset --all` discards all staged changes.
 * `arhiv add <type> <json>`, `arhiv update <id> <json>`, and `arhiv erase <id>` manage document data.
 * `arhiv import track <file...>` imports audio files as track documents.
 * `arhiv schema [type]` prints available document types or a type's fields.
@@ -176,6 +179,7 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 * integration with emacs/file system - use FUSE?
 * improve backup: add manifest; add integrity checks; add restore command
 * get rid of tailwind?
+* domain docs to cover user workflows?
 
 * як це розкладаєтьс на "базові" компоненти? і інтегрується із рештою екосистеми?
   * формат даних (encrypted compressed jsonl)

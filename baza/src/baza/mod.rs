@@ -4,7 +4,6 @@ mod validator;
 
 use std::{
     collections::{HashMap, HashSet},
-    fs::remove_file,
     io::{Read, Seek},
     time::Instant,
 };
@@ -264,6 +263,20 @@ impl Baza {
         self.state.erase_document(id)
     }
 
+    /// Discards a staged change or staged conflict resolution for one document.
+    pub fn reset_document(&mut self, id: &Id, lock_key: &Option<DocumentLockKey>) -> Result<()> {
+        log::debug!("Resetting document {id}");
+
+        self.state.reset_document(id, lock_key)
+    }
+
+    /// Discards every staged change in the local working state.
+    pub fn reset_all_documents(&mut self) -> Result<()> {
+        log::debug!("Resetting all staged documents");
+
+        self.state.reset_all_documents()
+    }
+
     pub fn has_staged_documents(&self) -> bool {
         self.state.has_staged_documents()
     }
@@ -291,6 +304,61 @@ impl Baza {
         log::info!("Listed documents in {:?}", duration);
 
         result
+    }
+
+    /// Reads all committed snapshots for one document from the encrypted storage history.
+    pub fn list_document_snapshots(&self, id: &Id) -> Result<Vec<Document>> {
+        let mut storage =
+            BazaStorage::read_file(&self.paths.storage_main_db_file, self.key.clone())?;
+        let mut documents = Vec::new();
+
+        while let Some(item) = storage.next_parsed() {
+            let (key, document) = item?;
+            if &key.id == id {
+                documents.push(document);
+            }
+        }
+
+        documents.sort_by(|a, b| {
+            a.updated_at
+                .cmp(&b.updated_at)
+                .then_with(|| a.rev.cmp(&b.rev))
+        });
+
+        Ok(documents)
+    }
+
+    /// Reads one committed document snapshot identified by document id and revision.
+    pub fn get_document_snapshot(&self, id: &Id, rev: &Revision) -> Result<Document> {
+        self.list_document_snapshots(id)?
+            .into_iter()
+            .find(|document| &document.rev == rev)
+            .with_context(|| format!("Can't find snapshot {id} {}", rev.to_safe_string()))
+    }
+
+    /// Stages a historical committed snapshot as the current working copy.
+    pub fn revert_document_to_snapshot(
+        &mut self,
+        id: &Id,
+        rev: &Revision,
+        lock_key: &Option<DocumentLockKey>,
+    ) -> Result<&Document> {
+        let snapshot = self.get_document_snapshot(id, rev)?;
+        ensure!(
+            !snapshot.is_erased(),
+            "Can't revert to an erased snapshot; erase the document instead"
+        );
+
+        let mut document = self.must_get_document(id)?.clone();
+        ensure!(
+            document.document_type == snapshot.document_type,
+            "Can't revert document {id} from type {} to historical type {}",
+            document.document_type,
+            snapshot.document_type
+        );
+        document.data = snapshot.data;
+
+        Ok(self.stage_document(document, lock_key)?)
     }
 
     pub fn find_document_backrefs(&self, id: &Id) -> HashSet<Id> {
@@ -398,6 +466,8 @@ impl Baza {
             self.state.write(&self.paths, self.key.clone())?;
             self.state_file_modification_time = self.paths.read_state_file_modification_time()?;
             log::info!("Saved state changes");
+
+            self.remove_unused_state_blobs()?;
         }
 
         Ok(())
@@ -473,16 +543,7 @@ impl Baza {
         fs_tx.commit()?;
         log::info!("Commit: finished");
 
-        // remove unused state BLOBs if any
-        let unused_state_blobs = self.paths.list_state_blobs()?;
-        if !unused_state_blobs.is_empty() {
-            log::info!("Removing {} unused state BLOBs", unused_state_blobs.len());
-
-            for blob_id in unused_state_blobs {
-                let file_path = self.paths.get_state_blob_path(&blob_id);
-                remove_file(file_path).context("Failed to remove unused state BLOB")?;
-            }
-        }
+        self.remove_unused_state_blobs()?;
 
         Ok(committed_ids)
     }
@@ -699,10 +760,13 @@ mod commit_tests;
 mod tests {
     use serde_json::json;
 
+    use baza_common::TempFile;
     use baza_storage::crypto::age::AgeKey;
 
     use crate::{
-        BazaState, DocumentHead, baza_storage::create_test_storage, entities::new_document,
+        BazaManager, BazaState, DocumentHead,
+        baza_storage::create_test_storage,
+        entities::{new_document, new_test_data},
     };
 
     use super::update_state_from_storage;
@@ -760,5 +824,67 @@ mod tests {
             *state.get_document(&doc_c.id).unwrap(),
             DocumentHead::new_committed(doc_c).unwrap()
         );
+    }
+
+    #[test]
+    fn test_list_document_snapshots_reads_committed_history() {
+        let temp_dir = TempFile::new_with_details("document_history", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
+        let mut baza = manager.open_mut().unwrap();
+
+        let doc = new_document(json!({ "test": "first" }));
+        let id = doc.id.clone();
+
+        baza.stage_document(doc, &None).unwrap();
+        baza.commit().unwrap();
+
+        let mut doc = baza.must_get_document(&id).unwrap().clone();
+        doc.data = new_test_data(json!({ "test": "second" }));
+        baza.stage_document(doc, &None).unwrap();
+        baza.commit().unwrap();
+
+        let snapshots = baza.list_document_snapshots(&id).unwrap();
+
+        assert_eq!(snapshots.len(), 2);
+        assert_eq!(snapshots[0].data, new_test_data(json!({ "test": "first" })));
+        assert_eq!(
+            snapshots[1].data,
+            new_test_data(json!({ "test": "second" }))
+        );
+    }
+
+    #[test]
+    fn test_revert_document_to_snapshot_stages_historical_data() {
+        let temp_dir = TempFile::new_with_details("document_revert", "");
+        temp_dir.mkdir().unwrap();
+
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
+        let mut baza = manager.open_mut().unwrap();
+
+        let doc = new_document(json!({ "test": "first" }));
+        let id = doc.id.clone();
+
+        baza.stage_document(doc, &None).unwrap();
+        baza.commit().unwrap();
+        let first_rev = baza.must_get_document(&id).unwrap().rev.clone();
+
+        let mut doc = baza.must_get_document(&id).unwrap().clone();
+        doc.data = new_test_data(json!({ "test": "second" }));
+        baza.stage_document(doc, &None).unwrap();
+        baza.commit().unwrap();
+
+        let reverted = baza
+            .revert_document_to_snapshot(&id, &first_rev, &None)
+            .unwrap()
+            .clone();
+
+        assert!(reverted.is_staged());
+        assert_eq!(reverted.data, new_test_data(json!({ "test": "first" })));
+
+        baza.reset_document(&id, &None).unwrap();
+        let current = baza.must_get_document(&id).unwrap();
+        assert_eq!(current.data, new_test_data(json!({ "test": "second" })));
     }
 }

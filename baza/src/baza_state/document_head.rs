@@ -202,6 +202,11 @@ impl DocumentHead {
         self.original.iter()
     }
 
+    /// Returns the staged working copy, including an automatic conflict resolution when present.
+    pub fn get_staged_document(&self) -> Option<&Document> {
+        self.staged.as_ref()
+    }
+
     pub fn iter_all_snapshots(&self) -> impl Iterator<Item = &Document> {
         self.staged.iter().chain(self.original.iter())
     }

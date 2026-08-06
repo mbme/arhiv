@@ -1,10 +1,11 @@
 use std::{
+    cmp::Ordering,
     env,
     fs::{self, read_to_string},
     io, process,
 };
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result, bail, ensure};
 use clap::{
     ArgAction, CommandFactory, Parser, Subcommand, ValueHint, builder::PossibleValuesParser,
 };
@@ -18,7 +19,7 @@ use arhiv::{
 };
 use baza::{
     Baza, BazaManager, DEV_MODE, DocumentExpert, DocumentHead, Filter,
-    entities::{Document, DocumentData, DocumentLockKey, DocumentType, Id},
+    entities::{Document, DocumentData, DocumentLockKey, DocumentType, Id, Revision},
     schema::DataSchema,
 };
 use baza_common::{
@@ -151,6 +152,55 @@ enum CLICommand {
         /// Print machine-readable JSON
         #[arg(long, default_value_t = false)]
         json: bool,
+    },
+    /// List conflicted documents
+    Conflicts {
+        /// Print machine-readable JSON
+        #[arg(long, default_value_t = false)]
+        json: bool,
+    },
+    /// Inspect document conflicts
+    Conflict {
+        #[command(subcommand)]
+        command: ConflictCommand,
+    },
+    /// Discard staged changes
+    Reset {
+        /// Id of the document to reset
+        #[arg()]
+        id: Option<Id>,
+        /// Reset every staged document
+        #[arg(long, default_value_t = false)]
+        all: bool,
+        /// Lock key to be checked before resetting a locked document
+        #[arg(long)]
+        lock_key: Option<String>,
+    },
+    /// List committed snapshots for a document
+    History {
+        /// Id of the document
+        #[arg()]
+        id: Id,
+        /// Print machine-readable JSON
+        #[arg(long, default_value_t = false)]
+        json: bool,
+    },
+    /// Work with committed document snapshots
+    Snapshot {
+        #[command(subcommand)]
+        command: SnapshotCommand,
+    },
+    /// Stage a committed snapshot as the current document data
+    Revert {
+        /// Id of the document
+        #[arg()]
+        id: Id,
+        /// Snapshot revision, as printed by history
+        #[arg()]
+        rev: String,
+        /// Lock key to be checked before updating a locked document
+        #[arg(long)]
+        lock_key: Option<String>,
     },
     /// Get document by id
     Get {
@@ -295,6 +345,35 @@ enum CollectionUpdate {
     Add,
     Remove,
     Move { to: usize },
+}
+
+#[derive(Subcommand, Debug)]
+enum ConflictCommand {
+    /// Show conflict branches and the staged resolution for a document
+    Show {
+        /// Id of the document
+        #[arg()]
+        id: Id,
+        /// Print machine-readable JSON
+        #[arg(long, default_value_t = false)]
+        json: bool,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+enum SnapshotCommand {
+    /// Get a committed snapshot by document id and revision
+    Get {
+        /// Id of the document
+        #[arg()]
+        id: Id,
+        /// Snapshot revision, as printed by history
+        #[arg()]
+        rev: String,
+        /// Print machine-readable JSON
+        #[arg(long, default_value_t = false)]
+        json: bool,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -583,6 +662,81 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             let filter = build_filter(document_types, query.join(" "), page, conflicts);
             print_document_list(&arhiv, &filter, json)?;
+        }
+        CLICommand::Conflicts { json } => {
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
+            print_conflicts(&arhiv, json)?;
+        }
+        CLICommand::Conflict { command } => {
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
+            handle_conflict_command(&arhiv, command)?;
+        }
+        CLICommand::Reset { id, all, lock_key } => {
+            ensure!(
+                all ^ id.is_some(),
+                "Provide one document id or --all, but not both"
+            );
+            ensure!(
+                !all || lock_key.is_none(),
+                "--lock-key can only be used with a document id"
+            );
+
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
+            let mut baza = arhiv.baza.open_mut()?;
+            if all {
+                baza.reset_all_documents()?;
+                baza.save_changes()?;
+
+                println!("Reset all staged documents");
+            } else {
+                let id = id.expect("id is present");
+                let lock_key = lock_key.map(DocumentLockKey::from_string);
+
+                baza.reset_document(&id, &lock_key)?;
+                baza.save_changes()?;
+
+                println!("Reset document {id}");
+            }
+        }
+        CLICommand::History { id, json } => {
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
+            print_document_history(&arhiv, &id, json)?;
+        }
+        CLICommand::Snapshot {
+            command: SnapshotCommand::Get { id, rev, json },
+        } => {
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
+            let rev = parse_revision(&rev)?;
+            let baza = arhiv.baza.open()?;
+            let snapshot = baza.get_document_snapshot(&id, &rev)?;
+
+            print_snapshot(&arhiv.baza.get_document_expert(), &snapshot, json)?;
+        }
+        CLICommand::Revert { id, rev, lock_key } => {
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
+            let rev = parse_revision(&rev)?;
+            let lock_key = lock_key.map(DocumentLockKey::from_string);
+
+            let mut baza = arhiv.baza.open_mut()?;
+            let document = baza
+                .revert_document_to_snapshot(&id, &rev, &lock_key)?
+                .clone();
+            baza.save_changes()?;
+
+            print_document(&document);
+            println!("Staged snapshot {} as document {id}", rev.to_safe_string());
         }
         CLICommand::Get { id, json } => {
             let arhiv = Arhiv::new_desktop();
@@ -915,6 +1069,278 @@ fn update_collection(
     Ok(())
 }
 
+fn handle_conflict_command(arhiv: &Arhiv, command: ConflictCommand) -> Result<()> {
+    match command {
+        ConflictCommand::Show { id, json } => {
+            let baza = arhiv.baza.open()?;
+            let head = get_document_head(&baza, &id)?;
+            ensure!(head.is_conflict(), "Document {id} is not conflicted");
+
+            print_conflict_details(&arhiv.baza.get_document_expert(), head, json)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn print_conflicts(arhiv: &Arhiv, json_output: bool) -> Result<()> {
+    let document_expert = arhiv.baza.get_document_expert();
+    let baza = arhiv.baza.open()?;
+    let mut conflicts = baza.iter_conflicts().collect::<Vec<_>>();
+    conflicts.sort_by_key(|head| head.get_id().to_string());
+
+    if json_output {
+        let documents = conflicts
+            .iter()
+            .map(|head| conflict_summary_json(&document_expert, head))
+            .collect::<Result<Vec<_>>>()?;
+        let total = documents.len();
+
+        serde_json::to_writer_pretty(
+            std::io::stdout(),
+            &serde_json::json!({
+                "documents": documents,
+                "total": total,
+            }),
+        )?;
+        return Ok(());
+    }
+
+    if conflicts.is_empty() {
+        println!("No conflicts found");
+        return Ok(());
+    }
+
+    println!("Conflicts: {}", conflicts.len());
+    for head in conflicts {
+        print_conflict_row(&document_expert, head)?;
+    }
+
+    Ok(())
+}
+
+fn print_document_history(arhiv: &Arhiv, id: &Id, json_output: bool) -> Result<()> {
+    let document_expert = arhiv.baza.get_document_expert();
+    let baza = arhiv.baza.open()?;
+    get_document_head(&baza, id)?;
+    let snapshots = baza.list_document_snapshots(id)?;
+
+    if json_output {
+        let snapshots = snapshots
+            .iter()
+            .map(|document| snapshot_json(&document_expert, document))
+            .collect::<Result<Vec<_>>>()?;
+        let total = snapshots.len();
+
+        serde_json::to_writer_pretty(
+            std::io::stdout(),
+            &serde_json::json!({
+                "id": id,
+                "snapshots": snapshots,
+                "total": total,
+            }),
+        )?;
+        return Ok(());
+    }
+
+    if snapshots.is_empty() {
+        println!("No committed snapshots found for document {id}");
+        return Ok(());
+    }
+
+    println!("History for document {id}: {} snapshots", snapshots.len());
+    for document in &snapshots {
+        print_snapshot_row(&document_expert, document)?;
+    }
+
+    Ok(())
+}
+
+fn print_conflict_details(
+    document_expert: &DocumentExpert<'_>,
+    head: &DocumentHead,
+    json_output: bool,
+) -> Result<()> {
+    let branches = sorted_original_snapshots(head);
+
+    if json_output {
+        let branches = branches
+            .iter()
+            .map(|document| snapshot_json(document_expert, document))
+            .collect::<Result<Vec<_>>>()?;
+        let staged = head
+            .get_staged_document()
+            .map(|document| snapshot_json(document_expert, document))
+            .transpose()?;
+
+        serde_json::to_writer_pretty(
+            std::io::stdout(),
+            &serde_json::json!({
+                "id": head.get_id(),
+                "isResolved": head.is_resolved_conflict(),
+                "staged": staged,
+                "branches": branches,
+                "branchesCount": branches.len(),
+                "snapshotsCount": head.get_snapshots_count(),
+            }),
+        )?;
+        return Ok(());
+    }
+
+    println!("Conflict for document {}", head.get_id());
+    println!("Resolved: {}", head.is_resolved_conflict());
+    println!("Branches: {}", branches.len());
+    println!("Snapshots: {}", head.get_snapshots_count());
+
+    if let Some(staged) = head.get_staged_document() {
+        println!();
+        print_snapshot_block(document_expert, "Staged resolution", staged)?;
+    }
+
+    for (index, document) in branches.iter().enumerate() {
+        println!();
+        print_snapshot_block(document_expert, &format!("Branch {}", index + 1), document)?;
+    }
+
+    Ok(())
+}
+
+fn print_snapshot(
+    document_expert: &DocumentExpert<'_>,
+    document: &Document,
+    json_output: bool,
+) -> Result<()> {
+    if json_output {
+        serde_json::to_writer_pretty(
+            std::io::stdout(),
+            &snapshot_json(document_expert, document)?,
+        )?;
+    } else {
+        print_snapshot_block(document_expert, "Snapshot", document)?;
+    }
+
+    Ok(())
+}
+
+fn print_snapshot_block(
+    document_expert: &DocumentExpert<'_>,
+    label: &str,
+    document: &Document,
+) -> Result<()> {
+    let title = document_expert.get_title(&document.document_type, &document.data)?;
+    let data = serde_json::to_string_pretty(&document.data)?;
+
+    println!("{label}");
+    println!("  Id: {}", document.id);
+    println!("  Rev: {}", document.rev.to_safe_string());
+    println!("  Type: {}", document.document_type);
+    println!("  Title: {}", title);
+    println!(
+        "  Updated: {}",
+        document.updated_at.default_date_time_format()
+    );
+    println!("  Data:\n{data}");
+
+    Ok(())
+}
+
+fn print_snapshot_row(document_expert: &DocumentExpert<'_>, document: &Document) -> Result<()> {
+    let title = document_expert.get_title(&document.document_type, &document.data)?;
+
+    println!(
+        "{}  {:<12}  {}  {}  {}",
+        document.rev.to_safe_string(),
+        document.document_type,
+        document.updated_at.default_date_time_format(),
+        document.id,
+        single_line(&title),
+    );
+
+    Ok(())
+}
+
+fn print_conflict_row(document_expert: &DocumentExpert<'_>, head: &DocumentHead) -> Result<()> {
+    let document = representative_document(head);
+    let title = document_expert.get_title(&document.document_type, &document.data)?;
+
+    println!(
+        "{}  {:<12}  {}  {} [branches: {}, staged: {}]",
+        document.id,
+        document.document_type,
+        document.updated_at.default_date_time_format(),
+        single_line(&title),
+        head.iter_original_snapshots().count(),
+        head.is_staged(),
+    );
+
+    Ok(())
+}
+
+fn conflict_summary_json(
+    document_expert: &DocumentExpert<'_>,
+    head: &DocumentHead,
+) -> Result<serde_json::Value> {
+    let document = representative_document(head);
+    let title = document_expert.get_title(&document.document_type, &document.data)?;
+
+    Ok(serde_json::json!({
+        "id": &document.id,
+        "documentType": &document.document_type,
+        "title": title,
+        "updatedAt": document.updated_at,
+        "isResolved": head.is_resolved_conflict(),
+        "hasStaged": head.is_staged(),
+        "branchesCount": head.iter_original_snapshots().count(),
+        "snapshotsCount": head.get_snapshots_count(),
+    }))
+}
+
+fn snapshot_json(
+    document_expert: &DocumentExpert<'_>,
+    document: &Document,
+) -> Result<serde_json::Value> {
+    let title = document_expert.get_title(&document.document_type, &document.data)?;
+
+    Ok(serde_json::json!({
+        "id": &document.id,
+        "rev": &document.rev,
+        "revSafe": document.rev.to_safe_string(),
+        "documentType": &document.document_type,
+        "title": title,
+        "updatedAt": document.updated_at,
+        "data": &document.data,
+        "isStaged": document.is_staged(),
+    }))
+}
+
+fn representative_document(head: &DocumentHead) -> &Document {
+    head.get_staged_document()
+        .unwrap_or_else(|| latest_original_snapshot(head))
+}
+
+fn latest_original_snapshot(head: &DocumentHead) -> &Document {
+    head.iter_original_snapshots()
+        .max_by(|a, b| compare_documents_by_history(a, b))
+        .expect("document head must have an original snapshot")
+}
+
+fn sorted_original_snapshots(head: &DocumentHead) -> Vec<&Document> {
+    let mut snapshots = head.iter_original_snapshots().collect::<Vec<_>>();
+    snapshots.sort_by(|a, b| compare_documents_by_history(a, b));
+
+    snapshots
+}
+
+fn compare_documents_by_history(a: &Document, b: &Document) -> Ordering {
+    a.updated_at
+        .cmp(&b.updated_at)
+        .then_with(|| a.rev.cmp(&b.rev))
+}
+
+fn parse_revision(value: &str) -> Result<Revision> {
+    Revision::from_safe_string(value).with_context(|| format!("Failed to parse revision '{value}'"))
+}
+
 fn print_documents_by_ids(
     document_expert: &DocumentExpert<'_>,
     baza: &Baza,
@@ -972,7 +1398,7 @@ fn print_document_list(arhiv: &Arhiv, filter: &Filter, json_output: bool) -> Res
         let documents = page
             .items
             .into_iter()
-            .map(|head| document_summary_json(&document_expert, &head))
+            .map(|head| document_summary_json(&document_expert, head))
             .collect::<Result<Vec<_>>>()?;
 
         serde_json::to_writer_pretty(
@@ -1003,7 +1429,7 @@ fn print_document_list(arhiv: &Arhiv, filter: &Filter, json_output: bool) -> Res
     );
 
     for head in page.items {
-        print_document_row(&document_expert, &head)?;
+        print_document_row(&document_expert, head)?;
     }
 
     Ok(())
@@ -1013,15 +1439,15 @@ fn document_summary_json(
     document_expert: &DocumentExpert<'_>,
     head: &DocumentHead,
 ) -> Result<serde_json::Value> {
-    let document = head.get_single_document();
+    let document = representative_document(head);
     let title = document_expert.get_title(&document.document_type, &document.data)?;
 
     Ok(serde_json::json!({
-        "id": document.id,
-        "documentType": document.document_type,
+        "id": &document.id,
+        "documentType": &document.document_type,
         "title": title,
         "updatedAt": document.updated_at,
-        "data": document.data,
+        "data": &document.data,
         "hasConflict": head.is_conflict(),
         "isStaged": head.is_staged(),
         "snapshotsCount": head.get_snapshots_count(),
@@ -1029,7 +1455,7 @@ fn document_summary_json(
 }
 
 fn print_document_row(document_expert: &DocumentExpert<'_>, head: &DocumentHead) -> Result<()> {
-    let document = head.get_single_document();
+    let document = representative_document(head);
     let title = document_expert.get_title(&document.document_type, &document.data)?;
 
     println!(
@@ -1049,7 +1475,7 @@ fn print_document_details(
     baza: &Baza,
     head: &DocumentHead,
 ) -> Result<()> {
-    let document = head.get_single_document();
+    let document = representative_document(head);
     let title = document_expert.get_title(&document.document_type, &document.data)?;
     let refs = document_expert.extract_refs(&document.document_type, &document.data)?;
     let data = serde_json::to_string_pretty(&document.data)?;

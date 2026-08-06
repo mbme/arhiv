@@ -235,10 +235,14 @@ Behavior:
 ## 12. Practical Observability Points
 
 - CLI status warns when `conflicts_count > 0`.
+- CLI `conflicts` lists conflicted documents, and `conflict show <id>` prints original branches plus any staged resolution.
+- CLI `reset <id>` discards a staged resolution and returns the head to its original conflict branches.
+- CLI `history <id>`, `snapshot get <id> <rev>`, and `revert <id> <rev>` expose committed snapshots for inspection and staged rollback.
 - UI header shows conflict count button and catalog can filter to conflicts.
 - Document payloads expose `hasConflict`, `isStaged`, and `snapshotsCount` for troubleshooting.
 
 Code:
+- `arhiv-cli/src/bin/arhiv.rs`
 - `arhiv/src/arhiv/status.rs`
 - `arhiv/src/ui/Workspace/WorkspaceHeader/ConflictsButton.tsx`
 - `arhiv/src/ui/Workspace/DocumentCard/Indicators.tsx`

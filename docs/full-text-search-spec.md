@@ -68,17 +68,19 @@ Fuzzy matching is intentionally conservative for short query terms. Short query 
 
 Candidate expansion must be bounded per query term. When there are more candidate indexed terms than the configured cap, the engine keeps the best candidates by match quality, inverse document frequency, and term-length closeness.
 
+When exact or prefix candidates exist for a query term, the engine should prefer those navigational candidates and may discard fuzzy candidates for that term. Fuzzy matching is a typo-recovery mechanism, not a broad recall mechanism.
+
 ## Base ranking
 
 Eligible records are ranked by a lexical score derived from BM25.
 
-For each query term, the engine scores candidate term matches against each record and keeps the best-scoring candidate for that query term in that record. The record's lexical score is the sum of these best per-query-term scores.
+For each query term, the engine scores candidate term matches against each record and keeps the best-scoring candidate for that query term in that record. Candidate scoring is field-aware: the best matching indexed field for that candidate contributes the candidate's per-query-term score. The record's lexical score is the sum of these best per-query-term scores.
 
 Candidate match quality is part of the lexical score. Exact matches receive the strongest multiplier, prefix matches receive a weaker multiplier, and fuzzy matches receive the weakest multiplier.
 
 ## Field boosts
 
-Field boosts are bounded ranking multipliers applied after lexical scoring.
+Field boosts are bounded ranking multipliers applied during field-aware per-term scoring.
 
 Title and id fields receive explicit boosts because they identify a record more directly than ordinary body fields. Field boosts must not make weak lexical matches dominate clearly better exact matches in ordinary fields.
 

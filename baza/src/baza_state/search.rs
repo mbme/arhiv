@@ -17,8 +17,8 @@ use crate::{
 const TITLE_FIELD_NAME: &str = "@title";
 const ID_FIELD_NAME: &str = "@id";
 const SEARCH_INDEX_FORMAT_VERSION: u8 = 1;
-// v2 stores token positions instead of byte offsets for proximity scoring.
-const SEARCH_ALGORITHM_VERSION: u8 = 2;
+// v3 ranks candidates with field-aware per-term scoring and conservative fuzzy fallback.
+const SEARCH_ALGORITHM_VERSION: u8 = 3;
 
 #[derive(Serialize, Deserialize)]
 struct SearchIndexFile {
@@ -224,16 +224,45 @@ impl SearchEngine {
 
 #[cfg(test)]
 mod tests {
-    use baza_common::TempFile;
+    use std::io::Write;
+
+    use baza_common::{TempFile, create_file_writer};
+    use baza_storage::AgeGzWriter;
     use baza_storage::crypto::age::AgeKey;
     use serde_json::json;
 
     use crate::{
         entities::{Id, new_document},
+        full_text_search::FTSEngine,
         schema::{DataDescription, DataSchema},
     };
 
-    use super::SearchEngine;
+    use super::{
+        SEARCH_ALGORITHM_VERSION, SEARCH_INDEX_FORMAT_VERSION, SearchEngine, SearchIndexFile,
+    };
+
+    fn write_search_index_file(
+        file: &str,
+        key: AgeKey,
+        schema: &DataSchema,
+        format_version: u8,
+        search_version: u8,
+        data_version: u8,
+    ) {
+        let writer = create_file_writer(file, true).unwrap();
+        let mut agegz_writer = AgeGzWriter::new(writer, key).unwrap();
+        let index_file = SearchIndexFile {
+            format_version,
+            search_version,
+            data_version,
+            schema_fingerprint: schema.fingerprint().unwrap(),
+            fts: FTSEngine::new(),
+        };
+
+        postcard::to_io(&index_file, &mut agegz_writer).unwrap();
+        let mut writer = agegz_writer.finish().unwrap();
+        writer.flush().unwrap();
+    }
 
     #[test]
     fn test_indexes_document_id_and_searchable_fields() {
@@ -321,5 +350,74 @@ mod tests {
         };
 
         assert!(err.to_string().contains("schema fingerprint mismatch"));
+    }
+
+    #[test]
+    fn test_search_index_read_rejects_format_version_mismatch() {
+        let schema = DataSchema::new_test_schema();
+        let key = AgeKey::generate_age_x25519_key();
+        let file = TempFile::new();
+
+        write_search_index_file(
+            &file.path,
+            key.clone(),
+            &schema,
+            SEARCH_INDEX_FORMAT_VERSION + 1,
+            SEARCH_ALGORITHM_VERSION,
+            schema.get_latest_data_version(),
+        );
+
+        let err = match SearchEngine::read(&file.path, key, schema) {
+            Ok(_) => panic!("Search index read should reject format version mismatch"),
+            Err(err) => err,
+        };
+
+        assert!(err.to_string().contains("format version mismatch"));
+    }
+
+    #[test]
+    fn test_search_index_read_rejects_search_algorithm_version_mismatch() {
+        let schema = DataSchema::new_test_schema();
+        let key = AgeKey::generate_age_x25519_key();
+        let file = TempFile::new();
+
+        write_search_index_file(
+            &file.path,
+            key.clone(),
+            &schema,
+            SEARCH_INDEX_FORMAT_VERSION,
+            SEARCH_ALGORITHM_VERSION + 1,
+            schema.get_latest_data_version(),
+        );
+
+        let err = match SearchEngine::read(&file.path, key, schema) {
+            Ok(_) => panic!("Search index read should reject search algorithm version mismatch"),
+            Err(err) => err,
+        };
+
+        assert!(err.to_string().contains("algorithm version mismatch"));
+    }
+
+    #[test]
+    fn test_search_index_read_rejects_data_version_mismatch() {
+        let schema = DataSchema::new_test_schema();
+        let key = AgeKey::generate_age_x25519_key();
+        let file = TempFile::new();
+
+        write_search_index_file(
+            &file.path,
+            key.clone(),
+            &schema,
+            SEARCH_INDEX_FORMAT_VERSION,
+            SEARCH_ALGORITHM_VERSION,
+            schema.get_latest_data_version() + 1,
+        );
+
+        let err = match SearchEngine::read(&file.path, key, schema) {
+            Ok(_) => panic!("Search index read should reject data version mismatch"),
+            Err(err) => err,
+        };
+
+        assert!(err.to_string().contains("data version mismatch"));
     }
 }

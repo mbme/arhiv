@@ -4,6 +4,12 @@ use crate::algorithms::smallest_range_covering_elements_from_k_lists;
 
 use super::{DocumentTermMatches, FieldBoost, FieldId};
 
+pub(super) struct DocumentScore {
+    pub value: f64,
+    pub boosted_field_terms: usize,
+    pub proximity_rank: u8,
+}
+
 #[derive(Default)]
 pub(super) struct DocumentScorer<'term, 'doc> {
     // query term -> selected term match
@@ -48,31 +54,13 @@ impl<'term, 'doc> DocumentScorer<'term, 'doc> {
         );
     }
 
-    fn calculate_fields_bonus(&self, field_boosts: &HashMap<FieldId, FieldBoost>) -> f64 {
-        let mut bonus = 1.0;
-
-        for (field, field_boost) in field_boosts {
-            let terms_in_field = self
-                .term_matches
-                .values()
-                .filter(|term_match| term_match.matches.get(field).is_some())
-                .count();
-
-            let field_bonus = field_boost.calculate(terms_in_field, self.terms_count());
-
-            bonus *= field_bonus;
-        }
-
-        bonus
-    }
-
     /// Calculate proximity bonus if all the terms matched the field.
     /// Exact phrases outrank ordered near matches, which outrank unordered near matches.
     /// Returns max bonus of all the fields.
-    fn calculate_proximity_bonus(&self) -> f64 {
+    fn calculate_proximity_bonus(&self) -> ProximityScore {
         // apply proximity boost if there was more than 1 query term in the document
         if self.terms_count() < 2 {
-            return 1.0;
+            return ProximityScore::none();
         }
 
         // list document fields that match ANY term
@@ -86,7 +74,7 @@ impl<'term, 'doc> DocumentScorer<'term, 'doc> {
             .keys()
             .collect::<Vec<_>>();
 
-        let mut max_proximity_bonus = 1.0;
+        let mut max_proximity_score = ProximityScore::none();
         for field in fields {
             let mut term_field_matches = self
                 .term_matches
@@ -111,13 +99,19 @@ impl<'term, 'doc> DocumentScorer<'term, 'doc> {
                 .collect::<Vec<_>>();
 
             if has_exact_phrase(&positions_by_query_term) {
-                max_proximity_bonus = f64::max(max_proximity_bonus, 2.0);
+                max_proximity_score = max_proximity_score.max(ProximityScore {
+                    multiplier: 2.0,
+                    rank: 3,
+                });
                 continue;
             }
 
             if let Some(span) = smallest_ordered_span(&positions_by_query_term) {
                 let ordered_bonus = (8.0 / (span as f64 + 2.0)).clamp(1.2, 1.6);
-                max_proximity_bonus = f64::max(max_proximity_bonus, ordered_bonus);
+                max_proximity_score = max_proximity_score.max(ProximityScore {
+                    multiplier: ordered_bonus,
+                    rank: 2,
+                });
                 continue;
             }
 
@@ -127,22 +121,63 @@ impl<'term, 'doc> DocumentScorer<'term, 'doc> {
 
             let proximity_bonus = (6.0 / (min_distance as f64 + 3.0)).clamp(1.05, 1.25);
 
-            max_proximity_bonus = f64::max(max_proximity_bonus, proximity_bonus);
+            max_proximity_score = max_proximity_score.max(ProximityScore {
+                multiplier: proximity_bonus,
+                rank: 1,
+            });
         }
 
-        max_proximity_bonus
+        max_proximity_score
     }
 
-    pub fn score(self, field_boosts: Option<&HashMap<FieldId, FieldBoost>>) -> f64 {
-        let proximity_bonus = self.calculate_proximity_bonus();
+    fn count_boosted_field_terms(&self, field_boosts: &HashMap<FieldId, FieldBoost>) -> usize {
+        self.term_matches
+            .values()
+            .filter(|term_match| {
+                field_boosts
+                    .keys()
+                    .any(|field| term_match.matches.get(field).is_some())
+            })
+            .count()
+    }
 
-        let fields_bonus = if let Some(field_boosts) = field_boosts {
-            self.calculate_fields_bonus(field_boosts)
+    pub fn score(self, field_boosts: Option<&HashMap<FieldId, FieldBoost>>) -> DocumentScore {
+        let boosted_field_terms = if let Some(field_boosts) = field_boosts {
+            self.count_boosted_field_terms(field_boosts)
         } else {
-            1.0
+            0
         };
 
-        self.term_scores.values().sum::<f64>() * proximity_bonus * fields_bonus
+        let proximity_score = self.calculate_proximity_bonus();
+
+        DocumentScore {
+            value: self.term_scores.values().sum::<f64>() * proximity_score.multiplier,
+            boosted_field_terms,
+            proximity_rank: proximity_score.rank,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+struct ProximityScore {
+    multiplier: f64,
+    rank: u8,
+}
+
+impl ProximityScore {
+    fn none() -> Self {
+        Self {
+            multiplier: 1.0,
+            rank: 0,
+        }
+    }
+
+    fn max(self, other: Self) -> Self {
+        if f64::total_cmp(&other.multiplier, &self.multiplier).is_gt() {
+            other
+        } else {
+            self
+        }
     }
 }
 

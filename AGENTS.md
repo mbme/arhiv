@@ -86,3 +86,4 @@ Use the most targeted check first, then broaden when needed:
 - Add high-value doc comments to new or changed public functions, methods, and types; explain ownership, invariants, boundary intent, or caller obligations rather than restating signatures.
 - Add high-value logs around meaningful workflow transitions, security- or data-sensitive decisions, and successful boundary conversions; keep pure helpers quiet and avoid noisy implementation traces.
 - Add high-value unit tests for durable rules, pure decision logic, and boundary behavior that can be tested without brittle infrastructure; prefer small focused tests over broad incidental coverage.
+- Add concise doc comments when they clarify boundary intent, invariants, or caller obligations, and add focused unit tests when changed code owns high-value pure logic, durable rules, or edge-case behavior.

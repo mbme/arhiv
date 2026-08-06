@@ -191,21 +191,17 @@ impl FTSEngine {
                     return None;
                 }
 
+                let query_term_len = query_term.chars().count();
+                let term_len = term.chars().count();
+
                 // ensure query term isn't too long to match this term
-                if query_term.len() > term.len() + 1 {
+                if query_term_len > term_len + 1 {
                     return None;
                 }
 
-                if query_term.len() < term.len() {
-                    let distance = damerau_levenshtein(query_term, &term[0..query_term.len()]);
-                    if distance > 1 {
-                        return None;
-                    }
-
-                    let mut similarity = 1.0 - (0.3 * distance as f64);
-                    similarity *= query_term.len() as f64 / term.len() as f64;
-
-                    Some(TermCandidate::fuzzy(term, similarity))
+                if query_term_len < term_len {
+                    fuzzy_prefix_similarity(query_term, term, query_term_len, term_len)
+                        .map(|similarity| TermCandidate::fuzzy(term, similarity))
                 } else {
                     let distance = damerau_levenshtein(query_term, term);
                     if distance > 2 {
@@ -441,6 +437,47 @@ impl FTSEngine {
     }
 }
 
+/// Scores a fuzzy query-term match against a longer indexed term.
+///
+/// The extra prefix length catches boundary typos such as `biter` -> `bitter`
+/// while keeping typo recovery limited to a single edit near the prefix.
+fn fuzzy_prefix_similarity(
+    query_term: &str,
+    term: &str,
+    query_term_len: usize,
+    term_len: usize,
+) -> Option<f64> {
+    let best_distance = [query_term_len, query_term_len + 1]
+        .into_iter()
+        .filter(|prefix_len| *prefix_len <= term_len)
+        .filter_map(|prefix_len| {
+            let prefix = char_prefix(term, prefix_len);
+            let distance = damerau_levenshtein(query_term, prefix);
+
+            (distance <= 1).then_some(distance)
+        })
+        .min()?;
+
+    let mut similarity = 1.0 - (0.3 * best_distance as f64);
+    similarity *= query_term_len as f64 / term_len as f64;
+
+    Some(similarity)
+}
+
+/// Returns a prefix by character count so fuzzy matching never slices inside a UTF-8 code point.
+fn char_prefix(input: &str, char_len: usize) -> &str {
+    if input.chars().count() <= char_len {
+        return input;
+    }
+
+    let byte_len = input
+        .char_indices()
+        .nth(char_len)
+        .map_or(input.len(), |(byte_index, _)| byte_index);
+
+    &input[..byte_len]
+}
+
 #[derive(Clone, Copy)]
 struct TermCandidate<'term> {
     term: &'term str,
@@ -506,7 +543,9 @@ mod tests {
 
     use crate::full_text_search::FieldBoost;
 
-    use super::{FTSEngine, MAX_MATCHED_TERMS_PER_QUERY_TERM};
+    use super::{
+        FTSEngine, MAX_MATCHED_TERMS_PER_QUERY_TERM, char_prefix, fuzzy_prefix_similarity,
+    };
 
     #[derive(Clone)]
     struct TestDoc {
@@ -645,6 +684,32 @@ mod tests {
         assert!(fts.search("abd").is_empty());
         assert!(fts.search("balue").is_empty());
         assert!(fts.search("catzzz").is_empty());
+    }
+
+    #[test]
+    fn test_fuzzy_prefix_similarity_allows_single_boundary_edit() {
+        assert!(fuzzy_prefix_similarity("biter", "bitter", 5, 6).is_some());
+        assert!(fuzzy_prefix_similarity("value", "valuable", 5, 8).is_some());
+        assert!(fuzzy_prefix_similarity("balue", "valuable", 5, 8).is_none());
+    }
+
+    #[test]
+    fn test_char_prefix_uses_character_boundaries() {
+        assert_eq!(char_prefix("abc", 2), "ab");
+        assert_eq!(char_prefix("abc", 3), "abc");
+        assert_eq!(char_prefix("éclair", 1), "é");
+    }
+
+    #[test]
+    fn test_fuzzy_prefix_matching_allows_missing_character_before_suffix() {
+        let mut fts = FTSEngine::new();
+
+        TestDoc::new(1, "The Bitter Lesson", "notes about search")
+            .insert_with_title_boost(&mut fts);
+        TestDoc::new(2, "Other Lesson", "unrelated body").insert_with_title_boost(&mut fts);
+
+        assert_eq!(search_ids(&fts, "biter"), vec!["1"]);
+        assert_eq!(search_ids(&fts, "biter lesson"), vec!["1"]);
     }
 
     #[test]

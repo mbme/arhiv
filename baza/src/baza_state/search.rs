@@ -17,8 +17,8 @@ use crate::{
 const TITLE_FIELD_NAME: &str = "@title";
 const ID_FIELD_NAME: &str = "@id";
 const SEARCH_INDEX_FORMAT_VERSION: u8 = 1;
-// v3 ranks candidates with field-aware per-term scoring and conservative fuzzy fallback.
-const SEARCH_ALGORITHM_VERSION: u8 = 3;
+// v4 accepts single-character typos across fuzzy-prefix candidate boundaries.
+const SEARCH_ALGORITHM_VERSION: u8 = 4;
 
 #[derive(Serialize, Deserialize)]
 struct SearchIndexFile {

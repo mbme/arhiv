@@ -66,6 +66,8 @@ exact > prefix > fuzzy
 
 Fuzzy matching is intentionally conservative for short query terms. Short query terms should prefer exact or prefix matching to avoid noisy results.
 
+Fuzzy prefix matching may account for one omitted or extra character across the query/indexed-term prefix boundary so typo recovery can match a short misspelled query against a longer indexed term.
+
 Candidate expansion must be bounded per query term. When there are more candidate indexed terms than the configured cap, the engine keeps the best candidates by match quality, inverse document frequency, and term-length closeness.
 
 When exact or prefix candidates exist for a query term, the engine should prefer those navigational candidates and may discard fuzzy candidates for that term. Fuzzy matching is a typo-recovery mechanism, not a broad recall mechanism.

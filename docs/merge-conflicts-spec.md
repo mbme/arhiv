@@ -238,6 +238,7 @@ Behavior:
 - CLI `conflicts` lists conflicted documents, and `conflict show <id>` prints original branches plus any staged resolution.
 - CLI `reset <id>` discards a staged resolution and returns the head to its original conflict branches.
 - CLI `history <id>`, `snapshot get <id> <rev>`, and `revert <id> <rev>` expose committed snapshots for inspection and staged rollback.
+- CLI `diff conflict <id>` compares canonical document JSON data between conflict branches and the staged resolution, when present.
 - UI header shows conflict count button and catalog can filter to conflicts.
 - Document payloads expose `hasConflict`, `isStaged`, and `snapshotsCount` for troubleshooting.
 

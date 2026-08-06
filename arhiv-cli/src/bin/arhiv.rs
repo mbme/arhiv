@@ -18,7 +18,7 @@ use arhiv::{
     server::media::generate_qrcode_svg,
 };
 use baza::{
-    Baza, BazaManager, DEV_MODE, DocumentExpert, DocumentHead, Filter,
+    Baza, BazaManager, DEV_MODE, DocumentExpert, DocumentHead, Filter, diff_document_data,
     entities::{Document, DocumentData, DocumentLockKey, DocumentType, Id, Revision},
     schema::DataSchema,
 };
@@ -202,6 +202,11 @@ enum CLICommand {
         #[arg(long)]
         lock_key: Option<String>,
     },
+    /// Compare document data
+    Diff {
+        #[command(subcommand)]
+        command: DiffCommand,
+    },
     /// Get document by id
     Get {
         /// Id of the document
@@ -373,6 +378,34 @@ enum SnapshotCommand {
         /// Print machine-readable JSON
         #[arg(long, default_value_t = false)]
         json: bool,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+enum DiffCommand {
+    /// Diff a staged working copy against its latest committed original
+    Staged {
+        /// Id of the document
+        #[arg()]
+        id: Id,
+    },
+    /// Diff two committed snapshots of one document
+    Snapshots {
+        /// Id of the document
+        #[arg()]
+        id: Id,
+        /// Left snapshot revision, as printed by history
+        #[arg()]
+        left_rev: String,
+        /// Right snapshot revision, as printed by history
+        #[arg()]
+        right_rev: String,
+    },
+    /// Diff a conflict's staged resolution against each branch, or branch-to-branch
+    Conflict {
+        /// Id of the conflicted document
+        #[arg()]
+        id: Id,
     },
 }
 
@@ -738,6 +771,12 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             print_document(&document);
             println!("Staged snapshot {} as document {id}", rev.to_safe_string());
         }
+        CLICommand::Diff { command } => {
+            let arhiv = Arhiv::new_desktop();
+            unlock_arhiv(&arhiv);
+
+            handle_diff_command(&arhiv, command)?;
+        }
         CLICommand::Get { id, json } => {
             let arhiv = Arhiv::new_desktop();
             unlock_arhiv(&arhiv);
@@ -1083,6 +1122,88 @@ fn handle_conflict_command(arhiv: &Arhiv, command: ConflictCommand) -> Result<()
     Ok(())
 }
 
+fn handle_diff_command(arhiv: &Arhiv, command: DiffCommand) -> Result<()> {
+    let document_expert = arhiv.baza.get_document_expert();
+    let baza = arhiv.baza.open()?;
+
+    match command {
+        DiffCommand::Staged { id } => {
+            let head = get_document_head(&baza, &id)?;
+            ensure!(head.is_staged(), "Document {id} has no staged changes");
+            ensure!(
+                !head.is_new_document(),
+                "Document {id} is new; no committed original to diff"
+            );
+
+            let original = latest_original_snapshot(head);
+            let staged = head
+                .get_staged_document()
+                .expect("staged document is present");
+
+            print_document_data_diff(&document_expert, "original", original, "staged", staged)?;
+        }
+        DiffCommand::Snapshots {
+            id,
+            left_rev,
+            right_rev,
+        } => {
+            let left_rev = parse_revision(&left_rev)?;
+            let right_rev = parse_revision(&right_rev)?;
+            let left = baza.get_document_snapshot(&id, &left_rev)?;
+            let right = baza.get_document_snapshot(&id, &right_rev)?;
+
+            print_document_data_diff(
+                &document_expert,
+                "left snapshot",
+                &left,
+                "right snapshot",
+                &right,
+            )?;
+        }
+        DiffCommand::Conflict { id } => {
+            let head = get_document_head(&baza, &id)?;
+            ensure!(head.is_conflict(), "Document {id} is not conflicted");
+
+            let branches = sorted_original_snapshots(head);
+            if let Some(staged) = head.get_staged_document() {
+                for (index, branch) in branches.iter().enumerate() {
+                    if index > 0 {
+                        println!();
+                    }
+
+                    print_document_data_diff(
+                        &document_expert,
+                        &format!("branch {}", index + 1),
+                        branch,
+                        "staged resolution",
+                        staged,
+                    )?;
+                }
+            } else {
+                let first = branches
+                    .first()
+                    .expect("conflict must have at least two branches");
+
+                for (index, branch) in branches.iter().enumerate().skip(1) {
+                    if index > 1 {
+                        println!();
+                    }
+
+                    print_document_data_diff(
+                        &document_expert,
+                        "branch 1",
+                        first,
+                        &format!("branch {}", index + 1),
+                        branch,
+                    )?;
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
 fn print_conflicts(arhiv: &Arhiv, json_output: bool) -> Result<()> {
     let document_expert = arhiv.baza.get_document_expert();
     let baza = arhiv.baza.open()?;
@@ -1220,6 +1341,44 @@ fn print_snapshot(
     }
 
     Ok(())
+}
+
+fn print_document_data_diff(
+    document_expert: &DocumentExpert<'_>,
+    left_role: &str,
+    left: &Document,
+    right_role: &str,
+    right: &Document,
+) -> Result<()> {
+    let left_label = document_diff_label(document_expert, left_role, left)?;
+    let right_label = document_diff_label(document_expert, right_role, right)?;
+    let diff = diff_document_data(&left_label, left, &right_label, right)?;
+
+    if diff.has_changes {
+        print!("{}", diff.unified_diff);
+    } else {
+        println!("No data differences between {left_role} and {right_role}");
+    }
+
+    Ok(())
+}
+
+fn document_diff_label(
+    document_expert: &DocumentExpert<'_>,
+    role: &str,
+    document: &Document,
+) -> Result<String> {
+    let title = document_expert.get_title(&document.document_type, &document.data)?;
+
+    Ok(format!(
+        "{}: {} {} rev {} updated {} title {}",
+        role,
+        document.id,
+        document.document_type,
+        document.rev.to_safe_string(),
+        document.updated_at.default_date_time_format(),
+        single_line(&title)
+    ))
 }
 
 fn print_snapshot_block(

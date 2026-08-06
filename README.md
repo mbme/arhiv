@@ -98,6 +98,7 @@ Useful document commands:
 * `arhiv get <id>` prints a readable document summary; add `--json` for the raw document head.
 * `arhiv conflicts` lists conflicted documents, and `arhiv conflict show <id>` prints conflict branches plus any staged resolution.
 * `arhiv history <id>` lists committed snapshots, `arhiv snapshot get <id> <rev>` prints one snapshot, and `arhiv revert <id> <rev>` stages a historical snapshot as current data.
+* `arhiv diff staged|snapshots|conflict ...` prints unified diffs of canonical document JSON data.
 * `arhiv reset <id>` discards a staged document change or conflict resolution; `arhiv reset --all` discards all staged changes.
 * `arhiv add <type> <json>`, `arhiv update <id> <json>`, and `arhiv erase <id>` manage document data.
 * `arhiv import track <file...>` imports audio files as track documents.

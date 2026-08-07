@@ -21,7 +21,7 @@ ordermap.workspace = true
 baza-common = { path = "../baza-common" }
 
 flate2 = "1"
-age = { version = "0.11", features = ["armor"] }
+age = { version = "0.12", features = ["armor"] }
 
 [dev-dependencies]
 criterion = "0.8"

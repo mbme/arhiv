@@ -27,7 +27,7 @@ hmac = "0.13"
 scrypt = { version = "0.12", default-features = false }
 time = { version = "0.3", features = ["formatting", "parsing", "macros", "serde", "local-offset"] }
 data-encoding = "2"
-infer = "0.19"
+infer = "0.22"
 mime_guess = "2"
 regex = "1.5.4"
 url = "2.2.2"

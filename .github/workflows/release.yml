@@ -109,4 +109,5 @@ jobs:
         uses: ncipollo/release-action@v1.21.0
         with:
           tag: ${{ github.ref_name }} # e.g. "42"
+          generateReleaseNotes: true
           artifacts: 'release-artifacts/arhiv.apk,release-artifacts/target/release/arhiv,release-artifacts/target/x86_64-pc-windows-gnu/release/arhiv.exe'

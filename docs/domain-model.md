@@ -52,6 +52,8 @@ A record may belong to multiple collections. A member occurs at most once in a c
 
 An **Attachment** is a specialized Record whose content is a file held by Arhiv. An attachment may serve a kind-defined role for another Record.
 
+An Attachment's record metadata, relationships, and history remain part of Arhiv even when its file content is unavailable. Unavailable attachment content is loss of that attachment's content, not corruption of Arhiv records, relationships, or history. Reading unavailable attachment content fails for that content, while unrelated records and metadata remain usable.
+
 ### Pending change
 
 A **Pending change** is a durable proposed Record form that has not been committed. It is either a proposed creation, an ordinary change based on one committed form of an existing Record, or a reconciled change based on every competing committed form of one Conflict. It may be discarded.
@@ -93,21 +95,21 @@ A heuristic reconciled Pending change may be prepared automatically. Committing 
 
 ## Record lifecycle
 
-| From | Action | To |
-| --- | --- | --- |
-| Absent | Prepare creation | Proposed new record |
-| Proposed new record | Commit pending changes | Active record |
-| Proposed new record | Discard | Absent |
-| Active record | Prepare edit | Pending edit |
-| Pending edit | Commit pending changes | Active record with a new current form |
-| Pending edit | Discard | Previous active record |
-| Active record | Prepare deletion | Pending deletion |
-| Pending deletion | Commit pending changes | Deleted record |
-| Pending deletion | Discard | Previous active record |
-| Active or deleted record | Receive concurrent committed forms | Conflict |
-| Conflict | Prepare reconciliation | Pending reconciled change |
-| Pending reconciled change | Commit pending changes | Active or deleted record with one current form |
-| Pending reconciled change | Discard | Conflict |
+| From                      | Action                             | To                                             |
+| ------------------------- | ---------------------------------- | ---------------------------------------------- |
+| Absent                    | Prepare creation                   | Proposed new record                            |
+| Proposed new record       | Commit pending changes             | Active record                                  |
+| Proposed new record       | Discard                            | Absent                                         |
+| Active record             | Prepare edit                       | Pending edit                                   |
+| Pending edit              | Commit pending changes             | Active record with a new current form          |
+| Pending edit              | Discard                            | Previous active record                         |
+| Active record             | Prepare deletion                   | Pending deletion                               |
+| Pending deletion          | Commit pending changes             | Deleted record                                 |
+| Pending deletion          | Discard                            | Previous active record                         |
+| Active or deleted record  | Receive concurrent committed forms | Conflict                                       |
+| Conflict                  | Prepare reconciliation             | Pending reconciled change                      |
+| Pending reconciled change | Commit pending changes             | Active or deleted record with one current form |
+| Pending reconciled change | Discard                            | Conflict                                       |
 
 A Conflict may exist alongside a prepared reconciled change. It remains unresolved until that change is committed.
 

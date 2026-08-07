@@ -11,14 +11,12 @@ import {
 } from '../../utils/arhivUpdateCheck';
 
 const LATEST_RELEASE_TAG_KEY = 'LATEST_ARHIV_RELEASE_TAG';
-// oxlint-disable-next-line typescript/no-unnecessary-type-arguments
 const $latestReleaseTag = signal(storage.getValue<string>(LATEST_RELEASE_TAG_KEY, ''));
 effect(() => {
   storage.setValue(LATEST_RELEASE_TAG_KEY, $latestReleaseTag.value);
 });
 
 const LAST_CHECK_ATTEMPT_KEY = 'LATEST_ARHIV_RELEASE_LAST_CHECK_ATTEMPT';
-// oxlint-disable-next-line typescript/no-unnecessary-type-arguments
 const $lastCheckAttempt = signal(storage.getValue<number>(LAST_CHECK_ATTEMPT_KEY, 0));
 effect(() => {
   storage.setValue(LAST_CHECK_ATTEMPT_KEY, $lastCheckAttempt.value);

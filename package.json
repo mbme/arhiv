@@ -12,7 +12,7 @@
     "arhiv-desktop"
   ],
   "scripts": {
-    "check": "npm run compiler-errors --workspaces && npm run fmt:check:root && npm run check-fmt --workspaces && npm run lint:root && npm run lint --workspaces && npm run test --workspaces && npm run check-android-config",
+    "check": "npm run compiler-errors --workspaces && npm run fmt:check:root && npm run check-fmt --workspaces && npm run lint:root && npm run lint --workspaces -- --report-unused-disable-directives-severity error && npm run test --workspaces && npm run check-android-config",
     "fmt": "npm run fmt:root && npm run fmt --workspaces",
     "fmt:check": "npm run fmt:check:root && npm run check-fmt --workspaces",
     "fmt:root": "oxfmt .oxlintrc.json .oxlintrc.shared.json arhiv/.oxlintrc.json arhiv-desktop/.oxlintrc.json scripts/",

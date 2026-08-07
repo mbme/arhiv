@@ -1,7 +1,10 @@
-(
+((nil . ((mb-use-local-tsgo . t)))
  (typescript-mode . ((apheleia-formatter . oxfmt)))
- (typescript-ts-mode . ((apheleia-formatter . oxfmt)))
+ (typescript-ts-mode . ((lsp-disabled-clients . (eslint deno-ls ts-ls))
+                        (apheleia-formatter . oxfmt)))
  (tsx-ts-mode . ((apheleia-formatter . oxfmt)))
  (js-mode . ((apheleia-formatter . oxfmt)))
  (js-ts-mode . ((apheleia-formatter . oxfmt)))
- (js-json-mode . ((apheleia-formatter . oxfmt))))
+ (js-json-mode . ((apheleia-formatter . oxfmt)))
+ (json-mode . ((apheleia-formatter . oxfmt)))
+ (markdown-mode . ((apheleia-formatter . oxfmt))))

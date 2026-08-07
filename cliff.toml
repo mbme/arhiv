@@ -1,0 +1,38 @@
+# Release notes are generated from user-visible Conventional Commits only.
+[changelog]
+header = ""
+body = """
+{% if commits | length > 0 -%}
+{% for group, group_commits in commits | group_by(attribute="group") %}
+### {{ group }}
+{% for commit in group_commits -%}
+- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message | upper_first }}{% if commit.breaking %} **(breaking)**{% endif %}
+{% endfor %}
+{% endfor -%}
+{% else -%}
+No user-visible changes in this release.
+{% endif -%}
+"""
+trim = true
+render_always = true
+footer = """
+{% for release in releases -%}
+{% if release.previous.version -%}
+[Full changelog](https://github.com/mbme/arhiv/compare/{{ release.previous.version }}...{{ release.version }})
+{% endif -%}
+{% endfor -%}
+"""
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+protect_breaking_commits = true
+tag_pattern = "^[0-9]+$"
+sort_commits = "newest"
+commit_parsers = [
+  { message = "^.+!:", group = "Breaking changes" },
+  { message = "^feat", group = "Added" },
+  { message = "^fix", group = "Fixed" },
+  { message = "^perf", group = "Changed" },
+  { message = ".*", skip = true },
+]

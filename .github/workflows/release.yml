@@ -23,9 +23,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
         with:
-          fetch-depth: 100 # fetch last 100 commits so that git describe --tags works
-          fetch-tags: true
-          # this is necessary due to using both fetch-depth & fetch-tags https://github.com/actions/checkout/issues/1467
+          # Release notes compare the tagged release with its preceding numeric tag.
+          fetch-depth: 0
           ref: ${{ github.ref }}
 
       - name: Setup environment
@@ -81,12 +80,19 @@ jobs:
         if: always()
         run: rm -f "$RUNNER_TEMP/arhiv-release.keystore" arhiv-android/keystore.properties
 
+      - name: Install git-cliff
+        run: cargo install --locked git-cliff --version 2.13.0
+
+      - name: Generate release notes
+        run: git-cliff --config cliff.toml --current --output release-notes.md
+
       - name: Upload release artifacts
         uses: actions/upload-artifact@v7.0.1
         with:
           name: release-artifacts
           path: |
             arhiv.apk
+            release-notes.md
             target/release/arhiv
             target/x86_64-pc-windows-gnu/release/arhiv.exe
           if-no-files-found: error
@@ -109,5 +115,5 @@ jobs:
         uses: ncipollo/release-action@v1.21.0
         with:
           tag: ${{ github.ref_name }} # e.g. "42"
-          generateReleaseNotes: true
+          bodyFile: release-artifacts/release-notes.md
           artifacts: 'release-artifacts/arhiv.apk,release-artifacts/target/release/arhiv,release-artifacts/target/x86_64-pc-windows-gnu/release/arhiv.exe'

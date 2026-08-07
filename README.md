@@ -206,7 +206,6 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 - improve backup: add manifest; add integrity checks; add restore command
 - get rid of tailwind?
 - domain docs to cover user workflows?
-- prepare release notes during release
 
 - як це розкладаєтьс на "базові" компоненти? і інтегрується із рештою екосистеми?
   - формат даних (encrypted compressed jsonl)

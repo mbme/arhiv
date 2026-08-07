@@ -86,6 +86,7 @@ Android cookie setup:
 - UI URLs are emitted as `https://localhost:<port>/ui`.
 - Server socket binds IPv4 loopback only (`127.0.0.1`).
 - This model is local-process trust, not PKI CA trust.
+- The UI Content Security Policy permits scripts from the local server and connections only to the local server or GitHub's API for stable-release update checks.
 
 ## 8. Known Limitations
 

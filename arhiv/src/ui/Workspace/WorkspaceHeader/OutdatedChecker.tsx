@@ -4,32 +4,37 @@ import { useSignal } from '../../utils/hooks';
 import { storage } from '../../utils/storage';
 import { IconButton } from '../../components/Button';
 import { showToast } from '../../components/Toaster';
+import {
+  getLatestArhivReleaseTag,
+  isArhivUpdateAvailable,
+  shouldCheckForArhivUpdates,
+} from '../../utils/arhivUpdateCheck';
 
-const KEY = 'LATEST_ARHIV_VERSION';
+const LATEST_RELEASE_TAG_KEY = 'LATEST_ARHIV_RELEASE_TAG';
 // oxlint-disable-next-line typescript/no-unnecessary-type-arguments
-const $latestVersion = signal(storage.getValue<string>(KEY, ''));
+const $latestReleaseTag = signal(storage.getValue<string>(LATEST_RELEASE_TAG_KEY, ''));
 effect(() => {
-  storage.setValue(KEY, $latestVersion.value);
+  storage.setValue(LATEST_RELEASE_TAG_KEY, $latestReleaseTag.value);
 });
 
-const LAST_CHECK_KEY = 'LATEST_ARHIV_VERSION_LAST_CHECK';
+const LAST_CHECK_ATTEMPT_KEY = 'LATEST_ARHIV_RELEASE_LAST_CHECK_ATTEMPT';
 // oxlint-disable-next-line typescript/no-unnecessary-type-arguments
-const $lastCheck = signal(storage.getValue<string>(LAST_CHECK_KEY, '0'));
+const $lastCheckAttempt = signal(storage.getValue<number>(LAST_CHECK_ATTEMPT_KEY, 0));
 effect(() => {
-  storage.setValue(LAST_CHECK_KEY, $lastCheck.value);
+  storage.setValue(LAST_CHECK_ATTEMPT_KEY, $lastCheckAttempt.value);
 });
 
 export function OutdatedChecker() {
-  const latestVersion = useSignal($latestVersion);
+  const latestReleaseTag = useSignal($latestReleaseTag);
+  const currentVersion = window.CONFIG.arhivVersion;
 
   useEffect(() => {
-    const lastCheck = Number($lastCheck.value);
     const now = Date.now();
-
-    // max one check per day
-    if (now - lastCheck < 24 * 60 * 60 * 1000) {
+    if (!shouldCheckForArhivUpdates(currentVersion, $lastCheckAttempt.value, now)) {
       return;
     }
+
+    $lastCheckAttempt.value = now;
 
     const abortController = new AbortController();
     fetch('https://api.github.com/repos/mbme/arhiv/releases/latest', {
@@ -42,35 +47,37 @@ export function OutdatedChecker() {
         return res.json();
       })
       .then((data) => {
-        // oxlint-disable-next-line typescript/no-unsafe-member-access
-        $latestVersion.value = data.name as string;
-        $lastCheck.value = now.toString();
+        const latestReleaseTag = getLatestArhivReleaseTag(data);
+        if (!latestReleaseTag) {
+          throw new Error('GitHub API response has no valid Arhiv release tag');
+        }
+
+        $latestReleaseTag.value = latestReleaseTag;
       })
       .catch((error: unknown) => {
-        console.error('Failed to fetch latest version', error);
+        if (!abortController.signal.aborted) {
+          console.error('Failed to fetch latest Arhiv release', error);
+        }
       });
 
     return () => {
       abortController.abort();
     };
-  }, []);
+  }, [currentVersion]);
 
-  const currentVersion = window.CONFIG.arhivVersion;
-  const isOutdated = latestVersion && !currentVersion.startsWith(latestVersion);
-
-  if (!isOutdated) {
+  if (!isArhivUpdateAvailable(currentVersion, latestReleaseTag)) {
     return null;
   }
 
   return (
     <IconButton
       icon="error-triangle"
-      title={`New Arhiv version ${latestVersion} is available`}
+      title={`Update available: Arhiv ${latestReleaseTag}`}
       className="text-orange-500"
       onClick={() => {
         showToast({
           level: 'warn',
-          message: `Current Arhiv version ${currentVersion} is outdated. Latest version is ${latestVersion}`,
+          message: `Update available: Arhiv ${latestReleaseTag}. Update through your package manager or download a new release.`,
         });
       }}
     />

@@ -140,7 +140,7 @@ async fn index_page() -> Result<impl IntoResponse, ServerError> {
 
                     <meta charset="UTF-8" />
                     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                    <meta http-equiv="Content-Security-Policy" content="script-src 'self'; ">
+                    <meta http-equiv="Content-Security-Policy" content="script-src 'self'; connect-src 'self' https://api.github.com; ">
 
                     <link rel="icon" type="image/svg+xml" href="{UI_BASE_PATH}/favicon.svg" />
                     <link rel="stylesheet" href="{UI_BASE_PATH}/index.css" />

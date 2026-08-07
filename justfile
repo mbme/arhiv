@@ -84,6 +84,7 @@ prod-build-desktop:
 
 # install the Arhiv CLI locally using Cargo
 cargo-install: _prod-npm-build
+  ARHIV_VERSION=$(just _print-long-version) \
   cargo install --path arhiv-cli --bin arhiv --features production-mode
 
 check-rs:

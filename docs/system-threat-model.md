@@ -26,6 +26,8 @@ The HTTPS server binds only to IPv4 loopback (`127.0.0.1`). It is not a LAN or I
 
 Desktop and Android receive server startup information through their process/JNI boundary, pin the delivered self-signed certificate, and set the primary authentication cookie directly. Generic browser launch uses a separate, one-time bootstrap token to establish that cookie, then redirects to the clean UI URL.
 
+Recognized release builds check GitHub's latest stable release once per hour while the workspace UI is open. The browser-side request sends no Arhiv records, credentials, or current-version value, but GitHub and the platform network stack can observe normal request metadata such as IP address, user agent, and request timing.
+
 ## 3. Protected Assets
 
 Arhiv protects the confidentiality and integrity of:
@@ -74,6 +76,7 @@ Arhiv does not protect against:
 | Launcher -> local server | Startup information, local process/JNI boundary, certificate pinning in Desktop/Android | A compromised local user account can interfere with this boundary. |
 | Browser/WebView -> local server | IPv4 loopback binding, HTTPS, certificate pinning where available, authenticated cookie | Loopback restricts network peers, not local processes owned by the same user. |
 | Generic browser launch -> authenticated UI | Separate 256-bit one-time bootstrap token; cookie exchange and redirect to clean UI URL | The initial bootstrap URL can still appear in browser or process history before it is consumed. |
+| Workspace UI -> GitHub Releases API | Validated numeric `tag_name`, hourly attempt limit, and CSP `connect-src` allowlist | GitHub and the platform network stack can observe normal request metadata and availability depends on external network access. |
 | Desktop/Android secret persistence -> platform secret store | System keyring or Android Keystore with platform authentication | These stores are convenience and local UX mechanisms, not a replacement for backup or encryption-key recovery. |
 | Live storage -> backup | Encrypted file copies of key, committed DB, and blobs | Backup is not a transactional snapshot and has no authenticated generation manifest. |
 

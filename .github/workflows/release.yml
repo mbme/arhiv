@@ -1,7 +1,6 @@
 name: Build & Release Arhiv
 
 on:
-  workflow_dispatch:
   push:
     tags:
       - '*'

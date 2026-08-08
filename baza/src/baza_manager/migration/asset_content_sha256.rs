@@ -10,7 +10,6 @@ use baza_storage::crypto::age::{AgeKey, AgeReader};
 
 use crate::{
     BazaInfo, BazaState, BazaStorage,
-    baza_manager::manager_state::BazaManagerState,
     baza_storage::{STORAGE_VERSION, create_storage},
     entities::{Document, Id},
     schema::ASSET_TYPE,
@@ -35,12 +34,16 @@ impl BazaManager {
         let mut manager_state = self.acquire_state_write_lock()?;
 
         let key = manager_state.get_key()?.clone();
-        self.migrate_data_v1_to_v2_asset_content_sha256_with_state(&mut manager_state, &key)
+        let changed = self.migrate_data_v1_to_v2_asset_content_sha256_with_key(&key)?;
+        if changed {
+            manager_state.clear_cached_baza();
+        }
+
+        Ok(changed)
     }
 
-    pub(super) fn migrate_data_v1_to_v2_asset_content_sha256_with_state(
+    pub(super) fn migrate_data_v1_to_v2_asset_content_sha256_with_key(
         &self,
-        manager_state: &mut BazaManagerState,
         key: &AgeKey,
     ) -> Result<bool> {
         log::info!(
@@ -68,7 +71,6 @@ impl BazaManager {
             } else {
                 false
             };
-            manager_state.clear_cached_baza();
             log::info!("Storage is already at data version {TARGET_DATA_VERSION}");
             return Ok(removed_state);
         }
@@ -97,8 +99,6 @@ impl BazaManager {
         }
         self.remove_local_state_artifacts(&mut fs_tx)?;
         fs_tx.commit()?;
-
-        manager_state.clear_cached_baza();
 
         log::info!(
             "Migrated {} storage file(s) from data version {} to {} in {:?}",

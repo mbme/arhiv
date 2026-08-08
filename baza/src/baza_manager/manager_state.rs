@@ -145,7 +145,9 @@ impl BazaManager {
         let key = manager_state.get_key()?.clone();
 
         self.merge_storages(&key)?;
-        self.migrate_to_latest_data_version_if_needed(&mut manager_state, &key)?;
+        if self.migrate_to_latest_data_version_if_needed(&key)? {
+            manager_state.clear_cached_baza();
+        }
 
         let mut baza = if self.paths.state_file_exists()? {
             let baza = Baza::read(key.clone(), self.paths.clone(), self.schema.clone())?;

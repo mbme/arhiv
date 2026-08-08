@@ -199,7 +199,6 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 
 # TODO
 
-- check if can use https://doc.rust-lang.org/std/fs/struct.File.html#method.lock instead of 3rd party
 - check if can improve multi-file fstransaction
 - better search - vector search? integrate tantivy?
 - better diff/merge

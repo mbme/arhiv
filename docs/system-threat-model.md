@@ -132,7 +132,7 @@ For security-sensitive changes, validate the affected boundary directly. Example
 - `arhiv/src/server/server_info.rs`
 - `baza-storage/src/crypto/age.rs`
 - `baza/src/baza_manager/keys.rs`
-- `baza/src/backup.rs`
+- `baza/src/backup/`
 - `arhiv-desktop/src/arhiv.ts`
 - `arhiv-desktop/src/index.ts`
 - `arhiv-android/src/lib.rs`

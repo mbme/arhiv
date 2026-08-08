@@ -86,7 +86,11 @@ impl Baza {
         Ok(())
     }
 
-    fn collect_asset_document_ids(&self) -> HashSet<Id> {
+    /// Returns IDs of asset document heads that reference storage blobs.
+    ///
+    /// This describes the Baza's expected blob set; it does not verify that corresponding files
+    /// exist in storage.
+    pub fn referenced_storage_blob_ids(&self) -> HashSet<Id> {
         self.iter_documents()
             .filter_map(|head| {
                 if *head.get_type() == ASSET_TYPE {
@@ -99,7 +103,7 @@ impl Baza {
     }
 
     pub(crate) fn remove_unused_state_blobs(&mut self) -> Result<()> {
-        let live_assets = self.collect_asset_document_ids();
+        let live_assets = self.referenced_storage_blob_ids();
         let state_blobs = self.paths.list_state_blobs()?;
 
         let unused_state_blobs = state_blobs.difference(&live_assets).collect::<Vec<_>>();
@@ -116,7 +120,7 @@ impl Baza {
     }
 
     pub(crate) fn remove_unused_storage_blobs(&mut self) -> Result<()> {
-        let committed_assets = self.collect_asset_document_ids();
+        let committed_assets = self.referenced_storage_blob_ids();
         let storage_blobs = self.paths.list_storage_blobs()?;
 
         // warn about missing storage BLOBs if any

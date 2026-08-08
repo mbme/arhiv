@@ -182,5 +182,5 @@ Until a public migration command is introduced:
 - `baza/src/baza_manager/mod.rs`
 - `baza/src/baza_manager/migration/`
 - `baza/src/baza/mod.rs`
-- `baza/src/backup.rs`
+- `baza/src/backup/`
 - `baza-common/src/fs_transaction.rs`

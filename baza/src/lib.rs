@@ -14,6 +14,7 @@ pub mod markup;
 pub mod merge;
 pub mod schema;
 
+pub use backup::{RestoreCheckReport, RestoreOptions};
 pub use baza::{BLOBSCount, Baza, DocumentsCount, StagingError, ValidationError};
 pub use baza_info::BazaInfo;
 pub use baza_manager::{BazaManager, StorageKeyUnlockResult};

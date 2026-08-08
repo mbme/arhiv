@@ -59,6 +59,11 @@ pub(crate) enum CLICommand {
         #[arg(value_hint = ValueHint::DirPath)]
         backup_dir: String,
     },
+    /// Check or apply an Arhiv backup restore
+    Restore {
+        #[command(subcommand)]
+        command: RestoreCommand,
+    },
     /// Run server
     Server {
         /// The port to listen on
@@ -324,6 +329,37 @@ pub(crate) enum CollectionCommand {
         /// Lock key to be checked before updating a locked collection
         #[arg(long)]
         lock_key: Option<String>,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub(crate) enum RestoreCommand {
+    /// Validate a backup manifest without mutating live storage
+    Check {
+        /// Encrypted backup manifest to validate.
+        #[arg(value_hint = ValueHint::FilePath)]
+        manifest_path: String,
+        /// Permit backups that are missing referenced asset blob files.
+        #[arg(long, default_value_t = false)]
+        allow_missing_blobs: bool,
+        /// Decrypt every referenced blob and verify plaintext size and SHA-256.
+        #[arg(long, default_value_t = false)]
+        deep: bool,
+    },
+    /// Restore a backup manifest into live storage
+    Apply {
+        /// Encrypted backup manifest to restore.
+        #[arg(value_hint = ValueHint::FilePath)]
+        manifest_path: String,
+        /// Permit degraded restore when referenced asset blob files are missing.
+        #[arg(long, default_value_t = false)]
+        allow_missing_blobs: bool,
+        /// Decrypt every referenced blob and verify plaintext size and SHA-256 before applying.
+        #[arg(long, default_value_t = false)]
+        deep: bool,
+        /// Permit replacing newer current storage with an older backup.
+        #[arg(long, default_value_t = false)]
+        allow_rollback: bool,
     },
 }
 

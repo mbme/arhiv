@@ -9,7 +9,7 @@ use clap_complete::generate;
 
 use arhiv::{Arhiv, server::media::generate_qrcode_svg};
 use baza::{
-    BazaManager, Filter,
+    BazaManager, Filter, RestoreCheckReport, RestoreOptions,
     entities::{Document, DocumentData, DocumentLockKey, DocumentType, Id, Revision},
 };
 use baza_common::{ensure_file_exists, file_exists, into_absolute_path, remove_file_if_exists};
@@ -17,7 +17,7 @@ use baza_common::{ensure_file_exists, file_exists, into_absolute_path, remove_fi
 use crate::{
     cli::{
         AssetCommand, CLIArgs, CLICommand, CollectionCommand, ConflictCommand, DiffCommand,
-        SnapshotCommand,
+        RestoreCommand, SnapshotCommand,
     },
     output::{
         get_document_head, latest_original_snapshot, print_conflict_details, print_conflicts,
@@ -465,6 +465,9 @@ pub(crate) async fn handle_command(command: CLICommand) -> Result<()> {
                 .backup(&backup_dir)
                 .context("must be able to backup")?;
         }
+        CLICommand::Restore { command } => {
+            handle_restore_command(command)?;
+        }
         CLICommand::GenerateCompletions { shell } => {
             let mut cmd = CLIArgs::command();
 
@@ -475,6 +478,77 @@ pub(crate) async fn handle_command(command: CLICommand) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn handle_restore_command(command: RestoreCommand) -> Result<()> {
+    match command {
+        RestoreCommand::Check {
+            manifest_path,
+            allow_missing_blobs,
+            deep,
+        } => {
+            ensure_file_exists(&manifest_path)?;
+            println!("Enter password for backup key");
+            let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)?;
+
+            let arhiv = Arhiv::new_desktop();
+            let report = arhiv.baza.restore_check(
+                &manifest_path,
+                password,
+                RestoreOptions {
+                    allow_missing_blobs,
+                    deep,
+                    allow_rollback: false,
+                },
+            )?;
+
+            print_restore_check_report(&report, false);
+        }
+        RestoreCommand::Apply {
+            manifest_path,
+            allow_missing_blobs,
+            deep,
+            allow_rollback,
+        } => {
+            ensure_file_exists(&manifest_path)?;
+            let arhiv = unlocked_desktop_arhiv()?;
+
+            println!("Enter password for backup key");
+            let password = prompt_password(BazaManager::MIN_PASSWORD_LENGTH, false)?;
+
+            let report = arhiv.baza.restore_apply(
+                &manifest_path,
+                password,
+                RestoreOptions {
+                    allow_missing_blobs,
+                    deep,
+                    allow_rollback,
+                },
+            )?;
+            arhiv
+                .lock()
+                .context("Failed to clear cached storage key after restore")?;
+
+            print_restore_check_report(&report, true);
+        }
+    }
+
+    Ok(())
+}
+
+fn print_restore_check_report(report: &RestoreCheckReport, applied: bool) {
+    if applied {
+        println!("Restored backup {}", report.timestamp);
+    } else {
+        println!("Backup {} passed restore check", report.timestamp);
+    }
+    println!("  manifest: {}", report.manifest_path);
+    println!("  referenced blobs: {}", report.referenced_blobs);
+    println!("  missing blobs: {}", report.missing_blobs.len());
+    println!("  verified artifacts: {}", report.verified_artifacts);
+    if report.deep_verified_blobs > 0 {
+        println!("  deep verified blobs: {}", report.deep_verified_blobs);
+    }
 }
 
 fn build_filter(

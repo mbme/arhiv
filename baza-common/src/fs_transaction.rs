@@ -1,10 +1,13 @@
-use std::{fs, io::Write};
+use std::{
+    fs,
+    io::{self, Read, Write},
+};
 
 use anyhow::{Context, Result, anyhow, bail, ensure};
 
 use crate::{
-    ensure_file_exists, generate_alpanumeric_string, get_file_size, log, move_file,
-    must_create_file, path_exists, set_file_size,
+    dir_exists, ensure_file_exists, file_exists, generate_alpanumeric_string, get_file_size, log,
+    move_file, must_create_file, path_exists, set_file_size,
 };
 
 enum FsOperation {
@@ -92,6 +95,22 @@ impl FsTransaction {
         Ok(())
     }
 
+    /// Copies `src` to a newly-created `dest`, failing when `dest` already exists.
+    pub fn copy_file_new(&mut self, src: impl Into<String>, dest: impl Into<String>) -> Result<()> {
+        let src = src.into();
+        let dest = dest.into();
+
+        let mut reader =
+            fs::File::open(&src).with_context(|| format!("Failed to open Copy source {src}"))?;
+        copy_to_new_file(&mut reader, &dest)
+            .with_context(|| format!("Failed to Copy {src} to {dest}"))?;
+
+        log::debug!("Copied {} to {}", &src, &dest);
+        self.ops.push(FsOperation::Copy { src, dest });
+
+        Ok(())
+    }
+
     pub fn hard_link_file(
         &mut self,
         src: impl Into<String>,
@@ -124,6 +143,17 @@ impl FsTransaction {
         Ok(())
     }
 
+    /// Removes an existing file and records enough state to restore it on rollback.
+    pub fn remove_file_if_exists(&mut self, src: impl Into<String>) -> Result<()> {
+        let src = src.into();
+
+        if file_exists(&src)? {
+            self.remove_file(src)?;
+        }
+
+        Ok(())
+    }
+
     pub fn create_file(&mut self, path: impl Into<String>, data: &[u8]) -> Result<()> {
         let path = path.into();
 
@@ -152,6 +182,17 @@ impl FsTransaction {
         log::debug!("Created dir {path}");
 
         self.ops.push(FsOperation::CreateDir { path });
+
+        Ok(())
+    }
+
+    /// Creates a missing directory and removes it again on rollback.
+    pub fn create_dir_if_missing(&mut self, path: impl Into<String>) -> Result<()> {
+        let path = path.into();
+
+        if !dir_exists(&path)? {
+            self.create_dir(path)?;
+        }
 
         Ok(())
     }
@@ -291,6 +332,27 @@ impl FsTransaction {
     }
 }
 
+fn copy_to_new_file(reader: &mut impl Read, dest: &str) -> Result<()> {
+    let mut writer = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(dest)
+        .with_context(|| format!("Failed to create Copy destination {dest}"))?;
+
+    if let Err(copy_err) = io::copy(reader, &mut writer).and_then(|_| writer.sync_all()) {
+        drop(writer);
+        if let Err(cleanup_err) = fs::remove_file(dest) {
+            return Err(copy_err).with_context(|| {
+                format!("Failed to remove partial Copy destination {dest}: {cleanup_err}")
+            });
+        }
+
+        return Err(copy_err).context("Failed to write Copy destination");
+    }
+
+    Ok(())
+}
+
 #[allow(unused_must_use)]
 impl Drop for FsTransaction {
     fn drop(&mut self) {
@@ -413,6 +475,72 @@ mod tests {
     }
 
     #[test]
+    fn copy_file_new_preserves_existing_destination() -> Result<()> {
+        let temp1 = TempFile::new();
+        temp1.write_str("temp1")?;
+
+        let temp2 = TempFile::new();
+        temp2.write_str("temp2")?;
+
+        let mut fs_tx = FsTransaction::new();
+        assert!(fs_tx.copy_file_new(temp1.as_ref(), temp2.as_ref()).is_err());
+
+        assert_eq!(temp1.str_contents()?, "temp1");
+        assert_eq!(temp2.str_contents()?, "temp2");
+
+        Ok(())
+    }
+
+    #[test]
+    fn copy_file_new_rolls_back_new_destination() -> Result<()> {
+        let temp1 = TempFile::new();
+        temp1.write_str("temp1")?;
+
+        let temp2 = TempFile::new();
+
+        let mut fs_tx = FsTransaction::new();
+        fs_tx.copy_file_new(temp1.as_ref(), temp2.as_ref())?;
+
+        assert_eq!(temp1.str_contents()?, "temp1");
+        assert_eq!(temp2.str_contents()?, "temp1");
+
+        fs_tx.rollback()?;
+
+        assert_eq!(temp1.str_contents()?, "temp1");
+        assert!(!temp2.exists());
+
+        Ok(())
+    }
+
+    #[test]
+    fn copy_file_new_removes_partial_destination_on_copy_error() {
+        struct FailingReader {
+            emitted_partial: bool,
+        }
+
+        impl Read for FailingReader {
+            fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+                if self.emitted_partial {
+                    return Err(io::Error::other("copy failed"));
+                }
+
+                self.emitted_partial = true;
+                let bytes = b"partial";
+                buf[..bytes.len()].copy_from_slice(bytes);
+                Ok(bytes.len())
+            }
+        }
+
+        let temp = TempFile::new();
+        let mut reader = FailingReader {
+            emitted_partial: false,
+        };
+
+        assert!(copy_to_new_file(&mut reader, temp.as_ref()).is_err());
+        assert!(!temp.exists());
+    }
+
+    #[test]
     fn test_hard_link() -> Result<()> {
         // commit hard link transaction
         {
@@ -486,6 +614,27 @@ mod tests {
     }
 
     #[test]
+    fn remove_file_if_exists_is_transactional_noop_for_missing_files() -> Result<()> {
+        let missing = TempFile::new();
+        let existing = TempFile::new();
+        existing.write_str("existing")?;
+
+        let mut fs_tx = FsTransaction::new();
+        fs_tx.remove_file_if_exists(missing.as_ref())?;
+        fs_tx.remove_file_if_exists(existing.as_ref())?;
+
+        assert!(!missing.exists());
+        assert!(!existing.exists());
+
+        fs_tx.rollback()?;
+
+        assert!(!missing.exists());
+        assert_eq!(existing.str_contents()?, "existing");
+
+        Ok(())
+    }
+
+    #[test]
     fn test_create_file() -> Result<()> {
         // commit create_file transaction
         {
@@ -541,6 +690,27 @@ mod tests {
 
             assert!(!temp1.exists());
         }
+
+        Ok(())
+    }
+
+    #[test]
+    fn create_dir_if_missing_is_transactional_noop_for_existing_dirs() -> Result<()> {
+        let existing = TempFile::new();
+        existing.mkdir()?;
+        let missing = TempFile::new();
+
+        let mut fs_tx = FsTransaction::new();
+        fs_tx.create_dir_if_missing(existing.as_ref())?;
+        fs_tx.create_dir_if_missing(missing.as_ref())?;
+
+        assert!(dir_exists(existing.as_ref())?);
+        assert!(dir_exists(missing.as_ref())?);
+
+        fs_tx.rollback()?;
+
+        assert!(dir_exists(existing.as_ref())?);
+        assert!(!missing.exists());
 
         Ok(())
     }

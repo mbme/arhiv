@@ -287,7 +287,7 @@ Durability/copy semantics:
 - Therefore, "safe backup" in current implementation means preserving decryptable key + storage + blobs, not strict atomic multi-file snapshot guarantees.
 
 Code:
-- `baza/src/backup.rs`
+- `baza/src/backup/`
 - `arhiv-cli/src/bin/arhiv.rs`
 
 ## 17. File Mutation Safety and Rollback Mechanics

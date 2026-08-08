@@ -19,6 +19,26 @@ pub fn path_to_string(path: impl Into<PathBuf>) -> String {
     path.to_string_lossy().to_string()
 }
 
+/// Returns the UTF-8-lossy file-name component, failing when `path` has none.
+pub fn path_file_name(path: impl AsRef<Path>) -> Result<String> {
+    Ok(path
+        .as_ref()
+        .file_name()
+        .context("Path must have a file name")?
+        .to_string_lossy()
+        .to_string())
+}
+
+/// Returns `path` relative to `base_dir`, failing unless `path` is contained by it.
+pub fn relative_path(base_dir: impl AsRef<Path>, path: impl AsRef<Path>) -> Result<String> {
+    Ok(path
+        .as_ref()
+        .strip_prefix(base_dir.as_ref())
+        .context("Path must live under base directory")?
+        .to_string_lossy()
+        .to_string())
+}
+
 pub fn build_path(a: impl AsRef<str>, b: impl AsRef<str>) -> String {
     let path: PathBuf = [a.as_ref(), b.as_ref()].into_iter().collect();
 

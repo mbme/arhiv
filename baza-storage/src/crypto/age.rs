@@ -1,6 +1,7 @@
 use std::{
     io::{self, BufRead, BufReader, Read, Seek, SeekFrom, Write},
     iter,
+    path::Path,
     str::FromStr,
 };
 
@@ -14,7 +15,7 @@ use age::{
 };
 use anyhow::{Context, Result, anyhow, ensure};
 
-use baza_common::{SecretBytes, create_file_reader, create_file_writer, log, read_all};
+use baza_common::{AtomicFileWriter, SecretBytes, create_file_reader, log, read_all};
 
 #[derive(Clone)]
 pub enum AgeKey {
@@ -217,11 +218,13 @@ pub fn encrypt_and_write_file(
     data: &[u8],
     armored: bool,
 ) -> Result<()> {
-    let writer = create_file_writer(file_path, false)?;
-
-    encrypt_and_write(writer, key, data, armored)?;
-
-    Ok(())
+    ensure!(
+        !Path::new(file_path).exists(),
+        "File {file_path} already exists"
+    );
+    let writer = AtomicFileWriter::create(file_path)?;
+    let writer = encrypt_and_write(writer, key, data, armored)?;
+    writer.commit()
 }
 
 pub fn encrypt_and_write<W: Write>(

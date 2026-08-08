@@ -8,8 +8,6 @@ use tokio::signal;
 
 pub use bytes::*;
 pub use fs::*;
-pub use fs_temp::*;
-pub use fs_transaction::FsTransaction;
 pub use iter::*;
 pub use json::*;
 pub use lock_file::*;
@@ -25,8 +23,6 @@ pub use crypto::secret::*;
 mod bytes;
 pub mod crypto;
 mod fs;
-mod fs_temp;
-mod fs_transaction;
 mod iter;
 mod json;
 mod lock_file;

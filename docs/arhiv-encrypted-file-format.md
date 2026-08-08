@@ -292,16 +292,24 @@ Code:
 
 ## 17. File Mutation Safety and Rollback Mechanics
 
-Arhiv uses `FsTransaction` in several storage/key mutation paths.
+Arhiv uses `FsTransaction` in several storage/key mutation paths and atomic
+single-file replacement helpers where rollback batching is not required.
 
 Behavior:
 - mutating operations can move previous files to backup names (`*-backup`),
-- transaction `commit()` removes backup temp files,
+- transaction `commit()` removes backup temp files and reports cleanup failures,
 - dropping an uncommitted transaction triggers rollback (best-effort reverse operations),
-- rollback failures are surfaced and logged.
+- rollback failures are surfaced and logged,
+- successful create, rename, copy, link, and remove operations sync the
+  containing directory when the local platform/filesystem supports directory
+  fsync,
+- `replace_file_atomically` writes through a same-directory temporary file,
+  syncs the file, renames it into place, and syncs the containing directory.
 
 Important limitation:
 - rollback is best-effort, not a hard atomic commit protocol across all touched files/directories.
+- `FsTransaction` is an in-process rollback guard, not a crash-safe journal;
+  callers must hold the relevant application-level lock for shared paths.
 
 Code:
 - `baza-common/src/fs_transaction.rs`

@@ -6,7 +6,7 @@ use std::{fs, sync::RwLock};
 
 use anyhow::{Context, Result, anyhow, ensure};
 
-use baza_common::{FsTransaction, LockFile, SecretString, Timestamp, log, move_file};
+use baza_common::{FsTransaction, LockFile, SecretString, Timestamp, log};
 use baza_storage::crypto::age::AgeKey;
 
 use crate::{DocumentExpert, schema::DataSchema};
@@ -126,8 +126,11 @@ impl BazaManager {
             "Recovering missing main storage DB {} from transaction backup {backup_file}",
             self.paths.storage_main_db_file
         );
-        move_file(&backup_file, &self.paths.storage_main_db_file)
+        let mut fs_tx = FsTransaction::new();
+        fs_tx
+            .move_file(&backup_file, &self.paths.storage_main_db_file, true)
             .context("Failed to restore main storage DB from transaction backup")?;
+        fs_tx.commit()?;
 
         Ok(())
     }
@@ -236,7 +239,7 @@ mod tests {
 
     use serde_json::json;
 
-    use baza_common::{TempFile, dir_exists, file_exists, move_file};
+    use baza_common::{TempFile, dir_exists, file_exists};
 
     use crate::{
         BazaStorage,
@@ -410,7 +413,7 @@ mod tests {
         }
 
         let backup_file = format!("{}-test-backup", manager.paths.storage_main_db_file);
-        move_file(&manager.paths.storage_main_db_file, &backup_file).unwrap();
+        fs::rename(&manager.paths.storage_main_db_file, &backup_file).unwrap();
         assert!(!file_exists(&manager.paths.storage_main_db_file).unwrap());
 
         let recovered_manager = BazaManager::new(

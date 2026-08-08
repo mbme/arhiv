@@ -38,3 +38,6 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "local-time"] 
 tracing-android = "0.2"
 which = "8"
 reqwest = { version = "0.13", default-features = false, features = ["json", "stream", "rustls"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Storage_FileSystem"] }

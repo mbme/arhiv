@@ -7,7 +7,18 @@ use std::{
 
 use anyhow::{Context, Result, bail, ensure};
 
-use crate::{Timestamp, bytes_to_hex_string, get_file_hash_sha256, get_string_hash_sha256, log};
+use crate::{Timestamp, bytes_to_hex_string, get_file_hash_sha256, get_string_hash_sha256};
+
+// Filesystem helpers are grouped by ownership: this module keeps ordinary
+// path/file conveniences, `durable` owns single-operation fsync/rename
+// semantics, and `transaction` composes durable mutations with rollback.
+mod durable;
+mod temp;
+mod transaction;
+
+pub use durable::{AtomicFileWriter, replace_file_atomically};
+pub use temp::*;
+pub use transaction::FsTransaction;
 
 pub fn path_exists(path: impl AsRef<str>) -> bool {
     fs::metadata(path.as_ref()).is_ok()
@@ -235,34 +246,6 @@ pub fn locate_dominating_file<S: Into<String>>(file_name: S) -> Result<String> {
             bail!("Can't locate dominating file {}", file_name);
         }
     }
-}
-
-pub fn move_file(src: impl AsRef<str>, dest: impl AsRef<str>) -> Result<()> {
-    let src = src.as_ref();
-    let dest = dest.as_ref();
-
-    match fs::rename(src, dest) {
-        Err(err) if err.raw_os_error() == Some(18) => {
-            // check for Invalid cross-device link (os error 18)
-        }
-        Err(err) => {
-            return Err(err).context("failed to rename file");
-        }
-        Ok(_) => {
-            return Ok(());
-        }
-    };
-
-    // if error is due to src and dest being on different file systems
-    // then copy src into dest, and remove src
-
-    fs::copy(src, dest).context("failed to copy file data")?;
-
-    if let Err(err) = fs::remove_file(src) {
-        log::warn!("Failed to remove source file {}: {}", src, err);
-    }
-
-    Ok(())
 }
 
 pub fn into_absolute_path(path: impl AsRef<str>, canonicalize: bool) -> Result<String> {

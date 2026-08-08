@@ -6,12 +6,13 @@ use std::{
     fmt,
     fs::File,
     io::{BufReader, Read, Write},
+    path::Path,
     time::Instant,
 };
 
 use anyhow::{Context, Result, anyhow, bail, ensure};
 
-use baza_common::{create_file_reader, create_file_writer, log};
+use baza_common::{AtomicFileWriter, create_file_reader, log, path_to_string};
 use baza_storage::crypto::age::AgeKey;
 use baza_storage::{AgeGzReader, AgeGzWriter, ContainerPatch, ContainerReader, ContainerWriter};
 
@@ -156,12 +157,13 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
 pub type BazaFileStorage<'i> = BazaStorage<'i, BufReader<File>>;
 
 impl BazaFileStorage<'_> {
-    pub fn read_file(file: &str, key: AgeKey) -> Result<Self> {
+    pub fn read_file(file: impl AsRef<Path>, key: AgeKey) -> Result<Self> {
+        let file = path_to_string(file.as_ref());
         log::debug!("Reading storage from file {file}");
 
         let start_time = Instant::now();
 
-        let storage_reader = create_file_reader(file)?;
+        let storage_reader = create_file_reader(&file)?;
 
         let storage = BazaStorage::read(storage_reader, key)?;
 
@@ -176,12 +178,10 @@ impl BazaFileStorage<'_> {
 
         let start_time = Instant::now();
 
-        let mut storage_writer =
-            create_file_writer(file, false).context("Failed to create storage file writer")?;
-
+        ensure!(!Path::new(file).exists(), "File {file} already exists");
+        let mut storage_writer = AtomicFileWriter::create(file)?;
         self.patch(&mut storage_writer, patch)?;
-
-        storage_writer.flush()?;
+        storage_writer.commit()?;
 
         let duration = start_time.elapsed();
         log::info!("Wrote storage to file in {:?}", duration);
@@ -252,12 +252,10 @@ pub fn create_storage(
 }
 
 pub fn create_empty_storage_file(file: &str, key: AgeKey, info: BazaInfo) -> Result<()> {
-    let mut storage_writer = create_file_writer(file, false)?;
+    ensure!(!Path::new(file).exists(), "File {file} already exists");
+    let mut storage_writer = AtomicFileWriter::create(file)?;
     create_storage(&mut storage_writer, key, info, &[])?;
-
-    storage_writer.flush()?;
-
-    Ok(())
+    storage_writer.commit()
 }
 
 #[cfg(test)]
@@ -375,11 +373,10 @@ pub fn merge_storages_to_file(storages: Vec<BazaStorage<impl Read>>, file: &str)
 
     let start_time = Instant::now();
 
-    let mut storage_writer = create_file_writer(file, false)?;
-
+    ensure!(!Path::new(file).exists(), "File {file} already exists");
+    let mut storage_writer = AtomicFileWriter::create(file)?;
     merge_storages(storages, &mut storage_writer)?;
-
-    storage_writer.flush()?;
+    storage_writer.commit()?;
 
     let duration = start_time.elapsed();
     log::info!("Merged storages to file in {:?}", duration);

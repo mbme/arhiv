@@ -174,6 +174,9 @@ Until a public migration command is introduced:
 - treat migrations as release-engineering operations
 - require explicit backup + validation + rollback readiness
 - do not perform ad-hoc partial file rewrites
+- use `FsTransaction` for multi-step in-process rollback and dedicated atomic
+  replacement helpers for single-file publish steps; neither replaces explicit
+  backup and validation for migration operations
 
 ## 11. Source of Truth (Code References)
 

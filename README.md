@@ -199,7 +199,6 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 
 # TODO
 
-- check if can improve multi-file fstransaction
 - better search - vector search? integrate tantivy?
 - better diff/merge
 - network p2p sync (use iroh), relays

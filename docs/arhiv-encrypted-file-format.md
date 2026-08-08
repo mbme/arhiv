@@ -322,9 +322,10 @@ Migration model:
 
 Explicit non-goal in current implementation:
 - no generic in-place storage format upgrader is specified in runtime flow.
-- helper methods under `dangerously_*` exist for low-level/manual migration tasks and are not part of normal user workflow contract.
+- data migrations use dedicated migrator code rather than reusable low-level
+  manual rewrite helpers.
 
 Code:
 - `baza/src/baza/mod.rs`
 - `baza/src/baza_manager/mod.rs`
-- `baza/src/baza_manager/migration.rs`
+- `baza/src/baza_manager/migration/`

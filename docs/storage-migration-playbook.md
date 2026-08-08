@@ -2,7 +2,7 @@
 
 Status: policy + implementation-derived constraints  
 Current storage version: `1`  
-Current data version: schema-defined (currently `1`)
+Current data version: schema-defined (currently `2`)
 
 ## 1. Scope
 
@@ -66,22 +66,23 @@ Operational policy:
 
 ## 6. Migration Procedure (Operational Playbook)
 
-There is currently no first-class public migration CLI command. The canonical process is an operator-driven one-shot migration workflow.
+Data migrations with an in-repo migrator run automatically during `BazaManager` open after unlock and before normal state loading. Migrations still use the one-shot workflow below internally. If local state is dirty, automatic migration stops before changing storage and the user must resolve local changes with the previous compatible Arhiv version before upgrading again.
 
 ### 6.1 Preflight
 
-1. Stop all Arhiv processes (CLI server, desktop, Android sync access).
-2. Acquire exclusive ownership of the storage root (no concurrent writers).
-3. Verify unlock credentials are available.
+1. Stop all other Arhiv processes (CLI server, desktop, Android sync access).
+2. Acquire exclusive ownership of the storage root through the storage lock (no concurrent writers).
+3. Verify unlock credentials are available; automatic migrations require an unlocked storage key.
 4. Run a backup to an absolute path:
    - `arhiv backup /absolute/path/to/backup`
 5. Verify backup artifacts exist:
    - timestamped `.key.age`
    - timestamped `.baza.gz.age`
    - `data/` blob directory entries as expected
-6. Prefer clean state before migration:
+6. Require clean local state before migration:
    - no staged local changes
    - no unresolved operational locks
+   - no local state blobs
 
 ### 6.2 Execute Migration
 
@@ -126,7 +127,7 @@ Minimum required checks:
 
 ## 8. Migration Implementation Requirements
 
-Any future in-repo migrator command/tool MUST:
+Any future in-repo migrator command/tool or automatic open-time migration MUST:
 1. Be idempotent for already-migrated storage.
 2. Refuse to run without exclusive lock.
 3. Emit explicit source/target versions in logs.
@@ -134,21 +135,52 @@ Any future in-repo migrator command/tool MUST:
 5. Abort on invariant violations with actionable diagnostics.
 6. Include at least one rollback test and one corruption/failure-path test.
 
-## 9. Current Gaps and Interim Rules
+## 9. Data Migration: v1 to v2 Asset Content Hashes
 
-Current code contains internal `dangerously_*` helpers intended for migration/testing workflows and marked `TODO remove`. They are not a public stable migration API.
+Data version `2` adds mandatory readonly `asset.content_sha256`.
 
-Until a dedicated migrator is introduced:
+Migration from data version `1` to `2` MUST:
+1. Preserve `storage_version = 1`.
+2. Require an unlocked storage key.
+3. Run under the exclusive storage lock.
+4. Refuse dirty local state before rewriting storage, including staged document
+   changes or local state blobs.
+5. Process every stored document snapshot, including historical, conflict, and
+   base snapshots.
+6. Preserve document IDs, revisions, document types, timestamps, and all
+   non-asset document data exactly.
+7. For each asset snapshot, decrypt the referenced asset blob and compute
+   `content_sha256` as uppercase hex SHA-256 of the plaintext bytes.
+8. Fail the migration if any required asset blob is missing, unreadable, or
+   cannot be decrypted.
+9. Rewrite migrated storage artifacts transactionally and update `BazaInfo` to
+   `data_version = 2`.
+10. Rebuild or rewrite local state/search artifacts so subsequent normal open
+    observes data version `2`.
+
+Migration from data version `1` to `2` MUST NOT:
+- verify `content_sha256` during normal asset reads after migration
+- compute the hash from encrypted blob bytes
+- migrate only current heads while leaving historical asset snapshots in the v1
+  shape
+
+## 10. Current Gaps and Interim Rules
+
+Arhiv has a dedicated in-repo data migrator for data version `1` to `2`, but
+there is currently no generic migration framework or first-class public
+migration CLI command.
+
+Until a public migration command is introduced:
 - treat migrations as release-engineering operations
 - require explicit backup + validation + rollback readiness
 - do not perform ad-hoc partial file rewrites
 
-## 10. Source of Truth (Code References)
+## 11. Source of Truth (Code References)
 
 - `baza/src/baza_info.rs`
 - `baza/src/baza_storage/mod.rs`
 - `baza/src/baza_manager/mod.rs`
-- `baza/src/baza_manager/migration.rs`
+- `baza/src/baza_manager/migration/`
 - `baza/src/baza/mod.rs`
 - `baza/src/backup.rs`
 - `baza-common/src/fs_transaction.rs`

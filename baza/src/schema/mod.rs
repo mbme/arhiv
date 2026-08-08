@@ -33,7 +33,7 @@ impl DataSchema {
 
         DataSchema {
             name: name.into(),
-            data_version: 1,
+            data_version: 2,
             modules,
         }
     }

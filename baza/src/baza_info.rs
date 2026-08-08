@@ -10,7 +10,7 @@ impl BazaInfo {
     #[cfg(test)]
     pub fn new_test_info() -> Self {
         Self {
-            data_version: 1,
+            data_version: 2,
             storage_version: 1,
         }
     }

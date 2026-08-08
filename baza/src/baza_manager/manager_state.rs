@@ -51,7 +51,6 @@ impl BazaManagerState {
         self.baza.take();
     }
 
-    #[cfg(test)]
     pub fn clear_cached_baza(&mut self) {
         self.baza.take();
     }
@@ -140,13 +139,13 @@ impl BazaManager {
 
         log::info!("Opening baza {}", self.paths);
 
+        let _lock = self.wait_for_file_lock()?;
         let mut manager_state = self.acquire_state_write_lock()?;
 
-        let _lock = self.wait_for_file_lock()?;
+        let key = manager_state.get_key()?.clone();
 
-        let key = manager_state.get_key()?;
-
-        self.merge_storages(key)?;
+        self.merge_storages(&key)?;
+        self.migrate_to_latest_data_version_if_needed(&mut manager_state, &key)?;
 
         let mut baza = if self.paths.state_file_exists()? {
             let baza = Baza::read(key.clone(), self.paths.clone(), self.schema.clone())?;

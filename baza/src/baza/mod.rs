@@ -11,9 +11,7 @@ use std::{
 use anyhow::{Context, Result, bail, ensure};
 use thiserror::Error;
 
-use baza_common::{
-    FsTransaction, Timestamp, file_exists, get_file_name, get_file_size, get_media_type, log,
-};
+use baza_common::{FsTransaction, Timestamp, file_exists, get_file_name, get_media_type, log};
 use baza_storage::crypto::age::AgeKey;
 
 use crate::{
@@ -28,7 +26,6 @@ use crate::{
     schema::{ASSET_TYPE, Asset, AssetData, DataSchema},
 };
 
-pub use blobs::write_and_encrypt_blob;
 pub use stats::{BLOBSCount, DocumentsCount};
 pub use validator::ValidationError;
 
@@ -424,23 +421,24 @@ impl Baza {
         );
 
         let media_type = get_media_type(file_path)?;
-        let size = get_file_size(file_path)?;
-
         let blob_key = AgeKey::generate_age_x25519_key();
 
         let age_x25519_key = blob_key.serialize();
 
-        let asset = Document::new_with_data(
+        let asset_id = Id::new();
+        let metadata = self.add_blob(&asset_id, file_path, blob_key)?;
+
+        let mut asset = Document::new_with_data(
             DocumentType::new(ASSET_TYPE),
             AssetData {
                 filename,
                 media_type,
-                size,
+                size: metadata.size,
+                content_sha256: metadata.content_sha256,
                 age_x25519_key,
             },
         );
-
-        self.add_blob(&asset.id, file_path, blob_key)?;
+        asset.id = asset_id;
 
         let document = asset.into_document()?;
         let document = self.stage_document(document, &None)?.clone();

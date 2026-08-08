@@ -40,7 +40,7 @@ Read the relevant spec before changing behavior in that area:
 - Crypto/key handling: `baza-common/src/crypto/`, `baza-storage/src/crypto/`, `arhiv/src/support/crypto_key.rs`, `baza/src/baza_manager/keys.rs`.
 - Storage container and patch/merge logic: `baza-storage/src/container.rs`, `baza/src/baza_storage/`, `baza/src/merge/mod.rs`.
 - Auth, cookies, HTTPS, certificates, and launcher trust path: `arhiv/src/server/`, `arhiv-desktop/src/`, `arhiv-android/` WebView/JNI startup code.
-- Dangerous migration helpers: `baza/src/baza_manager/migration.rs` methods prefixed with `dangerously_`.
+- Storage/data migration code: `baza/src/baza_manager/migration/`.
 - Android storage/network security configuration: `arhiv-android/app/src/main/AndroidManifest.xml`, `arhiv-android/app/src/main/res/xml/network_security_config.xml`.
 
 ## Before changing X, read Y

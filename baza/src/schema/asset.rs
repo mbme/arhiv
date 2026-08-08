@@ -36,6 +36,12 @@ pub fn get_asset_definition() -> DataDescription {
                 readonly: true,
             },
             Field {
+                name: "content_sha256",
+                field_type: FieldType::String {},
+                mandatory: true,
+                readonly: true,
+            },
+            Field {
                 name: "age_x25519_key",
                 field_type: FieldType::String {},
                 mandatory: true,
@@ -58,6 +64,7 @@ pub struct AssetData {
     pub filename: String,
     pub media_type: String,
     pub size: u64,
+    pub content_sha256: String,
     #[serde(serialize_with = "expose_secret_string")]
     pub age_x25519_key: SecretString,
 }

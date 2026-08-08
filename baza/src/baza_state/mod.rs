@@ -2,7 +2,7 @@ use std::{collections::HashSet, time::Instant};
 
 use anyhow::{Context, Result, ensure};
 
-use baza_common::{Timestamp, log};
+use baza_common::{Timestamp, file_exists, log};
 use baza_storage::crypto::age::AgeKey;
 
 pub use self::search::SearchEngine;
@@ -34,6 +34,13 @@ pub struct BazaState {
     schema: DataSchema,
     search: SearchEngine,
     document_locks: DocumentLocksFile,
+}
+
+/// Local state facts used by migrations that must inspect state without normal version gates.
+pub(crate) struct LocalStateMigrationStatus {
+    pub data_version: Option<u8>,
+    pub has_staged_documents: bool,
+    pub has_document_locks: bool,
 }
 
 impl BazaState {
@@ -103,6 +110,38 @@ impl BazaState {
             search,
             schema,
             document_locks: locks,
+        })
+    }
+
+    /// Reads only the local state fields needed for migration preflight.
+    ///
+    /// This deliberately avoids constructing a full `BazaState`, allowing migrations to inspect
+    /// old-version state files before normal open/read compatibility checks would pass.
+    pub(crate) fn read_local_migration_status(
+        paths: &BazaPaths,
+        key: AgeKey,
+    ) -> Result<LocalStateMigrationStatus> {
+        let (data_version, has_staged_documents) = if file_exists(&paths.state_file)? {
+            let file = BazaStateFile::read(&paths.state_file, key.clone())?;
+            let has_staged_documents = file.documents.values().any(DocumentHead::is_staged);
+
+            (Some(file.info.data_version), has_staged_documents)
+        } else {
+            (None, false)
+        };
+
+        let has_document_locks = if file_exists(&paths.state_document_locks_file)? {
+            let locks = DocumentLocksFile::read(&paths.state_document_locks_file, key)?;
+
+            !locks.list_document_locks().is_empty()
+        } else {
+            false
+        };
+
+        Ok(LocalStateMigrationStatus {
+            data_version,
+            has_staged_documents,
+            has_document_locks,
         })
     }
 

@@ -6,7 +6,10 @@ use std::{
 
 use anyhow::{Context, Result, ensure};
 
-use baza_common::{create_file_reader, create_file_writer, file_exists, log};
+use baza_common::{
+    Sha256HashingWriter, bytes_to_hex_string, create_file_reader, create_file_writer, file_exists,
+    log,
+};
 use baza_storage::crypto::age::{AgeKey, AgeReader, AgeWriter};
 
 use crate::{
@@ -47,16 +50,22 @@ impl Baza {
         Ok(age_reader)
     }
 
-    pub fn add_blob(&mut self, asset_id: &Id, file_path: &str, blob_key: AgeKey) -> Result<()> {
+    /// Encrypts a local file into the state blob area and returns metadata for the exact bytes copied.
+    pub(crate) fn add_blob(
+        &mut self,
+        asset_id: &Id,
+        file_path: &str,
+        blob_key: AgeKey,
+    ) -> Result<BlobWriteMetadata> {
         ensure!(
             !self.blob_exists(asset_id)?,
             "BLOB {asset_id} already exists"
         );
 
         let blob_path = self.paths.get_state_blob_path(asset_id);
-        write_and_encrypt_blob(file_path, &blob_path, blob_key)?;
+        let metadata = write_and_encrypt_blob(file_path, &blob_path, blob_key)?;
 
-        Ok(())
+        Ok(metadata)
     }
 
     fn remove_storage_blob(&mut self, asset_id: &Id) -> Result<()> {
@@ -158,24 +167,45 @@ impl Baza {
     }
 }
 
-pub fn write_and_encrypt_blob(file_path: &str, blob_path: &str, key: AgeKey) -> Result<()> {
+#[derive(Debug, Clone, PartialEq, Eq)]
+/// Metadata derived from the plaintext stream while it is encrypted into a blob.
+pub(crate) struct BlobWriteMetadata {
+    pub size: u64,
+    pub content_sha256: String,
+}
+
+/// Copies a plaintext file into an AGE-encrypted blob while hashing the same byte stream.
+pub(crate) fn write_and_encrypt_blob(
+    file_path: &str,
+    blob_path: &str,
+    key: AgeKey,
+) -> Result<BlobWriteMetadata> {
     let file_writer = create_file_writer(blob_path, false)?;
-    let mut age_writer = AgeWriter::new(file_writer, key)?;
+    let age_writer = AgeWriter::new(file_writer, key)?;
+    let mut hashing_writer = Sha256HashingWriter::new(age_writer);
 
     let mut file_reader = create_file_reader(file_path)?;
 
-    copy(&mut file_reader, &mut age_writer).context("Failed to copy & encrypt file data")?;
+    let size = copy(&mut file_reader, &mut hashing_writer)
+        .context("Failed to copy & encrypt file data")?;
 
+    let (content_hash, age_writer) = hashing_writer.finish();
     age_writer.finish()?;
 
-    Ok(())
+    Ok(BlobWriteMetadata {
+        size,
+        content_sha256: bytes_to_hex_string(&content_hash),
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use std::fs;
 
-    use baza_common::{TempFile, generate_alpanumeric_string, read_all_as_string};
+    use baza_common::{
+        TempFile, bytes_to_hex_string, generate_alpanumeric_string, get_file_hash_sha256,
+        read_all_as_string,
+    };
 
     use crate::{baza_manager::BazaManager, entities::Id};
 
@@ -193,7 +223,12 @@ mod tests {
         blob1_file.write_str(&data).unwrap();
 
         let id = Id::new();
-        baza.add_blob(&id, &blob1_file.path, key.clone()).unwrap();
+        let metadata = baza.add_blob(&id, &blob1_file.path, key.clone()).unwrap();
+        assert_eq!(metadata.size, data.len() as u64);
+        assert_eq!(
+            metadata.content_sha256,
+            bytes_to_hex_string(&get_file_hash_sha256(data.as_bytes()).unwrap())
+        );
 
         let blob1_state_path = baza.get_blob_path(&id).unwrap().unwrap();
         let encrypted_data = fs::read(&blob1_state_path).unwrap();

@@ -16,7 +16,74 @@ Canonical specifications and project guidance remain authoritative for their res
 
 ## Decisions
 
-No decisions have been recorded yet.
+## ADR-001: Store mandatory plaintext content hashes for assets
+
+- Status: Accepted
+- Date: 2026-08-07
+
+### Context
+
+Assets store encrypted blob bytes separately from their document metadata. The
+asset document records filename, media type, size, and per-asset AGE key
+material, but it does not record a stable identity for the plaintext content.
+That makes content identity, auditability, dedupe, restore validation, and
+future asset tooling harder to implement consistently.
+
+The content identity must remain stable across re-encryption, backup/restore,
+and device-local storage differences. Existing asset blobs are AGE-encrypted and
+authenticated, so normal reads already fail on corrupted ciphertext or wrong
+keys without requiring a second read-path hash check.
+
+### Decision
+
+Asset documents store a mandatory readonly `content_sha256` field containing the
+uppercase hex SHA-256 digest of the asset plaintext bytes.
+
+The `content_sha256` value is computed from the exact plaintext byte stream that
+is encrypted into the blob. New asset creation computes the hash while streaming
+plaintext into the `AgeWriter`, making the copied bytes the source of truth for
+both blob content and asset metadata.
+
+Adding the mandatory field changes the strict asset data contract, so the schema
+`data_version` moves from `1` to `2`. Existing v1 storage is upgraded by an
+explicit v1-to-v2 migration that decrypts every stored asset blob and backfills
+`content_sha256` into every stored asset document snapshot. Migration fails if
+any required asset blob is missing, unreadable, or cannot be decrypted.
+
+Normal asset reads do not verify `content_sha256`. Hash verification belongs in
+explicit status, verify, repair, restore, or dedupe workflows.
+
+### Consequences
+
+- Asset plaintext content has a durable, schema-owned identity value.
+- The hash remains stable across blob re-encryption and storage movement.
+- Existing v1 stores require a one-shot data migration before normal v2 open;
+  the supported migrator runs automatically during `BazaManager` open when local
+  state is clean.
+- Migration must process historical and conflict/base snapshots, not only
+  current document heads, because all strict asset JSON payloads must be
+  v2-compatible.
+- Migration requires access to decrypted asset bytes and therefore requires an
+  unlocked storage key.
+- Missing or unreadable asset blobs become migration blockers instead of being
+  silently carried forward.
+- Staged local changes, document locks, and local state blobs block automatic
+  migration; users must resolve those with the previous compatible version and
+  then run the upgraded version again.
+- Read-path performance and behavior remain unchanged because normal asset reads
+  rely on AGE authentication rather than stored-hash verification.
+
+### Alternatives considered
+
+- Optional `content_sha256`: rejected because it would make content identity a
+  best-effort property and preserve two asset-data shapes indefinitely.
+- Ciphertext or blob-file hash: rejected because it changes across
+  re-encryption and is not a stable content identity.
+- Pre-hash source files before encryption: rejected because a separate read can
+  drift from the bytes actually encrypted.
+- Verify the hash on every asset read: rejected because AGE already
+  authenticates blob bytes and read-path verification is a separate product
+  behavior with different performance and UX tradeoffs.
 
 <!--
 ## ADR-001: Short decision title

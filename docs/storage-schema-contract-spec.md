@@ -1,7 +1,7 @@
 # Arhiv Storage Schema Contract Specification
 
 Status: implementation-aligned
-Current data version: `1`
+Current data version: `2`
 
 ## 1. Scope
 
@@ -62,7 +62,13 @@ Contract:
 - `filename: string`
 - `media_type: string`
 - `size: u64`
+- `content_sha256: string` (uppercase hex SHA-256 of plaintext asset bytes)
 - `age_x25519_key: string` (secret material, serialized as string)
+
+`content_sha256` is the SHA-256 digest of the decrypted/plaintext asset byte
+stream, encoded as uppercase hexadecimal. It identifies asset content across
+re-encryption, backup/restore, and device-local blob movement. Normal asset reads
+do not verify this field; verification is an explicit workflow concern.
 
 ## 5. Field Type Contract (Current)
 
@@ -148,11 +154,12 @@ Contract implication:
 ## 10. Data Version Compatibility Contract
 
 Runtime gate:
-- `state.info.data_version` must equal `schema.get_latest_data_version()`
-- mismatch fails open/read with data-version mismatch
+- `BazaManager` applies registered safe data migrations after unlock and before normal state loading
+- after migration, `state.info.data_version` must equal `schema.get_latest_data_version()`
+- unsupported versions or blocked migrations fail open/read before returning a `Baza`
 
 Current state:
-- latest `data_version` is hardcoded in `DataSchema` (`1`)
+- latest `data_version` is hardcoded in `DataSchema` (`2`)
 - there is no negotiated multi-version schema compatibility at runtime
 
 Operational policy:

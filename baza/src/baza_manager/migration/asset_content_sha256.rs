@@ -1,4 +1,4 @@
-use std::{io::Write, time::Instant};
+use std::{collections::HashMap, io::Write, time::Instant};
 
 use anyhow::{Context, Result, ensure};
 
@@ -12,7 +12,7 @@ use crate::{
     BazaInfo, BazaState, BazaStorage,
     baza_manager::manager_state::BazaManagerState,
     baza_storage::{STORAGE_VERSION, create_storage},
-    entities::Document,
+    entities::{Document, Id},
     schema::ASSET_TYPE,
 };
 
@@ -83,9 +83,12 @@ impl BazaManager {
         self.ensure_local_state_can_migrate(&local_state)?;
 
         let started_at = Instant::now();
+        let mut asset_hashes = HashMap::new();
         let migrated_files = db_files
             .iter()
-            .map(|db_file| self.write_migrated_asset_hash_storage(db_file, key.clone()))
+            .map(|db_file| {
+                self.write_migrated_asset_hash_storage(db_file, key.clone(), &mut asset_hashes)
+            })
             .collect::<Result<Vec<_>>>()?;
 
         let mut fs_tx = FsTransaction::new();
@@ -153,7 +156,12 @@ impl BazaManager {
         Ok(first_info)
     }
 
-    fn write_migrated_asset_hash_storage(&self, db_file: &str, key: AgeKey) -> Result<String> {
+    fn write_migrated_asset_hash_storage(
+        &self,
+        db_file: &str,
+        key: AgeKey,
+        asset_hashes: &mut HashMap<(Id, String), String>,
+    ) -> Result<String> {
         log::info!("Migrating asset metadata in storage file {db_file}");
 
         let mut storage = BazaStorage::read_file(db_file, key.clone())?;
@@ -179,7 +187,8 @@ impl BazaManager {
             );
 
             if document.document_type.is(ASSET_TYPE) {
-                let content_sha256 = self.compute_asset_content_sha256(&document)?;
+                let content_sha256 =
+                    self.compute_or_get_asset_content_sha256(&document, asset_hashes)?;
                 document.data.set("content_sha256", content_sha256);
                 migrated_assets += 1;
             }
@@ -213,13 +222,22 @@ impl BazaManager {
         Ok(migrated_file)
     }
 
-    fn compute_asset_content_sha256(&self, document: &Document) -> Result<String> {
-        let blob_key = document
+    fn compute_or_get_asset_content_sha256(
+        &self,
+        document: &Document,
+        asset_hashes: &mut HashMap<(Id, String), String>,
+    ) -> Result<String> {
+        let blob_key_string = document
             .data
             .get_mandatory_str("age_x25519_key")
-            .to_string()
-            .into();
-        let blob_key = AgeKey::from_age_x25519_key(blob_key)?;
+            .to_string();
+        let cache_key = (document.id.clone(), blob_key_string.clone());
+
+        if let Some(content_sha256) = asset_hashes.get(&cache_key) {
+            return Ok(content_sha256.clone());
+        }
+
+        let blob_key = AgeKey::from_age_x25519_key(blob_key_string.into())?;
         let blob_path = self.paths.get_storage_blob_path(&document.id);
         ensure!(
             file_exists(&blob_path)?,
@@ -234,7 +252,10 @@ impl BazaManager {
         let hash = get_file_hash_sha256(age_reader)
             .with_context(|| format!("Failed to hash asset blob {}", document.id))?;
 
-        Ok(bytes_to_hex_string(&hash))
+        let content_sha256 = bytes_to_hex_string(&hash);
+        asset_hashes.insert(cache_key, content_sha256.clone());
+
+        Ok(content_sha256)
     }
 
     fn new_migration_temp_file(&self, db_file: &str) -> String {
@@ -272,6 +293,7 @@ impl BazaManager {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
+    use serde_json::json;
 
     use baza_common::{
         TempFile, bytes_to_hex_string, create_file_writer, get_file_hash_sha256, read_all_as_string,
@@ -379,6 +401,62 @@ mod tests {
         let baza = manager.open()?;
         let migrated_asset = baza.get_asset(&asset_id)?.expect("asset exists");
         assert_eq!(migrated_asset.data.content_sha256, expected_hash);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_migrates_all_asset_snapshots() -> Result<()> {
+        let temp_dir = TempFile::new_with_details("baza_migrate_asset_snapshots", "");
+        temp_dir.mkdir()?;
+
+        let manager = BazaManager::new_for_tests(&temp_dir.path);
+        let source_file = temp_dir.new_child("asset");
+        source_file.write_str("asset data")?;
+
+        let asset_id = {
+            let mut baza = manager.open_mut()?;
+            let asset = baza.create_asset(&source_file.path)?;
+            baza.commit()?;
+            asset.id
+        };
+
+        let expected_hash = bytes_to_hex_string(&get_file_hash_sha256("asset data".as_bytes())?);
+        let mut documents = read_main_storage_documents(&manager);
+        let asset_document = documents
+            .iter()
+            .find(|document| document.id == asset_id)
+            .cloned()
+            .expect("asset document exists");
+
+        documents.push(asset_document.with_rev(json!({ "history": 1 })));
+        for document in &mut documents {
+            if document.document_type.is(ASSET_TYPE) {
+                document.data.remove("content_sha256");
+            }
+        }
+
+        rewrite_main_storage(
+            &manager,
+            BazaInfo {
+                storage_version: STORAGE_VERSION,
+                data_version: SOURCE_DATA_VERSION,
+            },
+            &documents,
+        );
+
+        assert!(manager.migrate_data_v1_to_v2_asset_content_sha256()?);
+
+        let asset_snapshots = read_main_storage_documents(&manager)
+            .into_iter()
+            .filter(|document| document.id == asset_id)
+            .collect::<Vec<_>>();
+        assert_eq!(asset_snapshots.len(), 2);
+        assert!(
+            asset_snapshots
+                .iter()
+                .all(|document| document.data.get_mandatory_str("content_sha256") == expected_hash)
+        );
 
         Ok(())
     }

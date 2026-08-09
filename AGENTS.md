@@ -14,6 +14,7 @@
 ## Canonical specs
 Read the relevant spec before changing behavior in that area:
 - Domain concepts, relationships, and central business rules: `docs/domain-model.md`.
+- Owner-facing workflows that compose domain and operational rules: `docs/user-workflows.md`.
 - Storage format/container/index semantics: `docs/arhiv-encrypted-file-format.md`.
 - Schema/data-version contract: `docs/storage-schema-contract-spec.md`.
 - Storage migrations/rollback rules: `docs/storage-migration-playbook.md`.

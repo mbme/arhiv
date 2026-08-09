@@ -93,7 +93,7 @@ A heuristic reconciled Pending change may be prepared automatically. Committing 
 9. Retained historical relationships to a deleted Record may remain in history, but must identify that Record as deleted.
 10. A Conflict remains until a reconciled Pending change is committed. That commit creates one current form and resolves the Conflict.
 
-## Record lifecycle
+## Record and pending-change transition model
 
 | From                      | Action                             | To                                             |
 | ------------------------- | ---------------------------------- | ---------------------------------------------- |

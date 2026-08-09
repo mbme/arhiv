@@ -38,6 +38,7 @@ That way, if you'll modify Arhiv on both devices simultaneously, Syncthing will 
 # Specification docs
 
 - `docs/domain-model.md`: business concepts, relationships, and central rules for the Arhiv.
+- `docs/user-workflows.md`: owner-facing workflows that compose domain, search, sync, recovery, and lifecycle rules.
 - `docs/arhiv-encrypted-file-format.md`: canonical on-disk encrypted format, container/index invariants, and compatibility boundaries.
 - `docs/storage-schema-contract-spec.md`: document-type/field schema contract, runtime validation behavior, and `data_version` migration triggers.
 - `docs/storage-migration-playbook.md`: operational migration procedure, rollback rules, and non-negotiable migration invariants.
@@ -204,7 +205,6 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 - network p2p sync (use iroh), relays
 - integration with emacs/file system - use FUSE?
 - get rid of tailwind?
-- domain docs to cover user workflows?
 - tool, not app
 
 - як це розкладаєтьс на "базові" компоненти? і інтегрується із рештою екосистеми?

@@ -204,7 +204,6 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 - better diff/merge
 - network p2p sync (use iroh), relays
 - integration with emacs/file system - use FUSE?
-- get rid of tailwind?
 - tool, not app
 
 - як це розкладаєтьс на "базові" компоненти? і інтегрується із рештою екосистеми?

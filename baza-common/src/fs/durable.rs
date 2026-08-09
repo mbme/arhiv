@@ -304,7 +304,10 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn durable_parent_dir_uses_current_directory_for_bare_relative_paths() {
-        assert_eq!(durable_parent_dir(Path::new("storage.age")), Some(Path::new(".")));
+        assert_eq!(
+            durable_parent_dir(Path::new("storage.age")),
+            Some(Path::new("."))
+        );
         assert_eq!(
             durable_parent_dir(Path::new("dir/storage.age")),
             Some(Path::new("dir"))

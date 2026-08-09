@@ -226,7 +226,7 @@ impl BazaManager {
         let manager = BazaManager::new(paths, self.get_schema().clone());
         let serialized_key = storage_key.serialize();
         manager.unlock_using_storage_key(serialized_key)?;
-        let baza = manager.open()?;
+        let baza = manager.open_for_inspection()?;
 
         Ok(StorageDbInfo {
             assets: current_asset_data_by_id(&baza)?,

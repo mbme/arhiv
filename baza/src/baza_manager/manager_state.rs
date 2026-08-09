@@ -89,15 +89,24 @@ impl DerefMut for BazaWriteGuard<'_> {
 
 impl BazaManager {
     pub fn open(&self) -> Result<BazaReadGuard<'_>> {
-        self.maybe_read_state()?;
+        self.maybe_read_state(true)?;
+        let state = self.acquire_state_read_lock()?;
 
+        Ok(BazaReadGuard { state })
+    }
+
+    /// Opens a database snapshot without reconciling its storage blob directory.
+    ///
+    /// Inspection callers use this for DB-only snapshots whose blob files are intentionally absent.
+    pub(crate) fn open_for_inspection(&self) -> Result<BazaReadGuard<'_>> {
+        self.maybe_read_state(false)?;
         let state = self.acquire_state_read_lock()?;
 
         Ok(BazaReadGuard { state })
     }
 
     pub fn open_mut(&self) -> Result<BazaWriteGuard<'_>> {
-        self.maybe_read_state()?;
+        self.maybe_read_state(true)?;
 
         let lock = self.wait_for_file_lock()?;
         let state = self.acquire_state_write_lock()?;
@@ -123,7 +132,7 @@ impl BazaManager {
             .map_err(|err| anyhow!("Failed to acquire write lock for the state: {err}"))
     }
 
-    fn maybe_read_state(&self) -> Result<()> {
+    fn maybe_read_state(&self, reconcile_storage_blobs: bool) -> Result<()> {
         ensure!(self.storage_exists()?, "Storage doesn't exist");
 
         self.paths.ensure_dirs_exist()?;
@@ -164,7 +173,9 @@ impl BazaManager {
 
         if !baza.has_staged_documents() {
             baza.update_state_from_storage()?;
-            baza.remove_unused_storage_blobs()?;
+            if reconcile_storage_blobs {
+                baza.remove_unused_storage_blobs()?;
+            }
         }
 
         manager_state.baza = Some(baza);

@@ -664,6 +664,7 @@ dependencies = [
  "hkdf 0.13.0",
  "hmac 0.13.0",
  "infer",
+ "libc",
  "mime_guess",
  "rand 0.10.2",
  "rayon",

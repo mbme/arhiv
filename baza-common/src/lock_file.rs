@@ -1,7 +1,11 @@
 use std::{
     fs::{self, File, OpenOptions, TryLockError},
+    io,
     time::Instant,
 };
+
+#[cfg(target_os = "android")]
+use std::os::fd::AsRawFd;
 
 use anyhow::Result;
 
@@ -31,7 +35,7 @@ impl LockFile {
         log::debug!("Locking file {file_path}");
 
         let file = open_lock_file(file_path)?;
-        file.try_lock().map_err(|err| match err {
+        try_lock_exclusive(&file).map_err(|err| match err {
             TryLockError::WouldBlock => anyhow::anyhow!("failed to lock file {file_path}"),
             TryLockError::Error(err) => err.into(),
         })?;
@@ -52,7 +56,7 @@ impl LockFile {
         let start_time = Instant::now();
 
         let file = open_lock_file(file_path)?;
-        file.lock()?;
+        lock_exclusive(&file)?;
 
         let duration = start_time.elapsed();
         log::trace!("Locked file {file_path} in {:?}", duration);
@@ -75,10 +79,69 @@ fn open_lock_file(file_path: &str) -> Result<File> {
         .open(file_path)?)
 }
 
+/// Acquires an exclusive advisory lock, using Android's supported `flock` API.
+fn lock_exclusive(file: &File) -> io::Result<()> {
+    #[cfg(target_os = "android")]
+    {
+        android_flock(file, libc::LOCK_EX)
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        file.lock()
+    }
+}
+
+/// Attempts to acquire an exclusive advisory lock without blocking.
+fn try_lock_exclusive(file: &File) -> Result<(), TryLockError> {
+    #[cfg(target_os = "android")]
+    {
+        android_try_flock(file)
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        file.try_lock()
+    }
+}
+
+/// Releases an exclusive advisory lock.
+fn unlock_exclusive(file: &File) -> io::Result<()> {
+    #[cfg(target_os = "android")]
+    {
+        android_flock(file, libc::LOCK_UN)
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        file.unlock()
+    }
+}
+
+#[cfg(target_os = "android")]
+/// Calls Android's supported `flock` operation for an open lock-file handle.
+fn android_flock(file: &File, operation: libc::c_int) -> io::Result<()> {
+    if unsafe { libc::flock(file.as_raw_fd(), operation) } == 0 {
+        Ok(())
+    } else {
+        Err(io::Error::last_os_error())
+    }
+}
+
+#[cfg(target_os = "android")]
+/// Attempts Android's non-blocking exclusive `flock` operation.
+fn android_try_flock(file: &File) -> Result<(), TryLockError> {
+    match android_flock(file, libc::LOCK_EX | libc::LOCK_NB) {
+        Ok(()) => Ok(()),
+        Err(err) if err.raw_os_error() == Some(libc::EWOULDBLOCK) => Err(TryLockError::WouldBlock),
+        Err(err) => Err(TryLockError::Error(err)),
+    }
+}
+
 impl Drop for LockFile {
     fn drop(&mut self) {
         if let Some(file) = self.file.take()
-            && let Err(err) = file.unlock()
+            && let Err(err) = unlock_exclusive(&file)
         {
             log::warn!("Failed to unlock file {}: {}", self.file_path, err);
         }

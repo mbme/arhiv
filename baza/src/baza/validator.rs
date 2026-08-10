@@ -193,7 +193,7 @@ impl Baza {
 
                 Some(format!(
                     "Document type '{}' doesn't expect field '{}'",
-                    &document.document_type, field_name
+                    document.document_type, field_name
                 ))
             })
             .collect::<Vec<_>>();

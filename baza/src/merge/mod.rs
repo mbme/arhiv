@@ -30,7 +30,7 @@ impl fmt::Display for Change<'_> {
 
 impl fmt::Debug for Change<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "{}", &self)
+        writeln!(f, "{}", self)
     }
 }
 

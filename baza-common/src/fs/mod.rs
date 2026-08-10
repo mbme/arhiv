@@ -232,7 +232,7 @@ pub fn locate_dominating_file<S: Into<String>>(file_name: S) -> Result<String> {
     loop {
         let candidate = format!(
             "{}/{}",
-            &dir.to_str().expect("must be able to serialize path"),
+            dir.to_str().expect("must be able to serialize path"),
             file_name,
         );
 

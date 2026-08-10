@@ -123,7 +123,7 @@ impl AsRef<str> for TempFile {
 
 impl fmt::Display for TempFile {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", &self.path)
+        write!(f, "{}", self.path)
     }
 }
 

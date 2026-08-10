@@ -48,7 +48,7 @@ impl Download {
             completed_file_path
         );
 
-        let download_file_path = format!("{}{}", &completed_file_path, DOWNLOAD_SUFFIX);
+        let download_file_path = format!("{}{}", completed_file_path, DOWNLOAD_SUFFIX);
 
         let url = Url::parse(url).context("failed to parse url")?;
 
@@ -134,7 +134,7 @@ impl Download {
                 }
             }
             _ => {
-                bail!("Download failed: unexpected response status: {}", &status);
+                bail!("Download failed: unexpected response status: {}", status);
             }
         }
 

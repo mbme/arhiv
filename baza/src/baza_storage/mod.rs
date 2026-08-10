@@ -43,7 +43,7 @@ pub struct BazaStorage<'i, R: Read + 'i> {
 
 impl<'i, R: Read + 'i> fmt::Debug for BazaStorage<'i, R> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_fmt(format_args!("BazaStorage: {:?}", &self.index))
+        f.write_fmt(format_args!("BazaStorage: {:?}", self.index))
     }
 }
 

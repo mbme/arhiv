@@ -320,7 +320,7 @@ pub(crate) async fn handle_command(command: CLICommand) -> Result<()> {
                     print_document_details(&arhiv.baza.get_document_expert(), &baza, head)?;
                 }
             } else {
-                eprintln!("Document with id '{}' not found", &id);
+                eprintln!("Document with id '{}' not found", id);
                 process::exit(1);
             }
         }

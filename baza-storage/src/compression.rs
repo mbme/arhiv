@@ -10,7 +10,7 @@ pub fn create_gz_reader<R: BufRead>(reader: R) -> GzDecoder<R> {
 }
 
 pub fn create_gz_writer<W: Write>(writer: W) -> GzEncoder<W> {
-    GzEncoder::new(writer, Compression::fast())
+    GzEncoder::new(writer, Compression::new(6))
 }
 
 pub struct AgeGzReader<R: Read> {

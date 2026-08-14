@@ -42,7 +42,7 @@ It does not define higher-level product behavior (sync policy, UI/API, merge con
 
 1. `*.gz.age` files:
 - Outer: AGE binary stream encryption
-- Inner: GZIP-compressed payload (`flate2` `Compression::fast()`)
+- Inner: GZIP-compressed payload (`flate2` `Compression::new(6)`)
 - Plaintext payload: type-specific bytes (JSON/container/postcard)
 
 2. `*.age` files (non-key):
@@ -208,7 +208,7 @@ State/search/locks failures:
 
 - Storage document ordering is deterministic due to explicit key sort.
 - Container index preserves insertion/patch order semantics.
-- GZIP encoder uses `Compression::fast()`; compressed bytes are not guaranteed stable across library/runtime changes even for identical plaintext.
+- GZIP encoder uses `Compression::new(6)`; compressed bytes are not guaranteed stable across library/runtime changes even for identical plaintext.
 - Compatibility gate currently enforced at runtime:
   - `storage_version == 1`
   - `data_version` must match schema latest data version.

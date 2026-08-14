@@ -59,8 +59,11 @@ pub struct FTSEngine {
     // document_id -> term count
     doc_term_count: HashMap<String, usize>,
 
-    // average term count per document
-    avg_doc_len: f64,
+    // document_id -> field -> term count
+    doc_field_term_count: HashMap<String, HashMap<FieldId, usize>>,
+
+    // field -> average term count across documents that contain the field
+    avg_field_len: HashMap<FieldId, f64>,
 
     // Boost scores for some document fields
     // document_id -> field -> score_boost
@@ -91,6 +94,10 @@ impl FTSEngine {
             }
 
             doc_term_count += field_terms.len();
+            self.doc_field_term_count
+                .entry(document_id.clone())
+                .or_default()
+                .insert(field, field_terms.len());
 
             for (term, token_position) in field_terms {
                 let term_matches = self.terms_index.entry(term).or_default();
@@ -112,7 +119,7 @@ impl FTSEngine {
         // update term count index
         *self.doc_term_count.entry(document_id.clone()).or_default() = doc_term_count;
 
-        self.update_avg_doc_term_count();
+        self.update_avg_field_len();
     }
 
     pub fn remove_document(&mut self, document_id: &str) {
@@ -125,9 +132,10 @@ impl FTSEngine {
         });
 
         self.doc_term_count.remove(document_id);
+        self.doc_field_term_count.remove(document_id);
         self.doc_field_boost.remove(document_id);
 
-        self.update_avg_doc_term_count();
+        self.update_avg_field_len();
     }
 
     fn get_or_intern_field(&mut self, field: &str) -> FieldId {
@@ -140,14 +148,25 @@ impl FTSEngine {
         self.fields.len() - 1
     }
 
-    fn update_avg_doc_term_count(&mut self) {
-        if self.doc_term_count.is_empty() {
-            self.avg_doc_len = 0.0;
+    fn update_avg_field_len(&mut self) {
+        if self.doc_field_term_count.is_empty() {
+            self.avg_field_len.clear();
             return;
         }
 
-        self.avg_doc_len =
-            self.doc_term_count.values().sum::<usize>() as f64 / self.doc_term_count.len() as f64;
+        let mut field_totals = HashMap::<FieldId, (usize, usize)>::new();
+        for field_term_counts in self.doc_field_term_count.values() {
+            for (field, term_count) in field_term_counts {
+                let (total, documents_count) = field_totals.entry(*field).or_default();
+                *total += term_count;
+                *documents_count += 1;
+            }
+        }
+
+        self.avg_field_len = field_totals
+            .into_iter()
+            .map(|(field, (total, documents_count))| (field, total as f64 / documents_count as f64))
+            .collect();
     }
 
     fn idf(&self, term: &str) -> f64 {
@@ -313,20 +332,26 @@ impl FTSEngine {
                 )| {
                     // Calculate BM25 score
 
-                    let doc_len = *self
-                        .doc_term_count
+                    let field_term_counts = self
+                        .doc_field_term_count
                         .get(document_id)
-                        .expect("Document term count couldn't be empty")
-                        as f64;
+                        .expect("Indexed document must have field term counts");
 
                     let field_boosts = self.doc_field_boost.get(document_id);
                     let doc_bm25_score = document_term_matches
                         .iter()
                         .map(|(field, positions)| {
+                            let field_len = *field_term_counts
+                                .get(field)
+                                .expect("Matched field must have a term count")
+                                as f64;
+                            let avg_field_len = *self
+                                .avg_field_len
+                                .get(field)
+                                .expect("Matched field must have an average term count");
                             let tf = positions.len() as f64;
                             let numerator = tf * (K1 + 1.0);
-                            let denominator =
-                                tf + K1 * (1.0 - B + B * (doc_len / self.avg_doc_len));
+                            let denominator = tf + K1 * (1.0 - B + B * (field_len / avg_field_len));
 
                             let field_multiplier = field_boosts
                                 .and_then(|field_boosts| field_boosts.get(field))
@@ -639,12 +664,12 @@ mod tests {
     }
 
     #[test]
-    fn test_remove_last_document_resets_average_doc_length() {
+    fn test_remove_last_document_resets_average_field_length() {
         let mut fts = new_test_fts(&[TestDoc::new(1, "title", "data")]);
 
         fts.remove_document("1");
 
-        assert_eq!(fts.avg_doc_len, 0.0);
+        assert!(fts.avg_field_len.is_empty());
         assert!(fts.search("title").is_empty());
     }
 
@@ -761,6 +786,26 @@ mod tests {
         TestDoc::new(2, "other", "value").insert(&mut fts);
 
         assert_eq!(fts.search("value"), vec!["1", "2"]);
+    }
+
+    #[test]
+    fn test_title_phrase_is_not_penalized_by_long_body() {
+        let mut fts = FTSEngine::new();
+
+        let long_body = vec!["background"; 1_000].join(" ");
+        TestDoc::new(1, "RAW IDEAS", &long_body).insert_with_title_boost(&mut fts);
+        TestDoc::new(
+            2,
+            "High Agency",
+            "raw intelligence favors action over brilliant ideas",
+        )
+        .insert_with_title_boost(&mut fts);
+
+        for id in 3..=22 {
+            TestDoc::new(id, "Other note", "background text").insert_with_title_boost(&mut fts);
+        }
+
+        assert_eq!(search_ids(&fts, "raw ideas")[0], "1");
     }
 
     #[test]
@@ -991,7 +1036,7 @@ mod tests {
                 ("alici", ["person-alicia-jones"].as_slice()),
                 (
                     "alic",
-                    ["person-alicia-jones", "person-alice-johnson"].as_slice(),
+                    ["person-alice-johnson", "person-alicia-jones"].as_slice(),
                 ),
                 ("person alice", ["person-alice-johnson"].as_slice()),
                 ("backup restore", ["note-backup-restore"].as_slice()),

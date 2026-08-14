@@ -219,3 +219,4 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 - remote backup without 3rd party tools - separate "backup manager"?
 - mark notes stale/irrelevant/archived
 - UI improve password input: allow to see plain text
+- skill for using arhiv cli

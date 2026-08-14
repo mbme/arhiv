@@ -78,6 +78,8 @@ Eligible records are ranked by a lexical score derived from BM25.
 
 For each query term, the engine scores candidate term matches against each record and keeps the best-scoring candidate for that query term in that record. Candidate scoring is field-aware: the best matching indexed field for that candidate contributes the candidate's per-query-term score. The record's lexical score is the sum of these best per-query-term scores.
 
+BM25 length normalization uses the matched field's token count and that field's average token count across indexed records. A long ordinary field must not reduce the score of a concise title or id match in the same record.
+
 Candidate match quality is part of the lexical score. Exact matches receive the strongest multiplier, prefix matches receive a weaker multiplier, and fuzzy matches receive the weakest multiplier.
 
 ## Field boosts

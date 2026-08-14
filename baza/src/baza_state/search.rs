@@ -17,8 +17,8 @@ use crate::{
 const TITLE_FIELD_NAME: &str = "@title";
 const ID_FIELD_NAME: &str = "@id";
 const SEARCH_INDEX_FORMAT_VERSION: u8 = 1;
-// v4 accepts single-character typos across fuzzy-prefix candidate boundaries.
-const SEARCH_ALGORITHM_VERSION: u8 = 4;
+// v5 uses field-local BM25 document-length normalization.
+const SEARCH_ALGORITHM_VERSION: u8 = 5;
 
 #[derive(Serialize, Deserialize)]
 struct SearchIndexFile {

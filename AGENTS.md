@@ -81,6 +81,7 @@ Use the most targeted check first, then broaden when needed:
 - Add concise comments to new public methods.
 - Prefer pure-Rust libraries; avoid dependencies that require C/C++ code or native libraries unless explicitly approved.
 - Keep outbound network/download workflows in `arhiv`; `baza` owns completed local files, encrypted blob storage, schema rules, staging, and other core database behavior.
+- Use `just arhiv -- <command>` to inspect configured local debug data when validating CLI behavior, schema, search, document state, histories, or conflicts; start with read-only commands to preserve the fixture.
 
 # Best practices
 - Prefer positive phrasing in code comments and guidance; describe intended ownership and behavior directly rather than framing APIs by what they do not do.

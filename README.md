@@ -204,7 +204,7 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 - better diff/merge
 - network p2p sync (use iroh), relays
 - integration with emacs/file system - use FUSE?
-- tool, not app
+- 3rd party schema? rely on standards? "gradual typing"?
 
 - як це розкладаєтьс на "базові" компоненти? і інтегрується із рештою екосистеми?
   - формат даних (encrypted compressed jsonl)
@@ -220,3 +220,4 @@ Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbm
 - mark notes stale/irrelevant/archived
 - UI improve password input: allow to see plain text
 - skill for using arhiv cli
+- browse logs in android app

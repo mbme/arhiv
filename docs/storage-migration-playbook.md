@@ -36,6 +36,12 @@ Bump `storage_version` when changing any persistent low-level format/contract, f
 - Compression/encryption layering by file type
 - Storage file merge assumptions across `baza*.gz.age` files
 
+A writer-only normalization does not require a version bump when old and new
+layouts both satisfy the existing reader contract, index-value association is
+preserved, and storage merge accepts both layouts. The format spec must identify
+the normalization as non-semantic, and tests must cover reading and rewriting
+the non-canonical layout of that storage version.
+
 Bump `data_version` when changing document/schema semantics, for example:
 - Document field meaning/types/defaults
 - Validation or conversion rules that affect stored document JSON

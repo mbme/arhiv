@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, collections::HashMap, io::Write};
 
-use anyhow::{Result, anyhow, bail, ensure};
+use anyhow::{Context, Result, anyhow, bail, ensure};
 
 use baza_storage::crypto::age::AgeKey;
 use baza_storage::{AgeGzWriter, ContainerWriter};
@@ -9,6 +9,11 @@ use crate::entities::{Document, DocumentKey};
 
 use super::{BazaInfo, DocumentsIndex};
 
+/// Builds a container whose document lines match canonical index order.
+///
+/// Documents may arrive in any order and are buffered until writable. Each
+/// indexed key must be supplied exactly once, and serialized payloads are
+/// validated against their keys.
 pub struct ContainerDraft<W: Write> {
     writer: Option<ContainerWriter<AgeGzWriter<W>>>,
     index: DocumentsIndex,
@@ -42,10 +47,23 @@ impl<W: Write> ContainerDraft<W> {
         let serialized = serde_json::to_string(document)?;
         let key = DocumentKey::for_document(document);
 
-        self.push_serialized(key, serialized)
+        self.push(key, serialized)
     }
 
+    /// Preserves serialized JSON after verifying that it matches `key`.
     pub fn push_serialized(&mut self, key: DocumentKey, line: String) -> Result<()> {
+        let document: Document = serde_json::from_str(&line)
+            .with_context(|| format!("failed to parse document {}", key.serialize()))?;
+        ensure!(
+            DocumentKey::for_document(&document) == key,
+            "document payload does not match key {}",
+            key.serialize()
+        );
+
+        self.push(key, line)
+    }
+
+    fn push(&mut self, key: DocumentKey, line: String) -> Result<()> {
         let position = self
             .index
             .position_of(&key)

@@ -2,7 +2,7 @@ mod container_draft;
 mod documents_index;
 
 use std::{
-    collections::{HashSet, VecDeque},
+    collections::{HashMap, HashSet, VecDeque},
     fmt,
     fs::File,
     io::{BufReader, Read, Write},
@@ -14,7 +14,7 @@ use anyhow::{Context, Result, anyhow, bail, ensure};
 
 use baza_common::{AtomicFileWriter, create_file_reader, log, path_to_string};
 use baza_storage::crypto::age::AgeKey;
-use baza_storage::{AgeGzReader, AgeGzWriter, ContainerPatch, ContainerReader, ContainerWriter};
+use baza_storage::{AgeGzReader, ContainerReader};
 
 use crate::entities::{Document, DocumentKey};
 
@@ -33,6 +33,12 @@ enum ReaderOrLinesIter<'i, R: Read> {
 }
 
 pub const STORAGE_VERSION: u8 = 1;
+
+/// Changes to apply while rewriting the main storage database.
+///
+/// Keys identify immutable snapshots; `None` removes an existing snapshot and
+/// `Some` inserts or replaces the snapshot for that key.
+pub type StoragePatch = HashMap<DocumentKey, Option<Document>>;
 
 pub struct BazaStorage<'i, R: Read + 'i> {
     pub index: DocumentsIndex,
@@ -105,30 +111,79 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
         Ok(self.info.as_ref().expect("info is available"))
     }
 
-    pub fn patch(self, writer: impl Write, patch: ContainerPatch) -> Result<()> {
+    /// Applies `patch` through a complete rewrite in canonical document-key order.
+    ///
+    /// Unchanged document JSON is copied verbatim. Documents may be buffered until
+    /// their canonical output position is available.
+    pub fn rewrite(mut self, writer: impl Write, mut patch: StoragePatch) -> Result<()> {
         ensure!(!patch.is_empty(), "container patch must not be empty");
 
-        // apply patch & write db
-        let agegz_writer = AgeGzWriter::new(writer, self.key)?;
-        let container_writer = ContainerWriter::new(agegz_writer);
+        for (key, document) in patch
+            .iter()
+            .filter_map(|(key, document)| document.as_ref().map(|document| (key, document)))
+        {
+            ensure!(
+                DocumentKey::for_document(document) == *key,
+                "patched document does not match key {}",
+                key.serialize()
+            );
+        }
 
-        match self.inner {
-            ReaderOrLinesIter::Reader(reader) => {
-                let agegz_writer = reader.patch(container_writer, patch)?;
-                agegz_writer.finish()?;
+        let mut keys = self
+            .index
+            .iter()
+            .filter(|key| !matches!(patch.get(*key), Some(None)))
+            .cloned()
+            .collect::<Vec<_>>();
+
+        for (key, document) in &patch {
+            if !self.index.contains(key) {
+                ensure!(
+                    document.is_some(),
+                    "cannot delete missing document {}",
+                    key.serialize()
+                );
+                keys.push(key.clone());
             }
-            _ => bail!("Can only patch Reader"),
-        };
+        }
 
-        Ok(())
+        let index = DocumentsIndex::from_document_keys(keys)?;
+        let info = self.get_info()?.clone();
+        let mut draft = ContainerDraft::new(writer, self.key.clone(), &info, index)?;
+
+        for item in self {
+            let (key, raw_document) = item?;
+
+            match patch.remove(&key) {
+                Some(Some(document)) => draft.push_document(&document)?,
+                Some(None) => {}
+                None => draft.push_serialized(key, raw_document)?,
+            }
+        }
+
+        for (key, document) in patch {
+            let document = document.context(format!(
+                "cannot delete missing document {}",
+                key.serialize()
+            ))?;
+            draft.push_document(&document)?;
+        }
+
+        draft.finish()
     }
 
+    /// Parses the next document and verifies that its payload matches the index key.
     pub fn next_parsed(&mut self) -> Option<Result<(DocumentKey, Document)>> {
         let value = self.next()?;
 
         let new_value = value.and_then(|(key, raw_document)| {
             let document = serde_json::from_str(&raw_document)
                 .context(anyhow!("Failed to parse document {}", key.serialize()))?;
+            ensure!(
+                DocumentKey::for_document(&document) == key,
+                "document payload does not match key {}",
+                key.serialize()
+            );
 
             Ok((key, document))
         });
@@ -173,14 +228,15 @@ impl BazaFileStorage<'_> {
         Ok(storage)
     }
 
-    pub fn patch_and_save_to_file(self, file: &str, patch: ContainerPatch) -> Result<()> {
+    /// Atomically writes a rewritten storage container to a path that must not exist.
+    pub fn rewrite_and_save_to_file(self, file: &str, patch: StoragePatch) -> Result<()> {
         log::debug!("Writing storage to file {file}");
 
         let start_time = Instant::now();
 
         ensure!(!Path::new(file).exists(), "File {file} already exists");
         let mut storage_writer = AtomicFileWriter::create(file)?;
-        self.patch(&mut storage_writer, patch)?;
+        self.rewrite(&mut storage_writer, patch)?;
         storage_writer.commit()?;
 
         let duration = start_time.elapsed();
@@ -211,21 +267,20 @@ impl<'i, R: Read + 'i> Iterator for BazaStorage<'i, R> {
     }
 }
 
-pub fn create_container_patch<'d>(
+/// Builds a snapshot patch keyed by document identity, rejecting duplicate keys.
+pub fn create_storage_patch<'d>(
     documents: impl Iterator<Item = &'d Document>,
-) -> Result<ContainerPatch> {
-    let mut patch = ContainerPatch::new();
+) -> Result<StoragePatch> {
+    let mut patch = StoragePatch::new();
     for new_document in documents {
-        let key = DocumentKey::for_document(new_document).serialize();
+        let key = DocumentKey::for_document(new_document);
         ensure!(
             !patch.contains_key(&key),
             "duplicate new document {}",
             new_document.id
         );
 
-        let value = serde_json::to_string(&new_document)?;
-
-        patch.insert(key, Some(value));
+        patch.insert(key, Some(new_document.clone()));
     }
 
     Ok(patch)
@@ -391,11 +446,34 @@ mod tests {
     use anyhow::Result;
 
     use baza_storage::crypto::age::AgeKey;
+    use baza_storage::{AgeGzWriter, ContainerWriter, LinesIndex};
     use serde_json::json;
 
-    use crate::{baza_storage::create_test_storage, entities::new_document};
+    use crate::{
+        baza_storage::create_test_storage,
+        entities::{DocumentKey, Id, new_document},
+    };
 
-    use super::{BazaInfo, BazaStorage, create_container_patch, create_storage, merge_storages};
+    use super::{
+        BazaInfo, BazaStorage, DocumentsIndex, StoragePatch, create_storage, create_storage_patch,
+        merge_storages,
+    };
+
+    fn create_raw_storage(
+        key: AgeKey,
+        index: LinesIndex,
+        lines: &[String],
+    ) -> Result<Cursor<Vec<u8>>> {
+        let mut data = Vec::new();
+        let agegz_writer = AgeGzWriter::new(&mut data, key)?;
+        let mut writer = ContainerWriter::new(agegz_writer);
+        writer.write_index(&index)?;
+        writer
+            .write_lines(lines.iter().map(String::as_str))?
+            .finish()?;
+
+        Ok(Cursor::new(data))
+    }
 
     #[test]
     fn test_storage() -> Result<()> {
@@ -438,7 +516,7 @@ mod tests {
         ];
         {
             let storage = BazaStorage::read(&mut data, key.clone())?;
-            storage.patch(&mut data1, create_container_patch(docs2.iter())?)?;
+            storage.rewrite(&mut data1, create_storage_patch(docs2.iter())?)?;
         }
 
         data1.set_position(0);
@@ -446,6 +524,12 @@ mod tests {
         // read
         {
             docs1.extend(docs2);
+            docs1.sort_by(|left, right| {
+                left.id
+                    .as_ref()
+                    .cmp(right.id.as_ref())
+                    .then_with(|| left.rev.canonical_cmp(&right.rev))
+            });
             let mut storage = BazaStorage::read(&mut data1, key.clone())?;
             assert_eq!(storage.index.len(), 3);
             assert_eq!(storage.get_info()?, &info);
@@ -453,6 +537,243 @@ mod tests {
             let all_items = storage.get_all()?;
             assert_eq!(all_items, docs1);
         }
+
+        Ok(())
+    }
+
+    #[test]
+    fn rewrite_orders_new_revisions_with_existing_document_snapshots() -> Result<()> {
+        let key = AgeKey::generate_age_x25519_key();
+        let info = BazaInfo::new_test_info();
+        let doc_a1 = new_document(json!({ "test": "a1" }))
+            .with_id(Id::from("aaaaaaaaaaaaaa"))
+            .with_rev(json!({ "a": 1 }));
+        let doc_b1 = new_document(json!({ "test": "b1" }))
+            .with_id(Id::from("bbbbbbbbbbbbbb"))
+            .with_rev(json!({ "b": 1 }));
+        let doc_a2 = new_document(json!({ "test": "a2" }))
+            .with_id(Id::from("aaaaaaaaaaaaaa"))
+            .with_rev(json!({ "a": 2 }));
+
+        let mut original = Cursor::new(Vec::new());
+        create_storage(
+            &mut original,
+            key.clone(),
+            info,
+            &[doc_b1.clone(), doc_a1.clone()],
+        )?;
+        original.set_position(0);
+
+        let storage = BazaStorage::read(&mut original, key.clone())?;
+        let mut rewritten = Cursor::new(Vec::new());
+        storage.rewrite(
+            &mut rewritten,
+            StoragePatch::from([(DocumentKey::for_document(&doc_a2), Some(doc_a2.clone()))]),
+        )?;
+        rewritten.set_position(0);
+
+        let storage = BazaStorage::read(&mut rewritten, key)?;
+        let keys = storage
+            .index
+            .iter()
+            .map(DocumentKey::serialize)
+            .collect::<Vec<_>>();
+        assert_eq!(
+            keys,
+            vec![
+                DocumentKey::for_document(&doc_a1).serialize(),
+                DocumentKey::for_document(&doc_a2).serialize(),
+                DocumentKey::for_document(&doc_b1).serialize(),
+            ]
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn rewrite_handles_causal_and_lexical_order_cycle() -> Result<()> {
+        let key = AgeKey::generate_age_x25519_key();
+        let info = BazaInfo::new_test_info();
+        let id = Id::from("aaaaaaaaaaaaaa");
+        let doc_b = new_document(json!({ "test": "b" }))
+            .with_id(id.clone())
+            .with_rev(json!({ "b": 1 }));
+        let doc_c = new_document(json!({ "test": "c" }))
+            .with_id(id.clone())
+            .with_rev(json!({ "c": 1 }));
+        let doc_ac = new_document(json!({ "test": "ac" }))
+            .with_id(id)
+            .with_rev(json!({ "a": 1, "c": 2 }));
+
+        let mut original = Cursor::new(Vec::new());
+        create_storage(
+            &mut original,
+            key.clone(),
+            info,
+            &[doc_b.clone(), doc_c.clone()],
+        )?;
+        original.set_position(0);
+
+        let storage = BazaStorage::read(&mut original, key.clone())?;
+        let mut rewritten = Cursor::new(Vec::new());
+        storage.rewrite(
+            &mut rewritten,
+            StoragePatch::from([(DocumentKey::for_document(&doc_ac), Some(doc_ac.clone()))]),
+        )?;
+        rewritten.set_position(0);
+
+        let storage = BazaStorage::read(&mut rewritten, key)?;
+        assert_eq!(storage.get_all()?, vec![doc_ac, doc_b, doc_c]);
+
+        Ok(())
+    }
+
+    #[test]
+    fn rewrite_preserves_unchanged_document_json() -> Result<()> {
+        let key = AgeKey::generate_age_x25519_key();
+        let info = BazaInfo::new_test_info();
+        let existing_document = new_document(json!({ "test": "existing" }))
+            .with_id(Id::from("aaaaaaaaaaaaaa"))
+            .with_rev(json!({ "a": 1 }));
+        let new_document = new_document(json!({ "test": "new" }))
+            .with_id(Id::from("bbbbbbbbbbbbbb"))
+            .with_rev(json!({ "b": 1 }));
+        let existing_key = DocumentKey::for_document(&existing_document);
+        let index =
+            DocumentsIndex::from_document_keys(vec![existing_key.clone()])?.to_lines_index();
+        let raw_existing_document = format!("  {}  ", serde_json::to_string(&existing_document)?);
+        let lines = vec![serde_json::to_string(&info)?, raw_existing_document.clone()];
+        let mut original = create_raw_storage(key.clone(), index, &lines)?;
+
+        let storage = BazaStorage::read(&mut original, key.clone())?;
+        let mut rewritten = Cursor::new(Vec::new());
+        storage.rewrite(
+            &mut rewritten,
+            StoragePatch::from([(DocumentKey::for_document(&new_document), Some(new_document))]),
+        )?;
+        rewritten.set_position(0);
+
+        let mut storage = BazaStorage::read(&mut rewritten, key)?;
+        let (rewritten_key, rewritten_line) = storage.next().expect("existing document")?;
+        assert_eq!(rewritten_key, existing_key);
+        assert_eq!(rewritten_line, raw_existing_document);
+
+        Ok(())
+    }
+
+    #[test]
+    fn rewrite_canonicalizes_noncanonical_v1_storage() -> Result<()> {
+        let key = AgeKey::generate_age_x25519_key();
+        let info = BazaInfo::new_test_info();
+        let doc_a = new_document(json!({ "test": "a" }))
+            .with_id(Id::from("aaaaaaaaaaaaaa"))
+            .with_rev(json!({ "a": 1 }));
+        let doc_b = new_document(json!({ "test": "b" }))
+            .with_id(Id::from("bbbbbbbbbbbbbb"))
+            .with_rev(json!({ "b": 1 }));
+        let doc_c = new_document(json!({ "test": "c" }))
+            .with_id(Id::from("cccccccccccccc"))
+            .with_rev(json!({ "c": 1 }));
+        let index = DocumentsIndex::from_document_keys(vec![
+            DocumentKey::for_document(&doc_b),
+            DocumentKey::for_document(&doc_a),
+        ])?
+        .to_lines_index();
+        let lines = vec![
+            serde_json::to_string(&info)?,
+            serde_json::to_string(&doc_b)?,
+            serde_json::to_string(&doc_a)?,
+        ];
+        let mut original = create_raw_storage(key.clone(), index, &lines)?;
+
+        let storage = BazaStorage::read(&mut original, key.clone())?;
+
+        let mut rewritten = Cursor::new(Vec::new());
+        storage.rewrite(
+            &mut rewritten,
+            StoragePatch::from([(DocumentKey::for_document(&doc_c), Some(doc_c.clone()))]),
+        )?;
+        rewritten.set_position(0);
+
+        let storage = BazaStorage::read(&mut rewritten, key)?;
+        assert_eq!(storage.get_all()?, vec![doc_a, doc_b, doc_c]);
+
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_document_payload_that_does_not_match_its_index_key() -> Result<()> {
+        let key = AgeKey::generate_age_x25519_key();
+        let info = BazaInfo::new_test_info();
+        let indexed_document = new_document(json!({ "test": "indexed" }))
+            .with_id(Id::from("aaaaaaaaaaaaaa"))
+            .with_rev(json!({ "a": 1 }));
+        let payload_document = new_document(json!({ "test": "payload" }))
+            .with_id(Id::from("bbbbbbbbbbbbbb"))
+            .with_rev(json!({ "b": 1 }));
+        let index =
+            DocumentsIndex::from_document_keys(vec![DocumentKey::for_document(&indexed_document)])?
+                .to_lines_index();
+        let lines = vec![
+            serde_json::to_string(&info)?,
+            serde_json::to_string(&payload_document)?,
+        ];
+        let mut data = create_raw_storage(key.clone(), index, &lines)?;
+
+        let mut storage = BazaStorage::read(&mut data, key)?;
+        let error = storage
+            .next_parsed()
+            .expect("document line exists")
+            .unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("document payload does not match key"),
+            "unexpected error: {error:#}"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn rewrite_rejects_existing_payload_that_does_not_match_its_index_key() -> Result<()> {
+        let key = AgeKey::generate_age_x25519_key();
+        let info = BazaInfo::new_test_info();
+        let indexed_document = new_document(json!({ "test": "indexed" }))
+            .with_id(Id::from("aaaaaaaaaaaaaa"))
+            .with_rev(json!({ "a": 1 }));
+        let payload_document = new_document(json!({ "test": "payload" }))
+            .with_id(Id::from("bbbbbbbbbbbbbb"))
+            .with_rev(json!({ "b": 1 }));
+        let new_document = new_document(json!({ "test": "new" }))
+            .with_id(Id::from("cccccccccccccc"))
+            .with_rev(json!({ "c": 1 }));
+        let index =
+            DocumentsIndex::from_document_keys(vec![DocumentKey::for_document(&indexed_document)])?
+                .to_lines_index();
+        let lines = vec![
+            serde_json::to_string(&info)?,
+            serde_json::to_string(&payload_document)?,
+        ];
+        let mut original = create_raw_storage(key.clone(), index, &lines)?;
+        let storage = BazaStorage::read(&mut original, key)?;
+        let mut rewritten = Cursor::new(Vec::new());
+        let error = storage
+            .rewrite(
+                &mut rewritten,
+                StoragePatch::from([(
+                    DocumentKey::for_document(&new_document),
+                    Some(new_document),
+                )]),
+            )
+            .unwrap_err();
+
+        assert!(
+            error
+                .to_string()
+                .contains("document payload does not match key"),
+            "unexpected error: {error:#}"
+        );
 
         Ok(())
     }

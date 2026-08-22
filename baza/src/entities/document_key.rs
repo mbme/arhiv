@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{cmp::Ordering, fmt};
 
 use anyhow::{Context, Result, anyhow};
 use serde::{Deserialize, Serialize, de::Visitor};
@@ -33,6 +33,15 @@ impl DocumentKey {
 
     pub fn serialize(&self) -> String {
         format!("{} {}", self.id, self.rev.to_safe_string())
+    }
+
+    /// Compares keys using the canonical persistence order.
+    #[must_use]
+    pub fn canonical_cmp(&self, other: &Self) -> Ordering {
+        self.id
+            .as_ref()
+            .cmp(other.id.as_ref())
+            .then_with(|| self.rev.canonical_cmp(&other.rev))
     }
 }
 

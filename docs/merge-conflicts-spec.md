@@ -29,7 +29,7 @@ Primary code:
 
 `Revision` is a vector clock map `{instance_id -> counter}`.
 
-Comparison (`compare_vector_clocks`):
+Comparison (`causal_cmp`):
 - `Before`: all components <= other, at least one <
 - `After`: all components >= other, at least one >
 - `Equal`: all equal
@@ -48,8 +48,10 @@ Result:
 - >1 latest revisions => conflict head
 
 Base revision for 3-way merge:
-- computed as maximum revision strictly older than every latest conflicting revision (`Revision::find_base_rev`)
-- may be absent
+- computed as the unique latest revision strictly older than every latest
+  conflicting revision (`Revision::find_base_rev`)
+- absent when there is no common stored ancestor or when multiple concurrent
+  common ancestors have no single causal maximum
 
 ## 3. Storage-Level Merge (multiple db files)
 
@@ -199,6 +201,9 @@ Behavior:
 
 ## 9. Invariants
 
+- Revision maps contain only positive counters; parsing treats zero counters as
+  absent so equality, hashing, ordering, and serialization share one canonical
+  representation.
 - All snapshots inside one `DocumentHead` share same document id.
 - Commit revision must be strictly newer than every original revision in that head.
 - Document id cannot change during stage/modify.

@@ -302,7 +302,7 @@ pub(crate) fn sorted_original_snapshots(head: &DocumentHead) -> Vec<&Document> {
 fn compare_documents_by_history(a: &Document, b: &Document) -> Ordering {
     a.updated_at
         .cmp(&b.updated_at)
-        .then_with(|| a.rev.cmp(&b.rev))
+        .then_with(|| a.rev.history_cmp(&b.rev))
 }
 
 pub(crate) fn print_documents_by_ids(

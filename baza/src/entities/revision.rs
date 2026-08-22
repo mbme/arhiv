@@ -5,13 +5,16 @@ use std::{
 };
 
 use anyhow::{Context, Result, anyhow, ensure};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 
 use super::instance_id::InstanceId;
 
-#[allow(clippy::derived_hash_with_manual_eq)]
-#[derive(Serialize, Deserialize, Hash, Clone, Eq)]
+/// A vector clock stored in canonical form.
+///
+/// Zero counters are omitted so equality, hashing, ordering, and serialization
+/// all operate on the same representation.
+#[derive(Serialize, Hash, Clone, Eq, PartialEq)]
 pub struct Revision(BTreeMap<InstanceId, u32>);
 
 #[derive(Debug, PartialEq)]
@@ -29,6 +32,11 @@ impl Revision {
 
     pub const fn initial() -> Self {
         Revision(BTreeMap::new())
+    }
+
+    fn from_versions(mut versions: BTreeMap<InstanceId, u32>) -> Self {
+        versions.retain(|_, version| *version > 0);
+        Self(versions)
     }
 
     pub fn is_initial(&self) -> bool {
@@ -53,8 +61,9 @@ impl Revision {
         self.set_version(id, next_version);
     }
 
+    /// Compares revisions by vector-clock causality.
     #[must_use]
-    pub fn compare_vector_clocks(&self, other: &Self) -> VectorClockOrder {
+    pub fn causal_cmp(&self, other: &Self) -> VectorClockOrder {
         let all_keys: HashSet<&InstanceId> = self.0.keys().chain(other.0.keys()).collect();
 
         let mut has_before = false;
@@ -87,10 +96,32 @@ impl Revision {
         }
     }
 
+    /// Compares the canonical revision representation independently of causal order.
+    #[must_use]
+    pub fn canonical_cmp(&self, other: &Self) -> Ordering {
+        self.0.iter().cmp(other.0.iter())
+    }
+
+    /// Compares revisions for deterministic history display while preserving causality.
+    #[must_use]
+    pub fn history_cmp(&self, other: &Self) -> Ordering {
+        let generation = |revision: &Self| {
+            revision
+                .0
+                .values()
+                .map(|&version| u64::from(version))
+                .sum::<u64>()
+        };
+
+        generation(self)
+            .cmp(&generation(other))
+            .then_with(|| self.canonical_cmp(other))
+    }
+
     #[must_use]
     pub fn is_concurrent_or_newer_than(&self, other: &Self) -> bool {
         matches!(
-            self.compare_vector_clocks(other),
+            self.causal_cmp(other),
             VectorClockOrder::After | VectorClockOrder::Concurrent
         )
     }
@@ -98,7 +129,7 @@ impl Revision {
     #[must_use]
     pub fn is_concurrent_or_older_than(&self, other: &Self) -> bool {
         matches!(
-            self.compare_vector_clocks(other),
+            self.causal_cmp(other),
             VectorClockOrder::Before | VectorClockOrder::Concurrent
         )
     }
@@ -106,22 +137,19 @@ impl Revision {
     #[must_use]
     pub fn is_concurrent_or_equal(&self, other: &Self) -> bool {
         matches!(
-            self.compare_vector_clocks(other),
+            self.causal_cmp(other),
             VectorClockOrder::Equal | VectorClockOrder::Concurrent
         )
     }
 
     #[must_use]
     pub fn is_concurrent(&self, other: &Self) -> bool {
-        matches!(
-            self.compare_vector_clocks(other),
-            VectorClockOrder::Concurrent
-        )
+        matches!(self.causal_cmp(other), VectorClockOrder::Concurrent)
     }
 
     #[must_use]
     pub fn is_older_than(&self, other: &Self) -> bool {
-        matches!(self.compare_vector_clocks(other), VectorClockOrder::Before)
+        matches!(self.causal_cmp(other), VectorClockOrder::Before)
     }
 
     pub fn serialize(&self) -> String {
@@ -205,16 +233,13 @@ impl Revision {
             .collect::<Result<_>>()
             .context(anyhow!("Failed to parse revision from safe string {value}"))?;
 
-        Ok(Revision(map))
+        Ok(Revision::from_versions(map))
     }
 
     pub fn from_value(value: Value) -> Result<Revision> {
-        let mut result = serde_json::from_value::<Option<Revision>>(value)
+        let result = serde_json::from_value::<Option<Revision>>(value)
             .context("failed to convert into Revision")?
             .unwrap_or_else(Revision::initial);
-
-        // leave only non-zero instance versions
-        result.0.retain(|_, value| *value > 0);
 
         Ok(result)
     }
@@ -250,60 +275,52 @@ impl Revision {
         max_rev
     }
 
-    /// base rev is max rev from all_revs that's < than each of revs
+    /// Finds the unique latest revision older than every supplied revision.
+    ///
+    /// Multiple concurrent common ancestors have no single causal maximum, so
+    /// this returns `None` rather than selecting one by an unrelated ordering.
     pub fn find_base_rev<'r>(
         revs: &HashSet<&'r Revision>,
         all_revs: impl Iterator<Item = &'r Revision>,
     ) -> Option<&'r Revision> {
-        let mut base_rev = None;
-
-        for rev in all_revs {
-            let could_be_base_rev = revs.iter().all(|item| rev.is_older_than(item));
-
-            if !could_be_base_rev {
-                continue;
-            }
-
-            match base_rev {
-                Some(current_base_rev) => {
-                    if rev > current_base_rev {
-                        base_rev = Some(rev);
-                    }
-                }
-                None => {
-                    base_rev = Some(rev);
-                }
-            }
+        let common_ancestors = all_revs
+            .filter(|rev| revs.iter().all(|item| rev.is_older_than(item)))
+            .collect::<Vec<_>>();
+        if common_ancestors.is_empty() {
+            return None;
         }
 
-        base_rev
+        let mut latest = LatestRevComputer::new();
+        latest.update(common_ancestors);
+        let latest = latest.get();
+
+        (latest.len() == 1).then(|| {
+            latest
+                .into_iter()
+                .next()
+                .expect("one revision is available")
+        })
     }
 }
 
-impl PartialEq for Revision {
-    fn eq(&self, other: &Self) -> bool {
-        self.compare_vector_clocks(other) == VectorClockOrder::Equal
+impl<'de> Deserialize<'de> for Revision {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let versions = BTreeMap::deserialize(deserializer)?;
+        Ok(Revision::from_versions(versions))
     }
 }
 
 #[allow(clippy::non_canonical_partial_ord_impl)]
 impl PartialOrd for Revision {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        match self.compare_vector_clocks(other) {
+        match self.causal_cmp(other) {
             VectorClockOrder::Before => Some(Ordering::Less),
             VectorClockOrder::After => Some(Ordering::Greater),
             VectorClockOrder::Equal => Some(Ordering::Equal),
             VectorClockOrder::Concurrent => None,
-        }
-    }
-}
-
-impl Ord for Revision {
-    fn cmp(&self, other: &Self) -> Ordering {
-        if let Some(ordering) = self.partial_cmp(other) {
-            ordering
-        } else {
-            self.serialize().cmp(&other.serialize())
         }
     }
 }
@@ -344,14 +361,14 @@ impl<'r> LatestRevComputer<'r> {
             if self
                 .0
                 .iter()
-                .any(|&rev| rev.compare_vector_clocks(new_rev) == VectorClockOrder::After)
+                .any(|&rev| rev.causal_cmp(new_rev) == VectorClockOrder::After)
             {
                 continue;
             }
 
             // remove all existing revs older than new_rev
             self.0
-                .retain(|&rev| rev.compare_vector_clocks(new_rev) != VectorClockOrder::Before);
+                .retain(|&rev| rev.causal_cmp(new_rev) != VectorClockOrder::Before);
 
             // insert new_rev if no equal rev exists
             self.0.insert(new_rev);
@@ -366,7 +383,7 @@ impl<'r> LatestRevComputer<'r> {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
+    use std::collections::{HashMap, HashSet};
 
     use anyhow::Result;
     use serde_json::json;
@@ -398,50 +415,44 @@ mod tests {
     }
 
     #[test]
-    fn test_revision_compare_vector_clocks() -> Result<()> {
+    fn test_revision_causal_cmp() -> Result<()> {
         {
             let rev1 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
             let rev2 = Revision::from_value(json!({ "a": 2, "b": 1 }))?;
 
-            assert_eq!(
-                rev1.compare_vector_clocks(&rev2),
-                VectorClockOrder::Concurrent
-            );
-            assert_eq!(
-                rev2.compare_vector_clocks(&rev1),
-                VectorClockOrder::Concurrent
-            );
+            assert_eq!(rev1.causal_cmp(&rev2), VectorClockOrder::Concurrent);
+            assert_eq!(rev2.causal_cmp(&rev1), VectorClockOrder::Concurrent);
         }
 
         {
             let rev1 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
             let rev2 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
 
-            assert_eq!(rev1.compare_vector_clocks(&rev2), VectorClockOrder::Equal);
-            assert_eq!(rev2.compare_vector_clocks(&rev1), VectorClockOrder::Equal);
+            assert_eq!(rev1.causal_cmp(&rev2), VectorClockOrder::Equal);
+            assert_eq!(rev2.causal_cmp(&rev1), VectorClockOrder::Equal);
         }
 
         {
             let rev1 = Revision::from_value(json!({ "a": 1, "b": 1 }))?;
             let rev2 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
 
-            assert_eq!(rev1.compare_vector_clocks(&rev2), VectorClockOrder::Before);
-            assert_eq!(rev2.compare_vector_clocks(&rev1), VectorClockOrder::After);
+            assert_eq!(rev1.causal_cmp(&rev2), VectorClockOrder::Before);
+            assert_eq!(rev2.causal_cmp(&rev1), VectorClockOrder::After);
         }
 
         {
             let rev1 = Revision::from_value(json!({ "a": 1, }))?;
             let rev2 = Revision::from_value(json!({ "a": 1, "b": 2}))?;
 
-            assert_eq!(rev1.compare_vector_clocks(&rev2), VectorClockOrder::Before);
-            assert_eq!(rev2.compare_vector_clocks(&rev1), VectorClockOrder::After);
+            assert_eq!(rev1.causal_cmp(&rev2), VectorClockOrder::Before);
+            assert_eq!(rev2.causal_cmp(&rev1), VectorClockOrder::After);
         }
 
         Ok(())
     }
 
     #[test]
-    fn test_revision_cmp() -> Result<()> {
+    fn test_revision_partial_cmp() -> Result<()> {
         {
             let rev0 = Revision::initial();
             let rev1 = Revision::from_value(json!({ "a": 1, "b": 1 }))?;
@@ -465,7 +476,44 @@ mod tests {
             assert!(rev3 >= rev1);
 
             assert!(rev4 != rev2);
+            assert_eq!(rev4.partial_cmp(&rev2), None);
         }
+
+        Ok(())
+    }
+
+    #[test]
+    fn canonical_comparison_is_transitive_for_concurrent_and_causal_revisions() -> Result<()> {
+        let rev_b = Revision::from_value(json!({ "b": 1 }))?;
+        let rev_c = Revision::from_value(json!({ "c": 1 }))?;
+        let rev_ac = Revision::from_value(json!({ "a": 1, "c": 2 }))?;
+
+        assert!(rev_ac.canonical_cmp(&rev_b).is_lt());
+        assert!(rev_b.canonical_cmp(&rev_c).is_lt());
+        assert!(rev_ac.canonical_cmp(&rev_c).is_lt());
+
+        Ok(())
+    }
+
+    #[test]
+    fn history_comparison_preserves_causal_order() -> Result<()> {
+        let ancestor = Revision::from_value(json!({ "b": 1 }))?;
+        let descendant = Revision::from_value(json!({ "a": 1, "b": 1 }))?;
+
+        assert!(descendant.canonical_cmp(&ancestor).is_lt());
+        assert!(ancestor.history_cmp(&descendant).is_lt());
+        assert!(descendant.history_cmp(&ancestor).is_gt());
+
+        Ok(())
+    }
+
+    #[test]
+    fn history_comparison_orders_concurrent_revisions_deterministically() -> Result<()> {
+        let rev_a = Revision::from_value(json!({ "a": 1 }))?;
+        let rev_b = Revision::from_value(json!({ "b": 1 }))?;
+
+        assert_eq!(rev_a.history_cmp(&rev_b), rev_a.canonical_cmp(&rev_b));
+        assert_eq!(rev_b.history_cmp(&rev_a), rev_b.canonical_cmp(&rev_a));
 
         Ok(())
     }
@@ -611,6 +659,31 @@ mod tests {
     }
 
     #[test]
+    fn parsing_normalizes_zero_versions() -> Result<()> {
+        let canonical = Revision::from_value(json!({ "a": 1 }))?;
+        let from_json: Revision = serde_json::from_value(json!({ "a": 1, "b": 0 }))?;
+        let from_safe_string = Revision::from_safe_string("a:1-b:0")?;
+
+        assert_eq!(from_json, canonical);
+        assert_eq!(from_safe_string, canonical);
+        assert_eq!(from_json.to_safe_string(), "a:1");
+        assert_eq!(from_safe_string.to_safe_string(), "a:1");
+
+        Ok(())
+    }
+
+    #[test]
+    fn equal_revisions_are_interchangeable_hash_map_keys() -> Result<()> {
+        let canonical = Revision::from_value(json!({ "a": 1 }))?;
+        let with_zero = Revision::from_safe_string("a:1-b:0")?;
+        let revisions = HashMap::from([(canonical, "snapshot")]);
+
+        assert_eq!(revisions.get(&with_zero), Some(&"snapshot"));
+
+        Ok(())
+    }
+
+    #[test]
     fn test_latest_rev_computer() {
         {
             let rev1 = Revision::from_value(json!({ "a": 1 })).unwrap();
@@ -693,5 +766,19 @@ mod tests {
         let base_rev = Revision::find_base_rev(&latest_revs, all_revs.iter().copied());
 
         assert_eq!(base_rev, Some(&rev2));
+    }
+
+    #[test]
+    fn find_base_rev_rejects_multiple_concurrent_common_ancestors() {
+        let base_a = Revision::from_value(json!({ "a": 1 })).unwrap();
+        let base_b = Revision::from_value(json!({ "b": 1 })).unwrap();
+        let head_a = Revision::from_value(json!({ "a": 2, "b": 1 })).unwrap();
+        let head_b = Revision::from_value(json!({ "a": 1, "b": 2 })).unwrap();
+        let latest_revs = HashSet::from([&head_a, &head_b]);
+
+        assert_eq!(
+            Revision::find_base_rev(&latest_revs, [&base_a, &base_b].into_iter()),
+            None
+        );
     }
 }

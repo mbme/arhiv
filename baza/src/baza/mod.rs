@@ -17,7 +17,7 @@ use baza_storage::crypto::age::AgeKey;
 use crate::{
     BazaInfo, BazaState, BazaStorage, DocumentHead, Filter, ListPage, Locks,
     baza_paths::BazaPaths,
-    baza_storage::{STORAGE_VERSION, create_container_patch},
+    baza_storage::{STORAGE_VERSION, create_storage_patch},
     entities::{
         Document, DocumentKey, DocumentLock, DocumentLockKey, DocumentType, Id, InstanceId,
         LatestRevComputer, Revision,
@@ -319,7 +319,7 @@ impl Baza {
         documents.sort_by(|a, b| {
             a.updated_at
                 .cmp(&b.updated_at)
-                .then_with(|| a.rev.cmp(&b.rev))
+                .then_with(|| a.rev.history_cmp(&b.rev))
         });
 
         Ok(documents)
@@ -523,11 +523,11 @@ impl Baza {
         self.run_commit_test_action(CommitCheckpoint::BlobsMoved)?;
 
         // write changes to db file
-        let mut patch = create_container_patch(new_snapshots.into_iter())?;
+        let mut patch = create_storage_patch(new_snapshots.into_iter())?;
         for key in self.get_storage_keys_to_erase(&storage)? {
             patch.insert(key, None);
         }
-        storage.patch_and_save_to_file(&self.paths.storage_main_db_file, patch)?;
+        storage.rewrite_and_save_to_file(&self.paths.storage_main_db_file, patch)?;
         self.run_commit_test_action(CommitCheckpoint::DbWritten)?;
 
         // backup state file
@@ -570,7 +570,10 @@ impl Baza {
     }
 
     /// collect keys of storage documents that are known to be erased in the state
-    fn get_storage_keys_to_erase<R: Read>(&self, storage: &BazaStorage<R>) -> Result<Vec<String>> {
+    fn get_storage_keys_to_erase<R: Read>(
+        &self,
+        storage: &BazaStorage<R>,
+    ) -> Result<Vec<DocumentKey>> {
         let mut keys = Vec::new();
         for key in storage.index.iter() {
             if let Some(head) = self.state.get_document(&key.id) {
@@ -583,7 +586,7 @@ impl Baza {
                     .all(|head_rev| key.rev.is_older_than(head_rev));
 
                 if is_old_snapshot {
-                    keys.push(key.serialize());
+                    keys.push(key.clone());
                 }
             }
         }

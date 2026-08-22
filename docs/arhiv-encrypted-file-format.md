@@ -104,6 +104,8 @@ Index keys are ordered and unique.
 For storage DB specifically:
 - Index entry 0 MUST be `"info"`.
 - Entries 1..N are serialized `DocumentKey` values.
+- Readers accept document keys in any order; canonical writer ordering is a
+  normalization rule rather than a read-compatibility requirement.
 
 `DocumentKey` serialization:
 - `"<id> <revision-safe-string>"`
@@ -126,23 +128,33 @@ For storage DB specifically:
 
 ## 5.5 Write ordering rules
 
-When creating storage:
-- Document keys are sorted by `(id ASC, rev ASC)` before writing.
+When creating or rewriting storage:
+- Document keys are sorted by document id, then by the lexicographic order of
+  canonical revision entries `(instance_id, counter)`.
+- Storage ordering is independent of vector-clock causal dominance.
 - This is done to improve compression locality.
 - First written value line is always `info`.
 - Document lines follow sorted index order.
 
 ## 5.6 Patch semantics
 
-Container patch is ordered map: `key -> Option<line>`.
+Storage patches are applied during a complete canonical rewrite.
 
 Rules:
-- Existing key + `Some(value)`: replace value, keep position.
-- Existing key + `None`: delete key and its value.
-- New key + `Some(value)`: append key to end of index; append value at end.
-- New key + `None`: ignored for index construction but invalid if left for new-value emission.
+- Existing key + replacement document: replace the document.
+- Existing key + deletion: delete the key and its value.
+- New key + document: add the document.
+- Deleting a missing key is invalid.
+- Before writing, every document payload must match its `DocumentKey` (`id` and `rev`).
+- Every completed rewrite uses the canonical storage ordering, placing all known
+  revisions of a document together.
+- Rewriting non-canonical v1 ordering does not change `storage_version`
+  because both layouts satisfy the same reader and index-value contracts.
 
 The patched output is fully rewritten as a new container and then encrypted/compressed.
+The rewrite implementation accepts source documents in their stored order and
+uses one order-independent buffering path to emit the canonical order. See
+ADR-002 in `docs/architecture-decisions.md`.
 
 ## 6. State File Format (`state.gz.age`)
 

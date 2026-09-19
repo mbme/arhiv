@@ -1,7 +1,5 @@
 # Arhiv Merge Conflict Handling Spec
 
-Status: implementation-aligned (current behavior)
-
 Scope: how Arhiv detects, represents, merges, exposes, and commits conflicting document revisions.
 
 ## 1. Terminology
@@ -215,7 +213,6 @@ Behavior:
 1. `DocumentHead::get_single_document()` returns first item from unordered `HashSet` when conflict has no staged doc.
 - This makes projected document data potentially nondeterministic for unresolved conflicts.
 - Search indexing and API projections rely on `get_single_document()`.
-- File note already contains `// FIXME this also wrong`.
 
 2. Auto-merge has no explicit conflict markers.
 - Overlapping edits are combined heuristically (especially strings/lists), not surfaced as structured hunks.
@@ -248,7 +245,7 @@ Behavior:
 - Document payloads expose `hasConflict`, `isStaged`, and `snapshotsCount` for troubleshooting.
 
 Code:
-- `arhiv-cli/src/bin/arhiv.rs`
+- `arhiv-cli/src/bin/arhiv/`
 - `arhiv/src/arhiv/status.rs`
 - `arhiv/src/ui/Workspace/WorkspaceHeader/ConflictsButton.tsx`
 - `arhiv/src/ui/Workspace/DocumentCard/Indicators.tsx`

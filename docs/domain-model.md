@@ -1,12 +1,12 @@
 # Arhiv Domain Model
 
-Status: intended durable domain model
-
 ## Purpose and scope
 
 Arhiv is a private, local-first application for one person's structured knowledge and files. The person is the implicit owner and is not a domain object.
 
-This document defines enduring domain concepts, relationships, and rules. It governs the domain when current behavior differs. User interfaces, storage, encryption, network protocols, and implementation mechanisms are outside its scope.
+This document explains the current domain concepts, relationships, and rules.
+User interfaces, storage, encryption, network protocols, and implementation
+mechanisms are outside its scope.
 
 ## Domain objects
 

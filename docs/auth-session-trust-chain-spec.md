@@ -1,7 +1,5 @@
 # Arhiv Auth, Session, and Trust-Chain Spec
 
-Status: implementation-aligned (current behavior)
-
 Scope: local HTTPS UI server authentication, session propagation, and certificate trust behavior across CLI/Desktop/Android launchers.
 
 ## 1. Components and Secrets
@@ -53,56 +51,33 @@ Browser bootstrap:
 - If file is missing: server generates new self-signed certificate and writes PEM file.
 - On unix, generated certificate file permissions are set to `0600`.
 
-## 5. Desktop Trust Chain
+## 5. Launcher session establishment
 
-Desktop launcher flow:
+Desktop and Android receive the server auth token and certificate bytes through
+their startup boundary. They establish the `AuthToken` cookie directly and
+trust only the delivered certificate. The
+[launcher-server runtime protocol](launcher-server-runtime-protocol-spec.md)
+describes how startup material is transported; the
+[platform security boundaries](platform-security-boundaries-spec.md) describe
+the Electron and Android trust implementations.
 
-1. Starts CLI server with `arhiv server --json`.
-2. Reads `@@SERVER_INFO:` JSON from server stderr.
-3. Computes SHA-256 base64 fingerprint from `serverInfo.certificate` DER bytes.
-4. Handles Electron `certificate-error` by accepting cert only when fingerprint matches expected fingerprint.
-
-Desktop cookie setup:
-- Launcher writes `AuthToken` cookie before opening UI URL.
-- Cookie attributes set by launcher:
-  - `secure: true`
-  - `sameSite: strict`
-
-## 6. Android Trust Chain
-
-Android launcher flow:
-
-1. Starts server through JNI and receives `ServerInfo { uiUrl, authToken, certificate }`.
-2. Builds trust manager from provided DER certificate bytes.
-3. WebView TLS handler (`onReceivedSslError`) accepts certificate only if presented cert DER bytes exactly match `serverInfo.certificate`.
-4. Non-matching certificates are rejected (`handler.cancel()`).
-
-Android cookie setup:
-- WebView cookie set for `serverInfo.uiUrl`:
-  - `AuthToken=<token>; Secure; HttpOnly`
-
-## 7. Boundary and Assumptions
+## 6. Boundary and Assumptions
 
 - UI URLs are emitted as `https://localhost:<port>/ui`.
 - Server socket binds IPv4 loopback only (`127.0.0.1`).
 - This model is local-process trust, not PKI CA trust.
 - The UI Content Security Policy permits scripts from the local server and connections only to the local server or GitHub's API for stable-release update checks.
 
-## 8. Known Limitations
+## 7. Known Limitations
 
 - No token expiry/rotation within a running server process.
 - No documented multi-client session separation; all clients use same server token for that server instance.
 - No CSRF-specific mechanism beyond `SameSite=Strict` cookie handling and localhost deployment assumptions.
 
-## 9. Source of Truth (Code References)
+## 8. Relevant implementation
 
 - `arhiv/src/server/ui_server/mod.rs`
 - `arhiv/src/server/mod.rs`
 - `arhiv/src/server/certificate.rs`
 - `arhiv/src/server/server_info.rs`
-- `arhiv/src/support/auth_token.rs`
-- `arhiv-desktop/src/arhiv.ts`
-- `arhiv-desktop/src/index.ts`
-- `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/MainActivity.java`
-- `arhiv-android/src/lib.rs`
-- `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/ServerInfo.java`
+- `arhiv/src/server/auth_token.rs`

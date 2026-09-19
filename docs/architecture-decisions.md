@@ -1,10 +1,11 @@
 # Architecture Decisions
 
-Status: decision record
-
 This document is the append-only record of significant architecture decisions in Arhiv. It preserves the context, decision, and consequences so that durable choices are not needlessly re-litigated.
 
-Canonical specifications and project guidance remain authoritative for their respective requirements. An ADR records the rationale for a decision; it does not replace or silently change a governing specification.
+The topic documents explain current behavior. An ADR records the rationale for
+a decision; it does not replace or silently change those explanations. When an
+accepted decision changes behavior, update the affected topic documents with
+the current result.
 
 ## Conventions
 

@@ -1,17 +1,14 @@
 # Arhiv User Workflows
 
-Status: intended durable product workflow contract
-
 ## Purpose and scope
 
-This document specifies the owner-facing outcomes for workflows that compose
+This document explains the owner-facing outcomes for workflows that compose
 Arhiv's domain, search, synchronization, recovery, and lifecycle rules. A
 workflow is independent of a particular UI, CLI command, or platform launcher.
 
-The domain model remains the source of truth for domain concepts and
-invariants. The linked specifications remain the source of truth for their
-technical contracts. This document does not redefine storage, cryptographic,
-API, or platform-security behavior; it defines how those contracts compose into
+The domain model explains the concepts and invariants used here. The linked
+technical documents provide details about storage, cryptography, APIs, and
+platform security. This document focuses on how those behaviors compose into
 observable owner workflows.
 
 The Arhiv owner is the sole actor in these workflows. The owner is intentionally

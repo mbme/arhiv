@@ -1,12 +1,10 @@
 # Arhiv Cross-Layer API and DTO Contract Spec
 
-Status: implementation-aligned (current behavior)
-
 Scope: contract between Rust server DTOs and TypeScript UI DTOs for `/ui/api`, plus adjacent typed payloads (`window.CONFIG`, multipart upload result).
 
 ## 1. Canonical DTO Sources
 
-Primary source of truth:
+Server definitions:
 - Rust server DTO definitions: `arhiv/src/ui/dto.rs`
 - API handler behavior: `arhiv/src/server/ui_server/api_handler.rs`
 
@@ -124,17 +122,14 @@ Upload endpoint returns JSON `FileUploadResult`:
 
 This payload is separate from `APIResponse` enum and is consumed by `uploadFile()`.
 
-## 9. Versioning and Compatibility Policy (Current)
+## 9. Versioning and compatibility
 
-Current state:
 - No explicit API version field in request/response envelopes.
-- Compatibility is source-level: Rust and TS DTO definitions are updated together within the same repo revision.
-
-Required change policy:
-- Any contract change must update at least:
-  - `arhiv/src/ui/dto.rs`
-  - `arhiv/src/ui/dto.ts`
-  - corresponding handler/client usage (`api_handler.rs`, UI call sites)
+- Compatibility is source-level: Rust DTOs, TypeScript DTOs, handlers, and UI
+  callers ship together in one repository revision.
+- `arhiv/scripts/check-dto-sync.ts` checks that request and response variant
+  names remain synchronized. Field-shape compatibility still relies on the
+  Rust and TypeScript definitions being updated together.
 
 ## 10. Known Risks
 
@@ -142,7 +137,7 @@ Required change policy:
 - `APIResponse` uses `deny_unknown_fields` on Rust serialize enum; accidental shape drift can surface as runtime parse/usage issues in clients.
 - Non-2xx error bodies are unstructured text, limiting programmatic error branching.
 
-## 11. Source of Truth (Code References)
+## 11. Relevant implementation
 
 - `arhiv/src/ui/dto.rs`
 - `arhiv/src/ui/dto.ts`

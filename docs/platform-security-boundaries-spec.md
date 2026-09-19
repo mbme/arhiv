@@ -1,7 +1,5 @@
 # Arhiv Platform Security Boundaries Spec
 
-Status: implementation-aligned (current behavior)
-
 Scope: platform-specific trust boundaries, process boundaries, permissions, and sensitive data flow for Desktop (Electron) and Android wrappers around the local Arhiv server.
 
 ## 1. Shared Security Model
@@ -127,14 +125,14 @@ UI capture boundary:
 - Desktop trust chain depends on integrity of startup `@@SERVER_INFO` stream from local child process.
 - Local certificate file is intentionally persistent; compromise of state dir can affect local trust material.
 
-## 7. Source of Truth (Code References)
+## 7. Relevant implementation
 
 - `arhiv-desktop/src/index.ts`
 - `arhiv-desktop/src/arhiv.ts`
 - `arhiv/src/arhiv/keyring.rs`
 - `arhiv/src/arhiv/mod.rs`
 - `arhiv/src/server/certificate.rs`
-- `arhiv/src/support/http_server.rs`
+- `arhiv/src/server/http_server.rs`
 - `arhiv-android/app/src/main/AndroidManifest.xml`
 - `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/MainActivity.java`
 - `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/Keyring.java`

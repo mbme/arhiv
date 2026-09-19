@@ -1,7 +1,5 @@
 # Arhiv Crypto and Key Lifecycle Threat Model
 
-Status: implementation-derived (current behavior) + explicit threat model policy
-
 ## 1. Scope
 
 This document specifies:
@@ -137,30 +135,20 @@ Limitations:
 2. External libraries/allocators/OS may retain copies outside Arhiv control.
 3. Host compromise remains out of scope.
 
-## 7. Keyring / Platform Integration Boundaries
+## 7. Platform credential caches
 
-Desktop/server:
-- Optional system keyring stores the serialized x25519 storage master key for convenience.
-- Missing, malformed, or non-matching cached keys require password/import recovery; storage
-  corruption and other open failures remain errors.
-- `lock()` erases the cached storage-key entry; password unlock writes it.
+Desktop and Android may cache the serialized storage master key in
+platform-protected credential storage. A valid cache can unlock storage without
+the Arhiv password. Missing, malformed, unavailable, or non-matching cached
+material requires password or imported-key recovery.
 
-Android:
-- Storage-key cache uses Android keystore + biometric/device-credential-gated encrypt/decrypt flow.
-- Rust side keeps an in-memory storage-key copy after init. The legacy password payload is not read
-  or migrated.
-- A biometric mismatch does not leave the system authentication prompt. Prompt cancellation and
-  retryable terminal errors offer a native retry/password choice; unavailable or locked-out device
-  authentication requires password/import recovery.
-- If the Android Keystore key is permanently invalidated or its encrypted cache is unreadable,
-  password/import recovery is required. A successful recovery immediately prompts for device
-  authentication before writing the renewed cache; permanently invalidated Keystore keys are
-  recreated first.
-- `lock()` erases the Android cache. It intentionally does not retain biometric convenience across
-  a lock; the next successful password/import recovery may cache the key again.
+Lock removes the platform cache before dropping the in-memory key. The
+[platform security boundaries](platform-security-boundaries-spec.md) describe
+the system keyring, Android Keystore, device-authentication flow, and
+platform-specific failure handling.
 
-Security boundary statement:
-- Keyring/keystore are convenience and local UX mechanisms, not trust anchors that replace encryption keys or backups.
+Credential caches are convenience mechanisms, not recovery copies or
+independent trust anchors.
 
 ## 8. Operational Guidance
 
@@ -169,7 +157,7 @@ Security boundary statement:
 3. Treat password change as key-file rewrap only; it is not data re-encryption.
 4. Pair key export with storage backup in recovery drills.
 
-## 9. Source of Truth (Code References)
+## 9. Relevant implementation
 
 - `baza-storage/src/crypto/age.rs`
 - `baza-common/src/crypto/secret.rs`

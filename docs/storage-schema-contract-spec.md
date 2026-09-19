@@ -1,6 +1,5 @@
 # Arhiv Storage Schema Contract Specification
 
-Status: implementation-aligned
 Current data version: `2`
 
 ## 1. Scope
@@ -160,33 +159,17 @@ Runtime gate:
 
 Current state:
 - latest `data_version` is hardcoded in `DataSchema` (`2`)
+- data version `1` is upgraded by the asset-content-hash migrator described in
+  `docs/storage-migration-playbook.md`
 - there is no negotiated multi-version schema compatibility at runtime
 
-Operational policy:
-- changing schema semantics that can invalidate existing stored docs requires coordinated `data_version` bump and migration plan
-
-## 11. Migration Triggers for Schema Changes
-
-A `data_version` bump is required when any of the following occur:
-- field rename/remove/type change for persisted documents
-- new mandatory field without deterministic default/backfill
-- enum option changes that invalidate existing values
-- document type rename/remove
-- changed interpretation of existing field values
-
-A bump is usually not required for:
-- adding optional field with backward-compatible handling
-- adding new document type that does not alter existing-type semantics
-
-When in doubt, treat schema-affecting changes as migration-affecting and follow `docs/storage-migration-playbook.md`.
-
-## 12. Known Limits (Current)
+## 11. Known limits
 
 - schema is static (compile-time), not user-extensible at runtime
 - `Date`, `Duration`, `People`, `Countries` currently validate as strings; domain-format semantics are not centrally enforced in schema layer
 - UI/API compatibility still depends on coordinated client + server upgrades in one repo revision
 
-## 13. Source of Truth (Code References)
+## 12. Relevant implementation
 
 - `baza/src/schema/mod.rs`
 - `baza/src/schema/data_description.rs`

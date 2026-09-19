@@ -1,6 +1,5 @@
 # Arhiv Encrypted File Format Specification
 
-Status: implementation-derived (current code)
 Version: 1 (storage `storage_version = 1`)
 
 ## 1. Scope
@@ -170,7 +169,15 @@ Top-level fields:
 
 ## 7. Search Index Format (`search_index.gz.age`)
 
-After AGE decrypt + GZIP decompress: postcard binary payload of `FTSEngine`.
+After AGE decrypt + GZIP decompress: postcard binary payload of
+`SearchIndexFile`.
+
+Fields:
+- `format_version` (currently `1`)
+- `search_version` (currently `5`)
+- `data_version`
+- `schema_fingerprint`
+- `fts` (`FTSEngine`)
 
 No additional framing/magic bytes are added by Arhiv; payload is exactly postcard bytes.
 
@@ -224,6 +231,9 @@ State/search/locks failures:
 - Compatibility gate currently enforced at runtime:
   - `storage_version == 1`
   - `data_version` must match schema latest data version.
+- Search-index reuse additionally requires matching format, search algorithm,
+  data version, and schema fingerprint values. A mismatch causes the index to
+  be rebuilt from current document heads.
 
 ## 13. Non-goals / Not Specified
 
@@ -231,9 +241,23 @@ State/search/locks failures:
 - Postcard internal schema evolution strategy is not separately version-tagged in these files.
 - Backup/sync conflict file naming strategy is out of scope for file payload format.
 
-## 14. Source of Truth (Code References)
+## 14. Related behavior
 
-Primary implementation files:
+This document owns file contents and compatibility boundaries. Related
+operations are explained elsewhere:
+
+- [Crypto and key lifecycle](crypto-key-lifecycle-threat-model.md) explains
+  creation, password changes, key import/export, cached credentials, and
+  recovery.
+- [Backup and restore](backup-restore-durability-spec.md) explains backup
+  generations, manifests, verification, and restoration.
+- [Storage migrations](storage-migration-playbook.md) explains version
+  upgrades and rollback.
+- [Merge conflicts](merge-conflicts-spec.md) explains storage-file union and
+  semantic reconciliation of concurrent record revisions.
+
+## 15. Relevant implementation
+
 - `baza-storage/src/crypto/age.rs`
 - `baza-storage/src/compression.rs`
 - `baza-storage/src/container.rs`
@@ -249,100 +273,3 @@ Primary implementation files:
 - `baza/src/baza/blobs.rs`
 - `baza/src/baza_manager/keys.rs`
 - `baza/src/baza_paths.rs`
-
-## 15. Key Lifecycle Operations (Implementation Contract)
-
-This section documents key lifecycle behavior that is directly implemented in code.
-
-Create:
-- `BazaManager::create` generates a new storage x25519 key and writes it into `key.age` encrypted by password-derived AGE key.
-
-Change password:
-- `change_key_file_password(old_password, new_password)` decrypts existing `key.age`, re-encrypts same storage key with new password key, then locks state.
-- Storage data does not get re-encrypted during password change; only `key.age` encryption changes.
-
-Export key:
-- `export_key(password, new_password)` decrypts local key file and re-encrypts it for export with `new_password`.
-- Output is AGE armored text payload (string form) suitable for file/QR transfer.
-
-Import key:
-- `import_key(encrypted_key_data, password)` decrypts imported payload, validates imported storage key by reading existing storage, then replaces local `key.age`.
-- On success, manager unlocks state with imported key.
-
-Verify key:
-- `verify_key(encrypted_key_data, password)` returns whether imported key can decrypt current storage.
-
-Recovery implications:
-- Password recovery without key material is not supported by format.
-- If both password and exportable key material are unavailable, data is unrecoverable.
-
-Code:
-- `baza/src/baza_manager/keys.rs`
-- `baza/src/baza_manager/mod.rs`
-
-## 16. Backup/Restore and Durability Notes (Current Behavior)
-
-Backup and restore behavior is specified in
-`docs/backup-restore-durability-spec.md`. The format-relevant behavior is:
-
-- each backup generation contains a key file, main storage database, committed
-  blobs, and an encrypted authenticated manifest that binds its listed key,
-  database, and referenced blob artifact bytes;
-- backup refuses to run while staged changes exist;
-- `arhiv restore check` validates a generation without mutating live storage;
-- `arhiv restore apply` validates and transactionally installs a generation,
-  then clears regenerable runtime state; and
-- backup remains a sequence of file copies rather than a transactional
-  point-in-time snapshot of concurrently changing live files.
-
-Code:
-- `baza/src/backup/`
-- `arhiv-cli/src/bin/arhiv/`
-
-## 17. File Mutation Safety and Rollback Mechanics
-
-Arhiv uses `FsTransaction` in several storage/key mutation paths and atomic
-single-file replacement helpers where rollback batching is not required.
-
-Behavior:
-- mutating operations can move previous files to backup names (`*-backup`),
-- transaction `commit()` removes backup temp files and reports cleanup failures,
-- dropping an uncommitted transaction triggers rollback (best-effort reverse operations),
-- rollback failures are surfaced and logged,
-- successful create, rename, copy, link, and remove operations sync the
-  containing directory when the local platform/filesystem supports directory
-  fsync,
-- `replace_file_atomically` writes through a same-directory temporary file,
-  syncs the file, renames it into place, and syncs the containing directory.
-
-Important limitation:
-- rollback is best-effort, not a hard atomic commit protocol across all touched files/directories.
-- `FsTransaction` is an in-process rollback guard, not a crash-safe journal;
-  callers must hold the relevant application-level lock for shared paths.
-
-Code:
-- `baza-common/src/fs_transaction.rs`
-- `baza/src/baza_manager/mod.rs`
-- `baza/src/baza_manager/keys.rs`
-
-## 18. Migration and Compatibility Policy (Current Code)
-
-Compatibility gates:
-- open/read requires exact match:
-  - `storage_version == 1`
-  - `data_version == schema.get_latest_data_version()`
-- state refresh additionally requires `storage_info == state_info`.
-
-Migration model:
-- on open, multiple storage db files ending in `.gz.age`, plus Syncthing-style `baza.gz.sync-conflict-*.age` files, are merged into the main db file by key-level union. Transaction backups named `*-backup` are excluded from normal merging. If the main db file is missing, one `baza.gz.age-*-backup` transaction backup is restored first; multiple such backups fail recovery rather than being merged.
-- this merge preserves unique `(id, rev)` snapshots and is not a schema/data migration transform.
-
-Explicit non-goal in current implementation:
-- no generic in-place storage format upgrader is specified in runtime flow.
-- data migrations use dedicated migrator code rather than reusable low-level
-  manual rewrite helpers.
-
-Code:
-- `baza/src/baza/mod.rs`
-- `baza/src/baza_manager/mod.rs`
-- `baza/src/baza_manager/migration/`

@@ -1,12 +1,13 @@
 # Full-Text Search Specification
 
-Status: intended durable search model
-
 ## Purpose and scope
 
 Full-text search helps the Arhiv owner find records by indexed text fields. It is a local, deterministic ranking feature over one Arhiv's current search index.
 
-This document governs query normalization, result eligibility, candidate matching, ranking, and search-index compatibility. It does not govern UI presentation, storage encryption, document schema validation, merge behavior, or cross-device synchronization.
+This document explains the current query normalization, result eligibility,
+candidate matching, ranking, and search-index compatibility behavior. UI
+presentation, storage encryption, document schema validation, merge behavior,
+and cross-device synchronization are outside its scope.
 
 ## Usage constraints
 
@@ -24,7 +25,7 @@ The search index includes:
 - record id text; and
 - schema fields whose field type exposes searchable string data.
 
-The search index does not expand references into referenced record titles. Reference-title indexing is out of scope unless a future spec update explicitly adds it.
+The search index does not expand references into referenced record titles.
 
 ## Query normalization
 
@@ -88,7 +89,8 @@ Field boosts are bounded ranking multipliers applied during field-aware per-term
 
 Title and id fields receive explicit boosts because they identify a record more directly than ordinary body fields. Field boosts must not make weak lexical matches dominate clearly better exact matches in ordinary fields.
 
-Additional schema/type-specific boosts require an explicit spec update. Field boost rules should remain centralized instead of spreading product ranking rules through callers.
+Title and id are the only specially boosted fields. Their boost values are
+assigned centrally while documents are indexed.
 
 ## Proximity and phrase boosts
 
@@ -108,9 +110,13 @@ Proximity boosts must remain bounded so they improve ordering among eligible rec
 
 ## Search-index compatibility
 
-Search-index serialization is an implementation detail, but persisted indexes must be invalidated when the indexed data model or ranking-critical stored data changes.
+The persisted search index records a format version, search algorithm version,
+schema data version, and schema fingerprint. The current search algorithm
+version is `5`.
 
-Changing stored term positions, token normalization, candidate classes, or ranking semantics requires bumping the search algorithm version so stale indexes are rebuilt instead of reused silently.
+Index loading rejects a mismatch in any of these values. Arhiv then rebuilds
+the index from current document heads instead of silently reusing incompatible
+ranking data.
 
 ## Non-goals
 

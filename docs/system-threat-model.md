@@ -1,12 +1,10 @@
 # Arhiv System Threat Model
 
-Status: policy + implementation-aligned (current behavior)
-
 ## 1. Purpose and Scope
 
 This document defines the system-level security model for Arhiv: protected assets, attacker capabilities, trust boundaries, security goals, and known limitations.
 
-It is a cross-cutting policy document. Detailed implementation contracts remain authoritative in:
+It is a cross-cutting overview. Detailed behavior is explained in:
 
 - `docs/crypto-key-lifecycle-threat-model.md` for key hierarchy, recovery, and secret handling
 - `docs/auth-session-trust-chain-spec.md` for local HTTPS, cookies, tokens, and browser bootstrap
@@ -24,9 +22,15 @@ Arhiv is a single-user, local-first application. Its encrypted storage is access
 
 The HTTPS server binds only to IPv4 loopback (`127.0.0.1`). It is not a LAN or Internet service.
 
-Desktop and Android receive server startup information through their process/JNI boundary, pin the delivered self-signed certificate, and set the primary authentication cookie directly. Generic browser launch uses a separate, one-time bootstrap token to establish that cookie, then redirects to the clean UI URL.
+Desktop, Android, and generic browser launch establish a local HTTPS session
+through their respective launcher boundaries. The authentication, startup, and
+platform documents describe the token exchange and certificate trust details.
 
-Recognized release builds check GitHub's latest stable release once per hour while the workspace UI is open. The browser-side request sends no Arhiv records, credentials, or current-version value, but GitHub and the platform network stack can observe normal request metadata such as IP address, user agent, and request timing.
+When the workspace UI mounts, recognized release builds may check GitHub's
+latest stable release. Attempts are limited to one per hour. The browser-side
+request sends no Arhiv records, credentials, or current-version value, but
+GitHub and the platform network stack can observe normal request metadata such
+as IP address, user agent, and request timing.
 
 ## 3. Protected Assets
 
@@ -100,29 +104,7 @@ Arhiv does not protect against:
 6. No remote multi-user isolation, server-side escrow, or recovery service is provided.
 7. Platform permissions and browser/runtime security properties are delegated to the operating system and platform runtimes.
 
-## 8. Security-Sensitive Change Rules
-
-Changes to the following require review of the linked detailed specification and targeted security validation:
-
-1. Key hierarchy, password handling, exports, or storage encryption -> crypto/key lifecycle threat model.
-2. Server binding, certificates, tokens, cookies, browser bootstrap, or UI routes -> auth/session trust-chain spec.
-3. Desktop or Android startup, certificate trust, keyring/keystore, permissions, or WebView behavior -> platform security boundaries spec.
-4. Backup, restore, storage replacement, migration, or sync merge behavior -> backup/restore, migration, and merge-conflict specs.
-
-Security claims must distinguish confidentiality, integrity, freshness/rollback resistance, availability, and metadata protection. Do not describe a control as providing a guarantee outside its stated boundary.
-
-## 9. Validation Expectations
-
-For security-sensitive changes, validate the affected boundary directly. Examples include:
-
-- verify the server is reachable on `127.0.0.1` and not on a non-loopback interface
-- verify protected routes reject missing, malformed, reused, or incorrect credentials as applicable
-- verify the browser bootstrap token succeeds once and cannot be reused
-- verify Desktop and Android reject a certificate other than the startup-delivered certificate
-- verify wrong keys, corrupted ciphertext, and incompatible storage versions fail closed
-- verify backup recovery using a disposable copy of a known committed storage state
-
-## 10. Source of Truth (Code References)
+## 8. Relevant implementation
 
 - `arhiv/src/server/mod.rs`
 - `arhiv/src/server/auth_token.rs`

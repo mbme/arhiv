@@ -38,11 +38,11 @@ Read the relevant spec before changing behavior in that area:
 - Keep Electron runtime versions aligned across dev and Arch packaging: `arhiv-desktop/package.json`, `package-lock.json`, `PKGBUILD.template`, and `arhiv-desktop/arhiv-desktop` must move together.
 
 ## High-risk areas
-- Crypto/key handling: `baza-common/src/crypto/`, `baza-storage/src/crypto/`, `arhiv/src/support/crypto_key.rs`, `baza/src/baza_manager/keys.rs`.
+- Crypto/key handling: `baza-common/src/crypto/`, `baza-storage/src/crypto/`, `baza/src/baza_manager/keys.rs`, `arhiv/src/arhiv/keyring.rs`.
 - Storage container and patch/merge logic: `baza-storage/src/container.rs`, `baza/src/baza_storage/`, `baza/src/merge/mod.rs`.
 - Auth, cookies, HTTPS, certificates, and launcher trust path: `arhiv/src/server/`, `arhiv-desktop/src/`, `arhiv-android/` WebView/JNI startup code.
 - Storage/data migration code: `baza/src/baza_manager/migration/`.
-- Android storage/network security configuration: `arhiv-android/app/src/main/AndroidManifest.xml`, `arhiv-android/app/src/main/res/xml/network_security_config.xml`.
+- Android storage/security configuration: `arhiv-android/app/src/main/AndroidManifest.xml`, `arhiv-android/app/src/main/res/xml/backup_rules.xml`, `arhiv-android/app/src/main/res/xml/data_extraction_rules.xml`.
 
 ## Before changing X, read Y
 - Domain concepts, relationships, or central business rules -> domain model document.
@@ -65,6 +65,23 @@ Use the most targeted check first, then broaden when needed:
 - Dev server: `just run`.
 - Electron dev runtime: `just desktop`.
 - Android/release/package commands live in `justfile`; prefer invoking recipes instead of copying long command lines.
+
+## Security-sensitive validation
+- Validate the affected boundary directly rather than relying only on broad checks.
+- For server auth changes, exercise missing, malformed, reused, and incorrect credentials as applicable.
+- For browser bootstrap changes, verify that the token succeeds once and cannot be reused.
+- For Desktop or Android trust changes, verify rejection of certificates other than the startup-delivered certificate.
+- For storage crypto or compatibility changes, verify wrong keys, corrupted ciphertext, and incompatible versions fail closed.
+- For backup/restore changes, perform recovery with a disposable copy of known committed storage.
+- Describe security effects precisely: distinguish confidentiality, integrity, freshness/rollback resistance, availability, and metadata protection.
+
+## Storage migration changes
+- Change `storage_version` for persistent container, encoding, encryption/compression, or storage-file merge contract changes.
+- Change `data_version` for stored document-shape or meaning changes that invalidate existing data.
+- Preserve parseable storage info, exact index/value cardinality, equal `BazaInfo` across mergeable storage files, and every distinct `DocumentKey(id, rev)`.
+- Keep migrations deterministic for identical input and target versions, and preserve pre-migration bytes on failure.
+- Migrators must be idempotent, hold the exclusive storage lock, log source and target versions, publish through transactional replacement, and fail with actionable diagnostics.
+- Cover migration rollback and corruption/failure paths with focused tests.
 
 ## Non-obvious gotchas
 - Debug and release UI asset serving differ: debug reads filesystem assets, release embeds assets.

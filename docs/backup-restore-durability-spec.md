@@ -1,7 +1,5 @@
 # Arhiv Backup, Restore, and Durability Specification
 
-Status: implementation-aligned (current behavior)
-
 ## 1. Scope
 
 This document specifies current backup/restore behavior and durability guarantees for Arhiv.
@@ -13,7 +11,7 @@ It covers:
 - corruption detection and repair paths
 
 It does not define:
-- future transactional snapshot features
+- transactional snapshot behavior that Arhiv does not currently provide
 - cloud/sync provider-level durability
 
 ## 2. Backup Command Contract
@@ -203,9 +201,9 @@ No automated in-place repair tool is currently provided for arbitrary corruption
 
 These are product/engineering gaps, not hidden behavior.
 
-## 11. Source of Truth (Code References)
+## 11. Relevant implementation
 
-- `arhiv-cli/src/bin/arhiv.rs`
+- `arhiv-cli/src/bin/arhiv/`
 - `baza/src/backup/`
 - `baza/src/baza_manager/manager_state.rs`
 - `baza/src/baza/mod.rs`

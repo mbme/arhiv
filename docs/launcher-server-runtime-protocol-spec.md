@@ -1,7 +1,5 @@
 # Arhiv Launcher-Server Runtime Protocol Spec
 
-Status: implementation-aligned (current behavior)
-
 Scope: startup/shutdown contract between launchers (CLI/Desktop/Android) and the Arhiv server process, including discovery data, lockfile semantics, and single-instance behavior.
 
 ## 1. Runtime Surfaces
@@ -42,8 +40,7 @@ When `--json` is passed:
 Desktop parser behavior:
 - reads stderr line stream,
 - takes first line with `@@SERVER_INFO:` prefix,
-- parses JSON payload,
-- computes certificate fingerprint from `certificate` bytes.
+- parses the JSON payload and passes it to desktop startup.
 
 Failure modes:
 - no marker line => desktop startup fails (`No server info marker found`).
@@ -113,14 +110,14 @@ Android path:
 - Lockfile stores only port; no pid or richer metadata.
 - Protocol versioning field is not present in `ServerInfo` payload.
 
-## 9. Source of Truth (Code References)
+## 9. Relevant implementation
 
-- `arhiv-cli/src/bin/arhiv.rs`
+- `arhiv-cli/src/bin/arhiv/`
 - `arhiv/src/server/mod.rs`
 - `arhiv/src/server/server_info.rs`
 - `arhiv/src/server/server_lock.rs`
 - `baza-common/src/lock_file.rs`
-- `arhiv/src/support/http_server.rs`
+- `arhiv/src/server/http_server.rs`
 - `arhiv-desktop/src/arhiv.ts`
 - `arhiv-desktop/src/index.ts`
 - `arhiv-android/src/lib.rs`

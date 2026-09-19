@@ -33,7 +33,7 @@ thiserror = "2" # macro for better errors
 url = "2.2.2"
 similar = { version = "3.1", features = ["unicode"] }
 strsim = "0.11"
-charabia = { version = "0.9", default-features = false }
+charabia = { version = "0.10", default-features = false }
 deunicode = "1.6"
 regex = "1.5.4"
 

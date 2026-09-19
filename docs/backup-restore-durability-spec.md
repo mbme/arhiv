@@ -213,11 +213,3 @@ No automated in-place repair tool is currently provided for arbitrary corruption
 3. Periodically perform restore drills in a disposable environment.
 4. Keep key export and backup strategy coordinated.
 5. Preserve multiple backup generations; do not rely on a single newest copy.
-
-## 10. Known Gaps
-
-1. No transactional multi-file snapshot protocol.
-2. No built-in backup rollback/freshness protection.
-3. Deep blob plaintext verification is explicit, not part of default restore.
-
-These are product/engineering gaps, not hidden behavior.

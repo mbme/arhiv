@@ -1,174 +1,95 @@
-# Arhiv Crypto and Key Lifecycle Threat Model
+# Arhiv Crypto and Key Lifecycle
 
-## 1. Scope
+## Scope
 
-This document specifies:
+This document defines key hierarchy, lifecycle, recovery boundaries, and secret
+handling. The [encrypted file format](arhiv-encrypted-file-format.md) owns byte
+formats; [authentication and sessions](auth-session-trust-chain-spec.md) owns
+TLS and UI session secrets.
 
-- Key hierarchy and lifecycle operations
-- Recoverability and non-recoverability boundaries
-- Threat model assumptions and security guarantees
-- Zeroization expectations and limits
+## Key hierarchy
 
-It does not specify:
+1. A password-derived AGE scrypt key encrypts and decrypts only
+   `storage/key.age`.
+2. The x25519 storage master key is stored inside `key.age` and encrypts the
+   database, state, search index, and document locks.
+3. Each asset has an x25519 blob key stored in its document metadata and used
+   only for that asset's blob.
 
-- TLS/UI trust chain details (covered in auth/session spec)
-- Storage container byte format (covered in encrypted file format spec)
+## Lifecycle
 
-## 2. Key Hierarchy and Roles
+### Create
 
-Arhiv uses AGE-based encryption with three practical key layers:
+Creation enforces the 8-byte minimum password length, derives its wrapping key,
+generates a storage master key, writes the password-encrypted `key.age`, and
+creates storage with the current `BazaInfo`.
 
-1. Password-derived key (AGE scrypt recipient/identity)
+### Unlock and lock
 
-- Derived from user password
-- Used only to encrypt/decrypt `storage/key.age` (ASCII-armored)
+Unlock decrypts and parses the storage master key, validates it by opening
+storage, and retains it in memory. When available, Arhiv also stores its
+serialized form in platform-protected credential storage.
 
-2. Storage master key (x25519 AGE identity)
+Lock durably deletes that platform cache before dropping in-memory access. If
+cache deletion fails, lock fails and retains the in-memory key.
 
-- Stored encrypted inside `key.age`
-- Encrypts/decrypts main storage + state/search/locks files
+### Change password
 
-3. Per-asset blob keys (x25519 AGE identity per asset)
+Password change decrypts `key.age`, re-encrypts the same storage master key with
+the new password, and replaces the key file transactionally. Storage payloads
+are not re-encrypted.
 
-- Stored in asset document metadata
-- Encrypt/decrypt asset blob payload files
+### Export, import, and verification
 
-## 3. Lifecycle Operations
+Export decrypts the local key file and returns the same storage master key in an
+ASCII-armored AGE payload protected by the export password.
 
-### 3.1 Create
+Import decrypts and parses the candidate key, validates it by reading storage,
+and transactionally replaces local `key.age`. Verification performs the same
+validation without replacement.
 
-Creating an Arhiv:
+## Recovery contract
 
-1. Derives password key from password (min length enforced).
-2. Generates new x25519 storage master key.
-3. Writes master key into `key.age` encrypted with password key.
-4. Creates initial storage with current `BazaInfo`.
+Recoverable cases:
 
-### 3.2 Unlock / Lock
+- a missing platform cache, when the owner still has the Arhiv password or an
+  exported key and its password;
+- a lost local `key.age`, when a usable export and password remain; and
+- password rotation, because it re-wraps the same storage master key.
 
-Unlocking:
+Storage is unrecoverable when no available credential can reconstruct its
+master key, including loss or corruption of all usable key files and exports.
+Arhiv has no server-side escrow or recovery service.
 
-1. Decrypts `key.age` with password key.
-2. Parses decrypted x25519 storage master key.
-3. Stores key in process memory and allows storage/state access.
-4. Saves the serialized storage master key to platform-protected local credential storage when available.
+## Security contract
 
-Locking:
+Key handling aims to:
 
-- Durably removes the platform-protected cached storage key before dropping the in-memory key/cache.
-- If credential deletion fails, lock fails and leaves the in-memory key available.
+- keep storage confidential at rest without decryption credentials;
+- separate the password wrapper from the storage master key;
+- allow password rotation without rewriting storage; and
+- fail closed on wrong credentials, malformed keys, or incompatible storage.
 
-### 3.3 Change Password
+Sensitive buffers and transported key material should use secret-aware memory
+handling where feasible. Logs must not contain plaintext secrets, and decrypted
+secret lifetimes should be minimized. Zeroization is best-effort: libraries,
+allocators, and the OS may retain copies, and a compromised host remains outside
+this guarantee.
 
-Changing the key-file password:
+## Platform credential caches
 
-1. Decrypts current `key.age` with old password.
-2. Re-encrypts same storage master key with new password.
-3. Replaces key file transactionally.
+Desktop and Android may cache the serialized storage master key in their system
+credential stores. A valid cache can unlock storage without the Arhiv password;
+a missing, malformed, unavailable, or non-matching cache falls back to password
+or imported-key recovery.
 
-Important: storage payload files are NOT re-encrypted during password change.
+Caches are convenience mechanisms, not recovery copies or independent trust
+anchors. See [Platform security boundaries](platform-security-boundaries-spec.md)
+for platform authentication and failure handling.
 
-### 3.4 Export Key
+## Operational guidance
 
-Exporting a key:
-
-1. Decrypts local `key.age` with current password.
-2. Re-encrypts same storage master key with `export_password`.
-3. Returns ASCII-armored AGE payload string.
-
-### 3.5 Import/Verify Key
-
-Importing a key:
-
-1. Decrypts imported key payload.
-2. Parses candidate storage master key.
-3. Validates candidate key by attempting to read storage.
-4. Replaces local `key.age` transactionally.
-
-Key verification performs the same validation without replacing the key file.
-
-## 4. Recoverability Contract
-
-### 4.1 Recoverable
-
-1. Forgotten local app state/keyring password cache:
-
-- recoverable if user still knows Arhiv password or has exported key + its password.
-
-2. Lost local `key.age`:
-
-- recoverable only if user has exported key payload + export password.
-
-3. Password rotation:
-
-- recoverable by design (same storage master key; key file re-wrapped).
-
-### 4.2 Not Recoverable
-
-1. Lost both:
-
-- usable `key.age` (or export) AND password material needed to decrypt it.
-
-2. Corrupted encrypted key payload with no valid backup/export.
-
-3. Storage encrypted with master key that no available credential can reconstruct.
-
-No server-side escrow or recovery service exists in current architecture.
-
-## 5. Threat Model
-
-### 5.1 In Scope
-
-1. At-rest compromise of storage directories (stolen disk/backup).
-2. Offline brute-force attempts against password-protected key exports.
-3. File-level tampering/corruption attempts that should fail decrypt/parse/open.
-
-### 5.2 Out of Scope
-
-1. Fully compromised runtime host (root/admin malware, live memory scraping).
-2. Compromised OS keyring/Android keystore implementation.
-3. User exfiltration of plaintext via screenshots, clipboard, manual sharing.
-
-### 5.3 Security Goals
-
-1. Confidentiality of storage contents at rest without decryption credentials.
-2. Separation of password wrapper key from storage master key.
-3. Operational ability to rotate password without rewriting whole storage.
-4. Deterministic fail-fast behavior on wrong key/password/version.
-
-## 6. Zeroization and Secret Handling Expectations
-
-Contract:
-
-1. Sensitive buffers and transported key material should use secret-aware
-   memory handling where feasible.
-2. Logs must never include plaintext secret values.
-3. Decrypted secret material lifetime in memory should be minimized.
-
-Limitations:
-
-1. Zeroization is best-effort at wrapper boundaries; full-process zeroization cannot be guaranteed.
-2. External libraries/allocators/OS may retain copies outside Arhiv control.
-3. Host compromise remains out of scope.
-
-## 7. Platform credential caches
-
-Desktop and Android may cache the serialized storage master key in
-platform-protected credential storage. A valid cache can unlock storage without
-the Arhiv password. Missing, malformed, unavailable, or non-matching cached
-material requires password or imported-key recovery.
-
-Lock removes the platform cache before dropping the in-memory key. The
-[platform security boundaries](platform-security-boundaries-spec.md) describe
-the system keyring, Android Keystore, device-authentication flow, and
-platform-specific failure handling.
-
-Credential caches are convenience mechanisms, not recovery copies or
-independent trust anchors.
-
-## 8. Operational Guidance
-
-1. Keep at least one offline exported key copy protected by a strong password.
-2. Validate export/import flows periodically in a controlled test environment.
-3. Treat password change as key-file rewrap only; it is not data re-encryption.
-4. Pair key export with storage backup in recovery drills.
+- Keep an offline exported key protected by a strong password.
+- Test export and import in a controlled environment.
+- Treat password change as key-file rewrapping, not data re-encryption.
+- Include both key recovery and storage backup in recovery drills.

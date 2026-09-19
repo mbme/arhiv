@@ -4,17 +4,11 @@ Scope: platform-specific trust boundaries, process boundaries, permissions, and 
 
 ## 1. Shared Security Model
 
-Common model across desktop and android:
-
-- Arhiv server is local process, started by wrapper.
-- UI is served over local HTTPS with a self-signed certificate.
-- Client wrappers trust only the specific server certificate delivered at startup.
-- API access is gated by an `AuthToken` cookie.
-
-Critical trust assumptions:
-
-- local host process boundary is trusted more than network perimeter.
-- compromise of local user account compromises local Arhiv runtime.
+Desktop and Android start the local HTTPS server, trust the certificate
+delivered through their startup boundary, and authenticate with an `AuthToken`
+cookie. A compromised local account compromises this runtime trust model. See
+[Authentication and sessions](auth-session-trust-chain-spec.md) for the shared
+server and session contract.
 
 ## 2. Desktop Boundary (Electron)
 
@@ -115,19 +109,13 @@ UI capture boundary:
 
 - `FLAG_SECURE` is set to block screenshots/overview previews.
 
-## 4. Local Server Boundary and Certificate Material
-
-- Server TLS private key and certificate are persisted in `<state_dir>/arhiv-server.pem`.
-- On unix, file permissions are set to `0600` when generated.
-- Server binds HTTPS socket to IPv4 loopback (`127.0.0.1`), and launchers consume localhost URLs from `ServerInfo`.
-
-## 5. Non-goals / Not guaranteed
+## 4. Non-goals
 
 - This model does not protect against fully compromised local OS/user account.
 - No remote multi-tenant isolation model is provided.
 - No formal sandbox between UI and server beyond platform process/runtime primitives.
 
-## 6. Known Risks
+## 5. Known Risks
 
 - Android `MANAGE_EXTERNAL_STORAGE` is broad and raises data exposure impact if app sandbox is compromised.
 - Desktop trust chain depends on integrity of startup `@@SERVER_INFO` stream from local child process.

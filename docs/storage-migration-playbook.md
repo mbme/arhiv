@@ -91,14 +91,19 @@ performed by the migrator.
 
 1. Acquire the exclusive storage lock.
 2. Read every mergeable storage database and require one common `BazaInfo`.
-3. Process every asset snapshot, decrypt its referenced blob, and compute the
-   plaintext SHA-256 value.
-4. Write a migrated temporary file for each storage database.
-5. Replace the storage files through `FsTransaction`.
-6. Remove state, search-index, lock, and staged-blob artifacts so normal open
+3. Process every stored snapshot, including historical, conflict, and base
+   snapshots. Preserve document identity, revision, type, timestamp, and
+   non-asset data.
+4. For each asset snapshot, decrypt the referenced blob and add
+   `content_sha256` as the uppercase plaintext SHA-256. Missing, unreadable, or
+   undecryptable required blobs fail migration.
+5. Write migrated temporary storage files with `data_version = 2`, preserving
+   `storage_version = 1`.
+6. Replace storage files through `FsTransaction`.
+7. Remove state, search-index, lock, and staged-blob artifacts so normal open
    regenerates them from migrated committed storage.
-7. Commit the filesystem transaction after all replacements and state cleanup
-   succeed.
+8. Commit the filesystem transaction after every replacement and cleanup
+   succeeds.
 
 ### 5.3 Post-migration validation
 
@@ -138,38 +143,7 @@ Minimum required checks:
 4. Start original binary version and verify open/status.
 5. Preserve failed migrated artifacts for forensic analysis.
 
-## 7. Data migration: v1 to v2 asset content hashes
-
-Data version `2` adds mandatory readonly `asset.content_sha256`.
-
-The data-version 1 to 2 migrator:
-
-1. preserves `storage_version = 1`;
-2. requires an unlocked storage key;
-3. runs under the exclusive storage lock;
-4. refuses dirty local state before rewriting storage, including staged changes
-   or local state blobs.
-5. processes every stored document snapshot, including historical, conflict, and
-   base snapshots.
-6. preserves document IDs, revisions, document types, timestamps, and all
-   non-asset document data exactly.
-7. decrypts the referenced blob for each asset snapshot and computes
-   `content_sha256` as uppercase hex SHA-256 of the plaintext bytes.
-8. fails if any required asset blob is missing, unreadable, or
-   cannot be decrypted.
-9. rewrites migrated storage artifacts transactionally and updates `BazaInfo` to
-   `data_version = 2`.
-10. removes local state/search artifacts so subsequent normal open
-    observes data version `2`.
-
-It does not:
-
-- verify `content_sha256` during normal asset reads after migration;
-- compute the hash from encrypted blob bytes; or
-- migrate only current document state while leaving historical asset snapshots
-  in the version 1 shape.
-
-## 8. Current limitations
+## 7. Current limitations
 
 Migration support consists of the dedicated open-time data migrator from
 version 1 to 2. There is no generic migration framework or public migration CLI
@@ -180,7 +154,7 @@ rollback preparation. `FsTransaction` provides in-process rollback for
 multi-file replacement, while dedicated atomic replacement helpers publish
 single files. Neither mechanism replaces a verified backup.
 
-## 9. File publication and rollback
+## 8. File publication and rollback
 
 Migration uses the same publication primitives as other storage and key
 mutations. `FsTransaction` can move previous files to `*-backup` names and

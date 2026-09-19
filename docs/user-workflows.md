@@ -1,224 +1,114 @@
 # Arhiv User Workflows
 
-## Purpose and scope
+## Scope
 
-This document explains the owner-facing outcomes for workflows that compose
-Arhiv's domain, search, synchronization, recovery, and lifecycle rules. A
-workflow is independent of a particular UI, CLI command, or platform launcher.
+This document describes owner-visible workflows independent of UI, CLI, or
+launcher details. The [domain model](domain-model.md) owns domain invariants;
+linked specifications own technical preconditions and failure modes.
+The owner is the sole workflow actor and is not a domain object.
 
-The domain model explains the concepts and invariants used here. The linked
-technical documents provide details about storage, cryptography, APIs, and
-platform security. This document focuses on how those behaviors compose into
-observable owner workflows.
+Every workflow must either leave committed history valid or leave it unchanged.
+Equivalent successful outcomes have the same domain meaning on every supported
+surface. Workflows that change committed data distinguish staged work from
+committed work and identify their recovery boundary.
 
-The Arhiv owner is the sole actor in these workflows. The owner is intentionally
-not a domain object.
-
-## Workflow rules
-
-1. A workflow must leave committed Arhiv history valid under the domain model,
-   or leave it unchanged when it fails or is discarded.
-2. A workflow may expose platform-specific controls, but equivalent successful
-   outcomes must have the same domain meaning on every supported surface.
-3. A workflow that changes committed data must clearly distinguish staged work
-   from committed work and state any recovery or rollback boundary.
-4. Detailed preconditions and failure modes that belong to another canonical
-   specification are incorporated by reference rather than duplicated here.
-
-## 1. Open, unlock, and lock an Arhiv
-
-### Goal
-
-Open an existing Arhiv and make its committed data available locally.
-
-### Flow
+## 1. Open, unlock, and lock
 
 1. The owner supplies a password, imports a usable key, or uses an available
    platform-protected key cache.
 2. Arhiv validates the resulting storage key by opening storage.
-3. On success, the owner can read committed documents and prepare changes.
-4. On lock, Arhiv removes the platform-protected cached storage key before it
-   releases in-memory access.
+3. On success, committed documents become available and changes may be staged.
+4. Lock durably removes the platform key cache before releasing in-memory
+   access.
 
-### Outcomes and recovery
-
-- Incorrect or unusable credentials fail without granting storage access.
-- Losing both usable key material and the password material that decrypts it is
-  unrecoverable; Arhiv has no server-side recovery service.
-- A missing local key cache is recoverable with the password or an exported key.
+Incorrect credentials do not grant access. A missing cache is recoverable with
+the password or an exported key; losing both usable key material and the
+password needed to decrypt it is unrecoverable.
 
 See [Crypto and key lifecycle](crypto-key-lifecycle-threat-model.md) and
 [Authentication and sessions](auth-session-trust-chain-spec.md).
 
-## 2. Create, edit, add assets, commit, or discard documents
+## 2. Create, edit, commit, or discard
 
-### Goal
+1. The owner prepares a document edit, creation, erasure, or asset import.
+2. Unsaved form edits remain interface-local; saving creates a staged change.
+3. Saved changes for multiple documents form one staging set.
+4. Before commit, every staged version must satisfy its type and relationship
+   rules.
+5. The owner commits the set atomically or discards selected staged changes.
 
-Build a coherent change to structured knowledge and files without exposing
-partially prepared work as committed history.
-
-### Flow
-
-1. The owner prepares a new document, edits an active document, or creates an
-   asset from a file.
-2. Unsaved form edits remain local to the current interface. Saving creates a
-   staged change in Arhiv.
-3. The owner may stage changes for multiple documents; together they form the
-   implicit staging set.
-4. Before commit, every staged version must satisfy its document type's required
-   fields, constrained values, and relationship rules.
-5. The owner either commits the staging set or discards one or more staged
-   changes.
-
-### Outcomes and recovery
-
-- A commit atomically makes all staged versions current snapshots and makes
-  their preceding current snapshots historical. A failed commit makes none of
-  the staged versions current.
-- Discarding a staged creation removes the proposed document. Discarding another
-  staged change restores the preceding committed state or conflict.
-- A newly created relationship can target only an existing active document in the
-  same Arhiv.
-- Asset metadata, relationships, and history remain usable when its blob is
-  unavailable. Only reading that asset's content fails.
+A failed commit makes none of the staged versions current. Discard restores the
+preceding committed state or conflict; discarding a staged creation removes it.
+New relationships may target only existing active documents in the same Arhiv.
+If an asset blob is unavailable, its metadata, relationships, and history remain
+usable, while reading its content fails.
 
 See the [Domain model](domain-model.md).
 
 ## 3. Erase a document
 
-### Goal
-
-Remove a document from active use while retaining the identity and historical
-context required by Arhiv.
-
-### Flow
-
-1. The owner stages an erasure.
-2. The owner commits the staging set or discards the erasure.
-3. A committed erasure replaces the active version with an erased current
-   snapshot.
-
-### Outcomes and recovery
-
-- An erased document retains its identity, but new incoming references,
-  collection memberships, and asset references cannot target it.
-- Retained historical relationships may still identify the document as erased.
-- Discarding the staged erasure preserves the prior active snapshot.
+The owner stages an erasure, then commits or discards it. Commit replaces the
+active version with an erased current snapshot; discard preserves the active
+snapshot. An erased document keeps its identity and historical relationships,
+but cannot receive new references, collection memberships, or asset references.
 
 See the [Domain model](domain-model.md).
 
 ## 4. Find and select documents
 
-### Goal
+The owner enters a short query or browses the catalog. Arhiv returns documents
+matching every normalized query term and orders them deterministically,
+favoring stronger matches in identifying fields.
 
-Quickly find a current document to open, reference, or select.
-
-### Flow
-
-1. The owner enters a short query or browses the catalog.
-2. Arhiv normalizes the query and returns only documents that match every
-   normalized query term.
-3. Arhiv orders eligible documents deterministically, favoring stronger matches
-   in identifying fields.
-
-### Outcomes and recovery
-
-- An empty normalized query matches every indexed document.
-- If a term has no candidate indexed term, the query returns no results.
-- Search does not silently relax to partial-term, OR, semantic, or
-  recommendation-style matching when a strict query has no results.
+An empty normalized query matches every indexed document. A term with no
+candidate produces no results; search does not fall back to OR, partial-term,
+semantic, or recommendation matching.
 
 See [Full-text search](full-text-search-spec.md).
 
 ## 5. Reconcile concurrent changes
 
-### Goal
-
-Bring concurrent snapshots of the same document back to one current snapshot
-without silently selecting one branch as the sole result.
-
-### Flow
-
-1. After external synchronization is incorporated, Arhiv detects concurrent
-   snapshots and marks the document as conflicted.
+1. Refresh detects concurrent snapshots and marks the document conflicted.
 2. Arhiv may prepare a heuristic staged merge.
-3. The owner inspects or edits the staged merge.
-4. The owner commits it to resolve the conflict, or discards it to retain the
-   competing snapshots for later reconciliation.
+3. The owner inspects or edits that merge, then commits it or discards it for
+   later reconciliation.
 
-### Outcomes and recovery
+The conflict remains until its staged merge is committed. Commit creates one
+current snapshot and retains superseded history subject to erasure rules.
+Incoming snapshots wait while any staged changes exist. Unrelated staged changes
+may still be committed while a conflict remains, but automatic commit waits
+until no conflicts exist.
 
-- A conflict remains until its staged merge is committed.
-- Committing the staged merge creates one current snapshot and preserves the
-  superseded snapshots in history subject to erasure rules.
-- A staging set delays incorporation of incoming synchronized snapshots; the
-  owner must commit or discard staged work before refresh can incorporate
-  them.
-- Unrelated staged changes may be committed while an unresolved conflict
-  remains. Automatic commit waits until no conflicts exist.
+See [Merge conflicts](merge-conflicts-spec.md).
 
-See the [Domain model](domain-model.md) and
-[Merge conflicts](merge-conflicts-spec.md).
+## 6. Back up and restore
 
-## 6. Back up and restore committed data
+Before backup, the owner commits or discards staged changes and selects an
+existing absolute backup directory. Arhiv creates a timestamped generation
+containing the key file, committed database, committed blobs, and authenticated
+manifest.
 
-### Goal
+Restore starts with a read-only check of a selected manifest; deep blob
+verification is optional. After successful preflight, the owner explicitly
+applies the restore.
 
-Create recoverable copies of committed storage, and validate or restore a
-backup generation without silently replacing live data.
+Backups exclude staged and runtime state and are not transactional snapshots
+across concurrently changing files. Restore apply refuses staged live changes
+and, by default, rollback to an older generation. It validates restored
+artifacts and clears regenerable runtime state. Missing blobs require the
+explicit degraded-restore option and leave their asset content unavailable.
 
-### Backup flow
-
-1. The owner first commits or discards staged changes.
-2. The owner chooses an existing absolute backup directory.
-3. Arhiv creates a timestamped backup generation containing the key file,
-   database file, committed blobs, and authenticated manifest.
-
-### Restore flow
-
-1. The owner runs a read-only restore check for a chosen manifest.
-2. The owner may request deep blob verification when full plaintext-content
-   validation is required.
-3. After a successful preflight, the owner explicitly applies the restore.
-
-### Outcomes and recovery
-
-- A backup preserves committed state only; staged changes and local runtime
-  state are excluded.
-- A successful backup is recoverable, but it is not a transactional snapshot
-  across all live files if those files change during backup.
-- Restore apply refuses live staged changes and, by default, rollback to an
-  older backup. It validates restored artifacts and clears runtime state so it
-  can be regenerated from restored committed storage.
-- Missing asset blobs may be restored only through the explicit degraded-restore
-  option; the associated asset content remains unavailable.
-
-See [Backup and restore](backup-restore-durability-spec.md) and
-[Crypto and key lifecycle](crypto-key-lifecycle-threat-model.md).
+See [Backup and restore](backup-restore-durability-spec.md).
 
 ## 7. Upgrade storage
 
-### Goal
+Before upgrading, the owner creates a backup and clears staged and local state.
+After unlock, Arhiv obtains exclusive storage ownership, runs any supported
+migration, and validates migrated storage before normal loading.
 
-Open an Arhiv with a newer compatible release while preserving data and a
-clear rollback path.
-
-### Flow
-
-1. The owner makes a backup and ensures local state is clean with no staged
-   changes.
-2. Arhiv unlocks storage, obtains exclusive storage ownership, and performs
-   any required supported migration before normal state loading.
-3. Arhiv validates the migrated storage before it becomes the active state.
-
-### Outcomes and recovery
-
-- A migration that cannot complete leaves pre-migration bytes available for
-  rollback rather than silently continuing with partial replacement.
-- During a migration window, mixed-version clients sharing one storage root are
-  unsupported.
-- If automatic migration stops because local state is dirty, the owner resolves
-  those changes with the previous compatible version before retrying the
-  upgrade.
+A failed migration retains pre-migration bytes for rollback instead of
+continuing with partial replacement. Mixed-version clients sharing a storage
+root are unsupported during migration. If dirty local state blocks migration,
+the owner resolves it with the previous compatible version before retrying.
 
 See [Storage migrations](storage-migration-playbook.md).

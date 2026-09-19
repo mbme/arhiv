@@ -58,24 +58,15 @@ It does not define higher-level product behavior (sync policy, UI/API, merge con
 
 ## 4. Cryptographic Key Model
 
-### 4.1 AGE key variants used
+| Key | Representation | Protects |
+| --- | --- | --- |
+| Password-derived key | AGE scrypt recipient/identity | `key.age` |
+| Storage master key | x25519 AGE identity inside `key.age` | Storage, state, search, and lock files |
+| Per-asset blob key | x25519 AGE identity in asset metadata | One asset blob |
 
-Arhiv uses one of:
-
-- Password-based AGE (scrypt recipient/identity)
-- x25519 AGE identity keypair (recipient = public key)
-
-### 4.2 Key roles
-
-- Key file password-derived key: decrypts/encrypts `key.age`.
-- Storage master key (x25519 private key stored inside `key.age`): encrypts/decrypts storage DB and state/search/locks files.
-- Blob key (per asset, x25519 private key serialized in asset metadata): encrypts/decrypts blob files.
-
-### 4.3 Serialization details
-
-- x25519 private keys use the age identity text format.
-- Password keys require minimum password length 8 bytes.
-- `key.age` plaintext is the serialized x25519 secret key bytes.
+x25519 private keys use the AGE identity text format. The
+[key lifecycle specification](crypto-key-lifecycle-threat-model.md) owns
+password policy, creation, caching, import/export, rotation, and recovery.
 
 ## 5. Main Storage Database Format (`baza.gz.age`)
 
@@ -212,16 +203,8 @@ Arhiv stores staged blobs in `state/data/` and committed blobs in `storage/data/
 
 ## 10. Key File Format (`key.age`)
 
-`key.age` is AGE ASCII-armored encrypted data.
-
-Plaintext bytes:
-
-- Serialized x25519 secret key string (UTF-8), used as storage master key.
-
-Operational notes:
-
-- Password changes re-encrypt same plaintext master key with a new password-derived AGE key.
-- Key export/import is armored AGE payload string round-trip.
+`key.age` is ASCII-armored AGE data whose plaintext is the UTF-8 AGE identity
+string for the x25519 storage master key.
 
 ## 11. Validation and Error Conditions
 
@@ -265,15 +248,6 @@ State/search/locks failures:
 
 ## 14. Related behavior
 
-This document owns file contents and compatibility boundaries. Related
-operations are explained elsewhere:
-
-- [Crypto and key lifecycle](crypto-key-lifecycle-threat-model.md) explains
-  creation, password changes, key import/export, cached credentials, and
-  recovery.
-- [Backup and restore](backup-restore-durability-spec.md) explains backup
-  generations, manifests, verification, and restoration.
-- [Storage migrations](storage-migration-playbook.md) explains version
-  upgrades and rollback.
-- [Merge conflicts](merge-conflicts-spec.md) explains storage-file union and
-  semantic merging of concurrent document revisions.
+See [Backup and restore](backup-restore-durability-spec.md), [Storage
+migrations](storage-migration-playbook.md), and [Merge
+conflicts](merge-conflicts-spec.md) for operations over these formats.

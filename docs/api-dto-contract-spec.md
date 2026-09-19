@@ -42,16 +42,7 @@ Request/response variant symmetry:
 
 ## 4. Stable Request/Response Variants (Current)
 
-Request variants:
-
-- `ListDocuments`, `GetDocuments`, `GetStatus`, `GetDocument`, `ParseMarkup`
-- `CreateDocument`, `SaveDocument`, `EraseDocument`
-- `ListDir`, `CreateAsset`, `Commit`
-- `LockDocument`, `UnlockDocument`, `ReorderCollectionRefs`
-- `CreateArhiv`, `LockArhiv`, `UnlockArhiv`
-- `ImportKey`, `ExportKey`, `CountConflicts`
-
-Response variants:
+Requests and responses use the same variant set:
 
 - `ListDocuments`, `GetDocuments`, `GetStatus`, `GetDocument`, `ParseMarkup`
 - `CreateDocument`, `SaveDocument`, `EraseDocument`

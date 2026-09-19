@@ -75,7 +75,9 @@ Policy and implication:
 - staged changes are expected to be brief;
 - the global gate intentionally keeps their base state stable rather than
   importing remote snapshots while staged changes exist;
-- incoming remote snapshots are not incorporated while staged changes exist.
+- incoming remote snapshots are not incorporated while staged changes exist;
+  conflict counts and current projections may lag until the next successful
+  refresh.
 
 ### 4.2 Outdated document selection
 
@@ -186,17 +188,7 @@ Auto-commit:
 - skips while any conflict exists
 - requires clean no-conflict state to auto-commit
 
-## 8. External Sync / Conflict Files
-
-Arhiv expects external sync tools may create additional storage files (including sync-conflict variants).
-
-Behavior:
-
-- all matching storage db files are merged on open
-- this preserves all distinct `(id, rev)` snapshots
-- semantic merging then happens during state refresh, not during file merge
-
-## 9. Invariants
+## 8. Invariants
 
 - Revision maps contain only positive counters; parsing treats zero counters as
   absent so equality, hashing, ordering, and serialization share one canonical
@@ -208,7 +200,7 @@ Behavior:
 - Erased snapshots cannot be modified directly.
 - State/storage info (`data_version`, `storage_version`) must match before refresh.
 
-## 10. Known Limitations / Behavioral Risks
+## 9. Known Limitations / Behavioral Risks
 
 1. When a conflict has no staged merge, selecting one branch for API
    and search projection is nondeterministic.
@@ -221,23 +213,7 @@ Behavior:
 
 - Different timestamps can influence final merged payload.
 
-4. State refresh is blocked when any staged change exists.
-
-- Remote conflict updates are delayed until staged changes are discarded or
-  committed.
-
-## 11. End-to-End Flow (Typical Sync Conflict)
-
-1. External sync creates/retains multiple `baza*.gz.age` files (possibly `sync-conflict` named).
-2. Arhiv open path merges storage files into main db by unique `(id, rev)` keys.
-3. State refresh computes latest concurrent revisions per id.
-4. For conflicted ids, optional base revision is located.
-5. Arhiv produces a staged merge for the conflicted document.
-6. UI shows conflict indicator/count (`has_conflict`, `CountConflicts`).
-7. User may inspect/edit staged result.
-8. The commit writes a new snapshot revision and resolves the conflict.
-
-## 12. Practical Observability Points
+## 10. Practical Observability
 
 - CLI status warns when `conflicts_count > 0`.
 - CLI `conflicts` lists conflicted documents, and `conflict show <id>` prints
@@ -250,9 +226,7 @@ Behavior:
 - UI header shows conflict count button and catalog can filter to conflicts.
 - Document payloads expose `hasConflict`, `isStaged`, and `snapshotsCount` for troubleshooting.
 
-## 13. Consistency and Idempotency Contract
-
-This section makes existing behavior explicit.
+## 11. Consistency and Idempotency
 
 Storage-file merge idempotency:
 
@@ -273,23 +247,8 @@ Deterministic parts:
 - base-revision lookup is deterministic for a fixed revision graph.
 - conflict/non-conflict classification is deterministic for a fixed snapshot set.
 
-Known non-deterministic edge:
+Non-deterministic edge:
 
 - Conflict projection can select any competing branch when no staged merge
   exists.
 - this affects API/search projection only in that state.
-
-## 14. Partial Sync and Concurrency Behavior
-
-Incoming sync while staged changes exist:
-
-- state refresh exits early.
-- remote snapshots are not imported until staged changes are committed or
-  discarded.
-
-Implications:
-
-- eventual convergence is deferred by staged changes.
-- conflict counts and current document states can lag behind storage changes until
-  the next successful refresh.
-- this is intentional because staged changes are normally brief.

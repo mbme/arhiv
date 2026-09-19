@@ -5,7 +5,7 @@ Arhiv is a local-first personal encrypted database. It can store structured reco
 Arhiv doesn't rely on a central server. Data can be synchronized between multiple devices using solutions like [Syncthing](https://github.com/syncthing/syncthing), or services like Google Drive or Dropbox, or by manually transferring files using USB flash drive etc.
 Records are stored in the `baza.gz.age` storage file.
 In case of simultaneous edits on multiple devices, there likely to be multiple versions of the storage file.
-On startup, Arhiv will merge multiple storage files into one. Conflicts would be automatically resolved; there would be a list of documents with resolved conflicts on UI.
+On startup, Arhiv merges the storage files by preserving their distinct record snapshots. For concurrent changes to one record, it prepares a heuristic merged version for review. The record remains in conflict until that version is committed.
 
 Currently, record schema is hardcoded, so it's impossible to add new record types without recompilation. This will change in future.
 
@@ -13,22 +13,22 @@ There's a cross-platform CLI app that can run a web server with UI. There's Andr
 
 # Privacy and Security
 
-- **All data (including files) is encrypted with [Age encryption](https://age-encryption.org/v1)**.
+- Record and attachment contents are encrypted at rest with [Age encryption](https://age-encryption.org/v1). Filesystem metadata such as names, sizes, timestamps, and directory layout is not concealed.
 - An x25519 Age key for storage file & state file is stored in `key.age` in storage dir.
   It is encrypted with password-based Age key.
-  **If you loose this file or your password, you lose access to your data!**.
-  You should export backup copies of your key using Arhiv CLI or UI.
+  **If you lose every usable key copy and the passwords needed to decrypt them, your data is unrecoverable.**
+  You should keep protected key exports together with tested storage backups.
 - Data files have their own Age x25519 keys stored in storage & state.
 - Web UI server generates self-signed **HTTPS certificate** and saves it in the state dir **in plain text**.
 - Desktop & Android apps verify the server HTTPS certificate.
-- Web UI server generates random signed **auth token** on startup.
+- Web UI server generates a random opaque **auth token** on startup.
 - Desktop & Android apps
   - start Web UI server and get **auth token** from it
   - send the auth token in a cookie to the Web UI server
   - Web UI server denies requests without the auth token
-- In Desktop & CLI apps password is saved to System keyring.
-- In Android app password is saved to the System KeyStore.
-- Desktop & Android apps **unlock server** using password they got from user or keyring. **The Web UI server stays unlocked** until the app is closed or manually locked.
+- Desktop uses the system keyring to cache the serialized storage master key.
+- Android encrypts the cached storage master key with an authentication-gated Android Keystore key.
+- Desktop & Android unlock storage using a supplied password, imported key, or available cached storage key. **The Web UI server stays unlocked** until the app is closed or manually locked.
 
 # Usage with Syncthing
 
@@ -103,7 +103,7 @@ Using makepkg: `just arch-install`. It also installs `arhiv-desktop` GUI.
 
 # CLI app
 
-Cross-platform CLI app. Uses system keyring to store password.
+Cross-platform CLI app. Uses the system keyring to cache the storage master key.
 
 Useful document commands:
 
@@ -134,11 +134,11 @@ Useful document commands:
 
 # Desktop app
 
-Cross-platform desktop app that uses `Electron` to display Web UI. Uses system keyring to store password.
+Cross-platform desktop app that uses `Electron` to display Web UI. Uses the system keyring to cache the storage master key.
 
 # Android app
 
-Java Webview app that displays Web UI. Uses biometric authentication or device authentication to safely store password in KeyStore.
+Java Webview app that displays Web UI. Uses biometric or device authentication to protect a cached storage master key with Android Keystore.
 Needs `MANAGE_EXTERNAL_STORAGE` permission to read/write files in user directory (next to Music, Downloads etc.).
 
 **Minimum supported Android version is 11(R)**.

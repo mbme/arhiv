@@ -78,7 +78,7 @@ Arhiv does not protect against:
 | Generic browser launch -> authenticated UI | Separate 256-bit one-time bootstrap token; cookie exchange and redirect to clean UI URL | The initial bootstrap URL can still appear in browser or process history before it is consumed. |
 | Workspace UI -> GitHub Releases API | Validated numeric `tag_name`, hourly attempt limit, and CSP `connect-src` allowlist | GitHub and the platform network stack can observe normal request metadata and availability depends on external network access. |
 | Desktop/Android secret persistence -> platform secret store | System keyring or Android Keystore with platform authentication | These stores are convenience and local UX mechanisms, not a replacement for backup or encryption-key recovery. |
-| Live storage -> backup | Encrypted file copies of key, committed DB, and blobs | Backup is not a transactional snapshot and has no authenticated generation manifest. |
+| Live storage -> backup | Encrypted file copies of key, committed DB, and blobs; encrypted authenticated generation manifest | The manifest binds its listed artifact bytes, but backup is not a transactional snapshot and provides no rollback/freshness protection. |
 
 ## 6. Security Goals
 

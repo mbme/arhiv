@@ -282,25 +282,22 @@ Code:
 
 ## 16. Backup/Restore and Durability Notes (Current Behavior)
 
-Backup command behavior:
-- CLI `backup` command copies:
-  - `key.age` into `<backup_dir>/<timestamp>.key.age`
-  - main storage db into `<backup_dir>/<timestamp>.baza.gz.age`
-  - committed blob files into `<backup_dir>/data/` (copy-if-missing by blob file name)
-- Backup directory must be an absolute existing directory.
-- If there are staged (uncommitted) documents, backup logs warning and does not include those staged-only changes.
+Backup and restore behavior is specified in
+`docs/backup-restore-durability-spec.md`. The format-relevant behavior is:
 
-Restore behavior:
-- There is no dedicated `restore` command in current CLI.
-- Recovery is operationally performed by restoring backed-up files into storage layout and reopening Arhiv.
-
-Durability/copy semantics:
-- Backup uses file copies (`fs::copy`) and is not a transactionally consistent point-in-time snapshot across all files.
-- Therefore, "safe backup" in current implementation means preserving decryptable key + storage + blobs, not strict atomic multi-file snapshot guarantees.
+- each backup generation contains a key file, main storage database, committed
+  blobs, and an encrypted authenticated manifest that binds its listed key,
+  database, and referenced blob artifact bytes;
+- backup refuses to run while staged changes exist;
+- `arhiv restore check` validates a generation without mutating live storage;
+- `arhiv restore apply` validates and transactionally installs a generation,
+  then clears regenerable runtime state; and
+- backup remains a sequence of file copies rather than a transactional
+  point-in-time snapshot of concurrently changing live files.
 
 Code:
 - `baza/src/backup/`
-- `arhiv-cli/src/bin/arhiv.rs`
+- `arhiv-cli/src/bin/arhiv/`
 
 ## 17. File Mutation Safety and Rollback Mechanics
 

@@ -7,57 +7,45 @@ Current data version: `2`
 This document defines the schema contract for document data stored in Arhiv.
 
 It covers:
-- canonical schema sources
+
+- schema composition and availability
 - document type and field model
 - runtime validation contract for staged writes
 - compatibility and migration triggers for `data_version`
 
 It does not define:
-- low-level encrypted file/container format (covered in `docs/arhiv-encrypted-file-format.md`)
-- merge algorithm semantics (covered in `docs/merge-conflicts-spec.md`)
-- migration execution playbook details (covered in `docs/storage-migration-playbook.md`)
 
-## 2. Canonical Schema Sources
+- low-level encrypted file/container format, covered in the
+  [encrypted file format](arhiv-encrypted-file-format.md)
+- merge algorithm semantics, covered in [merge conflicts](merge-conflicts-spec.md)
+- migration execution details, covered in
+  [storage migrations](storage-migration-playbook.md)
 
-Primary runtime schema:
-- `arhiv/src/definitions/mod.rs` (`get_standard_schema`)
-- `arhiv/src/definitions/*.rs` (document-type definitions)
-- `baza/src/schema/mod.rs` (`DataSchema`)
-- `baza/src/schema/data_description.rs` (`DataDescription`)
-- `baza/src/schema/field.rs` (`Field`, `FieldType`)
-- `baza/src/schema/asset.rs` (built-in `asset` type)
+## 2. Schema Availability
 
 Schema is compiled into the binary. There is no runtime user-defined schema loading.
 
 ## 3. Schema Model Contract
 
-`DataSchema` contains:
-- app name (`name`)
-- `data_version: u8`
-- list of `DataDescription` modules
-
-Each `DataDescription` contains:
-- `document_type: &'static str`
-- `title_format: &'static str`
-- `fields: Vec<Field>`
-
-Each `Field` contains:
-- `name: &'static str`
-- `field_type: FieldType`
-- `mandatory: bool`
-- `readonly: bool`
+The schema contains an application name, a `data_version`, and a list of
+document-type definitions. Each document type defines its machine name, title
+format, and fields. Each field defines its name, type, and whether it is
+mandatory or readonly.
 
 ## 4. Built-in and Reserved Document Types
 
-`DataSchema::new` appends two definitions automatically:
+The compiled schema always includes two reserved document types:
+
 - erased document type (`_erased`)
 - `asset` document type
 
 Contract:
+
 - these types are always present in runtime schema
 - consumers must not assume only application-defined modules exist
 
-`asset` data contract is concrete and strict (`AssetData` uses `#[serde(deny_unknown_fields)]`):
+The `asset` data contract is strict:
+
 - `filename: string`
 - `media_type: string`
 - `size: u64`
@@ -72,6 +60,7 @@ do not verify this field; verification is an explicit workflow concern.
 ## 5. Field Type Contract (Current)
 
 Supported `FieldType` variants:
+
 - `String`
 - `MarkupString`
 - `Flag`
@@ -85,6 +74,7 @@ Supported `FieldType` variants:
 - `Countries`
 
 Current validation-level JSON expectations:
+
 - `String`/`MarkupString`/`Ref`/`Date`/`Duration`/`People`/`Countries`: JSON string (empty string accepted unless field is mandatory)
 - `Flag`: JSON boolean
 - `NaturalNumber`: JSON number representable as `u64`
@@ -92,12 +82,14 @@ Current validation-level JSON expectations:
 - `Enum`: JSON string in allowed options (empty string accepted unless mandatory)
 
 Notes:
+
 - `Ref([])` and `RefList([])` mean any document type.
 - For ref types with a non-empty allowed list, referenced document type must match one of the listed types.
 
 ## 6. Document Data Shape Contract
 
-Top-level document envelope is strict (`Document` uses `#[serde(deny_unknown_fields)]`):
+The top-level document envelope is strict:
+
 - `id`
 - `rev`
 - `document_type`
@@ -107,28 +99,39 @@ Top-level document envelope is strict (`Document` uses `#[serde(deny_unknown_fie
 `data` is a dynamic JSON object (`DocumentData`).
 
 Staging-time field presence rule:
+
 - unknown non-null fields in `data` are rejected:
   - `"Document type '<type>' doesn't expect field '<field>'"`
 - fields explicitly set to JSON `null` are treated as absent by validation accessors
 
 ## 7. Staging Validation Contract
 
-When staging (`Baza::validate_staged`), the system enforces:
+When staging, the system enforces:
+
 1. document-level invariants:
-- erased docs cannot be staged
-- for edits to an existing doc, `document_type` and `updated_at` must match the previous staged/current document snapshot
+
+- erased documents cannot be staged
+- for edits to an existing document, `document_type` and `updated_at` must match
+  the previous staged version or current snapshot
+
 2. field-level schema checks:
+
 - mandatory/readonly/type/enum constraints
+
 3. reference checks:
+
 - referenced IDs must exist
-- referenced Records must be active; deleted Records cannot receive new references, collection memberships, or attachment relationships
+- referenced documents must be active; erased documents cannot receive new
+  references, collection memberships, or asset references
 - referenced document type must satisfy ref type constraints when specified
 
 Error model:
-- field-scoped failures aggregate as `ValidationError::FieldError { field -> [errors] }`
-- document-scoped failures aggregate as `ValidationError::DocumentError { errors }`
+
+- field-scoped failures are grouped by field
+- document-scoped failures are grouped separately
 
 API mapping:
+
 - create/save validation is returned in typed response payloads (`errors.documentErrors`, `errors.fieldErrors`) rather than transport-level failures
 
 ## 8. Readonly Field Contract
@@ -136,31 +139,36 @@ API mapping:
 If a field is marked `readonly`, changing its value relative to previous document state is rejected at staging time.
 
 Current behavior:
+
 - readonly is enforced by runtime validation, not by storage encoding
 - readonly comparison is value-based on serialized JSON values
 
 ## 9. Title/Cover/Search/Ref-Derivation Semantics
 
 Schema fields are also used by higher-level derivation logic:
-- title rendering from `title_format` and fields (`DocumentExpert`)
+
+- title rendering from `title_format` and fields
 - cover inference via field named `cover` with `Ref([asset])`
 - search extraction from selected text-like field types
 - reference/backreference extraction from `MarkupString`, `Ref`, and `RefList`
 
 Contract implication:
+
 - changing field type/name can affect search, title rendering, refs graph, and UI behavior even if raw storage remains parseable
 
 ## 10. Data Version Compatibility Contract
 
 Runtime gate:
-- `BazaManager` applies registered safe data migrations after unlock and before normal state loading
-- after migration, `state.info.data_version` must equal `schema.get_latest_data_version()`
-- unsupported versions or blocked migrations fail open/read before returning a `Baza`
+
+- registered safe data migrations run after unlock and before normal state loading
+- after migration, the stored `data_version` must equal the schema's latest version
+- unsupported versions or blocked migrations prevent normal opening and reading
 
 Current state:
-- latest `data_version` is hardcoded in `DataSchema` (`2`)
+
+- latest `data_version` is `2`
 - data version `1` is upgraded by the asset-content-hash migrator described in
-  `docs/storage-migration-playbook.md`
+  [storage migrations](storage-migration-playbook.md)
 - there is no negotiated multi-version schema compatibility at runtime
 
 ## 11. Known limits
@@ -168,24 +176,3 @@ Current state:
 - schema is static (compile-time), not user-extensible at runtime
 - `Date`, `Duration`, `People`, `Countries` currently validate as strings; domain-format semantics are not centrally enforced in schema layer
 - UI/API compatibility still depends on coordinated client + server upgrades in one repo revision
-
-## 12. Relevant implementation
-
-- `baza/src/schema/mod.rs`
-- `baza/src/schema/data_description.rs`
-- `baza/src/schema/field.rs`
-- `baza/src/schema/asset.rs`
-- `baza/src/baza/validator.rs`
-- `baza/src/entities/document.rs`
-- `baza/src/entities/document_data.rs`
-- `baza/src/baza/mod.rs`
-- `arhiv/src/definitions/mod.rs`
-- `arhiv/src/definitions/book.rs`
-- `arhiv/src/definitions/contact.rs`
-- `arhiv/src/definitions/film.rs`
-- `arhiv/src/definitions/game.rs`
-- `arhiv/src/definitions/note.rs`
-- `arhiv/src/definitions/tag.rs`
-- `arhiv/src/definitions/task.rs`
-- `arhiv/src/definitions/track.rs`
-- `arhiv/src/ui/dto.rs`

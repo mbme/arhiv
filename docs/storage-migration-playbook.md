@@ -10,23 +10,27 @@ migration, and the operational procedure for validating or rolling back an
 upgrade.
 
 It covers:
+
 - `storage_version` lifecycle and compatibility policy
 - migration safety properties
 - preflight, execution, validation, rollback, and failure handling
 
 It does not define:
+
 - UI/API behavior changes unrelated to on-disk storage
 - Document merge/conflict semantics (covered elsewhere)
 
 ## 2. Versioning Model
 
 `BazaInfo` is the version gate:
+
 - `storage_version`: on-disk storage/container semantics
 - `data_version`: schema/data semantics
 
 Runtime compatibility is strict:
-- `state.get_info().storage_version == STORAGE_VERSION` is required
-- `state.get_info().data_version == schema.get_latest_data_version()` is required
+
+- stored `storage_version` must equal the supported storage version
+- stored `data_version` must equal the schema's latest data version
 
 If either check fails, open/read fails.
 
@@ -71,8 +75,8 @@ performed by the migrator.
    state blobs.
 2. With that previous version, run a backup to an absolute path:
    - `arhiv backup /absolute/path/to/backup`
-   Running this command with the upgraded binary may open and migrate storage
-   before the backup is created.
+     Running this command with the upgraded binary may open and migrate storage
+     before the backup is created.
 3. Verify backup artifacts exist:
    - timestamped `.key.age`
    - timestamped `.baza.gz.age`
@@ -99,6 +103,7 @@ performed by the migrator.
 ### 5.3 Post-migration validation
 
 Minimum required checks:
+
 1. Open storage with target binary succeeds.
 2. `status` reports expected `storage_version` and `data_version`.
 3. Document count and blob references are consistent.
@@ -110,14 +115,17 @@ Minimum required checks:
 ### 6.1 Failure classes
 
 1. Pre-write transform failure:
+
 - No on-disk replacement happened.
 - Keep original files; abort migration.
 
 2. Replacement-stage failure:
+
 - The uncommitted `FsTransaction` attempts to restore its moved-aside files.
 - Do not continue with partially replaced files.
 
 3. Post-cutover validation failure:
+
 - Treat as failed migration.
 - Restore the pre-migration backup set; transaction backups have already been
   removed after a successful transaction commit.
@@ -135,11 +143,12 @@ Minimum required checks:
 Data version `2` adds mandatory readonly `asset.content_sha256`.
 
 The data-version 1 to 2 migrator:
+
 1. preserves `storage_version = 1`;
 2. requires an unlocked storage key;
 3. runs under the exclusive storage lock;
-4. refuses dirty local state before rewriting storage, including staged document
-   changes or local state blobs.
+4. refuses dirty local state before rewriting storage, including staged changes
+   or local state blobs.
 5. processes every stored document snapshot, including historical, conflict, and
    base snapshots.
 6. preserves document IDs, revisions, document types, timestamps, and all
@@ -154,10 +163,11 @@ The data-version 1 to 2 migrator:
     observes data version `2`.
 
 It does not:
+
 - verify `content_sha256` during normal asset reads after migration;
 - compute the hash from encrypted blob bytes; or
-- migrate only current heads while leaving historical asset snapshots in the
-  version 1 shape.
+- migrate only current document state while leaving historical asset snapshots
+  in the version 1 shape.
 
 ## 8. Current limitations
 
@@ -188,13 +198,3 @@ Rollback is best-effort rather than a hard atomic commit across every touched
 file and directory. `FsTransaction` is an in-process rollback guard, not a
 crash-safe journal, so callers hold the relevant application-level lock for
 shared paths.
-
-## 10. Relevant implementation
-
-- `baza/src/baza_info.rs`
-- `baza/src/baza_storage/mod.rs`
-- `baza/src/baza_manager/mod.rs`
-- `baza/src/baza_manager/migration/`
-- `baza/src/baza/mod.rs`
-- `baza/src/backup/`
-- `baza-common/src/fs/transaction.rs`

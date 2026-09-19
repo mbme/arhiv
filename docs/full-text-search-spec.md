@@ -2,7 +2,8 @@
 
 ## Purpose and scope
 
-Full-text search helps the Arhiv owner find records by indexed text fields. It is a local, deterministic ranking feature over one Arhiv's current search index.
+Full-text search helps the Arhiv owner find documents by indexed text fields. It
+is a local, deterministic ranking feature over one Arhiv's current search index.
 
 This document explains the current query normalization, result eligibility,
 candidate matching, ranking, and search-index compatibility behavior. UI
@@ -11,7 +12,9 @@ and cross-device synchronization are outside its scope.
 
 ## Usage constraints
 
-Search is optimized for navigational record lookup and record-picking flows. The primary expected interaction is a short query that quickly narrows records so the owner can open, reference, or select one of the top results.
+Search is optimized for navigational document lookup and document-picking
+flows. The primary expected interaction is a short query that quickly narrows
+documents so the owner can open, reference, or select one of the top results.
 
 Ranking should prioritize first-page precision over broad recall. Exact and prefix matches on identifying fields, especially title and id, should rank ahead of weaker fuzzy or body-field matches.
 
@@ -21,11 +24,11 @@ Search is also used by catalog views, but catalog browsing uses the same determi
 
 The search index includes:
 
-- record title text;
-- record id text; and
+- document title text;
+- document id text; and
 - schema fields whose field type exposes searchable string data.
 
-The search index does not expand references into referenced record titles.
+The search index does not expand references into referenced document titles.
 
 ## Query normalization
 
@@ -39,13 +42,15 @@ Search uses the same token normalization model for indexed content and query tex
 
 Stop-word removal is out of scope. Query terms that normalize to common words remain ordinary required terms.
 
-An empty normalized query matches every indexed record.
+An empty normalized query matches every indexed document.
 
 ## Result eligibility
 
 Search uses strict AND semantics.
 
-A non-empty query result is eligible only when the record matches every normalized query term. A record may satisfy a query term through an exact, prefix, or fuzzy candidate term match.
+A non-empty query result is eligible only when the document matches every
+normalized query term. A document may satisfy a query term through an exact,
+prefix, or fuzzy candidate term match.
 
 If any query term has no candidate indexed terms, search returns no results.
 
@@ -75,11 +80,17 @@ When exact or prefix candidates exist for a query term, the engine should prefer
 
 ## Base ranking
 
-Eligible records are ranked by a lexical score derived from BM25.
+Eligible documents are ranked by a lexical score derived from BM25.
 
-For each query term, the engine scores candidate term matches against each record and keeps the best-scoring candidate for that query term in that record. Candidate scoring is field-aware: the best matching indexed field for that candidate contributes the candidate's per-query-term score. The record's lexical score is the sum of these best per-query-term scores.
+For each query term, the engine scores candidate term matches against each
+document and keeps the best-scoring candidate for that query term in that
+document. Candidate scoring is field-aware: the best matching indexed field for
+that candidate contributes the candidate's per-query-term score. The document's
+lexical score is the sum of these best per-query-term scores.
 
-BM25 length normalization uses the matched field's token count and that field's average token count across indexed records. A long ordinary field must not reduce the score of a concise title or id match in the same record.
+BM25 length normalization uses the matched field's token count and that field's
+average token count across indexed documents. A long ordinary field must not
+reduce the score of a concise title or id match in the same document.
 
 Candidate match quality is part of the lexical score. Exact matches receive the strongest multiplier, prefix matches receive a weaker multiplier, and fuzzy matches receive the weakest multiplier.
 
@@ -87,7 +98,9 @@ Candidate match quality is part of the lexical score. Exact matches receive the 
 
 Field boosts are bounded ranking multipliers applied during field-aware per-term scoring.
 
-Title and id fields receive explicit boosts because they identify a record more directly than ordinary body fields. Field boosts must not make weak lexical matches dominate clearly better exact matches in ordinary fields.
+Title and id fields receive explicit boosts because they identify a document
+more directly than ordinary body fields. Field boosts must not make weak lexical
+matches dominate clearly better exact matches in ordinary fields.
 
 Title and id are the only specially boosted fields. Their boost values are
 assigned centrally while documents are indexed.
@@ -96,7 +109,9 @@ assigned centrally while documents are indexed.
 
 The search index stores token positions for each term occurrence. Proximity ranking is based on token positions, not byte offsets.
 
-When all query terms match the same indexed field, the engine may apply one proximity boost for that field. The highest field-level proximity boost is used for the record.
+When all query terms match the same indexed field, the engine may apply one
+proximity boost for that field. The highest field-level proximity boost is used
+for the document.
 
 Proximity quality is ordered as:
 
@@ -106,7 +121,9 @@ exact ordered phrase > ordered near match > unordered near match > no proximity 
 
 An exact ordered phrase means the matched tokens appear contiguously in query-term order. An ordered near match means the matched tokens appear in query-term order but are not contiguous. An unordered near match means all query terms appear in a compact token span without preserving query order.
 
-Proximity boosts must remain bounded so they improve ordering among eligible records without overriding strict eligibility or overwhelming lexical relevance.
+Proximity boosts must remain bounded so they improve ordering among eligible
+documents without overriding strict eligibility or overwhelming lexical
+relevance.
 
 ## Search-index compatibility
 
@@ -115,7 +132,7 @@ schema data version, and schema fingerprint. The current search algorithm
 version is `5`.
 
 Index loading rejects a mismatch in any of these values. Arhiv then rebuilds
-the index from current document heads instead of silently reusing incompatible
+the index from current document state instead of silently reusing incompatible
 ranking data.
 
 ## Non-goals
@@ -124,7 +141,7 @@ The following are intentionally out of scope for this specification:
 
 - OR search or relaxed partial-term fallback;
 - stop-word removal;
-- referenced-record title expansion;
+- referenced-document title expansion;
 - synonym expansion;
 - semantic/vector search;
 - exploratory web-search-style ranking or recommendation behavior;

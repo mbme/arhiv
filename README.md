@@ -1,24 +1,24 @@
 # Arhiv
 
-Arhiv is a local-first encrypted personal database for structured records and
+Arhiv is a local-first encrypted personal database for structured documents and
 files. It runs without a central server and supports a CLI, local web UI,
 Electron desktop wrapper, and Android application.
 
-Record schemas are compiled into the application. Arhiv stores committed record
+Document types are compiled into the application. Arhiv stores committed
 snapshots in `baza.gz.age` and can synchronize storage through file-sync tools
 such as Syncthing, cloud drives, or manual transfer.
 
 When synchronized devices produce multiple storage files, Arhiv preserves their
 distinct snapshots and detects concurrent revisions. It prepares a heuristic
-merged version for review; the record remains in conflict until that version is
+staged merge for review; the document remains in conflict until that merge is
 committed.
 
 ## Privacy and security
 
-- Record and attachment contents are encrypted at rest with [age](https://age-encryption.org/v1). Filesystem metadata such as names, sizes, timestamps, and directory layout is not concealed.
+- Document data and asset blobs are encrypted at rest with [age](https://age-encryption.org/v1). Filesystem metadata such as names, sizes, timestamps, and directory layout is not concealed.
 - The x25519 storage master key is stored in `key.age`, encrypted by a password-derived age key.
 - Losing every usable key copy and the passwords needed to decrypt them makes the data unrecoverable. Keep protected key exports together with tested storage backups.
-- Attachments use individual x25519 keys stored in their encrypted record metadata.
+- Assets use individual x25519 keys stored in their encrypted document metadata.
 - The Web UI server uses a persistent self-signed HTTPS certificate and a random opaque authentication token generated at startup.
 - Desktop and Android pin the certificate delivered through their local startup boundary and establish the authenticated cookie directly.
 - Desktop can cache the serialized storage master key in the system keyring. Android protects its cached key with an authentication-gated Android Keystore key.
@@ -68,3 +68,6 @@ synchronization, security, runtime, and interface documentation.
 Development setup, checks, packaging, and release details are in
 [CONTRIBUTING.md](CONTRIBUTING.md). Android-specific build and debugging
 instructions are in [arhiv-android/README.md](arhiv-android/README.md).
+
+Uncommitted ideas and possible improvements are tracked in the
+[backlog](BACKLOG.md).

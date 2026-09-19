@@ -20,7 +20,7 @@ not a domain object.
    or leave it unchanged when it fails or is discarded.
 2. A workflow may expose platform-specific controls, but equivalent successful
    outcomes must have the same domain meaning on every supported surface.
-3. A workflow that changes committed data must clearly distinguish pending work
+3. A workflow that changes committed data must clearly distinguish staged work
    from committed work and state any recovery or rollback boundary.
 4. Detailed preconditions and failure modes that belong to another canonical
    specification are incorporated by reference rather than duplicated here.
@@ -36,7 +36,7 @@ Open an existing Arhiv and make its committed data available locally.
 1. The owner supplies a password, imports a usable key, or uses an available
    platform-protected key cache.
 2. Arhiv validates the resulting storage key by opening storage.
-3. On success, the owner can read committed records and prepare changes.
+3. On success, the owner can read committed documents and prepare changes.
 4. On lock, Arhiv removes the platform-protected cached storage key before it
    releases in-memory access.
 
@@ -47,10 +47,10 @@ Open an existing Arhiv and make its committed data available locally.
   unrecoverable; Arhiv has no server-side recovery service.
 - A missing local key cache is recoverable with the password or an exported key.
 
-See `docs/crypto-key-lifecycle-threat-model.md` and
-`docs/auth-session-trust-chain-spec.md`.
+See [Crypto and key lifecycle](crypto-key-lifecycle-threat-model.md) and
+[Authentication and sessions](auth-session-trust-chain-spec.md).
 
-## 2. Create, edit, attach, commit, or discard records
+## 2. Create, edit, add assets, commit, or discard documents
 
 ### Goal
 
@@ -59,103 +59,106 @@ partially prepared work as committed history.
 
 ### Flow
 
-1. The owner prepares a new Record, edits an active Record, or attaches a file
-   through a role allowed by the relevant Record kind.
-2. Arhiv keeps each prepared form as a Pending change. The owner may prepare
-   changes for multiple Records; together they are the one implicit pending
-   change set.
-3. Before commit, every pending form must satisfy its kind's required details,
-   constrained values, and relationship rules.
-4. The owner either commits the pending change set or discards one or more
-   pending changes.
+1. The owner prepares a new document, edits an active document, or creates an
+   asset from a file.
+2. Unsaved form edits remain local to the current interface. Saving creates a
+   staged change in Arhiv.
+3. The owner may stage changes for multiple documents; together they form the
+   implicit staging set.
+4. Before commit, every staged version must satisfy its document type's required
+   fields, constrained values, and relationship rules.
+5. The owner either commits the staging set or discards one or more staged
+   changes.
 
 ### Outcomes and recovery
 
-- Commit atomically makes all pending forms current and makes their preceding
-  current forms historical. A failed commit makes none of the pending forms
-  current.
-- Discarding a pending creation removes the proposed Record. Discarding another
-  pending change restores the preceding committed form or conflict state.
-- A newly created relationship can target only an existing active Record in the
+- A commit atomically makes all staged versions current snapshots and makes
+  their preceding current snapshots historical. A failed commit makes none of
+  the staged versions current.
+- Discarding a staged creation removes the proposed document. Discarding another
+  staged change restores the preceding committed state or conflict.
+- A newly created relationship can target only an existing active document in the
   same Arhiv.
-- Attachment metadata, relationships, and history remain usable when its file
-  content is unavailable. Only reading that attachment's content fails.
+- Asset metadata, relationships, and history remain usable when its blob is
+  unavailable. Only reading that asset's content fails.
 
-See `docs/domain-model.md`.
+See the [Domain model](domain-model.md).
 
-## 3. Delete a record
+## 3. Erase a document
 
 ### Goal
 
-Remove a Record from active use while retaining the identity and historical
+Remove a document from active use while retaining the identity and historical
 context required by Arhiv.
 
 ### Flow
 
-1. The owner prepares a deletion as a Pending change.
-2. The owner commits the pending change set or discards the deletion.
-3. A committed deletion replaces the active form with an erased current form.
+1. The owner stages an erasure.
+2. The owner commits the staging set or discards the erasure.
+3. A committed erasure replaces the active version with an erased current
+   snapshot.
 
 ### Outcomes and recovery
 
-- A deleted Record retains its identity, but new incoming references,
-  collection memberships, and attachment relationships cannot target it.
-- Retained historical relationships may still identify the Record as deleted.
-- Discarding the pending deletion preserves the prior active form.
+- An erased document retains its identity, but new incoming references,
+  collection memberships, and asset references cannot target it.
+- Retained historical relationships may still identify the document as erased.
+- Discarding the staged erasure preserves the prior active snapshot.
 
-See `docs/domain-model.md`.
+See the [Domain model](domain-model.md).
 
-## 4. Find and select records
+## 4. Find and select documents
 
 ### Goal
 
-Quickly find a current Record to open, reference, or select.
+Quickly find a current document to open, reference, or select.
 
 ### Flow
 
 1. The owner enters a short query or browses the catalog.
-2. Arhiv normalizes the query and returns only Records that match every
+2. Arhiv normalizes the query and returns only documents that match every
    normalized query term.
-3. Arhiv orders eligible Records deterministically, favoring stronger matches
+3. Arhiv orders eligible documents deterministically, favoring stronger matches
    in identifying fields.
 
 ### Outcomes and recovery
 
-- An empty normalized query matches every indexed Record.
+- An empty normalized query matches every indexed document.
 - If a term has no candidate indexed term, the query returns no results.
 - Search does not silently relax to partial-term, OR, semantic, or
   recommendation-style matching when a strict query has no results.
 
-See `docs/full-text-search-spec.md`.
+See [Full-text search](full-text-search-spec.md).
 
 ## 5. Reconcile concurrent changes
 
 ### Goal
 
-Bring concurrent committed forms of the same Record back to one current form
+Bring concurrent snapshots of the same document back to one current snapshot
 without silently selecting one branch as the sole result.
 
 ### Flow
 
 1. After external synchronization is incorporated, Arhiv detects concurrent
-   committed forms and marks the Record as a Conflict.
-2. Arhiv may prepare a heuristic merged form as a Pending reconciled change.
-3. The owner inspects or edits that proposed result.
-4. The owner commits it to resolve the Conflict, or discards it to retain the
-   competing committed forms for later reconciliation.
+   snapshots and marks the document as conflicted.
+2. Arhiv may prepare a heuristic staged merge.
+3. The owner inspects or edits the staged merge.
+4. The owner commits it to resolve the conflict, or discards it to retain the
+   competing snapshots for later reconciliation.
 
 ### Outcomes and recovery
 
-- A Conflict remains until a reconciled Pending change is committed.
-- Committing the reconciled change creates one current form and preserves the
-  superseded forms in history subject to deletion rules.
-- A pending change set delays incorporation of incoming synchronized snapshots;
-  the owner must commit or clear pending work before refresh can incorporate
+- A conflict remains until its staged merge is committed.
+- Committing the staged merge creates one current snapshot and preserves the
+  superseded snapshots in history subject to erasure rules.
+- A staging set delays incorporation of incoming synchronized snapshots; the
+  owner must commit or discard staged work before refresh can incorporate
   them.
-- Unrelated pending changes may be committed while an unresolved Conflict
-  remains. Automatic commit waits until no Conflicts exist.
+- Unrelated staged changes may be committed while an unresolved conflict
+  remains. Automatic commit waits until no conflicts exist.
 
-See `docs/domain-model.md` and `docs/merge-conflicts-spec.md`.
+See the [Domain model](domain-model.md) and
+[Merge conflicts](merge-conflicts-spec.md).
 
 ## 6. Back up and restore committed data
 
@@ -166,7 +169,7 @@ backup generation without silently replacing live data.
 
 ### Backup flow
 
-1. The owner first commits or discards pending changes.
+1. The owner first commits or discards staged changes.
 2. The owner chooses an existing absolute backup directory.
 3. Arhiv creates a timestamped backup generation containing the key file,
    database file, committed blobs, and authenticated manifest.
@@ -188,10 +191,10 @@ backup generation without silently replacing live data.
   older backup. It validates restored artifacts and clears runtime state so it
   can be regenerated from restored committed storage.
 - Missing asset blobs may be restored only through the explicit degraded-restore
-  option; the associated attachment content remains unavailable.
+  option; the associated asset content remains unavailable.
 
-See `docs/backup-restore-durability-spec.md` and
-`docs/crypto-key-lifecycle-threat-model.md`.
+See [Backup and restore](backup-restore-durability-spec.md) and
+[Crypto and key lifecycle](crypto-key-lifecycle-threat-model.md).
 
 ## 7. Upgrade storage
 
@@ -202,7 +205,7 @@ clear rollback path.
 
 ### Flow
 
-1. The owner makes a backup and ensures local state is clean with no pending
+1. The owner makes a backup and ensures local state is clean with no staged
    changes.
 2. Arhiv unlocks storage, obtains exclusive storage ownership, and performs
    any required supported migration before normal state loading.
@@ -218,4 +221,4 @@ clear rollback path.
   those changes with the previous compatible version before retrying the
   upgrade.
 
-See `docs/storage-migration-playbook.md`.
+See [Storage migrations](storage-migration-playbook.md).

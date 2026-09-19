@@ -62,7 +62,7 @@ explicit status, verify, repair, restore, or dedupe workflows.
   the supported migrator runs automatically during `BazaManager` open when local
   state is clean.
 - Migration must process historical and conflict/base snapshots, not only
-  current document heads, because all strict asset JSON payloads must be
+  current document state, because all strict asset JSON payloads must be
   v2-compatible.
 - Migration requires access to decrypted asset bytes and therefore requires an
   unlocked storage key.

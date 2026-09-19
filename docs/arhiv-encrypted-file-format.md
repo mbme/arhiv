@@ -7,6 +7,7 @@ Version: 1 (storage `storage_version = 1`)
 This document specifies the on-disk encrypted file formats used by Arhiv/Baza in the current repository state.
 
 It covers:
+
 - Main storage database files (`*.gz.age`)
 - State files (`state.gz.age`)
 - Search index files (`search_index.gz.age`)
@@ -40,15 +41,18 @@ It does not define higher-level product behavior (sync policy, UI/API, merge con
 ### 3.2 Envelope layering by file type
 
 1. `*.gz.age` files:
+
 - Outer: AGE binary stream encryption
-- Inner: GZIP-compressed payload (`flate2` `Compression::new(6)`)
+- Inner: GZIP-compressed payload at compression level 6
 - Plaintext payload: type-specific bytes (JSON/container/postcard)
 
 2. `*.age` files (non-key):
+
 - Outer: AGE binary stream encryption
 - Plaintext payload: raw bytes or postcard bytes (no gzip)
 
 3. `key.age`:
+
 - Outer: AGE ASCII-armored encryption
 - Plaintext payload: UTF-8 x25519 secret key string (the storage master key)
 
@@ -57,6 +61,7 @@ It does not define higher-level product behavior (sync policy, UI/API, merge con
 ### 4.1 AGE key variants used
 
 Arhiv uses one of:
+
 - Password-based AGE (scrypt recipient/identity)
 - x25519 AGE identity keypair (recipient = public key)
 
@@ -68,7 +73,7 @@ Arhiv uses one of:
 
 ### 4.3 Serialization details
 
-- x25519 private keys are serialized by `age` identity `to_string()` format.
+- x25519 private keys use the age identity text format.
 - Password keys require minimum password length 8 bytes.
 - `key.age` plaintext is the serialized x25519 secret key bytes.
 
@@ -77,10 +82,12 @@ Arhiv uses one of:
 ## 5.1 High-level
 
 After AGE decrypt + GZIP decompress, plaintext is a text container:
+
 - Line 1: JSON array index (`LinesIndex`)
 - Remaining lines: one UTF-8 JSON value per index key
 
 Container invariants:
+
 - Number of value lines must be exactly index length.
 - No extra lines are allowed.
 - Missing lines are invalid.
@@ -94,19 +101,22 @@ value_line := UTF-8 text without embedded newline
 ```
 
 Important:
-- Embedded newlines in values are not supported because parsing is line-based (`BufRead::lines`).
+
+- Embedded newlines in values are not supported because parsing is line-based.
 
 ## 5.3 Storage index semantics
 
 Index keys are ordered and unique.
 
 For storage DB specifically:
+
 - Index entry 0 MUST be `"info"`.
 - Entries 1..N are serialized `DocumentKey` values.
 - Readers accept document keys in any order; canonical writer ordering is a
   normalization rule rather than a read-compatibility requirement.
 
 `DocumentKey` serialization:
+
 - `"<id> <revision-safe-string>"`
 - `id`: document id string (current generator uses 14-char random id, but parser accepts any string without additional validation here)
 - `revision-safe-string`: `instance:version` segments joined by `-`, sorted by instance id; empty string denotes initial revision
@@ -128,6 +138,7 @@ For storage DB specifically:
 ## 5.5 Write ordering rules
 
 When creating or rewriting storage:
+
 - Document keys are sorted by document id, then by the lexicographic order of
   canonical revision entries `(instance_id, counter)`.
 - Storage ordering is independent of vector-clock causal dominance.
@@ -140,8 +151,9 @@ When creating or rewriting storage:
 Storage patches are applied during a complete canonical rewrite.
 
 Rules:
+
 - Existing key + replacement document: replace the document.
-- Existing key + deletion: delete the key and its value.
+- Existing key + removal: remove the key and its value.
 - New key + document: add the document.
 - Deleting a missing key is invalid.
 - Before writing, every document payload must match its `DocumentKey` (`id` and `rev`).
@@ -151,21 +163,22 @@ Rules:
   because both layouts satisfy the same reader and index-value contracts.
 
 The patched output is fully rewritten as a new container and then encrypted/compressed.
-The rewrite implementation accepts source documents in their stored order and
-uses one order-independent buffering path to emit the canonical order. See
-ADR-002 in `docs/architecture-decisions.md`.
+The rewrite accepts source documents in their stored order and uses one
+order-independent buffering path to emit the canonical order. See
+ADR-002 in [Architecture decisions](architecture-decisions.md).
 
 ## 6. State File Format (`state.gz.age`)
 
 After AGE decrypt + GZIP decompress: UTF-8 JSON object `BazaStateFile`.
 
 Top-level fields:
+
 - `instance_id`
 - `info` (`BazaInfo`)
 - `documents` (`HashMap<Id, DocumentHead>`)
 - `refs` (`HashMap<DocumentKey, Refs>`)
 
-`modified` is runtime-only (`#[serde(skip)]`) and not serialized.
+`modified` is runtime-only and is not serialized.
 
 ## 7. Search Index Format (`search_index.gz.age`)
 
@@ -173,6 +186,7 @@ After AGE decrypt + GZIP decompress: postcard binary payload of
 `SearchIndexFile`.
 
 Fields:
+
 - `format_version` (currently `1`)
 - `search_version` (currently `5`)
 - `data_version`
@@ -190,6 +204,7 @@ After AGE decrypt (no gzip): postcard binary payload of `HashMap<Id, DocumentLoc
 After AGE decrypt (no gzip): raw original file bytes.
 
 Write/read behavior:
+
 - Encrypt path: stream-copy source file -> AGE writer.
 - Decrypt path: AGE reader stream returned directly (supports `Read + Seek`).
 
@@ -200,26 +215,31 @@ Arhiv stores staged blobs in `state/data/` and committed blobs in `storage/data/
 `key.age` is AGE ASCII-armored encrypted data.
 
 Plaintext bytes:
+
 - Serialized x25519 secret key string (UTF-8), used as storage master key.
 
 Operational notes:
+
 - Password changes re-encrypt same plaintext master key with a new password-derived AGE key.
 - Key export/import is armored AGE payload string round-trip.
 
 ## 11. Validation and Error Conditions
 
 Container-level failures:
+
 - Invalid index JSON -> parse failure.
 - Missing or extra value lines relative to index length -> failure.
 - Attempt to write before index -> failure.
 - Attempt to write more/fewer lines than index length -> failure.
 
 Storage-level failures:
+
 - Index key parse failure (for document keys after `info`) -> failure.
 - `info` line missing or invalid JSON -> failure.
 - Document line invalid JSON for declared key -> failure.
 
 State/search/locks failures:
+
 - Decrypt failure with wrong key/password.
 - Decompressed payload parse failure (JSON/postcard).
 
@@ -227,17 +247,19 @@ State/search/locks failures:
 
 - Storage document ordering is deterministic due to explicit key sort.
 - Container index preserves insertion/patch order semantics.
-- GZIP encoder uses `Compression::new(6)`; compressed bytes are not guaranteed stable across library/runtime changes even for identical plaintext.
+- GZIP uses compression level 6; compressed bytes are not guaranteed stable
+  across library or runtime changes even for identical plaintext.
 - Compatibility gate currently enforced at runtime:
   - `storage_version == 1`
   - `data_version` must match schema latest data version.
 - Search-index reuse additionally requires matching format, search algorithm,
   data version, and schema fingerprint values. A mismatch causes the index to
-  be rebuilt from current document heads.
+  be rebuilt from current document state.
 
 ## 13. Non-goals / Not Specified
 
-- AGE internals (recipient stanza layout, stream chunk internals) are delegated to the `age` crate specification/implementation.
+- AGE internals, including recipient stanza layout and stream chunk details,
+  follow the age format specification.
 - Postcard internal schema evolution strategy is not separately version-tagged in these files.
 - Backup/sync conflict file naming strategy is out of scope for file payload format.
 
@@ -254,22 +276,4 @@ operations are explained elsewhere:
 - [Storage migrations](storage-migration-playbook.md) explains version
   upgrades and rollback.
 - [Merge conflicts](merge-conflicts-spec.md) explains storage-file union and
-  semantic reconciliation of concurrent record revisions.
-
-## 15. Relevant implementation
-
-- `baza-storage/src/crypto/age.rs`
-- `baza-storage/src/compression.rs`
-- `baza-storage/src/container.rs`
-- `baza/src/baza_storage/mod.rs`
-- `baza/src/baza_storage/container_draft.rs`
-- `baza/src/baza_storage/documents_index.rs`
-- `baza/src/baza_info.rs`
-- `baza/src/entities/document_key.rs`
-- `baza/src/entities/revision.rs`
-- `baza/src/baza_state/state_file.rs`
-- `baza/src/baza_state/search.rs`
-- `baza/src/baza_state/document_locks_file.rs`
-- `baza/src/baza/blobs.rs`
-- `baza/src/baza_manager/keys.rs`
-- `baza/src/baza_paths.rs`
+  semantic merging of concurrent document revisions.

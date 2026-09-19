@@ -1,6 +1,7 @@
 # Arhiv Agent Guide
 
 ## What this repo is
+
 - `arhiv` is a local-first encrypted personal database for structured records and files.
 - Runtime surfaces: Rust CLI/server, React UI, Electron desktop wrapper, and Android Java/JNI wrapper.
 - Core ownership boundaries:
@@ -12,7 +13,9 @@
   - `arhiv-cli/`, `arhiv-desktop/`, `arhiv-android/`: platform entrypoints.
 
 ## Canonical specs
+
 Read the relevant spec before changing behavior in that area:
+
 - Domain concepts, relationships, and central business rules: `docs/domain-model.md`.
 - Owner-facing workflows that compose domain and operational rules: `docs/user-workflows.md`.
 - Storage format/container/index semantics: `docs/arhiv-encrypted-file-format.md`.
@@ -29,6 +32,7 @@ Read the relevant spec before changing behavior in that area:
 - Full-text search eligibility, ranking, and index compatibility: `docs/full-text-search-spec.md`.
 
 ## Safety invariants
+
 - Keep API DTO shapes synchronized between `arhiv/src/ui/dto.rs` and `arhiv/src/ui/dto.ts`.
 - Do not change storage container/index semantics (`info` first line, key order, patch behavior) without coordinated storage migration work.
 - Preserve the launcher protocol: desktop startup depends on `arhiv server --json` and the `@@SERVER_INFO:` JSON marker on stderr.
@@ -38,6 +42,7 @@ Read the relevant spec before changing behavior in that area:
 - Keep Electron runtime versions aligned across dev and Arch packaging: `arhiv-desktop/package.json`, `package-lock.json`, `PKGBUILD.template`, and `arhiv-desktop/arhiv-desktop` must move together.
 
 ## High-risk areas
+
 - Crypto/key handling: `baza-common/src/crypto/`, `baza-storage/src/crypto/`, `baza/src/baza_manager/keys.rs`, `arhiv/src/arhiv/keyring.rs`.
 - Storage container and patch/merge logic: `baza-storage/src/container.rs`, `baza/src/baza_storage/`, `baza/src/merge/mod.rs`.
 - Auth, cookies, HTTPS, certificates, and launcher trust path: `arhiv/src/server/`, `arhiv-desktop/src/`, `arhiv-android/` WebView/JNI startup code.
@@ -45,6 +50,7 @@ Read the relevant spec before changing behavior in that area:
 - Android storage/security configuration: `arhiv-android/app/src/main/AndroidManifest.xml`, `arhiv-android/app/src/main/res/xml/backup_rules.xml`, `arhiv-android/app/src/main/res/xml/data_extraction_rules.xml`.
 
 ## Before changing X, read Y
+
 - Domain concepts, relationships, or central business rules -> domain model document.
 - Storage format, encryption, container ordering, or file matching -> encrypted file format spec + migration playbook.
 - Document schema, fields, validation, or `data_version` -> storage schema contract + migration playbook.
@@ -58,15 +64,19 @@ Read the relevant spec before changing behavior in that area:
 - Significant architecture decisions and their rationale -> `docs/architecture-decisions.md`.
 
 ## Common validation commands
+
 Use the most targeted check first, then broaden when needed:
+
 - Rust: `just check-rs`.
 - TypeScript/UI/desktop/root linting: `just check-ts`.
 - Full local gate: `just check`.
+- Markdown: format the intended files with the repository-local `oxfmt`, then validate the same scope with `oxfmt --check`.
 - Dev server: `just run`.
 - Electron dev runtime: `just desktop`.
 - Android/release/package commands live in `justfile`; prefer invoking recipes instead of copying long command lines.
 
 ## Security-sensitive validation
+
 - Validate the affected boundary directly rather than relying only on broad checks.
 - For server auth changes, exercise missing, malformed, reused, and incorrect credentials as applicable.
 - For browser bootstrap changes, verify that the token succeeds once and cannot be reused.
@@ -76,6 +86,7 @@ Use the most targeted check first, then broaden when needed:
 - Describe security effects precisely: distinguish confidentiality, integrity, freshness/rollback resistance, availability, and metadata protection.
 
 ## Storage migration changes
+
 - Change `storage_version` for persistent container, encoding, encryption/compression, or storage-file merge contract changes.
 - Change `data_version` for stored document-shape or meaning changes that invalidate existing data.
 - Preserve parseable storage info, exact index/value cardinality, equal `BazaInfo` across mergeable storage files, and every distinct `DocumentKey(id, rev)`.
@@ -84,6 +95,7 @@ Use the most targeted check first, then broaden when needed:
 - Cover migration rollback and corruption/failure paths with focused tests.
 
 ## Non-obvious gotchas
+
 - Debug and release UI asset serving differ: debug reads filesystem assets, release embeds assets.
 - Server binds IPv4 loopback internally and emits localhost URLs in `ServerInfo`.
 - Baza storage file matching intentionally accepts sync-conflict filename variants.
@@ -92,6 +104,7 @@ Use the most targeted check first, then broaden when needed:
 - Desktop automated runtime test coverage is effectively unknown; do not assume lint/typecheck exercises desktop startup behavior.
 
 ## Intent Ledger
+
 - Preserve automatic browser launch for `arhiv server --browser`; development workflows require it.
 - Reap browser child processes without coupling their lifetime to the server process.
 - Use readable, exact release tags for external GitHub Actions; do not SHA-pin them because SHA pinning is unnecessary for this project.
@@ -99,8 +112,10 @@ Use the most targeted check first, then broaden when needed:
 - Prefer pure-Rust libraries; avoid dependencies that require C/C++ code or native libraries unless explicitly approved.
 - Keep outbound network/download workflows in `arhiv`; `baza` owns completed local files, encrypted blob storage, schema rules, staging, and other core database behavior.
 - Use `just arhiv -- <command>` to inspect configured local debug data when validating CLI behavior, schema, search, document state, histories, or conflicts; start with read-only commands to preserve the fixture.
+- Keep behavior documentation humane and concise: documents describe behavior rather than source-code layout, while code implements that behavior.
 
 # Best practices
+
 - Prefer positive phrasing in code comments and guidance; describe intended ownership and behavior directly rather than framing APIs by what they do not do.
 - Add high-value doc comments to new or changed public functions, methods, and types; explain ownership, invariants, boundary intent, or caller obligations rather than restating signatures.
 - Add high-value logs around meaningful workflow transitions, security- or data-sensitive decisions, and successful boundary conversions; keep pure helpers quiet and avoid noisy implementation traces.

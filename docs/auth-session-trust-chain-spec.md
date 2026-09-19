@@ -11,18 +11,21 @@ Scope: local HTTPS UI server authentication, session propagation, and certificat
 
 ## 2. Server-Side Auth Contract
 
-UI auth middleware (`client_authenticator`) enforces the following:
+UI authentication enforces the following:
 
 1. Client token source:
+
 - Cookie `AuthToken` only.
 
 2. Parsing and validation:
+
 - Token must parse as `AuthToken` serialized format.
 - Missing token => `401 Unauthorized` (`AuthToken is missing`).
 - Parse failure => `400 Bad Request`.
 - Token mismatch against server startup token => `401 Unauthorized` (`Invalid AuthToken`).
 
 3. Session propagation:
+
 - On successful auth, server sets cookie `AuthToken=<token>` with attributes:
   - `Path=/ui`
   - `HttpOnly`
@@ -30,16 +33,18 @@ UI auth middleware (`client_authenticator`) enforces the following:
   - `SameSite=Strict`
 
 Auth token internals:
+
 - token payload is 32 random bytes.
 - serialized as URL-safe base64.
 
 ## 3. Token Issuance and Lifetime
 
-- Token is generated once per server start (`AuthToken::generate`).
+- Token is generated once per server start.
 - No TTL/expiration mechanism is enforced by middleware.
 - New server start implies new token.
 
 Browser bootstrap:
+
 - `browserUrl` contains a separate one-time token at `/auth`.
 - The endpoint accepts that token once, sets the authenticated cookie, and redirects to the clean `/ui` URL.
 - Query tokens are not accepted by protected UI/API routes.
@@ -73,11 +78,3 @@ the Electron and Android trust implementations.
 - No token expiry/rotation within a running server process.
 - No documented multi-client session separation; all clients use same server token for that server instance.
 - No CSRF-specific mechanism beyond `SameSite=Strict` cookie handling and localhost deployment assumptions.
-
-## 8. Relevant implementation
-
-- `arhiv/src/server/ui_server/mod.rs`
-- `arhiv/src/server/mod.rs`
-- `arhiv/src/server/certificate.rs`
-- `arhiv/src/server/server_info.rs`
-- `arhiv/src/server/auth_token.rs`

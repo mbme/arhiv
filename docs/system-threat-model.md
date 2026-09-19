@@ -2,15 +2,22 @@
 
 ## 1. Purpose and Scope
 
-This document defines the system-level security model for Arhiv: protected assets, attacker capabilities, trust boundaries, security goals, and known limitations.
+This document defines the system-level security model for Arhiv: protected
+information and resources, attacker capabilities, trust boundaries, security
+goals, and known limitations.
 
 It is a cross-cutting overview. Detailed behavior is explained in:
 
-- `docs/crypto-key-lifecycle-threat-model.md` for key hierarchy, recovery, and secret handling
-- `docs/auth-session-trust-chain-spec.md` for local HTTPS, cookies, tokens, and browser bootstrap
-- `docs/platform-security-boundaries-spec.md` for Desktop and Android boundaries
-- `docs/backup-restore-durability-spec.md` for backup, restore, and durability guarantees
-- `docs/merge-conflicts-spec.md` for synchronization and conflict behavior
+- [Crypto and key lifecycle](crypto-key-lifecycle-threat-model.md) for key
+  hierarchy, recovery, and secret handling.
+- [Authentication and sessions](auth-session-trust-chain-spec.md) for local
+  HTTPS, cookies, tokens, and browser bootstrap.
+- [Platform security boundaries](platform-security-boundaries-spec.md) for
+  Desktop and Android boundaries.
+- [Backup and restore](backup-restore-durability-spec.md) for backup, restore,
+  and durability guarantees.
+- [Merge conflicts](merge-conflicts-spec.md) for synchronization and conflict
+  behavior.
 
 ## 2. Deployment Model
 
@@ -28,15 +35,15 @@ platform documents describe the token exchange and certificate trust details.
 
 When the workspace UI mounts, recognized release builds may check GitHub's
 latest stable release. Attempts are limited to one per hour. The browser-side
-request sends no Arhiv records, credentials, or current-version value, but
+request sends no Arhiv documents, credentials, or current-version value, but
 GitHub and the platform network stack can observe normal request metadata such
 as IP address, user agent, and request timing.
 
-## 3. Protected Assets
+## 3. Protected Information and Resources
 
 Arhiv protects the confidentiality and integrity of:
 
-1. User records, metadata, and asset/blob plaintext.
+1. User documents, metadata, and asset-blob plaintext.
 2. The storage master key, per-asset blob keys, user passwords, and exported keys.
 3. Authentication and browser-bootstrap tokens.
 4. The local server TLS private key and certificate.
@@ -73,16 +80,16 @@ Arhiv does not protect against:
 
 ## 5. Trust Boundaries and Controls
 
-| Boundary | Primary control | Important limitation |
-| --- | --- | --- |
-| Encrypted storage or backup -> attacker | AGE encryption; password-protected key wrapper | Password strength and key/export handling determine resistance to offline guessing. |
-| Storage files -> Arhiv parser | Authenticated decryption and strict format/version parsing | This detects altered or malformed bytes, but not replay of an older valid encrypted file. |
-| Launcher -> local server | Startup information, local process/JNI boundary, certificate pinning in Desktop/Android | A compromised local user account can interfere with this boundary. |
-| Browser/WebView -> local server | IPv4 loopback binding, HTTPS, certificate pinning where available, authenticated cookie | Loopback restricts network peers, not local processes owned by the same user. |
-| Generic browser launch -> authenticated UI | Separate 256-bit one-time bootstrap token; cookie exchange and redirect to clean UI URL | The initial bootstrap URL can still appear in browser or process history before it is consumed. |
-| Workspace UI -> GitHub Releases API | Validated numeric `tag_name`, hourly attempt limit, and CSP `connect-src` allowlist | GitHub and the platform network stack can observe normal request metadata and availability depends on external network access. |
-| Desktop/Android secret persistence -> platform secret store | System keyring or Android Keystore with platform authentication | These stores are convenience and local UX mechanisms, not a replacement for backup or encryption-key recovery. |
-| Live storage -> backup | Encrypted file copies of key, committed DB, and blobs; encrypted authenticated generation manifest | The manifest binds its listed artifact bytes, but backup is not a transactional snapshot and provides no rollback/freshness protection. |
+| Boundary                                                    | Primary control                                                                                    | Important limitation                                                                                                                    |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Encrypted storage or backup -> attacker                     | AGE encryption; password-protected key wrapper                                                     | Password strength and key/export handling determine resistance to offline guessing.                                                     |
+| Storage files -> Arhiv parser                               | Authenticated decryption and strict format/version parsing                                         | This detects altered or malformed bytes, but not replay of an older valid encrypted file.                                               |
+| Launcher -> local server                                    | Startup information, local process/JNI boundary, certificate pinning in Desktop/Android            | A compromised local user account can interfere with this boundary.                                                                      |
+| Browser/WebView -> local server                             | IPv4 loopback binding, HTTPS, certificate pinning where available, authenticated cookie            | Loopback restricts network peers, not local processes owned by the same user.                                                           |
+| Generic browser launch -> authenticated UI                  | Separate 256-bit one-time bootstrap token; cookie exchange and redirect to clean UI URL            | The initial bootstrap URL can still appear in browser or process history before it is consumed.                                         |
+| Workspace UI -> GitHub Releases API                         | Validated numeric `tag_name`, hourly attempt limit, and CSP `connect-src` allowlist                | GitHub and the platform network stack can observe normal request metadata and availability depends on external network access.          |
+| Desktop/Android secret persistence -> platform secret store | System keyring or Android Keystore with platform authentication                                    | These stores are convenience and local UX mechanisms, not a replacement for backup or encryption-key recovery.                          |
+| Live storage -> backup                                      | Encrypted file copies of key, committed DB, and blobs; encrypted authenticated generation manifest | The manifest binds its listed artifact bytes, but backup is not a transactional snapshot and provides no rollback/freshness protection. |
 
 ## 6. Security Goals
 
@@ -103,19 +110,3 @@ Arhiv does not protect against:
 5. Backups are recoverable copies, not atomic point-in-time snapshots; staged changes are excluded and a concurrent writer can produce a mixed-time artifact set.
 6. No remote multi-user isolation, server-side escrow, or recovery service is provided.
 7. Platform permissions and browser/runtime security properties are delegated to the operating system and platform runtimes.
-
-## 8. Relevant implementation
-
-- `arhiv/src/server/mod.rs`
-- `arhiv/src/server/auth_token.rs`
-- `arhiv/src/server/http_server.rs`
-- `arhiv/src/server/ui_server/mod.rs`
-- `arhiv/src/server/certificate.rs`
-- `arhiv/src/server/server_info.rs`
-- `baza-storage/src/crypto/age.rs`
-- `baza/src/baza_manager/keys.rs`
-- `baza/src/backup/`
-- `arhiv-desktop/src/arhiv.ts`
-- `arhiv-desktop/src/index.ts`
-- `arhiv-android/src/lib.rs`
-- `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/MainActivity.java`

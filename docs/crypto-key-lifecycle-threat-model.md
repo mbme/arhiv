@@ -3,12 +3,14 @@
 ## 1. Scope
 
 This document specifies:
+
 - Key hierarchy and lifecycle operations
 - Recoverability and non-recoverability boundaries
 - Threat model assumptions and security guarantees
 - Zeroization expectations and limits
 
 It does not specify:
+
 - TLS/UI trust chain details (covered in auth/session spec)
 - Storage container byte format (covered in encrypted file format spec)
 
@@ -17,14 +19,17 @@ It does not specify:
 Arhiv uses AGE-based encryption with three practical key layers:
 
 1. Password-derived key (AGE scrypt recipient/identity)
+
 - Derived from user password
 - Used only to encrypt/decrypt `storage/key.age` (ASCII-armored)
 
 2. Storage master key (x25519 AGE identity)
+
 - Stored encrypted inside `key.age`
 - Encrypts/decrypts main storage + state/search/locks files
 
 3. Per-asset blob keys (x25519 AGE identity per asset)
+
 - Stored in asset document metadata
 - Encrypt/decrypt asset blob payload files
 
@@ -32,7 +37,8 @@ Arhiv uses AGE-based encryption with three practical key layers:
 
 ### 3.1 Create
 
-`create(password)`:
+Creating an Arhiv:
+
 1. Derives password key from password (min length enforced).
 2. Generates new x25519 storage master key.
 3. Writes master key into `key.age` encrypted with password key.
@@ -40,19 +46,22 @@ Arhiv uses AGE-based encryption with three practical key layers:
 
 ### 3.2 Unlock / Lock
 
-`unlock(password)`:
+Unlocking:
+
 1. Decrypts `key.age` with password key.
 2. Parses decrypted x25519 storage master key.
 3. Stores key in process memory and allows storage/state access.
 4. Saves the serialized storage master key to platform-protected local credential storage when available.
 
-`lock()`:
+Locking:
+
 - Durably removes the platform-protected cached storage key before dropping the in-memory key/cache.
 - If credential deletion fails, lock fails and leaves the in-memory key available.
 
 ### 3.3 Change Password
 
-`change_key_file_password(old_password, new_password)`:
+Changing the key-file password:
+
 1. Decrypts current `key.age` with old password.
 2. Re-encrypts same storage master key with new password.
 3. Replaces key file transactionally.
@@ -61,37 +70,43 @@ Important: storage payload files are NOT re-encrypted during password change.
 
 ### 3.4 Export Key
 
-`export_key(password, export_password)`:
+Exporting a key:
+
 1. Decrypts local `key.age` with current password.
 2. Re-encrypts same storage master key with `export_password`.
 3. Returns ASCII-armored AGE payload string.
 
 ### 3.5 Import/Verify Key
 
-`import_key(encrypted_key_data, password)`:
+Importing a key:
+
 1. Decrypts imported key payload.
 2. Parses candidate storage master key.
 3. Validates candidate key by attempting to read storage.
 4. Replaces local `key.age` transactionally.
 
-`verify_key(...)` performs validation without replacing key file.
+Key verification performs the same validation without replacing the key file.
 
 ## 4. Recoverability Contract
 
 ### 4.1 Recoverable
 
 1. Forgotten local app state/keyring password cache:
+
 - recoverable if user still knows Arhiv password or has exported key + its password.
 
 2. Lost local `key.age`:
+
 - recoverable only if user has exported key payload + export password.
 
 3. Password rotation:
+
 - recoverable by design (same storage master key; key file re-wrapped).
 
 ### 4.2 Not Recoverable
 
 1. Lost both:
+
 - usable `key.age` (or export) AND password material needed to decrypt it.
 
 2. Corrupted encrypted key payload with no valid backup/export.
@@ -123,14 +138,15 @@ No server-side escrow or recovery service exists in current architecture.
 
 ## 6. Zeroization and Secret Handling Expectations
 
-Current implementation uses secrecy wrappers (`SecretString`, `SecretBytes`, `SecretBox`/`SecretSlice`) for sensitive buffers and key material transport.
-
 Contract:
-1. Secrets should be kept in secret-typed wrappers where feasible.
+
+1. Sensitive buffers and transported key material should use secret-aware
+   memory handling where feasible.
 2. Logs must never include plaintext secret values.
 3. Decrypted secret material lifetime in memory should be minimized.
 
 Limitations:
+
 1. Zeroization is best-effort at wrapper boundaries; full-process zeroization cannot be guaranteed.
 2. External libraries/allocators/OS may retain copies outside Arhiv control.
 3. Host compromise remains out of scope.
@@ -156,16 +172,3 @@ independent trust anchors.
 2. Validate export/import flows periodically in a controlled test environment.
 3. Treat password change as key-file rewrap only; it is not data re-encryption.
 4. Pair key export with storage backup in recovery drills.
-
-## 9. Relevant implementation
-
-- `baza-storage/src/crypto/age.rs`
-- `baza-common/src/crypto/secret.rs`
-- `baza/src/baza_manager/keys.rs`
-- `baza/src/baza_manager/manager_state.rs`
-- `baza/src/baza_manager/mod.rs`
-- `baza/src/baza/mod.rs`
-- `arhiv/src/arhiv/mod.rs`
-- `arhiv/src/arhiv/keyring.rs`
-- `arhiv-android/src/keyring.rs`
-- `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/Keyring.java`

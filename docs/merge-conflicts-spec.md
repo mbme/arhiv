@@ -1,33 +1,32 @@
 # Arhiv Merge Conflict Handling Spec
 
-Scope: how Arhiv detects, represents, merges, exposes, and commits conflicting document revisions.
+Scope: how Arhiv detects, represents, merges, exposes, and commits conflicting
+document revisions.
 
-## 1. Terminology
+## 1. Domain and synchronization terms
 
-- Snapshot: an immutable committed document version stored in `storage/baza*.gz.age`.
-- Revision (`rev`): a vector clock (`Revision`) attached to each committed snapshot.
-- Document head (`DocumentHead`): state-layer representation of one logical document id, containing:
-  - `original`: one or more committed snapshots (conflict branches when count > 1)
-  - `staged`: optional working copy (rev=`initial`/null)
-  - `snapshots_count`: total known snapshot count in storage for this id
-- Conflict: `DocumentHead.original.len() > 1`.
-- Unresolved conflict: conflict with no staged document.
-- Resolved conflict: conflict with a staged merged document.
+The [domain model](domain-model.md) defines document, document version,
+snapshot, staged change, conflict, and staged merge. This document uses those
+terms without redefining them.
 
-Primary code:
-- `baza/src/entities/revision.rs`
-- `baza/src/baza_state/document_head.rs`
-- `baza/src/baza/mod.rs`
-- `baza/src/merge/expert.rs`
-- `baza/src/merge/mod.rs`
+Synchronization adds these technical terms:
+
+- Stored snapshot: an immutable serialized document version in
+  `storage/baza*.gz.age`.
+- Revision (`rev`): the vector clock attached to a stored snapshot.
+- Branch: a latest snapshot that is not causally superseded by another snapshot
+  of the same document.
+- Merge base: the common stored ancestor used for three-way reconciliation.
+- Snapshot identity: the `(id, rev)` pair used to deduplicate stored snapshots.
 
 ## 2. Conflict Detection Model
 
 ### 2.1 Revision ordering
 
-`Revision` is a vector clock map `{instance_id -> counter}`.
+Each revision is a vector clock map `{instance_id -> counter}`.
 
-Comparison (`causal_cmp`):
+Its causal comparison has four possible results:
+
 - `Before`: all components <= other, at least one <
 - `After`: all components >= other, at least one >
 - `Equal`: all equal
@@ -37,17 +36,20 @@ A conflict branch exists when latest revisions for a document are concurrent.
 
 ### 2.2 Selecting latest branches per document
 
-When loading storage, Arhiv computes latest revisions with `LatestRevComputer`:
+When loading storage, Arhiv computes the latest revisions:
+
 - drops revisions dominated by newer ones
-- keeps one head per concurrent branch
+- keeps each concurrent branch
 
 Result:
-- 1 latest revision => non-conflict head
-- >1 latest revisions => conflict head
+
+- one latest revision means the document has no conflict
+- more than one latest revision means the document has a conflict
 
 Base revision for 3-way merge:
+
 - computed as the unique latest revision strictly older than every latest
-  conflicting revision (`Revision::find_base_rev`)
+  conflicting revision
 - absent when there is no common stored ancestor or when multiple concurrent
   common ancestors have no single causal maximum
 
@@ -56,172 +58,173 @@ Base revision for 3-way merge:
 Before opening state, Arhiv merges all `baza*.gz.age`-matching files in storage dir into main `baza.gz.age`.
 
 Important details:
-- filename matching is fuzzy (`is_baza_file`), so sync-conflict files like `baza.gz.sync-conflict-...age` are included.
-- merge is key-level union (snapshot identity = `DocumentKey(id, rev)`), not semantic document merge.
-- duplicate keys are deduplicated.
 
-Code:
-- `baza/src/baza_manager/mod.rs::merge_storages`
-- `baza/src/baza_paths.rs::list_storage_db_files`
-- `baza/src/baza_storage/mod.rs::merge_storages`
+- filename matching accepts sync-conflict files such as `baza.gz.sync-conflict-...age`.
+- merge is a key-level union using `(id, rev)` as snapshot identity, not a
+  semantic document merge.
+- duplicate keys are deduplicated.
 
 ## 4. State Refresh From Storage
 
-Executed in `Baza::update_state_from_storage` via `update_state_from_storage`.
-
 ### 4.1 Precondition gate
 
-If state has any staged documents, refresh exits early with no merge/import.
+If state has any staged changes, refresh exits early with no merge/import.
 
 Policy and implication:
-- pending changes are expected to be brief;
-- the global gate intentionally keeps their base state stable rather than importing remote snapshots while any local change is pending;
-- incoming remote snapshots are not incorporated while local staged changes exist.
+
+- staged changes are expected to be brief;
+- the global gate intentionally keeps their base state stable rather than
+  importing remote snapshots while staged changes exist;
+- incoming remote snapshots are not incorporated while staged changes exist.
 
 ### 4.2 Outdated document selection
 
 For each document id in storage:
+
 - compute latest revisions (+ optional merge base)
-- skip if state already has exactly same original revision set
+- skip if the current state already has exactly the same committed revision set
 - otherwise mark as outdated and load required snapshots
 
 Trust boundary:
+
 - synchronized snapshots are treated as valid committed Arhiv history;
 - refresh parses and merges them, but does not rerun local staging validation.
 
-### 4.3 Conflict head construction
+### 4.3 Conflict state construction
 
 For each outdated id:
-- build `DocumentHead::new` from latest snapshots
+
+- rebuild the document's current state from the latest snapshots
 - if conflict:
   - load base snapshot if base revision exists
-  - run semantic merge (`MergeExpert::merge_originals(base, originals)`)
-  - store merge result as `staged` via `document_head.modify(merged)`
+  - run the semantic merge
+  - store the merge result as a staged merge
 
-Resulting conflict states:
-- unresolved conflict: possible when conflict exists but no staged merge result (not produced by this path under normal conditions)
-- resolved conflict: conflict + staged merged document (normal state after auto-merge)
+When the merge produces a result, it becomes the staged merge. A conflict can
+remain without one, although this refresh path does not normally
+produce that state.
 
 ### 4.4 Snapshot count
 
-After refresh, `snapshots_count` is updated from full storage index count per id (all historical snapshots, not only latest branches).
+After refresh, `snapshots_count` is updated from the full storage index count
+for the document, including historical snapshots rather than only latest branches.
 
 ## 5. Semantic Merge Algorithm
 
-`MergeExpert` performs field-aware 3-way merge.
+Arhiv performs a field-aware three-way merge.
 
 Input constraints:
-- at least 2 originals
+
+- at least two competing snapshots
 - same document id
 - same document type (except erased-vs-non-erased handled specially)
 
-Original ordering:
-- originals sorted by `updated_at` ascending
+Competing-snapshot ordering:
+
+- snapshots sorted by `updated_at` ascending
 - merged left-to-right
 
 Erasure handling:
-- all originals erased => return oldest erased snapshot
-- mix erased/non-erased => drop erased originals
+
+- all competing snapshots erased => return oldest erased snapshot
+- mix erased/non-erased => drop erased snapshots
 - if only one non-erased left => return it
 
 Field strategies:
-- `String`, `People`, `Countries`, `MarkupString`: word-level three-way text merge (`merge_strings_three_way`)
-- `RefList`: three-way slice merge (`merge_slices_three_way`)
-- `Flag`, `NaturalNumber`, `Ref`, `Enum`, `Date`, `Duration`: last-write-wins (`value_b` in pairwise fold)
 
-No conflict markers are emitted. Overlaps are synthesized into a single value by algorithmic reconciliation.
+- `String`, `People`, `Countries`, `MarkupString`: word-level three-way text merge
+- `RefList`: three-way list merge
+- `Flag`, `NaturalNumber`, `Ref`, `Enum`, `Date`, `Duration`: last-write-wins
 
-Code:
-- `baza/src/merge/expert.rs`
-- `baza/src/merge/mod.rs`
+No conflict markers are emitted. Overlaps are synthesized into a single value
+by algorithmic reconciliation.
 
-## 6. Conflict Lifecycle
+## 6. Synchronization effects on the conflict lifecycle
 
 ### 6.1 Created
 
-Conflict appears when state head has >1 latest original snapshots for same id.
+A conflict appears when refresh finds more than one concurrent latest snapshot
+for the same document.
 
 ### 6.2 Surfaced
 
 API/UI flags conflict via `has_conflict` and conflict count endpoint:
-- list/get document responses include `has_conflict`
-- `CountConflicts` returns count of heads where `is_conflict()`
+
+- list/get responses include `has_conflict`
+- `CountConflicts` returns the number of conflicted documents
 - catalog filter `onlyConflicts` supported
 
-Code:
-- `arhiv/src/server/ui_server/api_handler.rs`
-- `arhiv/src/ui/dto.rs`
-- `arhiv/src/ui/dto.ts`
-- `baza/src/baza_state/query.rs`
+### 6.3 Staged merge
 
-### 6.3 Resolved (staged)
+A staged merge can result from:
 
-Conflict becomes resolved when `DocumentHead` has staged document (`is_resolved_conflict`).
-
-This can happen by:
 - automatic merge during state refresh from storage
-- manual edit/save of a conflicted document (stage_document modifies head)
+- manual edit or save of a conflicted document
 
 ### 6.4 Committed
 
 On commit:
-- one new revision is computed globally from all original revisions + local instance increment
-- every staged document (including resolved conflicts) is committed to that same new revision
-- committed head becomes single-snapshot (non-conflict)
-- old snapshots remain in storage history unless erased by erase rules
 
-Code:
-- `baza/src/baza_state/mod.rs::commit`
-- `baza/src/baza/mod.rs::commit`
+- one new revision is computed globally from all competing revisions plus the
+  local instance increment
+- every staged change, including staged merges, is committed to that
+  same new revision
+- the document returns to one current snapshot
+- old snapshots remain in storage history unless erased by erase rules
 
 ## 7. Commit and Auto-Commit Semantics
 
 Manual commit:
-- allowed as long as there are staged docs and no document locks
+
+- allowed when staged changes exist and no edit locks remain
 - not blocked by presence of conflicts in general
-- therefore unresolved conflicts may coexist while unrelated staged docs are committed
+- therefore conflicts without staged merges may coexist while unrelated staged
+  changes are committed
 
 Auto-commit:
-- explicitly skips when `baza.has_conflicts()` is true
-- requires clean no-conflict state to auto-commit
 
-Code:
-- `baza/src/auto_commit_service.rs`
+- skips while any conflict exists
+- requires clean no-conflict state to auto-commit
 
 ## 8. External Sync / Conflict Files
 
 Arhiv expects external sync tools may create additional storage files (including sync-conflict variants).
 
 Behavior:
+
 - all matching storage db files are merged on open
 - this preserves all distinct `(id, rev)` snapshots
-- semantic conflict resolution then happens at state refresh stage, not during file merge
+- semantic merging then happens during state refresh, not during file merge
 
 ## 9. Invariants
 
 - Revision maps contain only positive counters; parsing treats zero counters as
   absent so equality, hashing, ordering, and serialization share one canonical
   representation.
-- All snapshots inside one `DocumentHead` share same document id.
-- Commit revision must be strictly newer than every original revision in that head.
-- Document id cannot change during stage/modify.
-- Erased original documents cannot be modified directly.
+- All snapshots grouped under one document share the same id.
+- A resolution's Commit revision must be strictly newer than every competing
+  revision.
+- Document id cannot change during staging.
+- Erased snapshots cannot be modified directly.
 - State/storage info (`data_version`, `storage_version`) must match before refresh.
 
 ## 10. Known Limitations / Behavioral Risks
 
-1. `DocumentHead::get_single_document()` returns first item from unordered `HashSet` when conflict has no staged doc.
-- This makes projected document data potentially nondeterministic for unresolved conflicts.
-- Search indexing and API projections rely on `get_single_document()`.
+1. When a conflict has no staged merge, selecting one branch for API
+   and search projection is nondeterministic.
 
 2. Auto-merge has no explicit conflict markers.
+
 - Overlapping edits are combined heuristically (especially strings/lists), not surfaced as structured hunks.
 
 3. Pairwise fold order for >2 branches uses `updated_at` ordering.
+
 - Different timestamps can influence final merged payload.
 
-4. State refresh is blocked when any staged document exists.
-- Remote conflict updates are delayed until local staged state is cleared/committed.
+4. State refresh is blocked when any staged change exists.
+
+- Remote conflict updates are delayed until staged changes are discarded or
+  committed.
 
 ## 11. End-to-End Flow (Typical Sync Conflict)
 
@@ -229,66 +232,64 @@ Behavior:
 2. Arhiv open path merges storage files into main db by unique `(id, rev)` keys.
 3. State refresh computes latest concurrent revisions per id.
 4. For conflicted ids, optional base revision is located.
-5. `MergeExpert` produces merged document and stages it on conflicted head.
+5. Arhiv produces a staged merge for the conflicted document.
 6. UI shows conflict indicator/count (`has_conflict`, `CountConflicts`).
 7. User may inspect/edit staged result.
-8. Commit writes new snapshot revision, collapsing head to single committed snapshot.
+8. The commit writes a new snapshot revision and resolves the conflict.
 
 ## 12. Practical Observability Points
 
 - CLI status warns when `conflicts_count > 0`.
-- CLI `conflicts` lists conflicted documents, and `conflict show <id>` prints original branches plus any staged resolution.
-- CLI `reset <id>` discards a staged resolution and returns the head to its original conflict branches.
+- CLI `conflicts` lists conflicted documents, and `conflict show <id>` prints
+  competing branches plus any staged merge.
+- CLI `reset <id>` discards a staged merge and leaves the competing snapshots in
+  conflict.
 - CLI `history <id>`, `snapshot get <id> <rev>`, and `revert <id> <rev>` expose committed snapshots for inspection and staged rollback.
-- CLI `diff conflict <id>` compares canonical document JSON data between conflict branches and the staged resolution, when present.
+- CLI `diff conflict <id>` compares canonical document JSON data between
+  conflict branches and the staged merge, when present.
 - UI header shows conflict count button and catalog can filter to conflicts.
 - Document payloads expose `hasConflict`, `isStaged`, and `snapshotsCount` for troubleshooting.
-
-Code:
-- `arhiv-cli/src/bin/arhiv/`
-- `arhiv/src/arhiv/status.rs`
-- `arhiv/src/ui/Workspace/WorkspaceHeader/ConflictsButton.tsx`
-- `arhiv/src/ui/Workspace/DocumentCard/Indicators.tsx`
 
 ## 13. Consistency and Idempotency Contract
 
 This section makes existing behavior explicit.
 
 Storage-file merge idempotency:
-- Merging storage files is key-identity based (`DocumentKey(id, rev)`).
+
+- Merging storage files uses `(id, rev)` as snapshot identity.
 - Re-merging the same effective set of snapshots does not create additional snapshots.
 - Duplicate keys are deduplicated before write.
 
 State refresh idempotency:
-- Refresh compares latest storage revision set vs state original revision set per document id.
-- If sets are equal, the document is skipped as up-to-date.
+
+- Refresh compares the latest storage revision set with the current committed
+  revision set for each document.
+- If the sets are equal, the document is skipped as up-to-date.
 - Re-running refresh without storage/state changes yields no additional state changes.
 
 Deterministic parts:
+
 - latest revision selection is deterministic for a fixed snapshot set.
 - base-revision lookup is deterministic for a fixed revision graph.
 - conflict/non-conflict classification is deterministic for a fixed snapshot set.
 
 Known non-deterministic edge:
-- unresolved conflict projection can be nondeterministic because `get_single_document()` selects first element of unordered `HashSet`.
-- this affects API/search projection only when conflict has no staged merged doc.
 
-Code:
-- `baza/src/baza/mod.rs`
-- `baza/src/baza_state/document_head.rs`
-- `baza/src/baza_storage/mod.rs`
+- Conflict projection can select any competing branch when no staged merge
+  exists.
+- this affects API/search projection only in that state.
 
 ## 14. Partial Sync and Concurrency Behavior
 
-Incoming sync while local staged state exists:
-- `update_state_from_storage` exits early when any staged documents exist.
-- remote snapshots are not imported until staged changes are committed/cleared.
+Incoming sync while staged changes exist:
+
+- state refresh exits early.
+- remote snapshots are not imported until staged changes are committed or
+  discarded.
 
 Implications:
-- eventual convergence is deferred by local staged state.
-- conflict counts/heads can lag behind storage changes until next successful refresh.
-- this is intentional because pending changes are normally brief.
 
-Code:
-- `baza/src/baza/mod.rs`
-- `baza/src/baza_manager/mod.rs`
+- eventual convergence is deferred by staged changes.
+- conflict counts and current document states can lag behind storage changes until
+  the next successful refresh.
+- this is intentional because staged changes are normally brief.

@@ -5,12 +5,14 @@ Scope: platform-specific trust boundaries, process boundaries, permissions, and 
 ## 1. Shared Security Model
 
 Common model across desktop and android:
+
 - Arhiv server is local process, started by wrapper.
 - UI is served over local HTTPS with a self-signed certificate.
 - Client wrappers trust only the specific server certificate delivered at startup.
 - API access is gated by an `AuthToken` cookie.
 
 Critical trust assumptions:
+
 - local host process boundary is trusted more than network perimeter.
 - compromise of local user account compromises local Arhiv runtime.
 
@@ -24,6 +26,7 @@ Critical trust assumptions:
 - On TLS certificate error, Electron accepts cert only when fingerprint matches expected value.
 
 Boundary implication:
+
 - desktop app does not trust system CA for local server identity; it uses certificate pinning-like fingerprint check against startup payload.
 
 ## 2.2 Session/token handling
@@ -39,8 +42,8 @@ Boundary implication:
 
 ## 2.4 Desktop secrets at rest
 
-- Serialized x25519 storage-master-key persistence uses the system keyring through Rust
-  `keyring-core` with OS-specific credential stores (`ArhivKeyring::new_system_keyring`).
+- Serialized x25519 storage-master-key persistence uses the operating system's
+  credential store.
 - DEV and PROD keyring service names differ (`Arhiv-dev` vs `Arhiv`).
 
 ## 3. Android Boundary
@@ -54,6 +57,7 @@ Boundary implication:
   they do not terminate the app process.
 
 Boundary implication:
+
 - Java/Kotlin UI and Rust server runtime share one app sandbox/process context (with JNI boundary).
 
 ## 3.2 Device security gate
@@ -88,6 +92,7 @@ Boundary implication:
 - Android does not permit cleartext traffic.
 
 Additional download path:
+
 - download helper builds OkHttp client with the same trust manager and a `localhost` hostname verifier.
 - File chooser requests are completed exactly once. Starting a replacement request cancels the prior
   request, and activity destruction cancels any outstanding request.
@@ -95,16 +100,19 @@ Additional download path:
 ## 3.5 Permissions and storage boundary
 
 Manifest-declared permissions:
+
 - `INTERNET`
 - `MANAGE_EXTERNAL_STORAGE`
 - `READ_EXTERNAL_STORAGE`
 
 Runtime behavior:
+
 - App requests all-files access (`ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION`).
 - Arhiv storage path is under external storage (`<externalStorage>/Arhiv`).
 - App files/state are under app private files dir.
 
 UI capture boundary:
+
 - `FLAG_SECURE` is set to block screenshots/overview previews.
 
 ## 4. Local Server Boundary and Certificate Material
@@ -124,17 +132,3 @@ UI capture boundary:
 - Android `MANAGE_EXTERNAL_STORAGE` is broad and raises data exposure impact if app sandbox is compromised.
 - Desktop trust chain depends on integrity of startup `@@SERVER_INFO` stream from local child process.
 - Local certificate file is intentionally persistent; compromise of state dir can affect local trust material.
-
-## 7. Relevant implementation
-
-- `arhiv-desktop/src/index.ts`
-- `arhiv-desktop/src/arhiv.ts`
-- `arhiv/src/arhiv/keyring.rs`
-- `arhiv/src/arhiv/mod.rs`
-- `arhiv/src/server/certificate.rs`
-- `arhiv/src/server/http_server.rs`
-- `arhiv-android/app/src/main/AndroidManifest.xml`
-- `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/MainActivity.java`
-- `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/Keyring.java`
-- `arhiv-android/app/src/main/java/me/mbsoftware/arhiv/DownloadRequest.java`
-- `arhiv-android/src/lib.rs`

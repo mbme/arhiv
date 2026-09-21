@@ -93,7 +93,7 @@ jobs:
           path: |
             arhiv.apk
             release-notes.md
-            target/release/arhiv
+            target/x86_64-unknown-linux-gnu/release/arhiv
             target/x86_64-pc-windows-gnu/release/arhiv.exe
           if-no-files-found: error
           retention-days: 1
@@ -116,4 +116,4 @@ jobs:
         with:
           tag: ${{ github.ref_name }} # e.g. "42"
           bodyFile: release-artifacts/release-notes.md
-          artifacts: 'release-artifacts/arhiv.apk,release-artifacts/target/release/arhiv,release-artifacts/target/x86_64-pc-windows-gnu/release/arhiv.exe'
+          artifacts: 'release-artifacts/arhiv.apk,release-artifacts/target/x86_64-unknown-linux-gnu/release/arhiv,release-artifacts/target/x86_64-pc-windows-gnu/release/arhiv.exe'

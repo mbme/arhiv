@@ -1,12 +1,13 @@
 # Backlog
 
+- criterion vs external benchmarks setup
 - network p2p sync (use iroh), relays
 - better diff/merge
 - integration with emacs/file system - use FUSE?
 - rethink "save" + "commit" distinction / approach? no need to "save"? + auto-commit
 
 - better Auth
-  - user key pair? maybe independent of iroh?
+  - user key pair? maybe independent of iroh and age?
   - support multiple devices, revocations etc.
 
 - better UI

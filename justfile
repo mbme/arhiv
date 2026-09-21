@@ -73,11 +73,14 @@ arch-install:
 _prod-npm-build:
   npm run prod:build --workspace arhiv
 
-prod-build *ARGS: _prod-npm-build
+prod-build: _prod-npm-build
   ARHIV_VERSION=$(just _print-long-version) \
-  cargo build --frozen --release --features production-mode -p arhiv-cli --bin arhiv {{ARGS}}
+  CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS="-Ctarget-cpu=${ARHIV_LINUX_TARGET_CPU:-x86-64-v3} -Clink-arg=-fuse-ld=lld" \
+  cargo build --frozen --release --target x86_64-unknown-linux-gnu --features production-mode -p arhiv-cli --bin arhiv
 
-prod-build-windows: (prod-build "--target x86_64-pc-windows-gnu")
+prod-build-windows: _prod-npm-build
+  ARHIV_VERSION=$(just _print-long-version) \
+  cargo build --frozen --release --target x86_64-pc-windows-gnu --features production-mode -p arhiv-cli --bin arhiv
 
 prod-build-desktop:
   npm run prod:build --workspace arhiv-desktop
@@ -85,6 +88,7 @@ prod-build-desktop:
 # install the Arhiv CLI locally using Cargo
 cargo-install: _prod-npm-build
   ARHIV_VERSION=$(just _print-long-version) \
+  RUSTFLAGS="-Ctarget-cpu=native -Clink-arg=-fuse-ld=lld" \
   cargo install --path arhiv-cli --bin arhiv --features production-mode
 
 check-rs:

@@ -15,6 +15,7 @@ options=(!buildflags !debug) # some of the build flags seem to break linking wit
 
 export RUSTUP_TOOLCHAIN=stable
 export CARGO_TARGET_DIR=target
+export ARHIV_LINUX_TARGET_CPU=native
 
 pkgver() {
   cd ..
@@ -46,7 +47,7 @@ package() {
   cd ..
 
   # arhiv CLI
-  install -Dm 755 -t "$pkgdir/usr/bin/" "target/release/arhiv"
+  install -Dm 755 -t "$pkgdir/usr/bin/" "target/x86_64-unknown-linux-gnu/release/arhiv"
 
   # arhiv desktop app
   install -Dm 755 "arhiv-desktop/arhiv-desktop" "$pkgdir/usr/bin/arhiv-desktop"
@@ -56,8 +57,8 @@ package() {
   install -Dm 644 "arhiv-cli/resources/v.arhiv.ui.desktop" "${pkgdir}/usr/share/applications/v.arhiv.ui.desktop"
 
   mkdir -p "target/completions"
-  "target/release/arhiv" generate-completions bash > "target/completions/arhiv.bash"
-  "target/release/arhiv" generate-completions zsh > "target/completions/_arhiv"
+  "target/x86_64-unknown-linux-gnu/release/arhiv" generate-completions bash > "target/completions/arhiv.bash"
+  "target/x86_64-unknown-linux-gnu/release/arhiv" generate-completions zsh > "target/completions/_arhiv"
 
   install -Dm 755 "target/completions/arhiv.bash" "${pkgdir}/usr/share/bash-completion/completions/arhiv.bash"
   install -Dm 755 "target/completions/_arhiv" "${pkgdir}/usr/share/zsh/site-functions/_arhiv"

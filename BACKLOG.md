@@ -1,15 +1,19 @@
 # Backlog
 
-- 3rd party schema? rely on standards? markdown + yaml header + "gradual typing"?
 - network p2p sync (use iroh), relays
 - better diff/merge
 - integration with emacs/file system - use FUSE?
-- rethink "save" + "commit" distinction / approach? no need to "save"?
+- rethink "save" + "commit" distinction / approach? no need to "save"? + auto-commit
+
+- better Auth
+  - user key pair? maybe independent of iroh?
+  - support multiple devices, revocations etc.
 
 - better UI
   - redesign interface?
     - can't reorder notes
     - multiple workspaces
+  - need better ergonomics
   - no way to list staged changes (diff)
   - need better way to see documents with conflicts, their diff & conflicts; also in CLI
   - no way to see document history
@@ -24,12 +28,14 @@
   - FS integration - FUSE? would be great to edit with Emacs & others
 
 - better content management
+  - dynamic schemas? 3rd party schema? rely on standards? markdown + yaml header + "gradual typing"?
   - mark notes stale/irrelevant/archived
-  - dynamic schemas?
+  - різні рівні "доступу" - враховувати при інтеграціях і публікаціях - приватне, ДСК і публічне
 
 - як це розкладаєтьс на "базові" компоненти? і інтегрується із рештою екосистеми?
   - формат даних (encrypted compressed jsonl)
   - проста база даних із схемою, гілками і мерджем, eventual consistency & conflict resolution
+  - file management
   - p2p sync
   - arhiv app
   - storage/(read/write APIs i.e. FS) for other apps

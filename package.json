@@ -5,7 +5,7 @@
   "type": "module",
   "repository": "",
   "author": "mbme",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "private": true,
   "workspaces": [
     "arhiv",

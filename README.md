@@ -71,3 +71,14 @@ instructions are in [arhiv-android/README.md](arhiv-android/README.md).
 
 Uncommitted ideas and possible improvements are tracked in the
 [backlog](BACKLOG.md).
+
+## License
+
+Arhiv is source-available under the [Apache License 2.0 with the Commons Clause
+v1.0 condition](LICENSE). Personal and internal business use is permitted under
+these terms; selling products or services whose value derives entirely or
+substantially from Arhiv's functionality requires a separate license. The
+restriction also covers some paid hosting, consulting, and support. For
+commercial licensing, [open a GitHub issue](https://github.com/mbme/arhiv/issues).
+
+Third-party dependencies retain their own licenses.

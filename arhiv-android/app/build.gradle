@@ -87,3 +87,9 @@ java {
     languageVersion = JavaLanguageVersion.of(17)
   }
 }
+
+def copyLicense = tasks.register("copyLicense", Copy) {
+  from rootProject.file("../LICENSE")
+  into layout.buildDirectory.dir("generated/licenseAssets")
+}
+android.sourceSets.main.assets.srcDir(copyLicense)

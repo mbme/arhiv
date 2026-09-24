@@ -5,7 +5,7 @@ pkgrel=1
 pkgver="0.0.0"
 pkgdesc='Personal computing environment'
 arch=(x86_64)
-license=(MIT)
+license=('LicenseRef-Arhiv-Apache-2.0-Commons-Clause-1.0')
 depends=(dbus)
 optdepends=(
     'electron43: to run Arhiv desktop app'
@@ -46,6 +46,8 @@ check() {
 package() {
   cd ..
 
+  install -Dm 644 "LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
   # arhiv CLI
   install -Dm 755 -t "$pkgdir/usr/bin/" "target/x86_64-unknown-linux-gnu/release/arhiv"
 
@@ -53,6 +55,7 @@ package() {
   install -Dm 755 "arhiv-desktop/arhiv-desktop" "$pkgdir/usr/bin/arhiv-desktop"
   install -Dm 644 "arhiv-desktop/dist/index.cjs" "$pkgdir/usr/share/arhiv-desktop/dist/index.cjs"
   install -Dm 644 "arhiv-desktop/electron-package.json" "$pkgdir/usr/share/arhiv-desktop/package.json"
+  install -Dm 644 "LICENSE" "$pkgdir/usr/share/arhiv-desktop/LICENSE"
 
   install -Dm 644 "arhiv-cli/resources/v.arhiv.ui.desktop" "${pkgdir}/usr/share/applications/v.arhiv.ui.desktop"
 

@@ -80,7 +80,8 @@ A pushed tag runs `.github/workflows/release.yml`, which publishes:
 
 - the Linux CLI binary;
 - the Windows CLI binary; and
-- the signed Android APK.
+- the signed Android APK; and
+- the combined license text (also bundled in the APK).
 
 The Android APK is distributed for sideloading. The Electron desktop wrapper is
 not published by the release workflow.

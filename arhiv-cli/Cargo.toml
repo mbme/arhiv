@@ -3,6 +3,7 @@ name = "arhiv-cli"
 version = "0.0.0"
 edition = "2024"
 authors = ["mbme"]
+license-file = "../LICENSE"
 publish = false
 
 [lints]

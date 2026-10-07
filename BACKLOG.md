@@ -1,6 +1,6 @@
 # Backlog
 
-- network p2p sync (use iroh), relays
+- network p2p sync (use iroh), relays, sync observability & progress tracking
 - better diff/merge
 - integration with emacs/file system - use FUSE?
 - rethink "save" + "commit" distinction / approach? no need to "save"? + auto-commit
@@ -52,6 +52,10 @@
 - browse logs in android app
 - look up how mergiraf resolves merge conflicts for markdown
 - do we delete data from search index when erased?
+- zero-knowledge storage + relays (encrypted store-and-forward) - for safe hosted service
+- chat-like "event stream" - let me post life events (chat messages) with "tags" (collections); LLM may additionally extract info/categorize
+- let LLMs pay "ontology tax" for my personal knowledge graph
+- add a method to change main key
 
 ## Information Decay system
 

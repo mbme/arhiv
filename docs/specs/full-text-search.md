@@ -1,4 +1,4 @@
-# Full-Text Search Specification
+# Full-Text Search
 
 ## Purpose and scope
 

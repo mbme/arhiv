@@ -1,6 +1,10 @@
-# Arhiv Cross-Layer API and DTO Contract Spec
+# API and DTO Contract
 
 Scope: contract between Rust server DTOs and TypeScript UI DTOs for `/ui/api`, plus adjacent typed payloads (`window.CONFIG`, multipart upload result).
+
+The canonical payload definitions are [Rust DTOs](../../arhiv/src/ui/dto.rs)
+and [TypeScript DTOs](../../arhiv/src/ui/dto.ts). They own the variant inventory
+and field shapes; this document owns compatibility and boundary behavior.
 
 ## 1. DTO Compatibility
 
@@ -38,18 +42,10 @@ UI endpoint construction:
 
 Request/response variant symmetry:
 
+- Requests and responses use the same variant set.
 - TS `APIRequest.typeName` and `APIResponse.typeName` variants mirror Rust enum variants 1:1 for normal operation.
 
-## 4. Stable Request/Response Variants (Current)
-
-Requests and responses use the same variant set:
-
-- `ListDocuments`, `GetDocuments`, `GetStatus`, `GetDocument`, `ParseMarkup`
-- `CreateDocument`, `SaveDocument`, `EraseDocument`
-- `ListDir`, `CreateAsset`, `Commit`
-- `LockDocument`, `UnlockDocument`, `ReorderCollectionRefs`
-- `CreateArhiv`, `LockArhiv`, `UnlockArhiv`
-- `ImportKey`, `ExportKey`, `CountConflicts`
+## 4. Cached-key recovery
 
 `UnlockArhiv` response:
 
@@ -89,9 +85,9 @@ Server-side API handler failures:
 
 Auth middleware failures (before API handler):
 
-- Missing/invalid auth token returns HTTP `401`.
-- Malformed auth token returns HTTP `400`.
-- Body is plain text error.
+- The [authentication contract](authentication.md#2-server-side-auth-contract)
+  owns missing/invalid token (`401`), malformed token (`400`), and plain-text
+  error behavior.
 
 Client-side RPC behavior:
 

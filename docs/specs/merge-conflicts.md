@@ -1,11 +1,11 @@
-# Arhiv Merge Conflict Handling Spec
+# Merge Conflicts
 
 Scope: how Arhiv detects, represents, merges, exposes, and commits conflicting
 document revisions.
 
 ## 1. Domain and synchronization terms
 
-The [domain model](domain-model.md) defines document, document version,
+The [domain model](../domain-model.md) defines document, document version,
 snapshot, staged change, conflict, and staged merge. This document uses those
 terms without redefining them.
 
@@ -141,14 +141,7 @@ Field strategies:
 No conflict markers are emitted. Overlaps are synthesized into a single value
 by algorithmic reconciliation.
 
-## 6. Synchronization effects on the conflict lifecycle
-
-### 6.1 Created
-
-A conflict appears when refresh finds more than one concurrent latest snapshot
-for the same document.
-
-### 6.2 Surfaced
+## 6. Conflict exposure and resolution
 
 API/UI flags conflict via `has_conflict` and conflict count endpoint:
 
@@ -156,14 +149,8 @@ API/UI flags conflict via `has_conflict` and conflict count endpoint:
 - `CountConflicts` returns the number of conflicted documents
 - catalog filter `onlyConflicts` supported
 
-### 6.3 Staged merge
-
-A staged merge can result from:
-
-- automatic merge during state refresh from storage
-- manual edit or save of a conflicted document
-
-### 6.4 Committed
+Refresh stages the automatic merge as described above. Manual edit/save of a
+conflicted document can also create a staged merge.
 
 On commit:
 
@@ -171,8 +158,8 @@ On commit:
   local instance increment
 - every staged change, including staged merges, is committed to that
   same new revision
-- the document returns to one current snapshot
-- old snapshots remain in storage history unless erased by erase rules
+- resolution creates one current snapshot and retains old snapshots in history,
+  subject to the [domain erasure rules](../domain-model.md#domain-invariants)
 
 ## 7. Commit and Auto-Commit Semantics
 
@@ -230,9 +217,8 @@ Auto-commit:
 
 Storage-file merge idempotency:
 
-- Merging storage files uses `(id, rev)` as snapshot identity.
-- Re-merging the same effective set of snapshots does not create additional snapshots.
-- Duplicate keys are deduplicated before write.
+- The key-level union described in section 3 creates no additional snapshots
+  when the same effective snapshot set is merged again.
 
 State refresh idempotency:
 
@@ -247,8 +233,4 @@ Deterministic parts:
 - base-revision lookup is deterministic for a fixed revision graph.
 - conflict/non-conflict classification is deterministic for a fixed snapshot set.
 
-Non-deterministic edge:
-
-- Conflict projection can select any competing branch when no staged merge
-  exists.
-- this affects API/search projection only in that state.
+The API/search projection exception is described in section 9.

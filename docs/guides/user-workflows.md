@@ -1,9 +1,12 @@
-# Arhiv User Workflows
+# Owner Workflows
+
+This guide explains owner-visible outcomes across supported surfaces. It is a
+behavioral overview, not a CLI or UI command reference.
 
 ## Scope
 
 This document describes owner-visible workflows independent of UI, CLI, or
-launcher details. The [domain model](domain-model.md) owns domain invariants;
+launcher details. The [domain model](../domain-model.md) owns domain invariants;
 linked specifications own technical preconditions and failure modes.
 The owner is the sole workflow actor and is not a domain object.
 
@@ -25,8 +28,8 @@ Incorrect credentials do not grant access. A missing cache is recoverable with
 the password or an exported key; losing both usable key material and the
 password needed to decrypt it is unrecoverable.
 
-See [Crypto and key lifecycle](crypto-key-lifecycle-threat-model.md) and
-[Authentication and sessions](auth-session-trust-chain-spec.md).
+See [Crypto and key lifecycle](../specs/key-lifecycle.md) and
+[Authentication and sessions](../specs/authentication.md).
 
 ## 2. Create, edit, commit, or discard
 
@@ -43,7 +46,7 @@ New relationships may target only existing active documents in the same Arhiv.
 If an asset blob is unavailable, its metadata, relationships, and history remain
 usable, while reading its content fails.
 
-See the [Domain model](domain-model.md).
+See the [Domain model](../domain-model.md).
 
 ## 3. Erase a document
 
@@ -52,7 +55,7 @@ active version with an erased current snapshot; discard preserves the active
 snapshot. An erased document keeps its identity and historical relationships,
 but cannot receive new references, collection memberships, or asset references.
 
-See the [Domain model](domain-model.md).
+See the [Domain model](../domain-model.md).
 
 ## 4. Find and select documents
 
@@ -64,7 +67,7 @@ An empty normalized query matches every indexed document. A term with no
 candidate produces no results; search does not fall back to OR, partial-term,
 semantic, or recommendation matching.
 
-See [Full-text search](full-text-search-spec.md).
+See [Full-text search](../specs/full-text-search.md).
 
 ## 5. Reconcile concurrent changes
 
@@ -79,7 +82,7 @@ Incoming snapshots wait while any staged changes exist. Unrelated staged changes
 may still be committed while a conflict remains, but automatic commit waits
 until no conflicts exist.
 
-See [Merge conflicts](merge-conflicts-spec.md).
+See [Merge conflicts](../specs/merge-conflicts.md).
 
 ## 6. Back up and restore
 
@@ -98,7 +101,7 @@ and, by default, rollback to an older generation. It validates restored
 artifacts and clears regenerable runtime state. Missing blobs require the
 explicit degraded-restore option and leave their asset content unavailable.
 
-See [Backup and restore](backup-restore-durability-spec.md).
+See [Backup and restore](../specs/backup-restore.md).
 
 ## 7. Upgrade storage
 
@@ -111,4 +114,6 @@ continuing with partial replacement. Mixed-version clients sharing a storage
 root are unsupported during migration. If dirty local state blocks migration,
 the owner resolves it with the previous compatible version before retrying.
 
-See [Storage migrations](storage-migration-playbook.md).
+See the [migration contract](../specs/migration.md) for safety guarantees and
+the [storage upgrade runbook](../runbooks/storage-upgrade.md) for preflight,
+verification, and rollback steps.

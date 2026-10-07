@@ -1,4 +1,4 @@
-# Arhiv Encrypted File Format Specification
+# Encrypted Storage Format
 
 Version: 1 (storage `storage_version = 1`)
 
@@ -19,7 +19,7 @@ It does not define higher-level product behavior (sync policy, UI/API, merge con
 
 ## 2. Terminology
 
-- AGE: The [age] encryption format as used by the Rust `age` crate stream APIs.
+- AGE: The [age](https://age-encryption.org/v1) encryption format as used by the Rust `age` crate stream APIs.
 - ASCII-armored AGE: text form with `-----BEGIN AGE ENCRYPTED FILE-----` envelope.
 - Binary AGE: non-armored binary stream envelope.
 - GZIP: DEFLATE stream wrapped in `.gz` framing.
@@ -56,17 +56,12 @@ It does not define higher-level product behavior (sync policy, UI/API, merge con
 - Outer: AGE ASCII-armored encryption
 - Plaintext payload: UTF-8 x25519 secret key string (the storage master key)
 
-## 4. Cryptographic Key Model
-
-| Key | Representation | Protects |
-| --- | --- | --- |
-| Password-derived key | AGE scrypt recipient/identity | `key.age` |
-| Storage master key | x25519 AGE identity inside `key.age` | Storage, state, search, and lock files |
-| Per-asset blob key | x25519 AGE identity in asset metadata | One asset blob |
+## 4. Key representation
 
 x25519 private keys use the AGE identity text format. The
-[key lifecycle specification](crypto-key-lifecycle-threat-model.md) owns
-password policy, creation, caching, import/export, rotation, and recovery.
+[key lifecycle contract](key-lifecycle.md) owns the key hierarchy,
+including which key protects each file, password policy, creation, caching,
+import/export, rotation, and recovery.
 
 ## 5. Main Storage Database Format (`baza.gz.age`)
 
@@ -156,7 +151,7 @@ Rules:
 The patched output is fully rewritten as a new container and then encrypted/compressed.
 The rewrite accepts source documents in their stored order and uses one
 order-independent buffering path to emit the canonical order. See
-ADR-002 in [Architecture decisions](architecture-decisions.md).
+[ADR-002](../adr/002-order-independent-storage-rewrites.md).
 
 ## 6. State File Format (`state.gz.age`)
 
@@ -232,12 +227,11 @@ State/search/locks failures:
 - Container index preserves insertion/patch order semantics.
 - GZIP uses compression level 6; compressed bytes are not guaranteed stable
   across library or runtime changes even for identical plaintext.
-- Compatibility gate currently enforced at runtime:
-  - `storage_version == 1`
-  - `data_version` must match schema latest data version.
-- Search-index reuse additionally requires matching format, search algorithm,
-  data version, and schema fingerprint values. A mismatch causes the index to
-  be rebuilt from current document state.
+- The [migration contract](migration.md#version-compatibility) owns storage and
+  data-version gates, including supported migration before normal loading.
+- The [search contract](full-text-search.md#search-index-compatibility) owns
+  index reuse and rebuild behavior for format, algorithm, data-version, and
+  schema-fingerprint mismatches.
 
 ## 13. Non-goals / Not Specified
 
@@ -248,6 +242,6 @@ State/search/locks failures:
 
 ## 14. Related behavior
 
-See [Backup and restore](backup-restore-durability-spec.md), [Storage
-migrations](storage-migration-playbook.md), and [Merge
-conflicts](merge-conflicts-spec.md) for operations over these formats.
+See [Backup and restore](backup-restore.md), [Storage
+migrations](migration.md), and [Merge
+conflicts](merge-conflicts.md) for operations over these formats.

@@ -1,4 +1,4 @@
-# Arhiv Backup, Restore, and Durability Specification
+# Backup and Restore
 
 ## 1. Scope
 

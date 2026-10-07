@@ -11,13 +11,13 @@ rules. Approval of the direction does not imply that the protocol is complete.
 
 Arhiv is a single-owner, local-first database. Its
 [domain model](../domain-model.md) has no account object. Existing
-[UI authentication](../auth-session-trust-chain-spec.md) protects local access;
+[UI authentication](../specs/authentication.md) protects local access;
 it does not authorize remote synchronization.
 
-The [key lifecycle](../crypto-key-lifecycle-threat-model.md) separates a password
+The [key lifecycle](../specs/key-lifecycle.md) separates a password
 wrapper from the storage master key. Password changes rewrap that key rather than
 revoking existing copies. Asset decryption keys are stored in database metadata.
-The [merge contract](../merge-conflicts-spec.md) already handles synchronized
+The [merge contract](../specs/merge-conflicts.md) already handles synchronized
 snapshots and concurrent revisions, but treats received snapshots as trusted
 committed history.
 
@@ -301,9 +301,9 @@ select a migration or claim storage compatibility.
 
 Existing living specs continue to describe current behavior. When this design is
 accepted and delivered, reconcile the narrow affected contracts, particularly
-[key lifecycle](../crypto-key-lifecycle-threat-model.md),
+[key lifecycle](../specs/key-lifecycle.md),
 [system threat model](../system-threat-model.md),
-[merge behavior](../merge-conflicts-spec.md),
-[backup and restore](../backup-restore-durability-spec.md), and
-[owner workflows](../user-workflows.md). Keep proposal rationale distinct from
+[merge behavior](../specs/merge-conflicts.md),
+[backup and restore](../specs/backup-restore.md), and
+[owner workflows](../guides/user-workflows.md). Keep proposal rationale distinct from
 implemented guarantees.

@@ -1,4 +1,4 @@
-# Arhiv Storage Schema Contract Specification
+# Document Schema
 
 Current data version: `2`
 
@@ -16,10 +16,10 @@ It covers:
 It does not define:
 
 - low-level encrypted file/container format, covered in the
-  [encrypted file format](arhiv-encrypted-file-format.md)
-- merge algorithm semantics, covered in [merge conflicts](merge-conflicts-spec.md)
+  [encrypted file format](storage-format.md)
+- merge algorithm semantics, covered in [merge conflicts](merge-conflicts.md)
 - migration execution details, covered in
-  [storage migrations](storage-migration-playbook.md)
+  [storage migrations](migration.md)
 
 ## 2. Schema Availability
 
@@ -88,13 +88,8 @@ Notes:
 
 ## 6. Document Data Shape Contract
 
-The top-level document envelope is strict:
-
-- `id`
-- `rev`
-- `document_type`
-- `updated_at`
-- `data`
+The [storage format](storage-format.md#54-storage-line-payload-semantics)
+owns the strict top-level document envelope.
 
 `data` is a dynamic JSON object (`DocumentData`).
 
@@ -130,9 +125,8 @@ Error model:
 - field-scoped failures are grouped by field
 - document-scoped failures are grouped separately
 
-API mapping:
-
-- create/save validation is returned in typed response payloads (`errors.documentErrors`, `errors.fieldErrors`) rather than transport-level failures
+The [API contract](api.md#6-validation-and-business-errors) owns the typed
+create/save validation response and its distinction from transport failures.
 
 ## 8. Readonly Field Contract
 
@@ -168,7 +162,7 @@ Current state:
 
 - latest `data_version` is `2`
 - data version `1` is upgraded by the asset-content-hash migrator described in
-  [storage migrations](storage-migration-playbook.md)
+  [storage migrations](migration.md)
 - there is no negotiated multi-version schema compatibility at runtime
 
 ## 11. Known limits

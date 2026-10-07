@@ -1,4 +1,4 @@
-# Arhiv Platform Security Boundaries Spec
+# Platform Security Boundaries
 
 Scope: platform-specific trust boundaries, process boundaries, permissions, and sensitive data flow for Desktop (Electron) and Android wrappers around the local Arhiv server.
 
@@ -7,7 +7,7 @@ Scope: platform-specific trust boundaries, process boundaries, permissions, and 
 Desktop and Android start the local HTTPS server, trust the certificate
 delivered through their startup boundary, and authenticate with an `AuthToken`
 cookie. A compromised local account compromises this runtime trust model. See
-[Authentication and sessions](auth-session-trust-chain-spec.md) for the shared
+[Authentication and sessions](authentication.md) for the shared
 server and session contract.
 
 ## 2. Desktop Boundary (Electron)

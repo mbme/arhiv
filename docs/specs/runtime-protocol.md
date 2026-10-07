@@ -1,4 +1,4 @@
-# Arhiv Launcher-Server Runtime Protocol Spec
+# Launcher-Server Runtime Protocol
 
 Scope: startup/shutdown contract between launchers (CLI/Desktop/Android) and the Arhiv server process, including discovery data, lockfile semantics, and single-instance behavior.
 

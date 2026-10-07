@@ -62,8 +62,10 @@ according to your recovery needs; Arhiv does not require it to be disabled.
 
 ## Documentation
 
-The [documentation guide](docs/README.md) links the current domain, storage,
-synchronization, security, runtime, and interface documentation.
+Start with the [documentation index](docs/README.md),
+[architecture overview](docs/architecture.md), or
+[owner workflows](docs/guides/user-workflows.md). Detailed contracts live in
+`docs/specs/`; operational upgrade and recovery steps live in `docs/runbooks/`.
 
 Development setup, checks, packaging, and release details are in
 [CONTRIBUTING.md](CONTRIBUTING.md). Android-specific build and debugging

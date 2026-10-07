@@ -1,4 +1,4 @@
-# Arhiv Auth, Session, and Trust-Chain Spec
+# Authentication and Sessions
 
 Scope: local HTTPS UI server authentication, session propagation, and certificate trust behavior across CLI/Desktop/Android launchers.
 
@@ -61,9 +61,9 @@ Browser bootstrap:
 Desktop and Android receive the server auth token and certificate bytes through
 their startup boundary. They establish the `AuthToken` cookie directly and
 trust only the delivered certificate. The
-[launcher-server runtime protocol](launcher-server-runtime-protocol-spec.md)
+[launcher-server runtime protocol](runtime-protocol.md)
 describes how startup material is transported; the
-[platform security boundaries](platform-security-boundaries-spec.md) describe
+[platform security boundaries](platform-security.md) describe
 the Electron and Android trust implementations.
 
 ## 6. Boundary and Assumptions

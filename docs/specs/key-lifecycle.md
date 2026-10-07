@@ -1,14 +1,14 @@
-# Arhiv Crypto and Key Lifecycle
+# Key Lifecycle
 
 ## Scope
 
 This is the key-lifecycle and security contract: it defines key hierarchy,
 lifecycle, recovery boundaries, and secret handling. The
-[system threat model](system-threat-model.md) owns system-wide assets, attackers,
+[system threat model](../system-threat-model.md) owns system-wide assets, attackers,
 goals, and residual risks. The
-[encrypted file format](arhiv-encrypted-file-format.md) owns byte formats;
-[authentication and sessions](auth-session-trust-chain-spec.md) owns TLS and UI
-session secrets; [platform security boundaries](platform-security-boundaries-spec.md)
+[encrypted file format](storage-format.md) owns byte formats;
+[authentication and sessions](authentication.md) owns TLS and UI
+session secrets; [platform security boundaries](platform-security.md)
 owns platform credential-cache controls.
 
 ## Key hierarchy
@@ -88,12 +88,12 @@ a missing, malformed, unavailable, or non-matching cache falls back to password
 or imported-key recovery.
 
 Caches are convenience mechanisms, not recovery copies or independent trust
-anchors. See [Platform security boundaries](platform-security-boundaries-spec.md)
+anchors. See [Platform security boundaries](platform-security.md)
 for platform authentication and failure handling.
 
-## Operational guidance
+## Recovery preparation
 
-- Keep an offline exported key protected by a strong password.
-- Test export and import in a controlled environment.
-- Treat password change as key-file rewrapping, not data re-encryption.
-- Include both key recovery and storage backup in recovery drills.
+Keep an offline exported key protected by a strong password, and test
+export/import in a controlled environment. Recovery drills need both key
+recovery and storage backup; password change rewraps the key file rather than
+re-encrypting data.

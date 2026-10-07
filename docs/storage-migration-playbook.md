@@ -9,6 +9,13 @@ This document explains Arhiv's current storage version model, automatic data
 migration, and the operational procedure for validating or rolling back an
 upgrade.
 
+It owns migration safety and supported upgrade/rollback behavior, alongside the
+operator procedure. The [encrypted file format](arhiv-encrypted-file-format.md)
+owns container and byte-format rules; the
+[storage schema contract](storage-schema-contract-spec.md) owns document shape
+and data-version compatibility. Version summaries here explain their migration
+consequences.
+
 It covers:
 
 - `storage_version` lifecycle and compatibility policy
@@ -18,7 +25,8 @@ It covers:
 It does not define:
 
 - UI/API behavior changes unrelated to on-disk storage
-- Document merge/conflict semantics (covered elsewhere)
+- Document merge/conflict semantics, covered in
+  [merge conflicts](merge-conflicts-spec.md)
 
 ## 2. Versioning Model
 

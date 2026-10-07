@@ -2,10 +2,14 @@
 
 ## Scope
 
-This document defines key hierarchy, lifecycle, recovery boundaries, and secret
-handling. The [encrypted file format](arhiv-encrypted-file-format.md) owns byte
-formats; [authentication and sessions](auth-session-trust-chain-spec.md) owns
-TLS and UI session secrets.
+This is the key-lifecycle and security contract: it defines key hierarchy,
+lifecycle, recovery boundaries, and secret handling. The
+[system threat model](system-threat-model.md) owns system-wide assets, attackers,
+goals, and residual risks. The
+[encrypted file format](arhiv-encrypted-file-format.md) owns byte formats;
+[authentication and sessions](auth-session-trust-chain-spec.md) owns TLS and UI
+session secrets; [platform security boundaries](platform-security-boundaries-spec.md)
+owns platform credential-cache controls.
 
 ## Key hierarchy
 

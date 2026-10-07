@@ -2,9 +2,12 @@
 
 This document is the append-only record of significant architecture decisions in Arhiv. It preserves the context, decision, and consequences so that durable choices are not needlessly re-litigated.
 
-The topic documents explain current behavior. An ADR records the rationale for
-a decision; it does not replace or silently change those explanations. When an
-accepted decision changes behavior, update the affected topic documents with
+The [maintained contracts](README.md#maintained-contracts) own detailed behavior.
+Change proposals, such as [P2P sync](proposals/p2p-sync.md), develop candidate
+designs and unresolved questions. An ADR records a significant decision and its
+rationale; it does not replace a proposal or silently change a contract.
+Acceptance records the chosen direction, not implementation completion. When
+an accepted decision changes behavior, update the affected topic documents with
 the current result.
 
 ## Conventions
@@ -184,7 +187,7 @@ Windows and Android retain their existing target-specific build configuration.
   the build machine's full feature set.
 
 <!--
-## ADR-003: Short decision title
+## ADR-NNN: Short decision title
 
 - Status: Proposed
 - Date: YYYY-MM-DD

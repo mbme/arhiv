@@ -1,13 +1,20 @@
 # Backlog
 
+- arhiv - personal db across devices
 - network p2p sync (use iroh), relays, sync observability & progress tracking
 - better diff/merge
+  - https://github.com/xit-vcs/xit/blob/master/docs/patch.md
+  - look up how mergiraf resolves merge conflicts for markdown
 - integration with emacs/file system - use FUSE?
 - rethink "save" + "commit" distinction / approach? no need to "save"? + auto-commit
 
+- i need a way to track & follow up/archive my ideas (research directions, projects, exploration areas)
+
 - better Auth/accounts
+  - what about atproto spaces?
   - user key pair? maybe independent of iroh and age?
   - support multiple devices, revocations etc.
+  - Cloudflare Workers + Durable Objects for iroh randevouz?
 
 - better UI
   - redesign interface?
@@ -22,6 +29,7 @@
   - improve password input: allow to see plain text
   - i'd like to improve collections UX
   - timeline view
+  - sometimes there's an bug with stale lock in UI - editor closed but the document lock didn't release
 
 - better integration
   - CLI API for LLMs
@@ -50,7 +58,6 @@
 - refactor: arhiv-cli shouldn't probably access baza directly
 - remote backup without 3rd party tools - separate "backup manager"?
 - browse logs in android app
-- look up how mergiraf resolves merge conflicts for markdown
 - do we delete data from search index when erased?
 - zero-knowledge storage + relays (encrypted store-and-forward) - for safe hosted service
 - chat-like "event stream" - let me post life events (chat messages) with "tags" (collections); LLM may additionally extract info/categorize

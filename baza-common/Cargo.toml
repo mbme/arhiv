@@ -30,13 +30,11 @@ time = { version = "0.3", features = ["formatting", "parsing", "macros", "serde"
 data-encoding = "2"
 infer = "0.22"
 mime_guess = "2"
-regex = "1.5.4"
 url = "2.2.2"
 shellexpand = "3.0.0"
 async-stream = "0.3"
 subst = "0.3"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "local-time"] }
-tracing-android = "0.2"
 which = "8"
 reqwest = { version = "0.13", default-features = false, features = ["json", "stream", "rustls"] }
 
@@ -45,3 +43,4 @@ windows-sys = { version = "0.61", features = ["Win32_Storage_FileSystem"] }
 
 [target.'cfg(target_os = "android")'.dependencies]
 libc = "0.2"
+tracing-android = "0.2"

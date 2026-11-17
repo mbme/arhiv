@@ -302,11 +302,7 @@ fn should_add_whitespace(left: &str, right: &str) -> bool {
 
     let right_has_whitespace = right.chars().next().is_none_or(|c| c.is_whitespace());
 
-    if right_has_whitespace {
-        return false;
-    }
-
-    true
+    !right_has_whitespace
 }
 
 pub fn merge_strings_three_way(base: &str, left: &str, right: &str) -> String {

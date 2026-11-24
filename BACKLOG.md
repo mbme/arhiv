@@ -1,6 +1,6 @@
 # Backlog
 
-- arhiv - personal db across devices
+- arhiv - personal db across devices; place to collect my thoughts
 - network p2p sync (use iroh), relays, sync observability & progress tracking
 - better diff/merge
   - https://github.com/xit-vcs/xit/blob/master/docs/patch.md

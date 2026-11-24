@@ -52,6 +52,8 @@ Specs own command contracts; guides and runbooks own task walkthroughs.
   [personal information management](research/pim-beyond-lifestream-research-report.md).
   These are background, not contracts. Their session-specific citation markers
   need durable source verification before supporting a decision.
+- [Solstone Journal case study](research/solstone-journal-case-study.md):
+  capture-first personal memory compared with Arhiv, with ideas for agent retrieval and reviewed suggestions.
 
 ## Maintenance
 

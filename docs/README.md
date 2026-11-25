@@ -45,8 +45,10 @@ Specs own command contracts; guides and runbooks own task walkthroughs.
 
 - [Architecture decisions](adr/README.md): significant choices,
   alternatives, and consequences, with status per decision.
-- [P2P synchronization](proposals/p2p-sync.md): draft proposal; agreed constraints
-  are separate from candidate mechanisms and unresolved rules.
+- [Personal device management](proposals/personal-device-management.md): draft
+  proposal for pairing, removal, device authorization, and recovery.
+- [P2P synchronization](proposals/p2p-sync.md): draft proposal for connections,
+  transfer, and merge between authorized devices.
 - [Backlog](../BACKLOG.md): uncommitted ideas.
 - Research: [lifestreams](research/modern-lifestream-research-report.md) and
   [personal information management](research/pim-beyond-lifestream-research-report.md).
